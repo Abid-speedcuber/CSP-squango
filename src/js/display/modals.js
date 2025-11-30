@@ -369,9 +369,9 @@ function openModal(name) {
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="modal-title">${displayName}</div>
                         <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Train this case">
-                            <img src="src/media/timer.svg" style="width: 24px; height: 24px;" alt="Train">
+                            <img src="src/media/timer.svg" style="width: 30px; height: 30px;" alt="Train">
                         </button>
-                        <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips for this modal">
+                        <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
