@@ -309,8 +309,36 @@ body.modal-open {
     padding-right: var(--scrollbar-width, 0px);
 }
 
+body.modal-open .floating-buttons-container {
+    right: calc(20px + var(--scrollbar-width, 0px));
+}
+
 body.modal-open .floating-settings-btn {
     right: calc(20px + var(--scrollbar-width, 0px));
+}
+
+.floating-buttons-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 999;
+    transition: all 0.3s ease;
+}
+
+.floating-buttons-container .floating-settings-btn,
+.floating-buttons-container .homepage-info-btn {
+    position: relative;
+    top: 0;
+    right: 0;
+    margin-bottom: 10px;
+}
+
+.floating-buttons-container .homepage-info-btn {
+    top: 0 !important;
+}
+
+.hide-instructions .homepage-info-btn {
+    display: none;
 }
 
 .modal.active {
@@ -518,10 +546,31 @@ details summary::marker {
     transform-origin: top right;
 }
 
-.floating-settings-btn:hover {
-    background: rgb (40, 40, 40);
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(123, 123, 123, 0.5);
+.homepage-info-btn {
+    position: fixed;
+    top: 86px;
+    right: 20px;
+}
+
+body.modal-open .homepage-info-btn {
+    right: calc(20px + var(--scrollbar-width, 0px));
+}
+
+@media (max-width: 570px) {
+    .floating-buttons-container {
+        top: 15px;
+        right: 15px;
+    }
+    
+    .homepage-info-btn {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .homepage-info-btn svg {
+        width: 20px;
+        height: 20px;
+    }
 }
 
 .floating-settings-btn svg {

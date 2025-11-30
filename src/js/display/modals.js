@@ -25,50 +25,73 @@ function generateModalHTML() {
     
     modalContainer.innerHTML = `
         <div id="settingsModal" class="modal">
-            <div class="modal-content" style="max-width: 400px; margin-top: 50px; height: 500px; display: flex; flex-direction: column;">
-                <div class="modal-header" style="flex-shrink: 0;">
-                    <span class="modal-title">Settings</span>
-                    <button class="close-btn" onclick="closeSettingsModal()">&times;</button>
+            <div class="modal-content" style="max-width: 450px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;">
+                <div class="modal-header" style="flex-shrink: 0; background: #2d3748; color: white; padding: 20px 25px;">
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span class="modal-title" style="font-size: 1.6rem; font-weight: 700; color: white;">Settings</span>
+                        <button onclick="showSettingsInfoModal()" class="settings-info-btn" style="background: rgba(255, 255, 255, 0.15); border: none; color: white; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    <button class="close-btn" onclick="closeSettingsModal()" style="color: white; opacity: 0.9;">&times;</button>
                 </div>
-                <div class="modal-body" style="overflow-y: auto; flex: 1;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <label for="hintToggle">Show Tracing Guides:</label>
-                        <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 25px; background: #fafafa;">
+                    
+                    <!-- Display Options Section -->
+                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Display Options</h3>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
+                            <label for="hintToggle" style="color: #4a5568; font-weight: 500;">Show Tracing Guides</label>
+                            <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
+                            <label for="showPathsToggle" style="color: #4a5568; font-weight: 500;">Show Shape Paths</label>
+                            <input type="checkbox" id="showPathsToggle" onchange="toggleShowPaths(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
+                            <label for="dynamicParityToggle" style="color: #4a5568; font-weight: 500;">Dynamically Decide Even/Odd</label>
+                            <input type="checkbox" id="dynamicParityToggle" onchange="toggleDynamicParity(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
+                            <label for="priorityLearningToggle" style="color: #4a5568; font-weight: 500;">Enable Priority Based Learning</label>
+                            <input type="checkbox" id="priorityLearningToggle" onchange="togglePriorityLearning(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
+                            <label for="hideInstructionsToggle" style="color: #4a5568; font-weight: 500;">Hide Instruction Buttons</label>
+                            <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <label for="showPathsToggle">Show Shape Paths:</label>
-                        <input type="checkbox" id="showPathsToggle" onchange="toggleShowPaths(this.checked)">
+
+                    <!-- Customization Section -->
+                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Customization</h3>
+                        <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Color Scheme Settings</button>
+                        <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <label for="dynamicParityToggle">Dynamically Decide Even/Odd:</label>
-                        <input type="checkbox" id="dynamicParityToggle" onchange="toggleDynamicParity(this.checked)">
+
+                    <!-- Data Management Section -->
+                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Data Management</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                            <button onclick="exportData()" style="padding: 12px 16px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Export Data</button>
+                            <label style="padding: 12px 16px; background: #4a5568; color: white; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.95rem; font-weight: 600; margin: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">
+                                Import Data
+                                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0])">
+                            </label>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-                        <label for="priorityLearningToggle">Enable Priority Based Learning:</label>
-                        <input type="checkbox" id="priorityLearningToggle" onchange="togglePriorityLearning(this.checked)">
+
+                    <!-- About Section -->
+                    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">About</h3>
+                        <button onclick="openSuggestModal()" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(108, 117, 125, 0.4)'; this.style.background='#5a6268'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(108, 117, 125, 0.3)'; this.style.background='#6c757d'">Suggest Updates / Report Bugs</button>
+                        <button onclick="openConfessionModal()" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(108, 117, 125, 0.4)'; this.style.background='#5a6268'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(108, 117, 125, 0.3)'; this.style.background='#6c757d'">Confession and credits</button>
                     </div>
-                    <div style="margin-top: 20px;">
-                        <button onclick="openColorSchemeModal()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; margin-bottom: 10px;">Color Scheme Settings</button>
-                        <button onclick="openCaseNameModal()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%; margin-bottom: 10px;">Case Name Settings</button>
-                        <details style="margin-top: 10px; margin-bottom: 10px;">
-                            <summary style="cursor: pointer; font-weight: 600; color: #333; user-select: none; padding: 8px 0; display: flex; align-items: center; gap: 8px; list-style: none;">
-                                <span style="font-size: 0.9rem; transform: rotate(0deg); transition: transform 0.2s; display: inline-block; flex-shrink: 0;" class="arrow">▶</span>
-                                <span>Extensions</span>
-                            </summary>
-                            <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px; padding-left: 0;">
-                                <div style="display: flex; gap: 10px;">
-                                    <button onclick="exportData()" style="flex: 1; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 500;">Export Data</button>
-                                    <label style="flex: 1; padding: 8px 16px; background: #28a745; color: white; border-radius: 4px; cursor: pointer; text-align: center; font-size: 1rem; font-weight: 500; margin: 0; display: flex; align-items: center; justify-content: center;">
-                                        Import Data
-                                        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0])">
-                                    </label>
-                                </div>
-                                <button onclick="openSuggestModal()" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Suggest Updates / Report Bugs</button>
-                                <button onclick="openConfessionModal()" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">Confession</button>
-                            </div>
-                        </details>
-                        <button onclick="openHowToUseModal()" style="padding: 8px 16px; background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; width: 100%;">How to Use This App</button>
-                    </div>
+
                 </div>
             </div>
         </div>
@@ -179,113 +202,69 @@ function generateModalHTML() {
             </div>
         </div>
 
-        <div id="howToUseModal" class="modal">
-          <div class="modal-content" style="max-width: 850px; margin-top: 50px; border-radius: 14px; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #007bff 0%, #17a2b8 100%); color: white; padding: 18px 25px;">
-              <span class="modal-title" style="font-size: 1.6rem; font-weight: 700;">How to Use This App</span>
-              <button class="close-btn" onclick="closeHowToUseModal()" style="color: white; font-size: 1.8rem;">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 75vh; overflow-y: auto; padding: 25px 30px; background: #fdfdfd; color: #222; line-height: 1.75; font-family: 'Segoe UI', sans-serif;">
-              <h2 style="margin-top: 0; color: #007bff; font-weight: 700;">Welcome to Square-1 Cubeshape Parity Trainer!</h2>
-              <p style="font-size: 1.05rem; color: #555;">This short guide explains all the features and settings of the app so you can make the most out of it – from basic tracking to advanced parity analysis.</p>
-              <div style="margin-top: 25px;">
-                <h3 style="color: #2d3748; font-weight: 700;">🧩 Basic Features</h3>
-                <ul style="padding-left: 20px; margin-top: 10px;">
-                  <li>All <strong>90 cubeshapes</strong> are displayed in individual cards.</li>
-                  <li>Click the checkmark on a card to change a case's state: <em>Unlearned → Learning → Learned</em>.</li>
-                  <li>The top bar shows your learning progress, learned probability coverage, and your estimated "parity safety" percentage.</li>
-                  <li>You can search cubeshapes by name or by their alternative names, and sort or filter them based on your needs.</li>
-                  <li>Each case name is clickable. Clicking it opens a detailed window where you'll find setup moves, a note section where you can write hints for that case, and a training option that will generate random scramble for the case directly using <strong>csTimer's</strong> csp trainer. It has many more advanced features that are explained inside the advanced feature section.</li>
-                  <li>Each case's note is directly visible on the homepage so that you can just look at the hint if you forget or need just a peek to remember a case's algorithm</li>
-                </ul>
-              </div>
-              <hr style="border:none; border-top:2px solid #eee; margin:30px 0;">
-              <div style="margin-top: 20px;">
-                <h3 style="color: #2d3748; font-weight: 700;">Advanced Features</h3>
-                <p>The <strong>Settings</strong> menu provides advanced tools to help you customize your learning experience and how parity information is displayed.</p>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Show Tracing Guides</h4>
-                  <p style="margin-top:5px;">This will show the tracing path I personally use; and if you don't know what you are doing yet, you can just mimic my tracing path for simplicity.</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Show Shape Paths</h4>
-                  <p style="margin-top:5px;">Adds a section in the case details showing how the cubeshape changes as it is solved using an algorithm.</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Enable Priority-Based Learning</h4>
-                  <p style="margin-top:5px;">Lets you organize cases into seven priority levels (from <em>Top</em> to <em>Meh</em>). You can then sort the grid by these levels to focus on what matters most first.</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Dynamically Decide Even/Odd</h4>
-                  <p style="margin-top:5px;">Applies Kale's parity tracing logic directly to each algorithm to automatically decide if it solves an even or odd parity case. You can set your tracing orientation in <em>Parity Orientation Settings</em> and get your personalized csp algorithm app that will show exactly the alg you are to use</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Case Name Settings</h4>
-                  <p style="margin-top:5px;">Allows you to rename cubeshapes, customize Left/Right prefixes, or swap them if you prefer mirrored naming conventions.</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Data Export and Import</h4>
-                  <p style="margin-top:5px;">Since the app doesn't yet use an online database, your progress is stored locally. You can export it as a JSON file and import it later to restore your data.</p>
-                </div>
-                <div style="background:#f8fbff; border-left:5px solid #007bff; border-radius:8px; padding:15px 18px; margin-top:15px;">
-                  <h4 style="margin:0; color:#007bff; font-size:1.05rem;">Parity Analysis Shortcut</h4>
-                  <p style="margin-top:5px;">Clicking the underlined word <strong>"Parity"</strong> in the app's title opens Kale's Parity Tracer – a tool that analyzes parity directly from any scramble using your orientation settings.</p>
-                </div>
-              </div>
-              <hr style="border:none; border-top:2px solid #eee; margin:35px 0;">
-              <div style="margin-top:20px;">
-                <h3 style="color:#2d3748; font-weight:700;">Setting Up Parity Orientation</h3>
-                <p>In regular parity deduction, you might use two different starting points – one for corners and one for edges. In this app, you'll only set one starting point, which works for both. Here's how to do it correctly:</p>
-                <ol style="padding-left:20px; margin-top:10px;">
-                  <li>Choose a position where the <strong>first corner clockwise</strong> is your first traced corner.</li>
-                  <li>Make sure the <strong>first edge clockwise</strong> is your first traced edge as well.</li>
-                </ol>
-                <p style="margin-top:12px; color:#444;">If your starting corner and edge are on two different sides of the cubeshape, or if you trace parity counterclockwise, then <strong>you are gay, you are queer, you have failed my app, you have failed humanity, and nobody loves you</strong>.</p>
-                <hr><br>
-                <p>Use the app in landscape mode for full experience.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         <div id="suggestModal" class="modal">
-          <div class="modal-content" style="max-width: 700px; margin-top: 60px; border-radius: 14px; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 18px 25px;">
-              <span class="modal-title" style="font-size: 1.5rem; font-weight: 700;">💡 Suggest Updates or Report Bugs</span>
-              <button class="close-btn" onclick="closeSuggestModal()" style="color: white; font-size: 1.8rem;">&times;</button>
+          <div class="modal-content" style="max-width: 650px; margin-top: 60px; border-radius: 12px; overflow: hidden;">
+            <div class="modal-header" style="background: #6c757d; color: white; padding: 20px 25px;">
+              <span class="modal-title" style="font-size: 1.4rem; font-weight: 600;">Feedback & Bug Reports</span>
+              <button class="close-btn" onclick="closeSuggestModal()" style="color: white; opacity: 0.9;">&times;</button>
             </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fdfdfd; padding: 25px 30px; color: #333; font-family: 'Segoe UI', sans-serif; line-height: 1.7;">
-              <p style="font-size: 1.05rem;">If you think any new feature would make the app better, or if you found any bug, wrong or wrongly labeled algorithm, wrong cases showing up inside training, then let me know via email. (I am most probably gonna ignore it anyways)</p>
-              <div style="background: #f8fff9; border-left: 5px solid #28a745; border-radius: 8px; padding: 15px 18px; margin-top: 15px;">
-                <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20Feedback%20or%20Bug%20Report&body=Hey%20Abid!%0D%0A%0D%0AHere's%20what%20I%20wanted%20to%20share:%0D%0A%0D%0A---%0D%0A(Please%20describe%20your%20suggestion%20or%20bug%20here)%0D%0A%0D%0AApp%20Version:%20v1.0%0D%0ADevice/Browser:%20" 
-                  style="display: inline-block; margin-top: 10px; background: #28a745; color: white; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: 600;">Email Me</a>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fafafa; padding: 25px 30px; color: #2d3748; line-height: 1.6;">
+              <p style="font-size: 1rem; margin-bottom: 20px;">If you have suggestions for new features or have encountered any issues such as bugs, incorrect algorithms, or mislabeled cases, please report them via email.</p>
+              
+              <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                <p style="margin: 0 0 12px 0; font-weight: 500; color: #495057;">Contact Information:</p>
+                <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20Feedback%20or%20Bug%20Report&body=Hello,%0D%0A%0D%0AI%20would%20like%20to%20report%20the%20following:%0D%0A%0D%0A---%0D%0A(Please%20describe%20your%20suggestion%20or%20issue%20here)%0D%0A%0D%0AApp%20Version:%20v1.0%0D%0ADevice/Browser:%20" 
+                  style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; font-size: 0.95rem; transition: background 0.2s;" 
+                  onmouseover="this.style.background='#5a6268'" 
+                  onmouseout="this.style.background='#6c757d'">Send Email</a>
               </div>
-              <p style="margin-top: 25px;">This app is <strong>open source</strong>. You can explore the code, or make your own tweaks and redistribute an even improved version of this app, I won't mind.</p>
-              <p><a href="https://github.com/your-github-link" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 600;">🌐 Visit the GitHub Repository</a></p>
+              
+              <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px;">
+                <p style="margin: 0 0 8px 0; font-weight: 500; color: #495057;">Open Source</p>
+                <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">This application is open source. You can view the code, suggest improvements, or create your own modified version.</p>
+                <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View on GitHub →</a>
+              </div>
             </div>
           </div>
         </div>
 
-        <div id="confessionModal" class="modal">
-          <div class="modal-content" style="max-width: 700px; margin-top: 60px; border-radius: 14px; overflow: hidden;">
-            <div class="modal-header" style="background: linear-gradient(135deg, #6c757d, #343a40); color: white; padding: 18px 25px;">
-              <span class="modal-title" style="font-size: 1.5rem; font-weight: 700;">A Small Confession</span>
-              <button class="close-btn" onclick="closeConfessionModal()" style="color: white; font-size: 1.8rem;">&times;</button>
-            </div>
-            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fdfdfd; padding: 25px 30px; color: #333; font-family: 'Segoe UI', sans-serif; line-height: 1.75;">
-              <p><strong>Honest moment:</strong> this app started as a passion project inspired by <em>Hashtag Cuber's Cubeshape Parity</em> webpage.</p>
-              <p>I used a few of her assets and algorithms (tweaked and fixed along the way), though I'm still unsure about the licensing terms. I couldn't find a way to contact <strong>Eva Kato</strong>, the creator – if anyone knows how to reach her, please do let me know!</p>
-              <p>Originally, this was meant to be a private learning tool – a kind of "certificate" of my wild vibe-coding journey. But it turned out so useful that I decided to share it publicly, hoping it helps others too.</p>
-              <div style="background: #fff6e6; border-left: 5px solid #ffc107; border-radius: 8px; padding: 15px 18px; margin-top: 15px;">
-                <p style="margin: 0;">If Eva (or anyone who personally know her) prefers this to be taken down or modified, I'll happily replace all borrowed parts with original content immediately.</p>
-              </div>
-              <p style="margin-top: 20px;">The scramble generator was adapted from <strong>csTimer's</strong> open code. And fun fact – almost the entire app (except that part) was written entirely by AI large language models – mainly <em>Claude Sonnet 4.5</em> and a bit of chatGPT.</p>
-              <p style="margin-top: 20px; font-size: 0.9rem; color: #555;">If you'd like to discuss or help make it more original, feel free to reach out:</p>
-              <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20Regarding%20Original%20Sources&body=Hey%20Abid!%0D%0AI'd%20like%20to%20discuss%20the%20app%20and%20original%20source%20content.%0D%0A" 
-                style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 10px 18px; border-radius: 6px; font-weight: 600; margin-top: 8px;">✉️ Contact Me</a>
-            </div>
-          </div>
-        </div>
+<div id="confessionModal" class="modal">
+  <div class="modal-content" style="max-width: 650px; margin-top: 60px; border-radius: 12px; overflow: hidden;">
+    <div class="modal-header" style="background: #6c757d; color: white; padding: 20px 25px;">
+      <span class="modal-title" style="font-size: 1.4rem; font-weight: 600;">Credits & Acknowledgments</span>
+      <button class="close-btn" onclick="closeConfessionModal()" style="color: white; opacity: 0.9;">&times;</button>
+    </div>
+    <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fafafa; padding: 25px 30px; color: #2d3748; line-height: 1.6;">
+      
+      <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">How This Was Built</p>
+        <p style="margin: 0; font-size: 0.95rem; color: #6c757d;">Full transparency: this app is built almost entirely with AI. I probably manually wrote like 60 lines of code myself. The AI I mainly used was Claude Sonnet 4.5 and a bit of ChatGPT o1. Turns out with enough willpower, you can build pretty much anything with AI these days.</p>
+      </div>
+
+      <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Main Credit</p>
+        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Most of the credit goes to <strong>Eva Kato (Hashtag Cuber)</strong> and her CSP website. This started as a personal tool to keep me motivated while learning CSP, so I borrowed the layout and algorithm data from her GitHub repo. When I realized the community might find it useful, I reached out to Eva and she was super chill about letting me publish it. Big W for Hashtag Cuber.</p>
+        <a href="https://hashtagcuber.com/csp/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Check out her CSP website →</a>
+      </div>
+
+      <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Scramble Generator</p>
+        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">The Square-1 scramble generator code is from csTimer's GitHub, written by Shuang Chen (cs0x7f) under GPL-3.0 license.</p>
+        <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View the code on GitHub →</a>
+      </div>
+
+      <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px;">
+        <p style="margin: 0 0 8px 0; font-weight: 500; color: #495057;">Get in Touch</p>
+        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Feel free to reach out if you want to discuss the app or share feedback:</p>
+        <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20General%20Inquiry&body=Hey!%0D%0A%0D%0AI%20wanted%20to%20reach%20out%20about%20the%20Square-1%20Parity%20app.%0D%0A" 
+          style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 500; font-size: 0.95rem; transition: background 0.2s;" 
+          onmouseover="this.style.background='#5a6268'" 
+          onmouseout="this.style.background='#6c757d'">Send Email</a>
+      </div>
+
+    </div>
+  </div>
+</div>
     `;
     
     document.body.appendChild(modalContainer);
@@ -324,7 +303,6 @@ function openModal(name) {
     
     pushModalState('caseModal', closeModal);
     
-    const prob = (item.probability / 3678 * 100).toFixed(3);
     const isSwapped = swappedCases.get(item.name) || false;
     const comment = comments.get(item.name) || '';
     
@@ -382,25 +360,34 @@ function openModal(name) {
         }
     }
     
-    const displayName = getDisplayName(item.name); // Get customized name
+    const displayName = getDisplayName(item.name);
 
     const modalHTML = `
         <div class="modal active" id="caseModal" onclick="if(event.target.id==='caseModal') closeModal()">
             <div class="modal-content" style="max-width: min(800px, 90vw);">
                 <div class="modal-header">
-                    <div class="modal-title">${displayName}</div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="modal-title">${displayName}</div>
+                        <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Train this case">
+                            <img src="src/media/timer.svg" style="width: 24px; height: 24px;" alt="Train">
+                        </button>
+                        <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips for this modal">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
                     <button class="close-btn" onclick="closeModal()">&times;</button>
                 </div>
                 <div class="modal-body">
-<div class="modal-images card-svg-container">
-    <div style="width: 200px; height: 200px;">${item.top}</div>
-    <div style="width: 200px; height: 200px;">${item.bottom}</div>
-</div>
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <div class="probability" style="font-size: 1.2rem;">${prob}%</div>
-                        <div style="margin-top: 10px; text-align: center;">
-                            <button onclick="swapAlgorithms('${item.name.replace(/'/g, "\\'")}');" style="padding: min(8px, 0.8vh) min(16px, 1.5vw); background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1rem, 1.2vw); min-font-size: 0.85rem;">Swap Odd/Even</button>
-                        </div>
+                    <div class="modal-images card-svg-container">
+                        <div style="width: 200px; height: 200px;">${item.top}</div>
+                        <div style="width: 200px; height: 200px;">${item.bottom}</div>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
+                        <button onclick="swapAlgorithms('${item.name.replace(/'/g, "\\'")}');" style="padding: min(8px, 0.8vh) min(16px, 1.5vw); background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1rem, 1.2vw); min-font-size: 0.85rem;">Swap Odd/Even</button>
                     </div>
                     <div class="modal-algo-section">
                         <span class="modal-algo-label">${oddLabel}:</span>
@@ -420,7 +407,6 @@ function openModal(name) {
                                     algoHTML = `<div class="modal-algo-line">${algo}</div>`;
                                 }
                                 
-                                // Add path if enabled
                                 if (showPaths && algo !== 'Done!') {
                                     try {
                                         if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
@@ -456,7 +442,6 @@ function openModal(name) {
                                     algoHTML = `<div class="modal-algo-line">${algo}</div>`;
                                 }
                                 
-                                // Add path if enabled
                                 if (showPaths && algo !== 'Done!') {
                                     try {
                                         if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
@@ -474,12 +459,9 @@ function openModal(name) {
                             }).join('')}
                         </div>
                     </div>
-                    <div style="margin-top: 30px; text-align: center;">
-                        <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="padding: min(12px, 1.2vh) min(30px, 2.5vw); background: #17a2b8; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1.1rem, 1.3vw); font-weight: 600;">🔄 Train This Case</button>
-                    </div>
                     <div style="margin-top: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Notes:</label>
-                        <textarea id="commentBox" style="width: 100%; min-height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
+                        <textarea id="commentBox" style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: none;">${comment}</textarea>
                         <div style="text-align: center;">
                             <button onclick="saveModalData('${item.name.replace(/'/g, "\\'")}');" style="margin-top: 10px; padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Save</button>
                         </div>
@@ -492,7 +474,6 @@ function openModal(name) {
     document.body.insertAdjacentHTML('beforeend', modalHTML);
     document.body.classList.add('modal-open');
     
-    // Apply SVG scaling to modal after it's added to DOM
     setTimeout(() => {
         if (typeof updateSVGScaling === 'function') {
             updateSVGScaling();
@@ -701,6 +682,9 @@ function openSettingsModal() {
     const priorityLearningToggle = document.getElementById('priorityLearningToggle');
     if (priorityLearningToggle) priorityLearningToggle.checked = enablePriorityLearning;
     
+    const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
+    if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+    
     pushModalState('settingsModal', closeSettingsModal);
 }
 
@@ -735,6 +719,19 @@ function toggleDynamicParity(isChecked) {
     useDynamicParity = isChecked;
     saveState();
     render(); // Re-render all cards with new parity labels
+}
+
+function toggleHideInstructions(isChecked) {
+    hideInstructions = isChecked;
+    saveState();
+    applyInstructionVisibility();
+}
+
+function applyInstructionVisibility() {
+    const instructionBtns = document.querySelectorAll('.settings-info-btn, .homepage-info-btn, .training-info-btn, .case-detail-info-btn');
+    instructionBtns.forEach(btn => {
+        btn.style.display = hideInstructions ? 'none' : 'flex';
+    });
 }
 
 function togglePriorityLearning(isChecked) {
@@ -835,6 +832,10 @@ function openNewParityAnalysis(scramble) {
     
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
+        hideInstructionButton: hideInstructions,
+        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
+        instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
+        instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
         topColor: colorScheme.topColor,
         topColorName: getColorName(colorScheme.topColor),
         topColorShort: getColorName(colorScheme.topColor).charAt(0),
@@ -857,20 +858,6 @@ function openNewParityAnalysis(scramble) {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-// How to Use Modal Functions
-function openHowToUseModal() {
-    const modal = document.getElementById('howToUseModal');
-    modal.style.display = 'block';
-    document.body.classList.add('modal-open');
-    
-    pushModalState('howToUseModal', closeHowToUseModal);
-}
-
-function closeHowToUseModal() {
-    const modal = document.getElementById('howToUseModal');
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
-}
 
 // Suggest Modal Functions
 function openSuggestModal() {
@@ -900,4 +887,192 @@ function closeConfessionModal() {
     const modal = document.getElementById('confessionModal');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
+}
+
+// Case Detail Tips Modal Functions
+function openCaseDetailTipsModal() {
+    pushModalState('caseDetailTipsModal', closeCaseDetailTipsModal);
+    
+    let tipsModal = document.getElementById('caseDetailTipsModal');
+    if (!tipsModal) {
+        tipsModal = document.createElement('div');
+        tipsModal.id = 'caseDetailTipsModal';
+        tipsModal.className = 'training-info-modal';
+        tipsModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Case Details Guide</span>
+                    <button class="training-info-close" onclick="closeCaseDetailTipsModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">You can view the tracing guide by enabling <strong>"Show Tracing Guides"</strong> from the Settings menu.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">To see how the cubeshape transforms step-by-step, enable <strong>"Show Shape Paths"</strong> from Settings.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text">Click directly on any setup algorithm to open the parity analysis tool and examine the parity state.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">Use the <strong>"Swap Odd/Even"</strong> button to exchange the odd and even algorithms, then click <strong>Save</strong> to apply your changes.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text">The Notes section allows you to add personal reminders for easier recall later. Example notes: <em>"Even - good"</em>, <em>"Odd - move both layers"</em>, <em>"Even - Left"</em>, etc.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text">Train this specific case by clicking the <img src="src/media/timer.svg" style="width: 18px; height: 18px; vertical-align: middle; display: inline;" alt="timer"> button next to the case name at the top.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(tipsModal);
+    }
+    
+    tipsModal.classList.add('active');
+}
+
+function closeCaseDetailTipsModal() {
+    const modal = document.getElementById('caseDetailTipsModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Settings Info Modal
+function showSettingsInfoModal() {
+    pushModalState('settingsInfoModal', closeSettingsInfoModal);
+    
+    let infoModal = document.getElementById('settingsInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'settingsInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Settings Guide</span>
+                    <button class="training-info-close" onclick="closeSettingsInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">Enable <strong>"Show Tracing Guides"</strong> to display tracing paths on cubeshape images.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">Enable <strong>"Show Shape Paths"</strong> to see how the cubeshape transforms step-by-step as you execute the algorithm.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text"><strong>"Dynamically Decide Even/Odd"</strong> determines parity based on your personal tracing path, making the app fully personalized to your solving style.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text"><strong>"Priority Based Learning"</strong> enables you to group cases into priority levels for a more organized learning experience.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text"><strong>"Color Scheme Settings"</strong> allows you to select your preferred color scheme for parity tracing and scramble image generation.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text"><strong>"Case Name Settings"</strong> lets you customize the display name for any case to match your preferences.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
+                        <div class="training-info-text"><strong>"Hide Instruction Buttons"</strong> removes all instruction buttons throughout the app once you're familiar with the features.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">8</div>
+                        <div class="training-info-text"><strong>"Export Data"</strong> saves all your progress, preferences, and custom settings to a JSON file for backup or transfer.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">9</div>
+                        <div class="training-info-text"><strong>"Import Data"</strong> restores your previously exported progress and settings from a JSON file.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+}
+
+function closeSettingsInfoModal() {
+    const modal = document.getElementById('settingsInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
+// Homepage Info Modal
+function showHomepageInfoModal() {
+    pushModalState('homepageInfoModal', closeHomepageInfoModal);
+    
+    let infoModal = document.getElementById('homepageInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'homepageInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">App Guide</span>
+                    <button class="training-info-close" onclick="closeHomepageInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">Click the underlined <strong>"Parity"</strong> text in the header to open Kale's parity tracing tool.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">Click on any case name to view detailed information including setup moves, shape paths, and training options.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text">Click the checkmark to cycle a case through: Unlearned → Learning → Learned. Right-click to jump directly from Unlearned to Learned.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">Enable <strong>Priority Based Learning</strong> in Settings to assign priority levels to cases using the arrow buttons.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text">The <strong style="color: #007bff;">blue percentage</strong> at the top shows the total probability of all your learned cases - this is your chance of encountering known parity cases.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text">The <strong style="color: #28a745;">green percentage</strong> indicates how often you can expect no parity issues (since you naturally avoid parity half the time on unknown cases).</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
+                        <div class="training-info-text">Use the <strong>"Show All"</strong> dropdown to filter cases - show only learned, exclude learned, or view all cases.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">8</div>
+                        <div class="training-info-text">Look for instruction buttons (like this one) throughout the app for contextual help. You can hide them anytime from Settings.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+}
+
+function closeHomepageInfoModal() {
+    const modal = document.getElementById('homepageInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 }

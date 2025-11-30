@@ -39,7 +39,16 @@
 <h1 class="desktop-title">Square-1 Cubeshape <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
 <h1 class="tablet-title">Sq-1 CS <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
 <h1 class="mobile-title">Sq-1 CS <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
-<button id="settingsBtn" class="floating-settings-btn" aria-label="Settings"><img src="src/media/icon-settings.svg" height="26px" width="26px"></button>
+<div id="floatingButtonsContainer" class="floating-buttons-container">
+            <button id="settingsBtn" class="floating-settings-btn" aria-label="Settings"><img src="src/media/icon-settings.svg" height="26px" width="26px"></button>
+            <button id="homepageInfoBtn" class="homepage-info-btn floating-settings-btn" aria-label="App Guide" style="top: 86px;" title="How to use this app">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </button>
+        </div>
         </header>
 
 <div class="topbar">
@@ -126,6 +135,7 @@ let useDynamicParity = false;     // Toggle for dynamic parity determination
 let showPaths = false;        // Toggle for short Left/Right notation (L. /R. )
 let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = false; // Toggle for priority-based learning system
+let hideInstructions = false; // Toggle for hiding instruction buttons
 // --- End New Case Name Settings ---
 let useShortLR = false;
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
@@ -167,8 +177,12 @@ try {
         useShortLR = state.useShortLR !== undefined ? state.useShortLR : true;
         lrPosition = state.lrPosition || 'front';
         enablePriorityLearning = state.enablePriorityLearning || false;
+        hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
         scrambleImageSize = state.scrambleImageSize || 200;
+        if (state.customShapesForParityTracerLibrary) {
+            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+        }
     }
     
     // Initialize all cases as planned with priority 4 (Normal) if not already set
@@ -205,8 +219,7 @@ if (isFirstLoad) {
     useDynamicParity = false;
     enablePriorityLearning = false;
     
-    // Default sort
-    sortSelect.value = 'probability';
+    // Note: sortSelect.value will be set after DOM is ready
     
     saveState();
 }
@@ -242,8 +255,10 @@ function saveState() {
             useShortLR: useShortLR,
             lrPosition: lrPosition,
             enablePriorityLearning: enablePriorityLearning,
+            hideInstructions: hideInstructions,
             colorScheme: colorScheme,
-            scrambleImageSize: scrambleImageSize
+            scrambleImageSize: scrambleImageSize,
+            customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary')
         }));
     } catch (e) {
         console.error('Error saving state:', e);
@@ -266,8 +281,10 @@ function exportData() {
         useDynamicParity: useDynamicParity,
         showPaths: showPaths,
         showHints: showHints,
+        hideInstructions: hideInstructions,
         colorScheme: colorScheme,
-            scrambleImageSize: scrambleImageSize
+        scrambleImageSize: scrambleImageSize,
+        customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary')
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -295,7 +312,11 @@ function importData(jsonStr) {
         swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
         useDynamicParity = state.useDynamicParity || false;
         showPaths = state.showPaths || false;
+        hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
+        if (state.customShapesForParityTracerLibrary) {
+            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+        }
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);
@@ -316,13 +337,32 @@ function handleFileImport(file) {
     reader.readAsText(file);
 }
 
-// DOM element references
-const searchInput = document.getElementById('search');
-const sortSelect = document.getElementById('sort');
-const learnFilterSelect = document.getElementById('learnFilter');
-const grid = document.getElementById('grid');
-const progressText = document.getElementById('progress-text');
-const safetyText = document.getElementById('safety-text');
+// DOM element references - will be initialized after DOM is ready
+let searchInput = null;
+let sortSelect = null;
+let learnFilterSelect = null;
+let grid = null;
+let progressText = null;
+let safetyText = null;
+
+// Initialize DOM references
+function initializeDOMReferences() {
+    searchInput = document.getElementById('search');
+    sortSelect = document.getElementById('sort');
+    learnFilterSelect = document.getElementById('learnFilter');
+    grid = document.getElementById('grid');
+    progressText = document.getElementById('progress-text');
+    safetyText = document.getElementById('safety-text');
+    
+    const refsFound = {
+        searchInput: !!searchInput,
+        sortSelect: !!sortSelect,
+        learnFilterSelect: !!learnFilterSelect,
+        grid: !!grid,
+        progressText: !!progressText,
+        safetyText: !!safetyText
+    };
+}
 
 </script>
 <script>
@@ -385,20 +425,23 @@ function updateSVGScaling() {
         svg.style.willChange = 'transform';
     });
     
-    // Update settings button size for narrow screens
-    const settingsBtn = document.getElementById('settingsBtn');
-    if (settingsBtn) {
+    // Update floating buttons container size for narrow screens
+    const floatingBtnsContainer = document.getElementById('floatingButtonsContainer');
+    if (floatingBtnsContainer) {
         if (viewportWidth < 400) {
             const btnScale = Math.max(0.5, viewportWidth / 600);
-            settingsBtn.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transformOrigin = 'top right';
         } else if (viewportWidth < 570) {
             const btnScale = Math.max(0.6, viewportWidth / 700);
-            settingsBtn.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transformOrigin = 'top right';
         } else if (viewportWidth < 768) {
             const btnScale = Math.max(0.75, viewportWidth / 850);
-            settingsBtn.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
+            floatingBtnsContainer.style.transformOrigin = 'top right';
         } else {
-            settingsBtn.style.transform = 'scale(1)';
+            floatingBtnsContainer.style.transform = 'scale(1)';
         }
     }
 }
@@ -458,8 +501,7 @@ window.onclick = function(event) {
     // Use setTimeout to ensure modals are generated
     setTimeout(() => {
         const settingsModal = document.getElementById('settingsModal');
-        const caseNameModal = document.getElementById('caseNameModal');       
-        const howToUseModal = document.getElementById('howToUseModal');
+        const caseNameModal = document.getElementById('caseNameModal');              
         const suggestModal = document.getElementById('suggestModal');
         const confessionModal = document.getElementById('confessionModal');
         const colorSchemeModal = document.getElementById('colorSchemeModal');
@@ -477,9 +519,7 @@ window.onclick = function(event) {
     if (trainingModal && event.target == trainingModal) {
         closeTrainingModal();
     }
-    if (event.target == howToUseModal) {
-        closeHowToUseModal();
-    }
+    
     if (event.target == suggestModal) {
         closeSuggestModal();
     }
@@ -518,15 +558,35 @@ window.addEventListener('popstate', function(event) {
 
 // Wait for DOM to be ready before generating modals
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', generateModalHTML);
+    document.addEventListener('DOMContentLoaded', () => {
+        generateModalHTML();
+    });
 } else {
     generateModalHTML();
 }
 
-// Initialize priority option visibility
-const priorityOption = document.getElementById('sortPriority');
-if (priorityOption) {
-    priorityOption.style.display = enablePriorityLearning ? 'block' : 'none';
+// Ensure DOM is ready before initialization
+function initializeApp() {   
+    // Initialize DOM references
+    initializeDOMReferences();
+    
+    // Set default sort value if first load
+    if (isFirstLoad && sortSelect) {
+        sortSelect.value = 'probability';
+    }
+    
+    // Initialize priority option visibility
+    const priorityOption = document.getElementById('sortPriority');
+    if (priorityOption) {
+        priorityOption.style.display = enablePriorityLearning ? 'block' : 'none';
+    }
+}
+
+// Call initialization after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
 }
 
 // Loading tips object
@@ -556,10 +616,40 @@ const loadingInterval = setInterval(() => {
     progressBar.style.width = loadProgress + '%';
 }, 100);
 
-updateProgress();
-filterAndSort();
+// Wait for DOM before calling these functions
+function finalizeInitialization() {
+    
+    // Setup homepage info button
+    const homepageInfoBtn = document.getElementById('homepageInfoBtn');
+    if (homepageInfoBtn) {
+        homepageInfoBtn.onclick = showHomepageInfoModal;
+    }
 
-// Complete loading and show content
+    // Apply instruction button visibility
+    if (hideInstructions) {
+        const container = document.getElementById('floatingButtonsContainer');
+        if (container) {
+            container.classList.add('hide-instructions');
+        }
+    }
+    if (typeof applyInstructionVisibility === 'function') {
+        applyInstructionVisibility();
+    }
+    
+    // These need to run after modal generation
+    setTimeout(() => {
+        updateProgress();
+        filterAndSort();
+    }, 100);
+}
+
+// Ensure this runs after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', finalizeInitialization);
+} else {
+    finalizeInitialization();
+}
+
 window.addEventListener('load', async () => {
     await new Promise(resolve => setTimeout(resolve, 300));
     
@@ -574,25 +664,17 @@ window.addEventListener('load', async () => {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     document.getElementById('loadingScreen').style.display = 'none';
-    
-    // Show how to use modal on first load - wait 1.5 seconds after everything is rendered
-    if (isFirstLoad) {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        openHowToUseModal();
-    }
 });
 
 </script>
 <script>
-// Register service worker
-if ('serviceWorker' in navigator) {
+// Register service worker (only in http/https, not file://)
+if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/serviceworker.js')
             .then(registration => {
-                console.log('ServiceWorker registered:', registration.scope);
             })
             .catch(err => {
-                console.log('ServiceWorker registration failed:', err);
             });
     });
 }

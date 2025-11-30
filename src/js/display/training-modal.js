@@ -22,7 +22,16 @@ function createTrainingModal() {
     modal.className = 'training-modal';
     modal.innerHTML = `
         <div class="training-modal-header">
-            <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left;" title="Click to select shape indices">Training: Case Name</button>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: #007bff; text-decoration: underline;" title="Click to select shape indices">Training: Case Name</button>
+                <button class="training-modal-info training-info-btn" id="trainingInfoBtn" title="Training mode help">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <button class="training-modal-refresh" id="trainingPrevBtn" title="Previous scramble">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -78,6 +87,11 @@ function createTrainingModal() {
     document.getElementById('trainingCaseName').addEventListener('click', (e) => {
         e.stopPropagation();
         openShapeIndexSelector();
+    });
+    
+    document.getElementById('trainingInfoBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openTrainingInfoModal();
     });
     
     const timerZone = document.getElementById('trainingTimerZone');
@@ -274,6 +288,10 @@ function openParityAnalysisFromTraining() {
     
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
+        hideInstructionButton: hideInstructions,
+        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
+        instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
+        instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
         topColor: colorScheme.topColor,
         topColorName: getColorName(colorScheme.topColor),
         topColorShort: getColorName(colorScheme.topColor).charAt(0),
@@ -397,6 +415,36 @@ function openShapeIndexSelector() {
     const currentSelection = window.trainingSelections?.[selectedKey] || [];
     
     const body = document.getElementById('shapeIndexSelectorBody');
+    
+    // Generate shape visuals
+    const orgShapes = (shapeIndexItem.org || []).map(idx => {
+        const hexCode = convertShapeIndexToHexPlease(idx);
+        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#000000', '#FFFFFF', 2, -4);
+        return `
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
+                    data-index="${idx}" 
+                    data-type="org" 
+                    onclick="toggleShapeIndex(${idx})"
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                ${shapeHTML}
+            </button>
+        `;
+    }).join('');
+    
+    const mirShapes = (shapeIndexItem.mir || []).map(idx => {
+        const hexCode = convertShapeIndexToHexPlease(idx);
+        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#000000', '#FFFFFF', 2, -4);
+        return `
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
+                    data-index="${idx}" 
+                    data-type="mir" 
+                    onclick="toggleShapeIndex(${idx})"
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                ${shapeHTML}
+            </button>
+        `;
+    }).join('');
+    
     body.innerHTML = `
         <div class="shape-index-section">
             <div class="shape-index-section-header">
@@ -406,15 +454,8 @@ function openShapeIndexSelector() {
                     <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="orgToggles">
-                ${(shapeIndexItem.org || []).map(idx => `
-                    <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                            data-index="${idx}" 
-                            data-type="org" 
-                            onclick="toggleShapeIndex(${idx})">
-                        ${idx}
-                    </button>
-                `).join('')}
+            <div class="shape-index-toggles" id="orgToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
+                ${orgShapes}
             </div>
         </div>
         <div class="shape-index-section" style="margin-top: 20px;">
@@ -425,15 +466,8 @@ function openShapeIndexSelector() {
                     <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="mirToggles">
-                ${(shapeIndexItem.mir || []).map(idx => `
-                    <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                            data-index="${idx}" 
-                            data-type="mir" 
-                            onclick="toggleShapeIndex(${idx})">
-                        ${idx}
-                    </button>
-                `).join('')}
+            <div class="shape-index-toggles" id="mirToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
+                ${mirShapes}
             </div>
         </div>
     `;
@@ -469,6 +503,7 @@ function toggleShapeIndex(index) {
     const button = document.querySelector(`button.shape-index-toggle[data-index="${index}"]`);
     if (button) {
         button.classList.toggle('active');
+        button.style.background = button.classList.contains('active') ? '#ebebeb' : '#ffffff';
     }
     
     // Update training scrambles
@@ -498,7 +533,10 @@ function selectAllIndices(type) {
     
     // Update button appearances
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
-    buttons.forEach(btn => btn.classList.add('active'));
+    buttons.forEach(btn => {
+        btn.classList.add('active');
+        btn.style.background = '#ebebeb';
+    });
     
     trainingScrambles = window.trainingSelections[selectedKey];
 }
@@ -517,7 +555,10 @@ function deselectAllIndices(type) {
     
     // Update button appearances
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
-    buttons.forEach(btn => btn.classList.remove('active'));
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.style.background = '#ffffff';
+    });
     
     trainingScrambles = window.trainingSelections[selectedKey];
 }
@@ -566,3 +607,50 @@ document.addEventListener('keyup', (e) => {
         }
     }
 });
+
+function openTrainingInfoModal() {
+    pushModalState('trainingInfoModal', closeTrainingInfoModal);
+    
+    let infoModal = document.getElementById('trainingInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'trainingInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Training Mode Guide</span>
+                    <button class="training-info-close" onclick="closeTrainingInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">To select a particular angle or orientation, press the case name and select from there.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">If the scramble image is too big or too small, you can change it from settings.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text">The colored part of the scramble means that's where the cubeshape starts changing. <span style="color: #2196F3; font-weight: 600;">Blue</span> means you have to scramble from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means you have to scramble from (1, -1) alignment.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">To use the parity tracing guide, directly click on the scramble.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+}
+
+function closeTrainingInfoModal() {
+    const modal = document.getElementById('trainingInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}

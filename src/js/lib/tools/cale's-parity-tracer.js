@@ -49,6 +49,24 @@
     const solvedEdgesArrayWithLongName = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
     const solvedCornersArrayWithLongName = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
 
+// Helper functions used across multiple modals
+function getContrastColor(hexColor) {
+    const r = parseInt(hexColor.substr(1, 2), 16);
+    const g = parseInt(hexColor.substr(3, 2), 16);
+    const b = parseInt(hexColor.substr(5, 2), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#FFFFFF';
+}
+
+function adjustColorBrightness(hexColor, percent) {
+    const num = parseInt(hexColor.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+}
+
     // Default shape patterns with long name
     const defaultShapePatternsForSquareOnePuzzleWithLongName = {
         'ECECECEC': 'Square',
@@ -734,8 +752,132 @@
         }
     }
 
+
+    // Parity Tracer Instruction Modal
+    function showParityTracerInstructionModal(config) {
+        const textColor = getContrastColor(config.backgroundColor);
+        const isDark = textColor === '#FFFFFF';
+        
+        function adjustColorBrightness(hexColor, percent) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+        
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+        
+        const instructionModal = document.createElement('div');
+        instructionModal.className = 'training-info-modal';
+        instructionModal.style.zIndex = '10010';
+        instructionModal.innerHTML = `
+            <div class="training-info-content" style="background: ${config.backgroundColor};">
+                <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
+                    <span class="training-info-title">Parity Tracer Guide</span>
+                    <button class="training-info-close" style="color: ${textColor};">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText1}</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText2}</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText3}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(instructionModal);
+        instructionModal.classList.add('active');
+        
+        const closeBtn = instructionModal.querySelector('.training-info-close');
+        closeBtn.onclick = () => {
+            instructionModal.remove();
+        };
+        
+        instructionModal.onclick = (e) => {
+            if (e.target === instructionModal) {
+                instructionModal.remove();
+            }
+        };
+    }
+
+
+    // Configuration Orientation Instruction Modal
+    function showConfigOrientationInstructionModal(config) {
+        const textColor = getContrastColor(config.backgroundColor);
+        const isDark = textColor === '#FFFFFF';
+        
+        function adjustColorBrightness(hexColor, percent) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+        
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+        
+        const instructionModal = document.createElement('div');
+        instructionModal.className = 'training-info-modal';
+        instructionModal.style.zIndex = '10011';
+        instructionModal.innerHTML = `
+            <div class="training-info-content" style="background: ${config.backgroundColor};">
+                <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
+                    <span class="training-info-title">Shape Orientation Guide</span>
+                    <button class="training-info-close" style="color: ${textColor};">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text" style="color: ${textColor};">This feature is currently limited - it only allows you to select one piece as the starting point: either an edge or a corner.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text" style="color: ${textColor};">If you select a corner, the first edge in your tracing will be the very first edge that appears clockwise from that corner.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text" style="color: ${textColor};">If you select an edge, the first corner in your tracing will be the very first corner that appears clockwise from that edge.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text" style="color: ${textColor};">In your tracing method: if your corner comes before the edge, select the corner. If your edge comes before the corner, select the edge.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counterclockwise, you are gay and nobody loves you.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(instructionModal);
+        instructionModal.classList.add('active');
+        
+        const closeBtn = instructionModal.querySelector('.training-info-close');
+        closeBtn.onclick = () => {
+            instructionModal.remove();
+        };
+        
+        instructionModal.onclick = (e) => {
+            if (e.target === instructionModal) {
+                instructionModal.remove();
+            }
+        };
+    }
+
     // Configure modal popup - RESTORED AND COMPLETE
-    function showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainSettingsBtn) {
+    function showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
         // Calculate contrasting colors based on background
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
@@ -795,9 +937,21 @@
 
         const headerDiv = document.createElement('div');
         headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
-        headerDiv.innerHTML = `
-      <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Configure Shape Orientations</h2>
-    `;
+        
+        const headerTitle = document.createElement('div');
+        headerTitle.style.cssText = 'display: flex; align-items: center; gap: 10px;';
+        headerTitle.innerHTML = `
+            <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Configure Shape Orientations</h2>
+            <button class="config-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Configuration Guide">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+            </button>
+        `;
+        
+        headerDiv.appendChild(headerTitle);
 
         const searchDiv = document.createElement('div');
         searchDiv.className = 'shape-search-container';
@@ -900,8 +1054,15 @@
             showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainSettingsBtn);
         };
 
-        resetDiv.appendChild(resetBtn);
-        casesListDiv.appendChild(resetDiv);
+        // Setup config info button handler
+        setTimeout(() => {
+            const configInfoBtn = configContent.querySelector('.config-info-btn');
+            if (configInfoBtn) {
+                configInfoBtn.onclick = () => {
+                    showConfigOrientationInstructionModal(config);
+                };
+            }
+        }, 100);
 
         configContent.appendChild(headerDiv);
         configContent.appendChild(searchDiv);
@@ -1062,6 +1223,7 @@
                 backdrop.removeEventListener('scroll', scrollHandler);
             }
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
 
@@ -1140,6 +1302,10 @@
     function createSquareOneParityTracerModalWithAllParametersIncluded(options = {}) {
         const config = {
             backgroundColor: options.backgroundColor || '#ffffff',
+            hideInstructionButton: options.hideInstructionButton || false,
+            instructionText1: options.instructionText1 || 'Enter your scramble in the top input bar and press Analyze to trace parity.',
+            instructionText2: options.instructionText2 || 'You can change the color scheme from Settings.',
+            instructionText3: options.instructionText3 || 'Customize the tracing start point from the settings button.',
             topLayerMainColor: options.topColor || '#000000',
             topLayerColorFullName: options.topColorName || 'Black',
             topLayerColorAbbreviation: options.topColorShort || 'B',
@@ -1432,6 +1598,7 @@
             const vizContainer = modal.querySelector(`#${uniqueId}-visualization`);
             const resultsContainer = modal.querySelector(`#${uniqueId}-results`);
             const closeBtnElement = document.getElementById(`${uniqueId}-close`);
+            const instructionBtnElement = document.getElementById(`${uniqueId}-instruction`);
             const settingsBtnElement = document.getElementById(`${uniqueId}-settings`);
 
             // Position buttons based on modal position
@@ -1439,6 +1606,8 @@
                 const rect = modal.getBoundingClientRect();
                 closeBtnElement.style.top = `${rect.top + 8}px`;
                 closeBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
+                instructionBtnElement.style.bottom = `${window.innerHeight - rect.bottom + 66}px`;
+                instructionBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
                 settingsBtnElement.style.bottom = `${window.innerHeight - rect.bottom + 16}px`;
                 settingsBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
             }
@@ -1563,6 +1732,7 @@
                 window.removeEventListener('resize', updateButtonPositions);
                 backdrop.remove();
                 closeBtnElement.remove();
+                instructionBtnElement.remove();
                 settingsBtnElement.remove();
             };
 
@@ -1573,11 +1743,16 @@
 
             closeBtnElement.addEventListener('click', closeMainModal);
 
+            instructionBtnElement.addEventListener('click', () => {
+                showParityTracerInstructionModal(config);
+            });
+            
             settingsBtnElement.addEventListener('click', () => {
                 closeBtnElement.style.display = 'none';
+                instructionBtnElement.style.display = 'none';
                 settingsBtnElement.style.display = 'none';
                 // Push another state for config on top of main modal
-                showConfigurationModalWithLongName(modal, config, closeBtnElement, settingsBtnElement);
+                showConfigurationModalWithLongName(modal, config, closeBtnElement, instructionBtnElement, settingsBtnElement);
             });
 
             // Close on backdrop click
@@ -1603,6 +1778,17 @@
         closeBtn.style.cssText += `background: ${buttonBgColor}; color: ${textColor};`;
 
         // Create settings button
+        // Create instruction button if not hidden
+        const instructionBtn = document.createElement('button');
+        instructionBtn.className = 'parity-tracer-instruction-btn';
+        instructionBtn.id = `${uniqueId}-instruction`;
+        instructionBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+        </svg>`;
+        instructionBtn.style.cssText = `background: ${buttonBgColor}; color: ${textColor}; position: fixed; width: 36px; height: 36px; border-radius: 50%; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; cursor: pointer; font-size: 1.25rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10007; border: none;`;
+
         const settingsIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="display: block; transform: scale(0.7); transform-origin: center;"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></svg>`;
         const settingsBtn = document.createElement('button');
         settingsBtn.className = 'parity-tracer-settings-btn';
@@ -1613,6 +1799,7 @@
         backdrop.appendChild(modal);
         document.body.appendChild(backdrop);
         document.body.appendChild(closeBtn);
+        document.body.appendChild(instructionBtn);
         document.body.appendChild(settingsBtn);
 
         return backdrop;

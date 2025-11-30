@@ -42,11 +42,11 @@ const defaultShapePatternsForTracing = {
   'ECEECEEEC':'312',
   'ECEEECEEC':'321', 
   'EECEECEEC':'222',
-  'EEEEEEEECC':'80', 
+  'EEEEEEEECC':'8', 
   'EEEEEECEEC':'62', 
   'EEEECEEEEC':'44', 
   'EEEEEEECEC':'71', 
-  'EEEEECEEUC':'53',
+  'EEEEECEEEC':'53',
   'CCCCCC':'Star'
 };
 
