@@ -369,7 +369,7 @@ function openModal(name) {
                     <div style="display: flex; align-items: center; gap: 12px;">
                         <div class="modal-title">${displayName}</div>
                         <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Train this case">
-                            <img src="src/media/timer.svg" style="width: 30px; height: 30px;" alt="Train">
+                            <img src="res/timer.svg" style="width: 30px; height: 30px;" alt="Train">
                         </button>
                         <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
@@ -927,7 +927,7 @@ function openCaseDetailTipsModal() {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
-                        <div class="training-info-text">Train this specific case by clicking the <img src="src/media/timer.svg" style="width: 18px; height: 18px; vertical-align: middle; display: inline;" alt="timer"> button next to the case name at the top.</div>
+                        <div class="training-info-text">Train this specific case by clicking the <img src="res/timer.svg" style="width: 18px; height: 18px; vertical-align: middle; display: inline;" alt="timer"> button next to the case name at the top.</div>
                     </div>
                 </div>
             </div>
