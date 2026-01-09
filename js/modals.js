@@ -307,9 +307,7 @@ function openModal(name) {
     const comment = comments.get(item.name) || '';
     
     const oddAlgos = isSwapped ? item.even : item.odd;
-    const oddPars = isSwapped ? item.evenPar : item.oddPar;
     const evenAlgos = isSwapped ? item.odd : item.even;
-    const evenPars = isSwapped ? item.oddPar : item.evenPar;
     
     const oddSetup = invertScramble(oddAlgos[0]);
     const evenSetup = invertScramble(evenAlgos[0]);
@@ -398,14 +396,7 @@ function openModal(name) {
                         <div class="modal-subsection">
                             <span class="modal-subsection-label">Solution:</span>
                             ${oddAlgos.map((algo, idx) => {
-                                const parCount = oddPars[idx];
-                                let algoHTML = '';
-                                if (parCount > 0) {
-                                    const highlightEnd = countSlashes(algo, parCount);
-                                    algoHTML = `<div class="modal-algo-line"><mark>${algo.substring(0, highlightEnd)}</mark>${algo.substring(highlightEnd)}</div>`;
-                                } else {
-                                    algoHTML = `<div class="modal-algo-line">${algo}</div>`;
-                                }
+                                let algoHTML = `<div class="modal-algo-line">${algo}</div>`;
                                 
                                 if (showPaths && algo !== 'Done!') {
                                     try {
@@ -433,14 +424,7 @@ function openModal(name) {
                         <div class="modal-subsection">
                             <span class="modal-subsection-label">Solution:</span>
                             ${evenAlgos.map((algo, idx) => {
-                                const parCount = evenPars[idx];
-                                let algoHTML = '';
-                                if (parCount > 0) {
-                                    const highlightEnd = countSlashes(algo, parCount);
-                                    algoHTML = `<div class="modal-algo-line"><mark>${algo.substring(0, highlightEnd)}</mark>${algo.substring(highlightEnd)}</div>`;
-                                } else {
-                                    algoHTML = `<div class="modal-algo-line">${algo}</div>`;
-                                }
+                                let algoHTML = `<div class="modal-algo-line">${algo}</div>`;
                                 
                                 if (showPaths && algo !== 'Done!') {
                                     try {

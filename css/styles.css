@@ -272,11 +272,6 @@ select {
     font-size: 0.9rem;
 }
 
-mark {
-    background-color: #fff3cd;
-    padding: 2px 0;
-}
-
 .topbar {
     background: white;
     border-radius: 8px;

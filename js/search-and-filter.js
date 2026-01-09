@@ -74,21 +74,8 @@ function filterAndSort() {
             return 0;
         });
     } else {
-        const sortMap = {
-            probability: 'probability',
-            good: 'good',
-            bad: 'bad',
-            antiProbability: 'probability',
-            antiGood: 'good',
-            antiBad: 'bad'
-        };
-
-        const field = sortMap[sortType];
+        const field = 'probability';
         filteredData.sort((a, b) => b[field] - a[field]);
-
-        if (sortType.startsWith('anti') && sortType !== 'antiProbability') {
-            filteredData.reverse();
-        }
         if (sortType === 'antiProbability') {
             filteredData.reverse();
         }

@@ -272,15 +272,8 @@ function renderShapePath(path) {
     `;
 }
 
-function renderAlgorithm(algoArray, parArray) {
-    return algoArray.map((algo, idx) => {
-        const parCount = parArray[idx];
-        if (parCount > 0) {
-            const highlightEnd = countSlashes(algo, parCount);
-            return `<div class="algo-line"><mark>${algo.substring(0, highlightEnd)}</mark>${algo.substring(highlightEnd)}</div>`;
-        }
-        return `<div class="algo-line">${algo}</div>`;
-    }).join('');
+function renderAlgorithm(algoArray) {
+    return algoArray.map(algo => `<div class="algo-line">${algo}</div>`).join('');
 }
 
 
@@ -573,9 +566,7 @@ function renderCard(item) {
     ` : '';
     
     const oddAlgos = isSwapped ? item.even : item.odd;
-    const oddPars = isSwapped ? item.evenPar : item.oddPar;
     const evenAlgos = isSwapped ? item.odd : item.even;
-    const evenPars = isSwapped ? item.oddPar : item.evenPar;
     
 const displayName = getDisplayName(item.name); // Get customized name
 
@@ -602,11 +593,11 @@ const displayName = getDisplayName(item.name); // Get customized name
             <div class="card-body">
                 <div class="algo-section">
                     <span class="algo-label">${oddLabel}</span>
-                    ${renderAlgorithm(oddAlgos, oddPars)}
+                    ${renderAlgorithm(oddAlgos)}
                 </div>
                 <div class="algo-section">
                     <span class="algo-label">${evenLabel}</span>
-                    ${renderAlgorithm(evenAlgos, evenPars)}
+                    ${renderAlgorithm(evenAlgos)}
                 </div>
                 ${comment ? `<div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-style: italic;">${comment}</div>` : ''}
             </div>
