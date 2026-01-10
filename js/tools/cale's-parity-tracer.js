@@ -953,21 +953,36 @@ function adjustColorBrightness(hexColor, percent) {
         
         headerDiv.appendChild(headerTitle);
         
+        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+        
         const cornerStickerDiv = document.createElement('div');
         cornerStickerDiv.style.cssText = `margin-bottom: 1.5rem; padding: 1rem; background: ${cardBg}; border-radius: 8px;`;
         cornerStickerDiv.innerHTML = `
             <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem;">Corner Sticker for Tracing:</div>
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerCounterClockwise" name="cornerSticker" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} onchange="setCornerStickerMode('counterclockwise')" style="cursor: pointer;">
-                    <label for="cornerCounterClockwise" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
+                    <input type="radio" id="cornerCounterClockwise-${Date.now()}" name="cornerSticker-${Date.now()}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
+                    <label for="cornerCounterClockwise-${Date.now()}" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerClockwise" name="cornerSticker" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} onchange="setCornerStickerMode('clockwise')" style="cursor: pointer;">
-                    <label for="cornerClockwise" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
+                    <input type="radio" id="cornerClockwise-${Date.now()}" name="cornerSticker-${Date.now()}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
+                    <label for="cornerClockwise-${Date.now()}" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
                 </div>
             </div>
         `;
+        
+        // Add event listeners for corner sticker mode after DOM insertion
+        setTimeout(() => {
+            const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const mode = e.target.value;
+                    if (typeof window.setCornerStickerMode === 'function') {
+                        window.setCornerStickerMode(mode);
+                    }
+                });
+            });
+        }, 100);
 
         const searchDiv = document.createElement('div');
         searchDiv.className = 'shape-search-container';
@@ -1081,6 +1096,7 @@ function adjustColorBrightness(hexColor, percent) {
         }, 100);
 
         configContent.appendChild(headerDiv);
+        configContent.appendChild(cornerStickerDiv);
         configContent.appendChild(searchDiv);
         configContent.appendChild(casesListDiv);
         configModalDiv.appendChild(configContent);

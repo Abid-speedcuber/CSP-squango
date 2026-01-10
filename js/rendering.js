@@ -506,61 +506,64 @@ function renderCard(item) {
         cardClass = `planned priority-${plannedLevel}`;
     }
     
-    const isSwapped = swappedCases.get(item.name) || false;
     const comment = comments.get(item.name) || '';
     
-    // Get custom algorithms if they exist
+    // Get all algorithms (custom or default)
     const customAlgs = customAlgorithms.get(item.name);
-    const baseOdd = customAlgs ? customAlgs.odd : item.odd;
-    const baseEven = customAlgs ? customAlgs.even : item.even;
+    const allAlgorithms = customAlgs ? 
+        [...(customAlgs.odd || []), ...(customAlgs.even || [])] : 
+        [...item.odd, ...item.even];
     
     // Get custom SVGs if they exist
     const customSVG = customSVGs.get(item.name);
     const topSVG = customSVG ? customSVG.top : item.top;
     const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
     
-    // Determine parity labels dynamically if enabled
-    let oddLabel = 'Odd:';
-    let evenLabel = 'Even:';
+    // Dynamically categorize algorithms by testing with parity tracer
+    let dynamicOddAlgos = [];
+    let dynamicEvenAlgos = [];
     
-    if (useDynamicParity) {
-        const oddAlgos = isSwapped ? item.even : item.odd;
-        const evenAlgos = isSwapped ? item.odd : item.even;
-        
-        try {
-            if (oddAlgos[0] && oddAlgos[0] !== 'Done!' && typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-                const oddSetup = invertScramble(oddAlgos[0]);
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(oddSetup, {
+    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
+        for (const alg of allAlgorithms) {
+            if (!alg || alg.trim() === '' || alg === 'Done!') continue;
+            
+            try {
+                const setup = invertScramble(alg);
+                
+                // Get the shape pattern to check for custom orientation
+                let currentState = applyScramble(setup);
+                const topRaw = buildUnits(currentState, 0);
+                const botRaw = buildUnits(currentState, 12);
+                const topCanonical = findCanonicalPattern(topRaw.types);
+                const botCanonical = findCanonicalPattern(botRaw.types);
+                const shapePattern = `${topCanonical.name}/${botCanonical.name}`;
+                
+                // Check if there's a custom orientation for this shape
+                const customRotation = parityOrientations.get(shapePattern);
+                
+                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
                     rightColor: colorScheme.rightColor,
                     backColor: colorScheme.backColor,
                     leftColor: colorScheme.leftColor
-                });
-                oddLabel = parityText + ':';
+                }, cornerStickerMode, customRotation);
+                
+                if (parityText === 'Odd') {
+                    dynamicOddAlgos.push(alg);
+                } else if (parityText === 'Even') {
+                    dynamicEvenAlgos.push(alg);
+                }
+            } catch (error) {
+                console.error('Error testing algorithm:', alg, error);
             }
-        } catch (error) {
-            console.error('Dynamic parity error (odd):', error);
-        }
-        
-        try {
-            if (evenAlgos[0] && evenAlgos[0] !== 'Done!' && typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-                const evenSetup = invertScramble(evenAlgos[0]);
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(evenSetup, {
-                    topColor: colorScheme.topColor,
-                    bottomColor: colorScheme.bottomColor,
-                    frontColor: colorScheme.frontColor,
-                    rightColor: colorScheme.rightColor,
-                    backColor: colorScheme.backColor,
-                    leftColor: colorScheme.leftColor
-                });
-                evenLabel = parityText + ':';
-            }
-        } catch (error) {
-            console.error('Dynamic parity error (even):', error);
         }
     }
+    
+    // If no algorithms were categorized, show placeholder
+    const oddAlgoDisplay = dynamicOddAlgos.length > 0 ? renderAlgorithm(dynamicOddAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const evenAlgoDisplay = dynamicEvenAlgos.length > 0 ? renderAlgorithm(dynamicEvenAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
@@ -580,10 +583,7 @@ function renderCard(item) {
         </div>
     ` : '';
     
-    const oddAlgos = isSwapped ? baseEven : baseOdd;
-    const evenAlgos = isSwapped ? baseOdd : baseEven;
-    
-const displayName = getDisplayName(item.name); // Get customized name
+    const displayName = getDisplayName(item.name); // Get customized name
 
     return `
         <div class="card ${cardClass}">
@@ -607,12 +607,12 @@ const displayName = getDisplayName(item.name); // Get customized name
 </div>
             <div class="card-body">
                 <div class="algo-section">
-                    <span class="algo-label">${oddLabel}</span>
-                    ${renderAlgorithm(oddAlgos)}
+                    <span class="algo-label">Odd:</span>
+                    ${oddAlgoDisplay}
                 </div>
                 <div class="algo-section">
-                    <span class="algo-label">${evenLabel}</span>
-                    ${renderAlgorithm(evenAlgos)}
+                    <span class="algo-label">Even:</span>
+                    ${evenAlgoDisplay}
                 </div>
                 ${comment ? `<div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-style: italic;">${comment}</div>` : ''}
             </div>

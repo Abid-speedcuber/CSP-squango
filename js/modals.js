@@ -53,10 +53,6 @@ function generateModalHTML() {
                             <input type="checkbox" id="showPathsToggle" onchange="toggleShowPaths(this.checked)" style="transform: scale(1.4); cursor: pointer;">
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
-                            <label for="dynamicParityToggle" style="color: #4a5568; font-weight: 500;">Dynamically Decide Even/Odd</label>
-                            <input type="checkbox" id="dynamicParityToggle" onchange="toggleDynamicParity(this.checked)" style="transform: scale(1.4); cursor: pointer;">
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
                             <label for="priorityLearningToggle" style="color: #4a5568; font-weight: 500;">Enable Priority Based Learning</label>
                             <input type="checkbox" id="priorityLearningToggle" onchange="togglePriorityLearning(this.checked)" style="transform: scale(1.4); cursor: pointer;">
                         </div>
@@ -304,70 +300,64 @@ function openModal(name) {
     
     pushModalState('caseModal', closeModal);
     
-    const isSwapped = swappedCases.get(item.name) || false;
     const comment = comments.get(item.name) || '';
     
-    // Get custom algorithms if they exist
+    // Get all algorithms (custom or default)
     const customAlgs = customAlgorithms.get(item.name);
-    const baseOdd = customAlgs ? customAlgs.odd : item.odd;
-    const baseEven = customAlgs ? customAlgs.even : item.even;
-    
-    const oddAlgos = isSwapped ? baseEven : baseOdd;
-    const evenAlgos = isSwapped ? baseOdd : baseEven;
+    const allAlgorithms = customAlgs ? 
+        [...(customAlgs.odd || []), ...(customAlgs.even || [])] : 
+        [...item.odd, ...item.even];
     
     // Get custom SVGs if they exist
     const customSVG = customSVGs.get(item.name);
     const topSVG = customSVG ? customSVG.top : item.top;
     const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
     
-    const oddSetup = invertScramble(oddAlgos[0]);
-    const evenSetup = invertScramble(evenAlgos[0]);
+    // Dynamically categorize algorithms by testing with parity tracer
+    const oddAlgos = [];
+    const evenAlgos = [];
     
-    // Determine parity labels dynamically if enabled
-    let oddLabel = 'Odd';
-    let evenLabel = 'Even';
-    
-    if (useDynamicParity) {
-        try {
-            if (oddAlgos[0] && oddAlgos[0] !== 'Done!' && typeof window.ParityTracerLibrary !== 'undefined') {
-                const parityText = window.ParityTracerLibrary.createModal({
-                    topColor: colorScheme.topColor,
-                    topColorName: getColorName(colorScheme.topColor),
-                    topColorShort: getColorName(colorScheme.topColor).charAt(0),
-                    bottomColor: colorScheme.bottomColor,
-                    bottomColorName: getColorName(colorScheme.bottomColor),
-                    bottomColorShort: getColorName(colorScheme.bottomColor).charAt(0),
-                    frontColor: colorScheme.frontColor,
-                    rightColor: colorScheme.rightColor,
-                    backColor: colorScheme.backColor,
-                    leftColor: colorScheme.leftColor,
-                    scrambleText: oddSetup,
-                    returnOnlyValue: true
-                });
-                oddLabel = parityText.charAt(0).toUpperCase() + parityText.slice(1);
-            }
+    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
+        for (const alg of allAlgorithms) {
+            if (!alg || alg.trim() === '' || alg === 'Done!') continue;
             
-            if (evenAlgos[0] && evenAlgos[0] !== 'Done!' && typeof window.ParityTracerLibrary !== 'undefined') {
-                const parityText = window.ParityTracerLibrary.createModal({
+            try {
+                const setup = invertScramble(alg);
+                
+                // Get the shape pattern to check for custom orientation
+                let currentState = applyScramble(setup);
+                const topRaw = buildUnits(currentState, 0);
+                const botRaw = buildUnits(currentState, 12);
+                const topCanonical = findCanonicalPattern(topRaw.types);
+                const botCanonical = findCanonicalPattern(botRaw.types);
+                const shapePattern = `${topCanonical.name}/${botCanonical.name}`;
+                
+                // Check if there's a custom orientation for this shape
+                const customRotation = parityOrientations.get(shapePattern);
+                
+                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
                     topColor: colorScheme.topColor,
-                    topColorName: getColorName(colorScheme.topColor),
-                    topColorShort: getColorName(colorScheme.topColor).charAt(0),
                     bottomColor: colorScheme.bottomColor,
-                    bottomColorName: getColorName(colorScheme.bottomColor),
-                    bottomColorShort: getColorName(colorScheme.bottomColor).charAt(0),
                     frontColor: colorScheme.frontColor,
                     rightColor: colorScheme.rightColor,
                     backColor: colorScheme.backColor,
-                    leftColor: colorScheme.leftColor,
-                    scrambleText: evenSetup,
-                    returnOnlyValue: true
-                });
-                evenLabel = parityText.charAt(0).toUpperCase() + parityText.slice(1);
+                    leftColor: colorScheme.leftColor
+                }, cornerStickerMode, customRotation);
+                
+                if (parityText === 'Odd') {
+                    oddAlgos.push(alg);
+                } else if (parityText === 'Even') {
+                    evenAlgos.push(alg);
+                }
+            } catch (error) {
+                console.error('Error testing algorithm:', alg, error);
             }
-        } catch (error) {
-            console.error('Dynamic parity error:', error);
         }
     }
+    
+    // Get setup moves for first algorithm of each type (if available)
+    const oddSetup = oddAlgos.length > 0 ? invertScramble(oddAlgos[0]) : '';
+    const evenSetup = evenAlgos.length > 0 ? invertScramble(evenAlgos[0]) : '';
     
     const displayName = getDisplayName(item.name);
 
@@ -402,10 +392,10 @@ function openModal(name) {
                         <div style="width: 200px; height: 200px;">${bottomSVG}</div>
                     </div>
                     <div style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
-                        <button onclick="swapAlgorithms('${item.name.replace(/'/g, "\\'")}');" style="padding: min(8px, 0.8vh) min(16px, 1.5vw); background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1rem, 1.2vw); min-font-size: 0.85rem;">Swap Odd/Even</button>
                     </div>
+                    ${oddAlgos.length > 0 ? `
                     <div class="modal-algo-section">
-                        <span class="modal-algo-label">${oddLabel}:</span>
+                        <span class="modal-algo-label">Odd:</span>
                         <div class="modal-subsection">
                             <span class="modal-subsection-label">Setup:</span>
                             <div class="modal-algo-line" style="cursor: pointer; background: #e8f5e9; padding: 8px; border-radius: 4px;" onclick="openNewParityAnalysis('${oddSetup.replace(/'/g, "\\'")}');" title="Click to analyze parity">${oddSetup}</div>
@@ -432,8 +422,10 @@ function openModal(name) {
                             }).join('')}
                         </div>
                     </div>
+                    ` : '<div class="modal-algo-section"><span class="modal-algo-label">Odd:</span><div style="color: #999; font-style: italic; padding: 10px;">No algorithms available</div></div>'}
+                    ${evenAlgos.length > 0 ? `
                     <div class="modal-algo-section">
-                        <span class="modal-algo-label">${evenLabel}:</span>
+                        <span class="modal-algo-label">Even:</span>
                         <div class="modal-subsection">
                             <span class="modal-subsection-label">Setup:</span>
                             <div class="modal-algo-line" style="cursor: pointer; background: #fff3e0; padding: 8px; border-radius: 4px;" onclick="openNewParityAnalysis('${evenSetup.replace(/'/g, "\\'")}');" title="Click to analyze parity">${evenSetup}</div>
@@ -460,6 +452,7 @@ function openModal(name) {
                             }).join('')}
                         </div>
                     </div>
+                    ` : '<div class="modal-algo-section"><span class="modal-algo-label">Even:</span><div style="color: #999; font-style: italic; padding: 10px;">No algorithms available</div></div>'}
                     <div style="margin-top: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Notes:</label>
                         <textarea id="commentBox" style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: none;">${comment}</textarea>
@@ -488,14 +481,6 @@ function closeModal() {
         modal.remove();
         document.body.classList.remove('modal-open');
     }
-}
-
-
-function swapAlgorithms(name) {
-    const currentSwap = swappedCases.get(name) || false;
-    swappedCases.set(name, !currentSwap);
-    closeModal();
-    openModal(name);
 }
 
 function toggleCaseSwapLR(name) {
@@ -715,12 +700,6 @@ function toggleShowPaths(isChecked) {
     showPaths = isChecked;
     saveState();
     // No need to re-render cards, only affects modals
-}
-
-function toggleDynamicParity(isChecked) {
-    useDynamicParity = isChecked;
-    saveState();
-    render(); // Re-render all cards with new parity labels
 }
 
 function toggleHideInstructions(isChecked) {

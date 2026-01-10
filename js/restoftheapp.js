@@ -40,12 +40,17 @@ let filteredData = [...data];
 let learnedCases = new Set();
 let learningCases = new Set();
 let plannedCases = new Set();
-let swappedCases = new Map(); // stores {caseName: true/false}
 let comments = new Map(); // stores {caseName: "comment text"}
 let plannedLevels = new Map(); // stores {caseName: 1-6}
 let perCaseSwapLR = new Map(); // stores {caseName: true/false} for per-case L/R swap
 let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
+
+// Global function to set corner sticker mode
+window.setCornerStickerMode = function(mode) {
+    cornerStickerMode = mode;
+    saveState();
+};
 let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
 let customSVGDefinitions = {}; // stores {svg_2_2_2: "svgString", Kite_top: "svgString", etc}
 let customSVGs = new Map(); // stores {caseName: {top: svgString, bottom: svgString}}
@@ -55,7 +60,6 @@ let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
 let customCaseNames = new Map();  // Stores {shape: "CustomText"}
 let swapShapeLR = new Map();      // Stores {shape: true/false} for swapping L/R at the base shape level
 let perCaseCustomNames = new Map(); // Stores {caseName: "CustomName"}
-let useDynamicParity = false;     // Toggle for dynamic parity determination
 let showPaths = false;        // Toggle for short Left/Right notation (L. /R. )
 let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = false; // Toggle for priority-based learning system
@@ -87,7 +91,6 @@ try {
         learnedCases = new Set(state.learned || []);
         learningCases = new Set(state.learning || []);
         plannedCases = new Set(state.planned || []);
-        swappedCases = new Map(Object.entries(state.swapped || {}));
         comments = new Map(Object.entries(state.comments || {}));
         plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
         perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
@@ -96,7 +99,6 @@ try {
         caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
         customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
         swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        useDynamicParity = state.useDynamicParity || false;
         showPaths = state.showPaths || false;
         useShortLR = state.useShortLR !== undefined ? state.useShortLR : true;
         lrPosition = state.lrPosition || 'front';
@@ -170,7 +172,6 @@ function saveState() {
             learned: Array.from(learnedCases),
             learning: Array.from(learningCases),
             planned: Array.from(plannedCases),
-            swapped: Object.fromEntries(swappedCases),
             comments: Object.fromEntries(comments),
             plannedLevels: Object.fromEntries(plannedLevels),
             perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
@@ -180,7 +181,6 @@ function saveState() {
             caseNameSettings: Object.fromEntries(caseNameSettings),
             customCaseNames: Object.fromEntries(customCaseNames),
             swapShapeLR: Object.fromEntries(swapShapeLR),
-            useDynamicParity: useDynamicParity,
             showPaths: showPaths,
             useShortLR: useShortLR,
             lrPosition: lrPosition,
@@ -205,7 +205,6 @@ function exportData() {
         learned: Array.from(learnedCases),
         learning: Array.from(learningCases),
         planned: Array.from(plannedCases),
-        swapped: Object.fromEntries(swappedCases),
         comments: Object.fromEntries(comments),
         plannedLevels: Object.fromEntries(plannedLevels),
         perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
@@ -213,7 +212,6 @@ function exportData() {
         caseNameSettings: Object.fromEntries(caseNameSettings),
         customCaseNames: Object.fromEntries(customCaseNames),
         swapShapeLR: Object.fromEntries(swapShapeLR),
-        useDynamicParity: useDynamicParity,
         showPaths: showPaths,
         showHints: showHints,
         hideInstructions: hideInstructions,
@@ -241,7 +239,6 @@ function importData(jsonStr) {
         learnedCases = new Set(state.learned || []);
         learningCases = new Set(state.learning || []);
         plannedCases = new Set(state.planned || []);
-        swappedCases = new Map(Object.entries(state.swapped || {}));
         comments = new Map(Object.entries(state.comments || {}));
         plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
         perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
@@ -249,7 +246,6 @@ function importData(jsonStr) {
         caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
         customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
         swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        useDynamicParity = state.useDynamicParity || false;
         showPaths = state.showPaths || false;
         hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
