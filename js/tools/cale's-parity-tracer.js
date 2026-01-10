@@ -952,6 +952,22 @@ function adjustColorBrightness(hexColor, percent) {
         `;
         
         headerDiv.appendChild(headerTitle);
+        
+        const cornerStickerDiv = document.createElement('div');
+        cornerStickerDiv.style.cssText = `margin-bottom: 1.5rem; padding: 1rem; background: ${cardBg}; border-radius: 8px;`;
+        cornerStickerDiv.innerHTML = `
+            <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem;">Corner Sticker for Tracing:</div>
+            <div style="display: flex; gap: 15px;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" id="cornerCounterClockwise" name="cornerSticker" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} onchange="setCornerStickerMode('counterclockwise')" style="cursor: pointer;">
+                    <label for="cornerCounterClockwise" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <input type="radio" id="cornerClockwise" name="cornerSticker" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} onchange="setCornerStickerMode('clockwise')" style="cursor: pointer;">
+                    <label for="cornerClockwise" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
+                </div>
+            </div>
+        `;
 
         const searchDiv = document.createElement('div');
         searchDiv.className = 'shape-search-container';
@@ -1226,6 +1242,11 @@ function adjustColorBrightness(hexColor, percent) {
             if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
+        function setCornerStickerMode(mode) {
+    cornerStickerMode = mode;
+    saveState();
+    console.log('Corner sticker mode set to:', mode);
+}
 
         // Back button handler for config modal using unified system
         if (typeof pushModalState !== 'undefined') {

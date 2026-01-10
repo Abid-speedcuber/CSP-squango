@@ -58,6 +58,11 @@ function getDisplayPart(part, caseName = null) {
  * based on user settings.
  */
 function getDisplayName(originalName) {
+    // Check for per-case custom name first
+    if (perCaseCustomNames.has(originalName)) {
+        return perCaseCustomNames.get(originalName);
+    }
+    
     const parts = originalName.split('/');
     if (parts.length === 2) {
         const [top, bottom] = parts;
@@ -504,6 +509,16 @@ function renderCard(item) {
     const isSwapped = swappedCases.get(item.name) || false;
     const comment = comments.get(item.name) || '';
     
+    // Get custom algorithms if they exist
+    const customAlgs = customAlgorithms.get(item.name);
+    const baseOdd = customAlgs ? customAlgs.odd : item.odd;
+    const baseEven = customAlgs ? customAlgs.even : item.even;
+    
+    // Get custom SVGs if they exist
+    const customSVG = customSVGs.get(item.name);
+    const topSVG = customSVG ? customSVG.top : item.top;
+    const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
+    
     // Determine parity labels dynamically if enabled
     let oddLabel = 'Odd:';
     let evenLabel = 'Even:';
@@ -565,8 +580,8 @@ function renderCard(item) {
         </div>
     ` : '';
     
-    const oddAlgos = isSwapped ? item.even : item.odd;
-    const evenAlgos = isSwapped ? item.odd : item.even;
+    const oddAlgos = isSwapped ? baseEven : baseOdd;
+    const evenAlgos = isSwapped ? baseOdd : baseEven;
     
 const displayName = getDisplayName(item.name); // Get customized name
 
@@ -587,8 +602,8 @@ const displayName = getDisplayName(item.name); // Get customized name
                 </div>
             </div>
 <div class="card-images card-svg-container">
-    <div style="width: 50%; height: auto;">${item.top}</div>
-    <div style="width: 50%; height: auto;">${item.bottom}</div>
+    <div style="width: 50%; height: auto;">${topSVG}</div>
+    <div style="width: 50%; height: auto;">${bottomSVG}</div>
 </div>
             <div class="card-body">
                 <div class="algo-section">

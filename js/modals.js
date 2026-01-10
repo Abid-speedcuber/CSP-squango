@@ -70,7 +70,9 @@ function generateModalHTML() {
                     <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                         <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Customization</h3>
                         <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Color Scheme Settings</button>
-                        <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
+                        <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
+                        <button onclick="openCustomizeAlgorithmsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Algorithms</button>
+                        <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Tracing Guides</button>
                     </div>
 
                     <!-- Data Management Section -->
@@ -306,8 +308,18 @@ function openModal(name) {
     const isSwapped = swappedCases.get(item.name) || false;
     const comment = comments.get(item.name) || '';
     
-    const oddAlgos = isSwapped ? item.even : item.odd;
-    const evenAlgos = isSwapped ? item.odd : item.even;
+    // Get custom algorithms if they exist
+    const customAlgs = customAlgorithms.get(item.name);
+    const baseOdd = customAlgs ? customAlgs.odd : item.odd;
+    const baseEven = customAlgs ? customAlgs.even : item.even;
+    
+    const oddAlgos = isSwapped ? baseEven : baseOdd;
+    const evenAlgos = isSwapped ? baseOdd : baseEven;
+    
+    // Get custom SVGs if they exist
+    const customSVG = customSVGs.get(item.name);
+    const topSVG = customSVG ? customSVG.top : item.top;
+    const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
     
     const oddSetup = invertScramble(oddAlgos[0]);
     const evenSetup = invertScramble(evenAlgos[0]);
@@ -381,11 +393,15 @@ function openModal(name) {
                 </div>
                 <div class="modal-body">
                     <div class="modal-images card-svg-container">
-                        <div style="width: 200px; height: 200px;">${item.top}</div>
-                        <div style="width: 200px; height: 200px;">${item.bottom}</div>
+                        <div style="width: 200px; height: 200px;">${topSVG}</div>
+                        <div style="width: 200px; height: 200px;">${bottomSVG}</div>
                     </div>
                     <div style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
                         <button onclick="swapAlgorithms('${item.name.replace(/'/g, "\\'")}');" style="padding: min(8px, 0.8vh) min(16px, 1.5vw); background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1rem, 1.2vw); min-font-size: 0.85rem;">Swap Odd/Even</button>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Custom Case Name:</label>
+                        <input type="text" id="perCaseNameInput" value="${perCaseCustomNames.get(item.name) || ''}" placeholder="Leave empty to use default naming" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;">
                     </div>
                     <div class="modal-algo-section">
                         <span class="modal-algo-label">${oddLabel}:</span>
@@ -499,6 +515,17 @@ function saveModalData(name) {
             comments.delete(name);
         }
     }
+    
+    const perCaseNameInput = document.getElementById('perCaseNameInput');
+    if (perCaseNameInput) {
+        const customName = perCaseNameInput.value.trim();
+        if (customName) {
+            perCaseCustomNames.set(name, customName);
+        } else {
+            perCaseCustomNames.delete(name);
+        }
+    }
+    
     saveState();
     render();
     closeModal();
@@ -1058,5 +1085,99 @@ function closeHomepageInfoModal() {
     const modal = document.getElementById('homepageInfoModal');
     if (modal) {
         modal.classList.remove('active');
+    }
+}
+
+function openCustomizeAlgorithmsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'customizeAlgsModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px; margin-top: 50px;">
+            <div class="modal-header">
+                <span class="modal-title">Customize Algorithms</span>
+                <button class="close-btn" onclick="closeCustomizeAlgorithmsModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <p style="margin-bottom: 15px;">Edit the JavaScript object below. Only change the 'odd' and 'even' arrays. Format: {caseName: {odd: ["alg1", "alg2"], even: ["alg1"]}}</p>
+                <textarea id="customAlgsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(Object.fromEntries(customAlgorithms), null, 2)}</textarea>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="saveCustomAlgorithms()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
+                    <button onclick="closeCustomizeAlgorithmsModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    pushModalState('customizeAlgsModal', closeCustomizeAlgorithmsModal);
+}
+
+function closeCustomizeAlgorithmsModal() {
+    const modal = document.getElementById('customizeAlgsModal');
+    if (modal) {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function saveCustomAlgorithms() {
+    const textarea = document.getElementById('customAlgsTextarea');
+    try {
+        const parsed = JSON.parse(textarea.value);
+        customAlgorithms = new Map(Object.entries(parsed));
+        saveState();
+        alert('Custom algorithms saved!');
+        closeCustomizeAlgorithmsModal();
+        render();
+    } catch (e) {
+        alert('Invalid JSON: ' + e.message);
+    }
+}
+
+function openCustomizeSVGsModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'customizeSVGsModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 800px; margin-top: 50px;">
+            <div class="modal-header">
+                <span class="modal-title">Customize Tracing Guides (SVGs)</span>
+                <button class="close-btn" onclick="closeCustomizeSVGsModal()">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <p style="margin-bottom: 15px;">Edit the JavaScript object below. Only change the 'top' and 'bottom' SVG strings. Format: {caseName: {top: "svgString", bottom: "svgString"}}</p>
+                <textarea id="customSVGsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(Object.fromEntries(customSVGs), null, 2)}</textarea>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="saveCustomSVGs()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
+                    <button onclick="closeCustomizeSVGsModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    pushModalState('customizeSVGsModal', closeCustomizeSVGsModal);
+}
+
+function closeCustomizeSVGsModal() {
+    const modal = document.getElementById('customizeSVGsModal');
+    if (modal) {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function saveCustomSVGs() {
+    const textarea = document.getElementById('customSVGsTextarea');
+    try {
+        const parsed = JSON.parse(textarea.value);
+        customSVGs = new Map(Object.entries(parsed));
+        saveState();
+        alert('Custom SVGs saved!');
+        closeCustomizeSVGsModal();
+        render();
+    } catch (e) {
+        alert('Invalid JSON: ' + e.message);
     }
 }
