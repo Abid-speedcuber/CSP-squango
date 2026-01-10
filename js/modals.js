@@ -71,7 +71,6 @@ function generateModalHTML() {
                         <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Customization</h3>
                         <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Color Scheme Settings</button>
                         <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
-                        <button onclick="openCustomizeAlgorithmsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Algorithms</button>
                         <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Tracing Guides</button>
                     </div>
 
@@ -381,6 +380,12 @@ function openModal(name) {
                         <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Train this case">
                             <img src="res/timer.svg" style="width: 30px; height: 30px;" alt="Train">
                         </button>
+                        <button onclick="event.stopPropagation(); openEditCaseModal('${item.name.replace(/'/g, "\\'")}');" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Edit Case">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                            </svg>
+                        </button>
                         <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -398,10 +403,6 @@ function openModal(name) {
                     </div>
                     <div style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
                         <button onclick="swapAlgorithms('${item.name.replace(/'/g, "\\'")}');" style="padding: min(8px, 0.8vh) min(16px, 1.5vw); background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: min(1rem, 1.2vw); min-font-size: 0.85rem;">Swap Odd/Even</button>
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Custom Case Name:</label>
-                        <input type="text" id="perCaseNameInput" value="${perCaseCustomNames.get(item.name) || ''}" placeholder="Leave empty to use default naming" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;">
                     </div>
                     <div class="modal-algo-section">
                         <span class="modal-algo-label">${oddLabel}:</span>
@@ -513,16 +514,6 @@ function saveModalData(name) {
             comments.set(name, commentText);
         } else {
             comments.delete(name);
-        }
-    }
-    
-    const perCaseNameInput = document.getElementById('perCaseNameInput');
-    if (perCaseNameInput) {
-        const customName = perCaseNameInput.value.trim();
-        if (customName) {
-            perCaseCustomNames.set(name, customName);
-        } else {
-            perCaseCustomNames.delete(name);
         }
     }
     
@@ -1088,66 +1079,146 @@ function closeHomepageInfoModal() {
     }
 }
 
-function openCustomizeAlgorithmsModal() {
+function openEditCaseModal(caseName) {
+    const item = data.find(d => d.name === caseName);
+    if (!item) return;
+    
+    const customAlgs = customAlgorithms.get(caseName);
+    const oddAlgs = customAlgs ? customAlgs.odd : item.odd;
+    const evenAlgs = customAlgs ? customAlgs.even : item.even;
+    const customName = perCaseCustomNames.get(caseName) || '';
+    
+    pushModalState('editCaseModal', closeEditCaseModal);
+    
     const modal = document.createElement('div');
     modal.className = 'modal active';
-    modal.id = 'customizeAlgsModal';
+    modal.id = 'editCaseModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 800px; margin-top: 50px;">
+        <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
             <div class="modal-header">
-                <span class="modal-title">Customize Algorithms</span>
-                <button class="close-btn" onclick="closeCustomizeAlgorithmsModal()">&times;</button>
+                <span class="modal-title">Edit Case: ${getDisplayName(caseName)}</span>
+                <button class="close-btn" onclick="closeEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <p style="margin-bottom: 15px;">Edit the JavaScript object below. Only change the 'odd' and 'even' arrays. Format: {caseName: {odd: ["alg1", "alg2"], even: ["alg1"]}}</p>
-                <textarea id="customAlgsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(Object.fromEntries(customAlgorithms), null, 2)}</textarea>
-                <div style="text-align: center; margin-top: 15px;">
-                    <button onclick="saveCustomAlgorithms()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
-                    <button onclick="closeCustomizeAlgorithmsModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <div style="margin-bottom: 20px;">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Custom Case Name:</label>
+                    <input type="text" id="editCaseCustomName" value="${customName}" placeholder="Leave empty to use default name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="font-weight: 600;">Odd Algorithms:</label>
+                        <button onclick="addAlgorithmField('editOddAlgs', 'odd')" style="padding: 4px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">+ Add Algorithm</button>
+                    </div>
+                    <div id="editOddAlgs" style="display: flex; flex-direction: column; gap: 8px;">
+                        ${oddAlgs.map((alg, idx) => `
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="text" class="odd-alg-input" value="${alg}" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                                <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="font-weight: 600;">Even Algorithms:</label>
+                        <button onclick="addAlgorithmField('editEvenAlgs', 'even')" style="padding: 4px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">+ Add Algorithm</button>
+                    </div>
+                    <div id="editEvenAlgs" style="display: flex; flex-direction: column; gap: 8px;">
+                        ${evenAlgs.map((alg, idx) => `
+                            <div style="display: flex; gap: 5px; align-items: center;">
+                                <input type="text" class="even-alg-input" value="${alg}" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                                <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
+                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
     `;
+    
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    pushModalState('customizeAlgsModal', closeCustomizeAlgorithmsModal);
 }
 
-function closeCustomizeAlgorithmsModal() {
-    const modal = document.getElementById('customizeAlgsModal');
+function closeEditCaseModal() {
+    const modal = document.getElementById('editCaseModal');
     if (modal) {
         modal.remove();
         document.body.classList.remove('modal-open');
     }
 }
 
-function saveCustomAlgorithms() {
-    const textarea = document.getElementById('customAlgsTextarea');
-    try {
-        const parsed = JSON.parse(textarea.value);
-        customAlgorithms = new Map(Object.entries(parsed));
-        saveState();
-        alert('Custom algorithms saved!');
-        closeCustomizeAlgorithmsModal();
-        render();
-    } catch (e) {
-        alert('Invalid JSON: ' + e.message);
+function addAlgorithmField(containerId, type) {
+    const container = document.getElementById(containerId);
+    const newField = document.createElement('div');
+    newField.style.cssText = 'display: flex; gap: 5px; align-items: center;';
+    newField.innerHTML = `
+        <input type="text" class="${type}-alg-input" value="" placeholder="Enter algorithm" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+        <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+    `;
+    container.appendChild(newField);
+}
+
+function saveEditedCase(caseName, originalName) {
+    const customNameInput = document.getElementById('editCaseCustomName');
+    const oddInputs = document.querySelectorAll('.odd-alg-input');
+    const evenInputs = document.querySelectorAll('.even-alg-input');
+    
+    // Save custom name
+    const customName = customNameInput.value.trim();
+    if (customName) {
+        perCaseCustomNames.set(caseName, customName);
+    } else {
+        perCaseCustomNames.delete(caseName);
     }
+    
+    // Collect algorithms
+    const oddAlgs = Array.from(oddInputs).map(input => input.value.trim()).filter(v => v);
+    const evenAlgs = Array.from(evenInputs).map(input => input.value.trim()).filter(v => v);
+    
+    // Save custom algorithms
+    if (oddAlgs.length > 0 || evenAlgs.length > 0) {
+        const item = data.find(d => d.name === originalName);
+        customAlgorithms.set(caseName, {
+            odd: oddAlgs.length > 0 ? oddAlgs : (item ? item.odd : []),
+            even: evenAlgs.length > 0 ? evenAlgs : (item ? item.even : [])
+        });
+    } else {
+        customAlgorithms.delete(caseName);
+    }
+    
+    saveState();
+    render();
+    closeEditCaseModal();
 }
 
 function openCustomizeSVGsModal() {
+    const svgVars = ['svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'];
+    
+    const currentValues = {};
+    svgVars.forEach(varName => {
+        currentValues[varName] = customSVGDefinitions[varName] || '';
+    });
+    
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.id = 'customizeSVGsModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 800px; margin-top: 50px;">
+        <div class="modal-content" style="max-width: 900px; margin-top: 50px;">
             <div class="modal-header">
-                <span class="modal-title">Customize Tracing Guides (SVGs)</span>
+                <span class="modal-title">Customize Tracing Guides (SVG Variables)</span>
                 <button class="close-btn" onclick="closeCustomizeSVGsModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <p style="margin-bottom: 15px;">Edit the JavaScript object below. Only change the 'top' and 'bottom' SVG strings. Format: {caseName: {top: "svgString", bottom: "svgString"}}</p>
-                <textarea id="customSVGsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 12px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(Object.fromEntries(customSVGs), null, 2)}</textarea>
+                <p style="margin-bottom: 15px;">Edit SVG variable values below. Leave empty to use default. Format: {"svg_2_2_2": "svgString", "Kite_top": "svgString"}</p>
+                <textarea id="customSVGsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(currentValues, null, 2)}</textarea>
                 <div style="text-align: center; margin-top: 15px;">
                     <button onclick="saveCustomSVGs()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
                     <button onclick="closeCustomizeSVGsModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -1172,11 +1243,10 @@ function saveCustomSVGs() {
     const textarea = document.getElementById('customSVGsTextarea');
     try {
         const parsed = JSON.parse(textarea.value);
-        customSVGs = new Map(Object.entries(parsed));
+        customSVGDefinitions = parsed;
         saveState();
-        alert('Custom SVGs saved!');
+        alert('Custom SVG definitions saved! Refresh page to see changes.');
         closeCustomizeSVGsModal();
-        render();
     } catch (e) {
         alert('Invalid JSON: ' + e.message);
     }

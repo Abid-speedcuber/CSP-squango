@@ -47,6 +47,7 @@ let perCaseSwapLR = new Map(); // stores {caseName: true/false} for per-case L/R
 let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
 let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
+let customSVGDefinitions = {}; // stores {svg_2_2_2: "svgString", Kite_top: "svgString", etc}
 let customSVGs = new Map(); // stores {caseName: {top: svgString, bottom: svgString}}
 
 // User's saved preferences
@@ -109,6 +110,7 @@ try {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
+        customSVGDefinitions = state.customSVGDefinitions || {};
         customSVGs = new Map(Object.entries(state.customSVGs || {}));
     }
 
@@ -172,6 +174,7 @@ function saveState() {
             comments: Object.fromEntries(comments),
             plannedLevels: Object.fromEntries(plannedLevels),
             perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
+            perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
             parityOrientations: Object.fromEntries(parityOrientations),
             // Save new name settings
             caseNameSettings: Object.fromEntries(caseNameSettings),
@@ -189,7 +192,8 @@ function saveState() {
             perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
-            customSVGs: Object.fromEntries(customSVGs)
+            customSVGDefinitions: customSVGDefinitions,
+            customSVGs: Object.fromEntries(customSVGs),
         }));
     } catch (e) {
         console.error('Error saving state:', e);
@@ -219,7 +223,7 @@ function exportData() {
         perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        customSVGs: Object.fromEntries(customSVGs)
+        customSVGDefinitions: customSVGDefinitions
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -255,7 +259,7 @@ function importData(jsonStr) {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
-        customSVGs = new Map(Object.entries(state.customSVGs || {}));
+        customSVGDefinitions = state.customSVGDefinitions || {};
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);
