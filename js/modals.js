@@ -319,22 +319,18 @@ function openModal(name) {
     
     if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
         for (const alg of allAlgorithms) {
-            if (!alg || alg.trim() === '' || alg === 'Done!') continue;
+            if (!alg || alg.trim() === '') continue;
+            
+            // Special case: "Done!" is always even parity (solved state)
+            if (alg === 'Done!') {
+                evenAlgos.push(alg);
+                continue;
+            }
             
             try {
                 const setup = invertScramble(alg);
                 
-                // Get the shape pattern to check for custom orientation
-                let currentState = applyScramble(setup);
-                const topRaw = buildUnits(currentState, 0);
-                const botRaw = buildUnits(currentState, 12);
-                const topCanonical = findCanonicalPattern(topRaw.types);
-                const botCanonical = findCanonicalPattern(botRaw.types);
-                const shapePattern = `${topCanonical.name}/${botCanonical.name}`;
-                
-                // Check if there's a custom orientation for this shape
-                const customRotation = parityOrientations.get(shapePattern);
-                
+                // Use the parity analyzer to get parity result
                 const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
@@ -342,7 +338,7 @@ function openModal(name) {
                     rightColor: colorScheme.rightColor,
                     backColor: colorScheme.backColor,
                     leftColor: colorScheme.leftColor
-                }, cornerStickerMode, customRotation);
+                }, cornerStickerMode);
                 
                 if (parityText === 'Odd') {
                     oddAlgos.push(alg);
@@ -1176,6 +1172,15 @@ function saveEditedCase(caseName, originalName) {
     saveState();
     render();
     closeEditCaseModal();
+    
+    // If the case modal is open, close and reopen it to show changes
+    const caseModal = document.getElementById('caseModal');
+    if (caseModal) {
+        closeModal();
+        setTimeout(() => {
+            openModal(caseName);
+        }, 100);
+    }
 }
 
 function openCustomizeSVGsModal() {

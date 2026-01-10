@@ -490,6 +490,7 @@ function showPriorityMenu(name, event) {
 */
 
 function renderCard(item) {
+    console.log('=== RENDERING CARD:', item.name, '===');
     const prob = (item.probability / 3678 * 100).toFixed(3);
     const isLearned = learnedCases.has(item.name);
     const isLearning = learningCases.has(item.name);
@@ -510,9 +511,15 @@ function renderCard(item) {
     
     // Get all algorithms (custom or default)
     const customAlgs = customAlgorithms.get(item.name);
-    const allAlgorithms = customAlgs ? 
-        [...(customAlgs.odd || []), ...(customAlgs.even || [])] : 
-        [...item.odd, ...item.even];
+    console.log('Custom algorithms for', item.name, ':', customAlgs);
+    console.log('Item.odd from database:', item.odd);
+    console.log('Item.even from database:', item.even);
+    const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
+    const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
+    console.log('oddAlgos to use:', oddAlgos);
+    console.log('evenAlgos to use:', evenAlgos);
+    const allAlgorithms = [...oddAlgos, ...evenAlgos];
+    console.log('allAlgorithms combined:', allAlgorithms);
     
     // Get custom SVGs if they exist
     const customSVG = customSVGs.get(item.name);
@@ -523,24 +530,29 @@ function renderCard(item) {
     let dynamicOddAlgos = [];
     let dynamicEvenAlgos = [];
     
+    console.log('Parity analyzer available?', typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined');
+    console.log('Starting dynamic categorization for', allAlgorithms.length, 'algorithms');
+    
     if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
         for (const alg of allAlgorithms) {
-            if (!alg || alg.trim() === '' || alg === 'Done!') continue;
+            console.log('Processing algorithm:', alg);
+            if (!alg || alg.trim() === '') {
+                console.log('Skipping algorithm (empty):', alg);
+                continue;
+            }
+            
+            // Special case: "Done!" is always even parity (solved state)
+            if (alg === 'Done!') {
+                console.log('Found "Done!" - adding to EVEN algorithms');
+                dynamicEvenAlgos.push(alg);
+                continue;
+            }
             
             try {
                 const setup = invertScramble(alg);
+                console.log('Setup scramble:', setup);
                 
-                // Get the shape pattern to check for custom orientation
-                let currentState = applyScramble(setup);
-                const topRaw = buildUnits(currentState, 0);
-                const botRaw = buildUnits(currentState, 12);
-                const topCanonical = findCanonicalPattern(topRaw.types);
-                const botCanonical = findCanonicalPattern(botRaw.types);
-                const shapePattern = `${topCanonical.name}/${botCanonical.name}`;
-                
-                // Check if there's a custom orientation for this shape
-                const customRotation = parityOrientations.get(shapePattern);
-                
+                // Use the parity analyzer to get parity result
                 const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
@@ -548,12 +560,18 @@ function renderCard(item) {
                     rightColor: colorScheme.rightColor,
                     backColor: colorScheme.backColor,
                     leftColor: colorScheme.leftColor
-                }, cornerStickerMode, customRotation);
+                }, cornerStickerMode);
+                
+                console.log('Parity result for algorithm:', alg, '→', parityText);
                 
                 if (parityText === 'Odd') {
                     dynamicOddAlgos.push(alg);
+                    console.log('Added to ODD algorithms');
                 } else if (parityText === 'Even') {
                     dynamicEvenAlgos.push(alg);
+                    console.log('Added to EVEN algorithms');
+                } else {
+                    console.warn('Unexpected parity result:', parityText);
                 }
             } catch (error) {
                 console.error('Error testing algorithm:', alg, error);
@@ -562,8 +580,11 @@ function renderCard(item) {
     }
     
     // If no algorithms were categorized, show placeholder
+    console.log('Final dynamicOddAlgos:', dynamicOddAlgos);
+    console.log('Final dynamicEvenAlgos:', dynamicEvenAlgos);
     const oddAlgoDisplay = dynamicOddAlgos.length > 0 ? renderAlgorithm(dynamicOddAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     const evenAlgoDisplay = dynamicEvenAlgos.length > 0 ? renderAlgorithm(dynamicEvenAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    console.log('=== END RENDERING CARD:', item.name, '===\n');
     
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>

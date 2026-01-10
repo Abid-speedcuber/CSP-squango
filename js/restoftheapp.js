@@ -221,7 +221,8 @@ function exportData() {
         perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        customSVGDefinitions: customSVGDefinitions
+        customSVGDefinitions: customSVGDefinitions,
+        customSVGs: Object.fromEntries(customSVGs)
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -256,10 +257,14 @@ function importData(jsonStr) {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         customSVGDefinitions = state.customSVGDefinitions || {};
+        customSVGs = new Map(Object.entries(state.customSVGs || {}));
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);
             applyHintVisibility();
+        }
+        if (state.customShapesForParityTracerLibrary) {
+            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
         }
         saveState();
         updateProgress();

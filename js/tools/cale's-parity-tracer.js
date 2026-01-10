@@ -270,7 +270,7 @@ function adjustColorBrightness(hexColor, percent) {
     }
 
     // Six-step parity calculation
-    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs) {
+    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner) {
         const steps = [];
 
         function getEdgeCodenameWithLongName(letter) {
@@ -282,10 +282,19 @@ function adjustColorBrightness(hexColor, percent) {
         }
 
         function getCornerCodenameWithLongName(id) {
-            const colorMap = {
+            // Default map is for counter-clockwise (most counter-clockwise sticker)
+            const counterClockwiseMap = {
                 'AB': 'O', 'DE': 'G', 'GH': 'R', 'JK': 'B',
                 'NO': 'R', 'QR': 'G', 'TU': 'O', 'WX': 'B'
             };
+            
+            // Clockwise map (most clockwise sticker)
+            const clockwiseMap = {
+                'AB': 'G', 'DE': 'R', 'GH': 'B', 'JK': 'O',
+                'NO': 'G', 'QR': 'O', 'TU': 'B', 'WX': 'R'
+            };
+            
+            const colorMap = useClockwiseCorner ? clockwiseMap : counterClockwiseMap;
             return colorMap[id] || '?';
         }
 
@@ -1051,13 +1060,97 @@ function adjustColorBrightness(hexColor, percent) {
             casesListDiv.appendChild(caseDiv);
         });
 
-        const resetDiv = document.createElement('div');
-        resetDiv.style.cssText = `grid-column: 1 / -1; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid ${borderColor}; text-align: center;`;
+        const buttonsDiv = document.createElement('div');
+        buttonsDiv.style.cssText = `grid-column: 1 / -1; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 2px solid ${borderColor}; text-align: center; display: flex; gap: 1rem; justify-content: center;`;
+
+        const saveBtnBg = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
+        const saveBtnHover = isDark ? adjustColorBrightness(config.backgroundColor, 25) : adjustColorBrightness(config.backgroundColor, -15);
+        const saveBtn = document.createElement('button');
+        saveBtn.textContent = 'Save & Apply';
+        saveBtn.style.cssText = `
+      padding: 0.75rem 2rem;
+      border: 2px solid ${borderColor};
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: ${saveBtnBg};
+      color: ${textColor};
+    `;
+
+        saveBtn.onmouseover = () => {
+            saveBtn.style.background = saveBtnHover;
+        };
+
+        saveBtn.onmouseout = () => {
+            saveBtn.style.background = saveBtnBg;
+        };
+
+        saveBtn.onclick = () => {
+            // Save shape patterns and corner sticker mode
+            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            if (typeof saveState === 'function') {
+                saveState();
+            }
+            
+            // Close config modal
+            configModalDiv.remove();
+            configFloatingCloseBtn.remove();
+            configStyle.remove();
+            window.removeEventListener('resize', resizeHandler);
+            configModalDiv.removeEventListener('scroll', scrollHandler);
+            const backdrop = document.querySelector('.parity-tracer-backdrop');
+            if (backdrop) {
+                backdrop.removeEventListener('scroll', scrollHandler);
+            }
+            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
+            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            
+            // Re-trigger analysis in the parity modal if it exists
+            const analyzeBtn = modalElement.querySelector(`button[id$="-analyze"]`);
+            if (analyzeBtn) {
+                analyzeBtn.click();
+            }
+            
+            // Re-render cards and modals
+            if (typeof render === 'function') {
+                render();
+            }
+            if (typeof filterAndSort === 'function') {
+                filterAndSort();
+            }
+            
+            // If there's an open case modal, close and reopen it to refresh
+            const caseModal = document.getElementById('caseModal');
+            if (caseModal && typeof openModal === 'function') {
+                const modalTitle = caseModal.querySelector('.modal-title');
+                if (modalTitle) {
+                    const caseName = modalTitle.textContent.trim();
+                    // Find the actual case name from data
+                    if (typeof data !== 'undefined') {
+                        const matchedCase = data.find(item => {
+                            const displayName = typeof getDisplayName === 'function' ? getDisplayName(item.name) : item.name;
+                            return displayName === caseName;
+                        });
+                        if (matchedCase) {
+                            closeModal();
+                            setTimeout(() => {
+                                openModal(matchedCase.name);
+                            }, 100);
+                        }
+                    }
+                }
+            }
+            
+            alert('Settings saved! All parity calculations have been updated.');
+        };
 
         const resetBtnBg = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -8);
         const resetBtnHover = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -12);
         const resetBtn = document.createElement('button');
-        resetBtn.textContent = 'Reset All to Default';
+        resetBtn.textContent = 'Reset to Default';
         resetBtn.style.cssText = `
       padding: 0.75rem 2rem;
       border: 2px solid ${borderColor};
@@ -1082,8 +1175,13 @@ function adjustColorBrightness(hexColor, percent) {
             currentShapePatternsStorageWithLongName = { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
             saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
             configModalDiv.remove();
-            showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainSettingsBtn);
+            configFloatingCloseBtn.remove();
+            configStyle.remove();
+            showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
+        
+        buttonsDiv.appendChild(saveBtn);
+        buttonsDiv.appendChild(resetBtn);
 
         // Setup config info button handler
         setTimeout(() => {
@@ -1095,6 +1193,8 @@ function adjustColorBrightness(hexColor, percent) {
             }
         }, 100);
 
+        casesListDiv.appendChild(buttonsDiv);
+        
         configContent.appendChild(headerDiv);
         configContent.appendChild(cornerStickerDiv);
         configContent.appendChild(searchDiv);
@@ -1418,8 +1518,9 @@ function adjustColorBrightness(hexColor, percent) {
                     }
                 }
 
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder);
-                return sixStepParity.isOdd ? 'odd' : 'even';
+                const useClockwise = (cornerMode === 'clockwise');
+                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
+                return sixStepParity.isOdd ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity calculation error:', err);
                 return 'error';
@@ -1719,7 +1820,8 @@ function adjustColorBrightness(hexColor, percent) {
                         parityCornersOrder = cornersOrderIDs;
                     }
 
-                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder);
+                    const useClockwise = (cornerStickerMode === 'clockwise');
+                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
 
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
@@ -1846,6 +1948,62 @@ function adjustColorBrightness(hexColor, percent) {
     globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
         version: '2.0.0'
+    };
+
+    // Export parity analysis function for use by other parts of the app
+    globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
+        getParityTextFromScramblePlease: function(scrambleText, colorConfig, cornerMode, customRotation) {
+            try {
+                const state = applyScrambleToStateArrayWithLongName(scrambleText);
+                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
+                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
+                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
+                const topCounts = countEdgesAndCornersWithLongName(topUnits);
+                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+
+                const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
+
+                let parityEdgesOrder = [];
+                let parityCornersOrder = [];
+
+                if (shouldSwapForParity) {
+                    const parityBlocks = [
+                        { side: 'B', units: botUnits },
+                        { side: 'T', units: topUnits }
+                    ];
+                    for (const b of parityBlocks) {
+                        for (const u of b.units) {
+                            if (u.type === 'E') {
+                                parityEdgesOrder.push(u.edge);
+                            } else {
+                                parityCornersOrder.push(u.pair);
+                            }
+                        }
+                    }
+                } else {
+                    const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
+                    for (const b of blocks) {
+                        for (const u of b.units) {
+                            if (u.type === 'E') {
+                                parityEdgesOrder.push(u.edge);
+                            } else {
+                                parityCornersOrder.push(u.pair);
+                            }
+                        }
+                    }
+                }
+
+                const useClockwise = (cornerMode === 'clockwise');
+                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
+                return sixStepParity.isOdd ? 'Odd' : 'Even';
+            } catch (err) {
+                console.error('Parity analysis error:', err);
+                return 'Error';
+            }
+        }
     };
 
 })(typeof window !== 'undefined' ? window : this);
