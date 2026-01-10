@@ -48,14 +48,6 @@ function generateModalHTML() {
                             <label for="hintToggle" style="color: #4a5568; font-weight: 500;">Show Tracing Guides</label>
                             <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.4); cursor: pointer;">
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
-                            <label for="showPathsToggle" style="color: #4a5568; font-weight: 500;">Show Shape Paths</label>
-                            <input type="checkbox" id="showPathsToggle" onchange="toggleShowPaths(this.checked)" style="transform: scale(1.4); cursor: pointer;">
-                        </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
-                            <label for="priorityLearningToggle" style="color: #4a5568; font-weight: 500;">Enable Priority Based Learning</label>
-                            <input type="checkbox" id="priorityLearningToggle" onchange="togglePriorityLearning(this.checked)" style="transform: scale(1.4); cursor: pointer;">
-                        </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
                             <label for="hideInstructionsToggle" style="color: #4a5568; font-weight: 500;">Hide Instruction Buttons</label>
                             <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.4); cursor: pointer;">
@@ -295,188 +287,13 @@ function generateModalHTML() {
 */
 
 function openModal(name) {
-    const item = data.find(d => d.name === name);
-    if (!item) return;
-    
-    pushModalState('caseModal', closeModal);
-    
-    const comment = comments.get(item.name) || '';
-    
-    // Get all algorithms (custom or default)
-    const customAlgs = customAlgorithms.get(item.name);
-    const allAlgorithms = customAlgs ? 
-        [...(customAlgs.odd || []), ...(customAlgs.even || [])] : 
-        [...item.odd, ...item.even];
-    
-    // Get custom SVGs if they exist
-    const customSVG = customSVGs.get(item.name);
-    const topSVG = customSVG ? customSVG.top : item.top;
-    const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
-    
-    // Dynamically categorize algorithms by testing with parity tracer
-    const oddAlgos = [];
-    const evenAlgos = [];
-    
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-        for (const alg of allAlgorithms) {
-            if (!alg || alg.trim() === '') continue;
-            
-            // Special case: "Done!" is always even parity (solved state)
-            if (alg === 'Done!') {
-                evenAlgos.push(alg);
-                continue;
-            }
-            
-            try {
-                const setup = invertScramble(alg);
-                
-                // Use the parity analyzer to get parity result
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-                    topColor: colorScheme.topColor,
-                    bottomColor: colorScheme.bottomColor,
-                    frontColor: colorScheme.frontColor,
-                    rightColor: colorScheme.rightColor,
-                    backColor: colorScheme.backColor,
-                    leftColor: colorScheme.leftColor
-                }, cornerStickerMode);
-                
-                if (parityText === 'Odd') {
-                    oddAlgos.push(alg);
-                } else if (parityText === 'Even') {
-                    evenAlgos.push(alg);
-                }
-            } catch (error) {
-                console.error('Error testing algorithm:', alg, error);
-            }
-        }
-    }
-    
-    // Get setup moves for first algorithm of each type (if available)
-    const oddSetup = oddAlgos.length > 0 ? invertScramble(oddAlgos[0]) : '';
-    const evenSetup = evenAlgos.length > 0 ? invertScramble(evenAlgos[0]) : '';
-    
-    const displayName = getDisplayName(item.name);
-
-    const modalHTML = `
-        <div class="modal active" id="caseModal" onclick="if(event.target.id==='caseModal') closeModal()">
-            <div class="modal-content" style="max-width: min(800px, 90vw);">
-                <div class="modal-header">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="modal-title">${displayName}</div>
-                        <button onclick="event.stopPropagation(); closeModal(); openTrainingModal('${item.name.replace(/'/g, "\\'")}');" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" title="Train this case">
-                            <img src="res/timer.svg" style="width: 30px; height: 30px;" alt="Train">
-                        </button>
-                        <button onclick="event.stopPropagation(); openEditCaseModal('${item.name.replace(/'/g, "\\'")}');" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Edit Case">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                        </button>
-                        <button onclick="openCaseDetailTipsModal()" class="case-detail-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: #2d3748; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Tips">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </button>
-                    </div>
-                    <button class="close-btn" onclick="closeModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="modal-images card-svg-container">
-                        <div style="width: 200px; height: 200px;">${topSVG}</div>
-                        <div style="width: 200px; height: 200px;">${bottomSVG}</div>
-                    </div>
-                    <div style="text-align: center; margin-bottom: 20px; margin-top: 15px;">
-                    </div>
-                    ${oddAlgos.length > 0 ? `
-                    <div class="modal-algo-section">
-                        <span class="modal-algo-label">Odd:</span>
-                        <div class="modal-subsection">
-                            <span class="modal-subsection-label">Setup:</span>
-                            <div class="modal-algo-line" style="cursor: pointer; background: #e8f5e9; padding: 8px; border-radius: 4px;" onclick="openNewParityAnalysis('${oddSetup.replace(/'/g, "\\'")}');" title="Click to analyze parity">${oddSetup}</div>
-                        </div>
-                        <div class="modal-subsection">
-                            <span class="modal-subsection-label">Solution:</span>
-                            ${oddAlgos.map((algo, idx) => {
-                                let algoHTML = `<div class="modal-algo-line">${algo}</div>`;
-                                
-                                if (showPaths && algo !== 'Done!') {
-                                    try {
-                                        if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
-                                            const shapePath = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePathPlease(algo);
-                                            if (shapePath) {
-                                                algoHTML += `<div style="margin-top: 8px; padding: 8px; background: #f0f9ff; border-radius: 4px; font-size: 0.85rem; color: #0369a1; font-family: monospace;">${shapePath}</div>`;
-                                            }
-                                        }
-                                    } catch (error) {
-                                        console.error('Shape path error:', error);
-                                    }
-                                }
-                                
-                                return algoHTML;
-                            }).join('')}
-                        </div>
-                    </div>
-                    ` : '<div class="modal-algo-section"><span class="modal-algo-label">Odd:</span><div style="color: #999; font-style: italic; padding: 10px;">No algorithms available</div></div>'}
-                    ${evenAlgos.length > 0 ? `
-                    <div class="modal-algo-section">
-                        <span class="modal-algo-label">Even:</span>
-                        <div class="modal-subsection">
-                            <span class="modal-subsection-label">Setup:</span>
-                            <div class="modal-algo-line" style="cursor: pointer; background: #fff3e0; padding: 8px; border-radius: 4px;" onclick="openNewParityAnalysis('${evenSetup.replace(/'/g, "\\'")}');" title="Click to analyze parity">${evenSetup}</div>
-                        </div>
-                        <div class="modal-subsection">
-                            <span class="modal-subsection-label">Solution:</span>
-                            ${evenAlgos.map((algo, idx) => {
-                                let algoHTML = `<div class="modal-algo-line">${algo}</div>`;
-                                
-                                if (showPaths && algo !== 'Done!') {
-                                    try {
-                                        if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
-                                            const shapePath = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePathPlease(algo);
-                                            if (shapePath) {
-                                                algoHTML += `<div style="margin-top: 8px; padding: 8px; background: #f0f9ff; border-radius: 4px; font-size: 0.85rem; color: #0369a1; font-family: monospace;">${shapePath}</div>`;
-                                            }
-                                        }
-                                    } catch (error) {
-                                        console.error('Shape path error:', error);
-                                    }
-                                }
-                                
-                                return algoHTML;
-                            }).join('')}
-                        </div>
-                    </div>
-                    ` : '<div class="modal-algo-section"><span class="modal-algo-label">Even:</span><div style="color: #999; font-style: italic; padding: 10px;">No algorithms available</div></div>'}
-                    <div style="margin-top: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #333;">Notes:</label>
-                        <textarea id="commentBox" style="width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: none;">${comment}</textarea>
-                        <div style="text-align: center;">
-                            <button onclick="saveModalData('${item.name.replace(/'/g, "\\'")}');" style="margin-top: 10px; padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Save</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
-    document.body.classList.add('modal-open');
-    
-    setTimeout(() => {
-        if (typeof updateSVGScaling === 'function') {
-            updateSVGScaling();
-        }
-    }, 10);
+    // Case modal removed - functionality moved to context menu and algorithm popups
+    return;
 }
 
 function closeModal() {
-    const modal = document.getElementById('caseModal');
-    if (modal) {
-        modal.remove();
-        document.body.classList.remove('modal-open');
-    }
+    // Case modal removed
+    return;
 }
 
 function toggleCaseSwapLR(name) {
@@ -693,9 +510,8 @@ function applyHintVisibility() {
 }
 
 function toggleShowPaths(isChecked) {
-    showPaths = isChecked;
-    saveState();
-    // No need to re-render cards, only affects modals
+    // Shape paths always shown now
+    return;
 }
 
 function toggleHideInstructions(isChecked) {
@@ -712,18 +528,8 @@ function applyInstructionVisibility() {
 }
 
 function togglePriorityLearning(isChecked) {
-    enablePriorityLearning = isChecked;
-    const priorityOption = document.getElementById('sortPriority');
-    if (priorityOption) {
-        priorityOption.style.display = isChecked ? 'block' : 'none';
-    }
-    // If disabling and currently on priority sort, switch to probability
-    if (!isChecked && sortSelect.value === 'priority') {
-        sortSelect.value = 'probability';
-        filterAndSort();
-    }
-    saveState();
-    render();
+    // Priority learning is always enabled now
+    return;
 }
 
 // Settings button click handler
@@ -1063,6 +869,10 @@ function openEditCaseModal(caseName) {
     const evenAlgs = customAlgs ? customAlgs.even : item.even;
     const customName = perCaseCustomNames.get(caseName) || '';
     
+    // Close any existing context menu
+    const existingMenu = document.getElementById('caseContextMenu');
+    if (existingMenu) existingMenu.remove();
+    
     pushModalState('editCaseModal', closeEditCaseModal);
     
     const modal = document.createElement('div');
@@ -1172,15 +982,6 @@ function saveEditedCase(caseName, originalName) {
     saveState();
     render();
     closeEditCaseModal();
-    
-    // If the case modal is open, close and reopen it to show changes
-    const caseModal = document.getElementById('caseModal');
-    if (caseModal) {
-        closeModal();
-        setTimeout(() => {
-            openModal(caseName);
-        }, 100);
-    }
 }
 
 function openCustomizeSVGsModal() {
@@ -1234,4 +1035,59 @@ function saveCustomSVGs() {
     } catch (e) {
         alert('Invalid JSON: ' + e.message);
     }
+}
+
+function openNotesModal(caseName) {
+    const comment = comments.get(caseName) || '';
+    
+    // Close any existing context menu
+    const existingMenu = document.getElementById('caseContextMenu');
+    if (existingMenu) existingMenu.remove();
+    
+    pushModalState('notesModal', closeNotesModal);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'notesModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; margin-top: 50px;">
+            <div class="modal-header">
+                <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
+                <button class="close-btn" onclick="closeNotesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="notesTextarea" style="width: 100%; height: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button onclick="saveNotes('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button onclick="closeNotesModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+}
+
+function closeNotesModal() {
+    const modal = document.getElementById('notesModal');
+    if (modal) {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function saveNotes(caseName) {
+    const textarea = document.getElementById('notesTextarea');
+    const noteText = textarea.value.trim();
+    
+    if (noteText) {
+        comments.set(caseName, noteText);
+    } else {
+        comments.delete(caseName);
+    }
+    
+    saveState();
+    render();
+    closeNotesModal();
 }

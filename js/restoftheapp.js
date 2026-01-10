@@ -60,9 +60,9 @@ let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
 let customCaseNames = new Map();  // Stores {shape: "CustomText"}
 let swapShapeLR = new Map();      // Stores {shape: true/false} for swapping L/R at the base shape level
 let perCaseCustomNames = new Map(); // Stores {caseName: "CustomName"}
-let showPaths = false;        // Toggle for short Left/Right notation (L. /R. )
+let showPaths = true;         // Shape paths always shown
 let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
-let enablePriorityLearning = false; // Toggle for priority-based learning system
+let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
 // --- End New Case Name Settings ---
 let useShortLR = false;
@@ -99,10 +99,10 @@ try {
         caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
         customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
         swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        showPaths = state.showPaths || false;
+        showPaths = true; // Always true now
         useShortLR = state.useShortLR !== undefined ? state.useShortLR : true;
         lrPosition = state.lrPosition || 'front';
-        enablePriorityLearning = state.enablePriorityLearning || false;
+        enablePriorityLearning = true; // Always true now
         hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
         scrambleImageSize = state.scrambleImageSize || 200;
@@ -148,7 +148,7 @@ if (isFirstLoad) {
     showPaths = true;
     showHints = true;  // Changed to true for tracing guides
     useDynamicParity = false;
-    enablePriorityLearning = false;
+    enablePriorityLearning = true;
 
     // Note: sortSelect.value will be set after DOM is ready
 
@@ -181,10 +181,10 @@ function saveState() {
             caseNameSettings: Object.fromEntries(caseNameSettings),
             customCaseNames: Object.fromEntries(customCaseNames),
             swapShapeLR: Object.fromEntries(swapShapeLR),
-            showPaths: showPaths,
+            showPaths: true,
             useShortLR: useShortLR,
             lrPosition: lrPosition,
-            enablePriorityLearning: enablePriorityLearning,
+            enablePriorityLearning: true,
             hideInstructions: hideInstructions,
             colorScheme: colorScheme,
             scrambleImageSize: scrambleImageSize,
@@ -212,7 +212,7 @@ function exportData() {
         caseNameSettings: Object.fromEntries(caseNameSettings),
         customCaseNames: Object.fromEntries(customCaseNames),
         swapShapeLR: Object.fromEntries(swapShapeLR),
-        showPaths: showPaths,
+        showPaths: true,
         showHints: showHints,
         hideInstructions: hideInstructions,
         colorScheme: colorScheme,
@@ -247,7 +247,7 @@ function importData(jsonStr) {
         caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
         customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
         swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        showPaths = state.showPaths || false;
+        showPaths = true; // Always true now
         hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
         if (state.customShapesForParityTracerLibrary) {

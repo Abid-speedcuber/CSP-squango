@@ -226,12 +226,6 @@
             if (isFirstLoad && sortSelect) {
                 sortSelect.value = 'probability';
             }
-
-            // Initialize priority option visibility
-            const priorityOption = document.getElementById('sortPriority');
-            if (priorityOption) {
-                priorityOption.style.display = enablePriorityLearning ? 'block' : 'none';
-            }
         }
 
         // Call initialization after DOM is ready

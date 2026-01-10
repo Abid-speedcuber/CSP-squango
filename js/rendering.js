@@ -208,55 +208,22 @@ function getShapePath(scramble) {
     }
     
     try {
-        let inversed = invertScramble(scramble);
-        
-        // Handle algorithms that start with / (which end with / before inversion)
-        // Treat starting / as (0,0)/ but we'll skip adding the initial state twice
-        const startsWithSlash = inversed.trim().startsWith('/');
-        if (startsWithSlash) {
-            inversed = '(0,0)' + inversed;
+        if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
+            const shapePathString = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePathPlease(scramble);
+            if (shapePathString) {
+                // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
+                const steps = shapePathString.split(' → ').map(s => s.trim());
+                return steps.map(step => {
+                    const [top, bottom] = step.split('/').map(s => s.trim());
+                    return { top, bottom };
+                });
+            }
         }
-        
-        const moves = inversed.split('/').filter(m => m.trim() !== '');
-        const path = [];
-        
-        // Get initial state (solved square) - only add if doesn't start with slash
-        if (!startsWithSlash) {
-            let currentState = solved();
-            const initialTop = buildUnits(currentState, 0);
-            const initialBot = buildUnits(currentState, 12);
-            const initialTopCanonical = findCanonicalPattern(initialTop.types);
-            const initialBotCanonical = findCanonicalPattern(initialBot.types);
-            
-            path.push({
-                top: getShortDisplayName(initialTopCanonical.name),
-                bottom: getShortDisplayName(initialBotCanonical.name)
-            });
-        }
-        
-        // Apply each move and track shape changes
-        let moveStr = '';
-        for (let i = 0; i < moves.length; i++) {
-            moveStr += (moveStr ? '/' : '') + moves[i];
-            let currentState = applyScramble(moveStr);
-            
-            const topRaw = buildUnits(currentState, 0);
-            const botRaw = buildUnits(currentState, 12);
-            const topCanonical = findCanonicalPattern(topRaw.types);
-            const botCanonical = findCanonicalPattern(botRaw.types);
-            
-            path.push({
-                top: getShortDisplayName(topCanonical.name),
-                bottom: getShortDisplayName(botCanonical.name)
-            });
-        }
-        
-        // Reverse the path since we inverted the scramble
-        return path.reverse();
     } catch (err) {
         console.error('Error generating shape path:', err);
-        return null;
     }
+    
+    return null;
 }
 
 function renderShapePath(path) {
@@ -279,6 +246,317 @@ function renderShapePath(path) {
 
 function renderAlgorithm(algoArray) {
     return algoArray.map(algo => `<div class="algo-line">${algo}</div>`).join('');
+}
+
+function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
+    return algoArray.map((algo, idx) => {
+        const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
+        return `<div class="algo-line algo-interactive" 
+                     id="${algoId}" 
+                     data-algo="${algo.replace(/"/g, '&quot;')}" 
+                     data-case="${caseName.replace(/"/g, '&quot;')}"
+                     onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
+                     onmouseleave="hideAlgoPopup(this, false)"
+                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${algo}</div>`;
+    }).join('');
+}
+
+let activePopup = null;
+let activePopupElement = null;
+let popupHoverTimeout = null;
+
+function showAlgoPopup(element, algo, isPermanent) {
+    // Clear any pending hide timeout
+    if (popupHoverTimeout) {
+        clearTimeout(popupHoverTimeout);
+        popupHoverTimeout = null;
+    }
+    
+    // If clicking on already active popup element, close it
+    if (isPermanent && activePopupElement === element) {
+        hideAlgoPopup(element, true);
+        return;
+    }
+    
+    // Close any existing popup if opening a new permanent one
+    if (isPermanent && activePopup) {
+        activePopup.remove();
+        activePopup = null;
+        activePopupElement = null;
+    }
+    
+    // Don't show hover popup if there's already a permanent popup
+    if (!isPermanent && activePopup && activePopupElement !== element) {
+        return;
+    }
+    
+    // Remove any existing non-permanent popup
+    if (!isPermanent) {
+        const existingHover = document.querySelector('.algo-popup:not(.permanent)');
+        if (existingHover) existingHover.remove();
+    }
+    
+    if (algo === 'Done!' || !algo || algo.trim() === '') return;
+    
+    const setup = invertScramble(algo);
+    const shapePath = getShapePath(algo);
+    
+    const popup = document.createElement('div');
+    popup.className = 'algo-popup' + (isPermanent ? ' permanent' : '');
+    
+    const setupId = 'popup-setup-' + Math.random().toString(36).substr(2, 9);
+    
+    popup.innerHTML = `
+        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Setup:</div>
+        <div id="${setupId}" style="font-family: monospace; font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer;" title="Click to analyze parity">${setup}</div>
+        ${shapePath ? `
+            <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Shape Path:</div>
+            <div style="font-size: 0.75rem; line-height: 1.6;">
+                ${shapePath.map((step, idx) => {
+                    const arrow = idx < shapePath.length - 1 ? ' → ' : '';
+                    return `<span style="background: #f0f9ff; padding: 1px 4px; border-radius: 2px; white-space: nowrap;">${step.top}/${step.bottom}</span>${arrow}`;
+                }).join('')}
+            </div>
+        ` : ''}
+    `;
+    
+    // Add hover handlers to popup itself
+    popup.addEventListener('mouseenter', () => {
+        if (popupHoverTimeout) {
+            clearTimeout(popupHoverTimeout);
+            popupHoverTimeout = null;
+        }
+    });
+    
+    popup.addEventListener('mouseleave', () => {
+        if (!isPermanent) {
+            hideAlgoPopup(element, false);
+        }
+    });
+    
+    document.body.appendChild(popup);
+    
+    // Add click handler to setup to open parity analysis
+    const setupElement = document.getElementById(setupId);
+    if (setupElement) {
+        setupElement.onclick = (e) => {
+            e.stopPropagation();
+            hideAlgoPopup(element, isPermanent);
+            openNewParityAnalysis(setup);
+        };
+        setupElement.onmouseenter = () => {
+            setupElement.style.background = '#e3f2fd';
+        };
+        setupElement.onmouseleave = () => {
+            setupElement.style.background = '#f8f9fa';
+        };
+    }
+    
+    // Position popup
+    const rect = element.getBoundingClientRect();
+    const popupRect = popup.getBoundingClientRect();
+    
+    // Try to position below first
+    let top = rect.bottom + 5;
+    let left = rect.left;
+    
+    // If popup goes off bottom of screen, position above
+    if (top + popupRect.height > window.innerHeight - 10) {
+        top = rect.top - popupRect.height - 5;
+    }
+    
+    // Adjust horizontal position if needed
+    if (left + popupRect.width > window.innerWidth - 10) {
+        left = window.innerWidth - popupRect.width - 10;
+    }
+    if (left < 10) left = 10;
+    
+    popup.style.top = top + 'px';
+    popup.style.left = left + 'px';
+    
+    if (isPermanent) {
+        activePopup = popup;
+        activePopupElement = element;
+        
+        // Add click outside handler - immediate close
+        setTimeout(() => {
+            const closePopup = (e) => {
+                if (!popup.contains(e.target) && e.target !== element) {
+                    hideAlgoPopup(element, true);
+                    document.removeEventListener('mousedown', closePopup);
+                }
+            };
+            document.addEventListener('mousedown', closePopup);
+        }, 100);
+        
+        // Add scroll handler - immediate close even if mouse on popup
+        const scrollHandler = () => {
+            hideAlgoPopup(element, true);
+            window.removeEventListener('scroll', scrollHandler, true);
+        };
+        window.addEventListener('scroll', scrollHandler, true);
+    }
+}
+
+function hideAlgoPopup(element, isPermanent) {
+    if (isPermanent) {
+        if (activePopup) {
+            activePopup.remove();
+            activePopup = null;
+            activePopupElement = null;
+        }
+    } else {
+        // Delay hiding to allow moving mouse to popup
+        popupHoverTimeout = setTimeout(() => {
+            const hoverPopup = document.querySelector('.algo-popup:not(.permanent)');
+            if (hoverPopup && !hoverPopup.matches(':hover')) {
+                hoverPopup.remove();
+            }
+            popupHoverTimeout = null;
+        }, 100);
+    }
+}
+
+function showContextMenu(caseName, event) {
+    event.stopPropagation();
+    
+    // Close any existing context menu
+    const existingMenu = document.getElementById('caseContextMenu');
+    if (existingMenu) existingMenu.remove();
+    
+    const priorityLevel = plannedLevels.get(caseName) || 4;
+    const priorityNames = ['Top', 'Most', 'More', 'Normal', 'Less', 'Least', 'Meh'];
+    
+    const menu = document.createElement('div');
+    menu.id = 'caseContextMenu';
+    menu.style.cssText = `
+        position: fixed;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        padding: 4px 0;
+        min-width: 180px;
+    `;
+    
+    const menuItems = [
+        {
+            label: '↑ Move Up in Priority',
+            action: () => {
+                adjustPriority(caseName, -1);
+                menu.remove();
+            },
+            disabled: priorityLevel === 1
+        },
+        {
+            label: '↓ Move Down in Priority',
+            action: () => {
+                adjustPriority(caseName, 1);
+                menu.remove();
+            },
+            disabled: priorityLevel === 7
+        },
+        { divider: true },
+        {
+            label: 'Add Notes',
+            action: () => {
+                menu.remove();
+                openNotesModal(caseName);
+            }
+        },
+        {
+            label: 'Train This Case',
+            action: () => {
+                menu.remove();
+                openTrainingModal(caseName);
+            }
+        },
+        {
+            label: 'Edit Case',
+            action: () => {
+                menu.remove();
+                openEditCaseModal(caseName);
+            }
+        }
+    ];
+    
+    menuItems.forEach(item => {
+        if (item.divider) {
+            const divider = document.createElement('div');
+            divider.style.cssText = 'height: 1px; background: #e9ecef; margin: 4px 0;';
+            menu.appendChild(divider);
+        } else {
+            const option = document.createElement('div');
+            option.textContent = item.label;
+            option.style.cssText = `
+                padding: 8px 16px;
+                cursor: ${item.disabled ? 'not-allowed' : 'pointer'};
+                font-size: 0.9rem;
+                color: ${item.disabled ? '#999' : '#333'};
+                opacity: ${item.disabled ? '0.5' : '1'};
+            `;
+            
+            if (!item.disabled) {
+                option.onmouseover = () => {
+                    option.style.background = '#f5f5f5';
+                };
+                option.onmouseout = () => {
+                    option.style.background = 'transparent';
+                };
+                option.onclick = item.action;
+            }
+            
+            menu.appendChild(option);
+        }
+    });
+    
+    // Add current priority indicator at bottom
+    const priorityIndicator = document.createElement('div');
+    priorityIndicator.style.cssText = `
+        padding: 6px 16px;
+        font-size: 0.75rem;
+        color: #666;
+        border-top: 1px solid #e9ecef;
+        margin-top: 4px;
+        text-align: center;
+    `;
+    priorityIndicator.textContent = `Current: ${priorityNames[priorityLevel - 1]}`;
+    menu.appendChild(priorityIndicator);
+    
+    document.body.appendChild(menu);
+    
+    // Position the menu
+    const rect = event.target.closest('.icon-btn').getBoundingClientRect();
+    let top = rect.bottom + 5;
+    let left = rect.left;
+    
+    // Adjust if menu goes off screen
+    setTimeout(() => {
+        const menuRect = menu.getBoundingClientRect();
+        if (menuRect.bottom > window.innerHeight) {
+            top = rect.top - menuRect.height - 5;
+        }
+        if (menuRect.right > window.innerWidth) {
+            left = window.innerWidth - menuRect.width - 10;
+        }
+        if (left < 10) left = 10;
+        if (top < 10) top = 10;
+        
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
+    }, 0);
+    
+    // Close menu when clicking outside
+    setTimeout(() => {
+        const closeMenu = (e) => {
+            if (!menu.contains(e.target) && e.target !== event.target) {
+                menu.remove();
+                document.removeEventListener('mousedown', closeMenu);
+            }
+        };
+        document.addEventListener('mousedown', closeMenu);
+    }, 100);
 }
 
 
@@ -503,7 +781,6 @@ function renderCard(item) {
     } else if (isLearning) {
         cardClass = 'learning';
     } else {
-        // All unlearned/unlearning cases are planned
         cardClass = `planned priority-${plannedLevel}`;
     }
     
@@ -582,34 +859,26 @@ function renderCard(item) {
     // If no algorithms were categorized, show placeholder
     console.log('Final dynamicOddAlgos:', dynamicOddAlgos);
     console.log('Final dynamicEvenAlgos:', dynamicEvenAlgos);
-    const oddAlgoDisplay = dynamicOddAlgos.length > 0 ? renderAlgorithm(dynamicOddAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
-    const evenAlgoDisplay = dynamicEvenAlgos.length > 0 ? renderAlgorithm(dynamicEvenAlgos) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const oddAlgoDisplay = dynamicOddAlgos.length > 0 ? renderAlgorithmWithPopup(dynamicOddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const evenAlgoDisplay = dynamicEvenAlgos.length > 0 ? renderAlgorithmWithPopup(dynamicEvenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     console.log('=== END RENDERING CARD:', item.name, '===\n');
     
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
     </svg>`;
     
-    const priorityNames = ['Top', 'Most', 'More', 'Normal', 'Less', 'Least', 'Meh'];
-    const priorityText = isPlanned ? priorityNames[plannedLevel - 1] : 'Set';
-    const priorityColor = isPlanned ? '#007bff' : '#999';
+    const threeDotsIcon = `<svg viewBox="0 0 24 24" fill="currentColor" style="width: 20px; height: 20px;">
+        <circle cx="12" cy="5" r="2"/>
+        <circle cx="12" cy="12" r="2"/>
+        <circle cx="12" cy="19" r="2"/>
+    </svg>`;
     
-    const priorityControls = enablePriorityLearning ? `
-        <div style="display: flex; align-items: center; gap: 2px;">
-            <span style="font-size: 0.75rem; font-weight: 600; color: ${priorityColor}; min-width: 42px; text-align: center;">${priorityText}</span>
-            <div style="display: flex; flex-direction: column; gap: 1px;">
-                <button onclick="event.stopPropagation(); adjustPriority('${item.name.replace(/'/g, "\\'")}', -1)" style="width: 16px; height: 12px; padding: 0; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1;">▲</button>
-                <button onclick="event.stopPropagation(); adjustPriority('${item.name.replace(/'/g, "\\'")}', 1)" style="width: 16px; height: 12px; padding: 0; border: 1px solid #ccc; background: white; cursor: pointer; border-radius: 2px; display: flex; align-items: center; justify-content: center; font-size: 10px; line-height: 1;">▼</button>
-            </div>
-        </div>
-    ` : '';
-    
-    const displayName = getDisplayName(item.name); // Get customized name
+    const displayName = getDisplayName(item.name);
 
     return `
         <div class="card ${cardClass}">
             <div class="card-header">
-                <div class="card-title" onclick="openModal('${item.name.replace(/'/g, "\\'")}')">
+                <div class="card-title">
                     ${displayName}
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -618,14 +887,16 @@ function renderCard(item) {
                         <div class="icon-btn" onmousedown="event.stopPropagation(); toggleLearned('${item.name.replace(/'/g, "\\'")}', event)" oncontextmenu="event.preventDefault();">
                             ${learnedIcon}
                         </div>
-                        ${priorityControls}
+                        <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: #666;">
+                            ${threeDotsIcon}
+                        </div>
                     </div>
                 </div>
             </div>
-<div class="card-images card-svg-container">
-    <div style="width: 50%; height: auto;">${topSVG}</div>
-    <div style="width: 50%; height: auto;">${bottomSVG}</div>
-</div>
+            <div class="card-images card-svg-container">
+                <div style="width: 50%; height: auto;">${topSVG}</div>
+                <div style="width: 50%; height: auto;">${bottomSVG}</div>
+            </div>
             <div class="card-body">
                 <div class="algo-section">
                     <span class="algo-label">Odd:</span>

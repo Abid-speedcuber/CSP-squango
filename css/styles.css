@@ -170,13 +170,7 @@ select {
     font-size: 1.1rem;
     font-weight: 600;
     color: #333;
-    cursor: pointer;
     flex: 1;
-}
-
-.card-title:hover {
-    color: #007bff;
-    text-decoration: underline;
 }
 
 .card-header-actions {
@@ -994,4 +988,40 @@ body.modal-open .homepage-info-btn {
 
 .card.learning .card-svg-container svg path:not(.label-toggle) {
     fill: white;
+}
+
+.algo-interactive {
+    cursor: pointer;
+    transition: background 0.15s ease;
+    padding: 2px 4px;
+    border-radius: 3px;
+    display: inline-block;
+    margin: 2px 0;
+}
+
+.algo-interactive:hover {
+    background: #e3f2fd;
+}
+
+.algo-popup {
+    position: fixed;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    padding: 10px 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    max-width: 400px;
+    pointer-events: auto;
+}
+
+.algo-popup.permanent {
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+@media (max-width: 570px) {
+    .algo-popup {
+        max-width: calc(100vw - 40px);
+        font-size: 0.85rem;
+    }
 }
