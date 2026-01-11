@@ -473,7 +473,9 @@ function showContextMenu(caseName, event) {
                 label: '↑ Move Up in Priority',
                 action: () => {
                     adjustPriority(caseName, -1);
-                    menu.remove();
+                    // Don't close menu
+                    const newPriority = plannedLevels.get(caseName) || 4;
+                    statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
                 },
                 disabled: priorityLevel === 1
             },
@@ -481,7 +483,9 @@ function showContextMenu(caseName, event) {
                 label: '↓ Move Down in Priority',
                 action: () => {
                     adjustPriority(caseName, 1);
-                    menu.remove();
+                    // Don't close menu
+                    const newPriority = plannedLevels.get(caseName) || 4;
+                    statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
                 },
                 disabled: priorityLevel === 7
             },
@@ -509,6 +513,13 @@ function showContextMenu(caseName, event) {
             action: () => {
                 menu.remove();
                 openEditCaseModal(caseName);
+            }
+        },
+        { divider: true },
+        {
+            label: 'Close',
+            action: () => {
+                menu.remove();
             }
         }
     );

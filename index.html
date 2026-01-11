@@ -36,38 +36,18 @@
     </script>
     <div class="container" style="opacity: 0; transition: opacity 0.3s ease;">
         <header>
-            <h1 class="desktop-title">Square-1 Cubeshape <span onclick="openNewParityAnalysis('')"
-                    style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span>
-            </h1>
-            <h1 class="tablet-title">Sq-1 CS <span onclick="openNewParityAnalysis('')"
-                    style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span>
-            </h1>
-            <h1 class="mobile-title">Sq-1 CS <span onclick="openNewParityAnalysis('')"
-                    style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span>
-            </h1>
+            <h1 class="desktop-title">SquanGo CSP</h1>
+            <h1 class="tablet-title">SquanGo CSP</h1>
+            <h1 class="mobile-title">SquanGo CSP</h1>
             <div id="floatingButtonsContainer" class="floating-buttons-container">
-                <button id="settingsBtn" class="floating-settings-btn" aria-label="Settings"><img
-                        src="res/icon-settings.svg" height="26px" width="26px"></button>
-                <button id="homepageInfoBtn" class="homepage-info-btn floating-settings-btn" aria-label="App Guide"
-                    style="top: 86px;" title="How to use this app">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" style="width: 28px; height: 28px;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-                <button id="generalNotesBtn" class="floating-settings-btn" aria-label="General Notes"
-                    style="top: 152px;" title="General Notes">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                        stroke-linejoin="round" style="width: 28px; height: 28px;">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                </button>
+                <button id="menuBtn" class="floating-settings-btn" aria-label="Menu"><img
+                        src="res/menu.svg" height="28px" width="28px"></button>
+                <div id="menuDropdown" class="menu-dropdown" style="display: none;">
+                    <button class="menu-item" onclick="openSettingsModal()"><img src="res/settings.svg" height="20px" width="20px"> Settings</button>
+                    <button class="menu-item" onclick="openNewParityAnalysis('')"><img src="res/tracer.svg" height="20px" width="20px"> Parity Tracer</button>
+                    <button class="menu-item" onclick="openGeneralNotesModal()"><img src="res/notes.svg" height="20px" width="20px"> Notes</button>
+                    <button class="menu-item" onclick="showHomepageInfoModal()"><img src="res/info.svg" height="20px" width="20px"> Instructions</button>
+                </div>
             </div>
         </header>
 
@@ -102,10 +82,7 @@
         <div class="controls">
             <button id="searchToggle" class="search-toggle-btn"
                 style="background-color:white; color:black; height:35px; width:35px;" aria-label="Toggle Search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8" />
-                    <path d="m21 21-4.35-4.35" />
-                </svg>
+                <img src="res/search.svg" height="22px" width="22px">
             </button>
             <input type="text" id="search" placeholder="Search cubeshapes...">
             <select id="sort">
@@ -277,16 +254,21 @@
         // Wait for DOM before calling these functions
         function finalizeInitialization() {
 
-            // Setup homepage info button
-            const homepageInfoBtn = document.getElementById('homepageInfoBtn');
-            if (homepageInfoBtn) {
-                homepageInfoBtn.onclick = showHomepageInfoModal;
-            }
-
-            // Setup general notes button
-            const generalNotesBtn = document.getElementById('generalNotesBtn');
-            if (generalNotesBtn) {
-                generalNotesBtn.onclick = openGeneralNotesModal;
+            // Setup menu button
+            const menuBtn = document.getElementById('menuBtn');
+            const menuDropdown = document.getElementById('menuDropdown');
+            if (menuBtn && menuDropdown) {
+                menuBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+                };
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
+                        menuDropdown.style.display = 'none';
+                    }
+                });
             }
 
             // Apply instruction button visibility
