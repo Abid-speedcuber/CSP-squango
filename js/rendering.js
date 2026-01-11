@@ -1,3 +1,12 @@
+// Helper function to wrap algorithm tokens to prevent breaking inside parentheses
+function wrapAlgorithmTokens(algo) {
+    if (!algo || typeof algo !== 'string') return algo;
+    
+    // Replace (number,number) patterns with non-breaking spans
+    // This regex captures patterns like (0,3), (-1,2), etc.
+    return algo.replace(/(\([^)]+\))/g, '<span style="white-space: nowrap;">$1</span>');
+}
+
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                NAME DISPLAY                                ║
@@ -245,7 +254,7 @@ function renderShapePath(path) {
 }
 
 function renderAlgorithm(algoArray) {
-    return algoArray.map(algo => `<div class="algo-line">${algo}</div>`).join('');
+    return algoArray.map(algo => `<div class="algo-line">${wrapAlgorithmTokens(algo)}</div>`).join('');
 }
 
 function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
@@ -257,7 +266,7 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
-                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${algo}</div>`;
+                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${wrapAlgorithmTokens(algo)}</div>`;
     }).join('');
 }
 

@@ -872,8 +872,13 @@ function openEditCaseModal(caseName) {
     if (!item) return;
     
     const customAlgs = customAlgorithms.get(caseName);
-    const oddAlgs = customAlgs ? customAlgs.odd : item.odd;
-    const evenAlgs = customAlgs ? customAlgs.even : item.even;
+    const allAlgs = [];
+    if (customAlgs) {
+        allAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
+    } else {
+        allAlgs.push(...(item.odd || []), ...(item.even || []));
+    }
+    
     const customName = perCaseCustomNames.get(caseName) || '';
     
     // Close any existing context menu
@@ -888,46 +893,32 @@ function openEditCaseModal(caseName) {
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
             <div class="modal-header">
-                <span class="modal-title">Edit Case: ${getDisplayName(caseName)}</span>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="modal-title" id="editCaseTitle">${getDisplayName(caseName)}</span>
+                    <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}' )" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                        <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
+                    </button>
+                </div>
                 <button class="close-btn" onclick="closeEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div style="margin-bottom: 20px;">
-                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Custom Case Name:</label>
-                    <input type="text" id="editCaseCustomName" value="${customName}" placeholder="Leave empty to use default name" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                </div>
-                
-                <div style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <label style="font-weight: 600;">Odd Algorithms:</label>
-                        <button onclick="addAlgorithmField('editOddAlgs', 'odd')" style="padding: 4px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">+ Add Algorithm</button>
-                    </div>
-                    <div id="editOddAlgs" style="display: flex; flex-direction: column; gap: 8px;">
-                        ${oddAlgs.map((alg, idx) => `
-                            <div style="display: flex; gap: 5px; align-items: center;">
-                                <input type="text" class="odd-alg-input" value="${alg}" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
-                                <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algorithms:</label>
+                    <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
+                        ${allAlgs.map((alg, idx) => `
+                            <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
+                                <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
+                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                    <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
+                                </button>
                             </div>
                         `).join('')}
                     </div>
+                    <button onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
                 
-                <div style="margin-bottom: 20px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                        <label style="font-weight: 600;">Even Algorithms:</label>
-                        <button onclick="addAlgorithmField('editEvenAlgs', 'even')" style="padding: 4px 12px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">+ Add Algorithm</button>
-                    </div>
-                    <div id="editEvenAlgs" style="display: flex; flex-direction: column; gap: 8px;">
-                        ${evenAlgs.map((alg, idx) => `
-                            <div style="display: flex; gap: 5px; align-items: center;">
-                                <input type="text" class="even-alg-input" value="${alg}" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
-                                <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                
-                <div style="text-align: center; margin-top: 20px;">
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                     <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
                     <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
@@ -937,7 +928,156 @@ function openEditCaseModal(caseName) {
     
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
+    
+    // Setup parity detection for algorithm inputs
+    setTimeout(() => {
+        const inputs = modal.querySelectorAll('.alg-input');
+        inputs.forEach(input => {
+            updateParityLabel(input);
+            
+            input.addEventListener('focus', () => {
+                const parityLabel = input.parentElement.querySelector('.parity-label');
+                if (parityLabel) parityLabel.textContent = '';
+            });
+            
+            input.addEventListener('blur', () => {
+                updateParityLabel(input);
+            });
+            
+            input.addEventListener('input', () => {
+                if (document.activeElement !== input) {
+                    updateParityLabel(input);
+                }
+            });
+        });
+    }, 100);
 }
+
+// Helper function to update parity label
+function updateParityLabel(input) {
+    const parityLabel = input.parentElement.querySelector('.parity-label');
+    if (!parityLabel) return;
+    
+    const alg = input.value.trim();
+    if (!alg || alg === 'Done!' || alg === input.dataset.original) {
+        parityLabel.textContent = '';
+        return;
+    }
+    
+    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        parityLabel.textContent = '';
+        return;
+    }
+    
+    try {
+        const setup = invertScramble(alg);
+        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            topColor: colorScheme.topColor,
+            bottomColor: colorScheme.bottomColor,
+            frontColor: colorScheme.frontColor,
+            rightColor: colorScheme.rightColor,
+            backColor: colorScheme.backColor,
+            leftColor: colorScheme.leftColor
+        }, cornerStickerMode);
+        
+        parityLabel.textContent = parityText.toLowerCase();
+        parityLabel.style.color = parityText === 'Odd' ? '#dc3545' : '#28a745';
+    } catch (error) {
+        parityLabel.textContent = '';
+    }
+}
+
+// Function to add new algorithm field
+window.addNewAlgorithmField = function() {
+    const algsList = document.getElementById('editAlgsList');
+    if (!algsList) return;
+    
+    const newField = document.createElement('div');
+    newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+    newField.innerHTML = `
+        <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+        <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
+        <button onclick="this.parentElement.remove()" style="padding: 6px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+            <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
+        </button>
+    `;
+    
+    algsList.appendChild(newField);
+    
+    const input = newField.querySelector('.alg-input');
+    input.addEventListener('focus', () => {
+        const parityLabel = input.parentElement.querySelector('.parity-label');
+        if (parityLabel) parityLabel.textContent = '';
+    });
+    
+    input.addEventListener('blur', () => {
+        updateParityLabel(input);
+    });
+    
+    input.focus();
+};
+
+// Function to open case rename modal
+window.openCaseRenameModal = function(caseName, currentName) {
+    const renameModal = document.createElement('div');
+    renameModal.className = 'modal active';
+    renameModal.id = 'caseRenameModal';
+    renameModal.style.zIndex = '10002';
+    renameModal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; margin-top: 100px;">
+            <div class="modal-header">
+                <span class="modal-title">Rename Case</span>
+                <button class="close-btn" onclick="closeCaseRenameModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Custom Name:</label>
+                <input type="text" id="caseRenameInput" value="${currentName}" placeholder="Leave empty for default name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                <div style="text-align: center; margin-top: 20px;">
+                    <button onclick="saveCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(renameModal);
+    
+    setTimeout(() => {
+        const input = document.getElementById('caseRenameInput');
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }, 100);
+};
+
+window.closeCaseRenameModal = function() {
+    const modal = document.getElementById('caseRenameModal');
+    if (modal) modal.remove();
+};
+
+window.saveCaseRename = function(caseName) {
+    const input = document.getElementById('caseRenameInput');
+    if (!input) return;
+    
+    const newName = input.value.trim();
+    if (newName) {
+        perCaseCustomNames.set(caseName, newName);
+    } else {
+        perCaseCustomNames.delete(caseName);
+    }
+    
+    saveState();
+    
+    // Update the title in edit modal
+    const titleElement = document.getElementById('editCaseTitle');
+    if (titleElement) {
+        titleElement.textContent = getDisplayName(caseName);
+    }
+    
+    closeCaseRenameModal();
+    showToast('Case name updated!', 2000, 'success');
+};
 
 function closeEditCaseModal() {
     const modal = document.getElementById('editCaseModal');
@@ -947,40 +1087,17 @@ function closeEditCaseModal() {
     }
 }
 
-function addAlgorithmField(containerId, type) {
-    const container = document.getElementById(containerId);
-    const newField = document.createElement('div');
-    newField.style.cssText = 'display: flex; gap: 5px; align-items: center;';
-    newField.innerHTML = `
-        <input type="text" class="${type}-alg-input" value="" placeholder="Enter algorithm" style="flex: 1; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
-        <button onclick="this.parentElement.remove()" style="padding: 6px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.85rem;">Delete</button>
-    `;
-    container.appendChild(newField);
-}
-
 function saveEditedCase(caseName, originalName) {
-    const customNameInput = document.getElementById('editCaseCustomName');
-    const oddInputs = document.querySelectorAll('.odd-alg-input');
-    const evenInputs = document.querySelectorAll('.even-alg-input');
+    const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
     
-    // Save custom name
-    const customName = customNameInput.value.trim();
-    if (customName) {
-        perCaseCustomNames.set(caseName, customName);
-    } else {
-        perCaseCustomNames.delete(caseName);
-    }
-    
-    // Collect algorithms
-    const oddAlgs = Array.from(oddInputs).map(input => input.value.trim()).filter(v => v);
-    const evenAlgs = Array.from(evenInputs).map(input => input.value.trim()).filter(v => v);
+    // Collect all algorithms
+    const allAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
     
     // Save custom algorithms
-    if (oddAlgs.length > 0 || evenAlgs.length > 0) {
-        const item = data.find(d => d.name === originalName);
+    if (allAlgs.length > 0) {
         customAlgorithms.set(caseName, {
-            odd: oddAlgs.length > 0 ? oddAlgs : (item ? item.odd : []),
-            even: evenAlgs.length > 0 ? evenAlgs : (item ? item.even : [])
+            odd: [],
+            even: allAlgs
         });
     } else {
         customAlgorithms.delete(caseName);
@@ -988,13 +1105,12 @@ function saveEditedCase(caseName, originalName) {
     
     saveState();
     
-    // Recalculate parity for this specific case
-    if (needsParityRecalculation()) {
-        calculateAndCacheAllParity();
-    }
+    // Recalculate parity
+    calculateAndCacheAllParity();
     
     render();
     closeEditCaseModal();
+    showToast('Case updated successfully!', 2000, 'success');
 }
 
 function openCustomizeSVGsModal() {
