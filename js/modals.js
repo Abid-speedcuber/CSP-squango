@@ -583,6 +583,13 @@ function updateImageSizePreview(value) {
 function saveColorScheme() {
     saveState();
     closeColorSchemeModal();
+    
+    // Recalculate parity with new color scheme
+    if (needsParityRecalculation()) {
+        calculateAndCacheAllParity();
+        render();
+    }
+    
     alert('Color scheme and image size saved! It will be applied to future training scrambles.');
 }
 
@@ -980,6 +987,12 @@ function saveEditedCase(caseName, originalName) {
     }
     
     saveState();
+    
+    // Recalculate parity for this specific case
+    if (needsParityRecalculation()) {
+        calculateAndCacheAllParity();
+    }
+    
     render();
     closeEditCaseModal();
 }

@@ -180,6 +180,9 @@ function closeTrainingModal() {
     }
     preGeneratedScrambles = [];
     timerElapsed = 0;
+    
+    // Soft render when coming back from training
+    filterAndSort(true);
 }
 
 function generateNextScrambleData() {

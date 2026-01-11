@@ -54,6 +54,8 @@ window.setCornerStickerMode = function(mode) {
 let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
 let customSVGDefinitions = {}; // stores {svg_2_2_2: "svgString", Kite_top: "svgString", etc}
 let customSVGs = new Map(); // stores {caseName: {top: svgString, bottom: svgString}}
+let cachedParityAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
+let lastParityCalculationSettings = null; // Track settings that affect parity calculation
 
 // User's saved preferences
 let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
@@ -67,6 +69,8 @@ let hideInstructions = false; // Toggle for hiding instruction buttons
 // --- End New Case Name Settings ---
 let useShortLR = false;
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
+let currentSortMode = localStorage.getItem('sortMode') || 'probability';
+let needsReorder = false;
 let colorScheme = {
     topColor: '#000000',
     bottomColor: '#FFFFFF',
@@ -82,6 +86,87 @@ let scrambleImageSize = 200; // Default size
 
 // Check if this is first load BEFORE loading state
 const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
+
+// Function to calculate and cache parity for all cases
+// Function to calculate and cache parity for all cases
+function calculateAndCacheAllParity() {
+    
+    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        console.warn('Parity analyzer not available, skipping parity calculation');
+        return;
+    }
+    
+    // Store current settings for comparison
+    lastParityCalculationSettings = {
+        colorScheme: JSON.stringify(colorScheme),
+        cornerStickerMode: cornerStickerMode,
+        customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
+        customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
+    };
+    
+    for (const item of data) {
+        const customAlgs = customAlgorithms.get(item.name);
+        const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
+        const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
+        const allAlgorithms = [...oddAlgos, ...evenAlgos];
+        
+        let dynamicOddAlgos = [];
+        let dynamicEvenAlgos = [];
+        
+        for (const alg of allAlgorithms) {
+            if (!alg || alg.trim() === '') continue;
+            
+            if (alg === 'Done!') {
+                dynamicEvenAlgos.push(alg);
+                continue;
+            }
+            
+            try {
+                const setup = invertScramble(alg);
+                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                    topColor: colorScheme.topColor,
+                    bottomColor: colorScheme.bottomColor,
+                    frontColor: colorScheme.frontColor,
+                    rightColor: colorScheme.rightColor,
+                    backColor: colorScheme.backColor,
+                    leftColor: colorScheme.leftColor
+                }, cornerStickerMode);
+                
+                if (parityText === 'Odd') {
+                    dynamicOddAlgos.push(alg);
+                } else if (parityText === 'Even') {
+                    dynamicEvenAlgos.push(alg);
+                }
+            } catch (error) {
+                console.error('Error testing algorithm:', alg, error);
+            }
+        }
+        
+        cachedParityAlgorithms.set(item.name, {
+            odd: dynamicOddAlgos,
+            even: dynamicEvenAlgos
+        });
+    }
+}
+
+// Function to check if parity needs recalculation
+function needsParityRecalculation() {
+    if (!lastParityCalculationSettings) return true;
+    
+    const currentSettings = {
+        colorScheme: JSON.stringify(colorScheme),
+        cornerStickerMode: cornerStickerMode,
+        customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
+        customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
+    };
+    
+    return (
+        currentSettings.colorScheme !== lastParityCalculationSettings.colorScheme ||
+        currentSettings.cornerStickerMode !== lastParityCalculationSettings.cornerStickerMode ||
+        currentSettings.customShapes !== lastParityCalculationSettings.customShapes ||
+        currentSettings.customAlgorithms !== lastParityCalculationSettings.customAlgorithms
+    );
+}
 
 // Load saved state
 try {
@@ -114,6 +199,14 @@ try {
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         customSVGDefinitions = state.customSVGDefinitions || {};
         customSVGs = new Map(Object.entries(state.customSVGs || {}));
+        
+        // Load cached parity calculations
+        if (state.cachedParityAlgorithms) {
+            cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
+        }
+        if (state.lastParityCalculationSettings) {
+            lastParityCalculationSettings = state.lastParityCalculationSettings;
+        }
     }
 
     // Initialize all cases as planned with priority 4 (Normal) if not already set
@@ -167,6 +260,7 @@ if (!caseNameSettings.has('Parallel Edges')) {
 }
 
 function saveState() {
+    localStorage.setItem('sortMode', currentSortMode);
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({
             learned: Array.from(learnedCases),
@@ -194,6 +288,8 @@ function saveState() {
             customAlgorithms: Object.fromEntries(customAlgorithms),
             customSVGDefinitions: customSVGDefinitions,
             customSVGs: Object.fromEntries(customSVGs),
+            cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
+            lastParityCalculationSettings: lastParityCalculationSettings,
         }));
     } catch (e) {
         console.error('Error saving state:', e);
@@ -219,6 +315,8 @@ function exportData() {
         scrambleImageSize: scrambleImageSize,
         customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
         perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
+        cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
+        lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
         customSVGDefinitions: customSVGDefinitions,
@@ -258,6 +356,15 @@ function importData(jsonStr) {
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         customSVGDefinitions = state.customSVGDefinitions || {};
         customSVGs = new Map(Object.entries(state.customSVGs || {}));
+        
+        // Load cached parity calculations
+        if (state.cachedParityAlgorithms) {
+            cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
+        }
+        if (state.lastParityCalculationSettings) {
+            lastParityCalculationSettings = state.lastParityCalculationSettings;
+        }
+        
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);

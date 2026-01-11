@@ -285,18 +285,44 @@
             // These need to run after modal generation
             setTimeout(() => {
                 updateProgress();
-                filterAndSort();
+                filterAndSort(true); // Soft render on initialization
             }, 100);
         }
 
         // Ensure this runs after DOM is ready
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', finalizeInitialization);
+            document.addEventListener('DOMContentLoaded', () => {
+                finalizeInitialization();
+                // Set saved sort mode
+                const sortSelect = document.getElementById('sort');
+                if (sortSelect && currentSortMode) {
+                    sortSelect.value = currentSortMode;
+                }
+            });
         } else {
             finalizeInitialization();
+            // Set saved sort mode
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect && currentSortMode) {
+                sortSelect.value = currentSortMode;
+            }
         }
 
         window.addEventListener('load', async () => {
+            // Set saved sort mode before parity calculation
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect && currentSortMode) {
+                sortSelect.value = currentSortMode;
+            }
+            
+            // Calculate parity only if needed (settings changed or first load)
+            if (needsParityRecalculation()) {
+                console.log('Parity settings changed, recalculating...');
+                calculateAndCacheAllParity();
+            } else {
+                console.log('Using cached parity calculations');
+            }
+            
             await new Promise(resolve => setTimeout(resolve, 300));
 
             clearInterval(loadingInterval);

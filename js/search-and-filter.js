@@ -1,7 +1,11 @@
-function filterAndSort() {
+function filterAndSort(softRender = false) {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const sortType = sortSelect.value;
     const learnFilter = learnFilterSelect.value;
+    
+    // Update current sort mode
+    currentSortMode = sortType;
+    localStorage.setItem('sortMode', currentSortMode);
 
     filteredData = data.filter(item => {
         let matchesLearnFilter = true;
@@ -81,7 +85,7 @@ function filterAndSort() {
         }
     }
 
-    render();
+    render(softRender);
 }
 
 // Responsive select labels
@@ -121,11 +125,20 @@ function attachSearchListeners() {
     
     if (searchInput) {
         searchInput.addEventListener('input', () => {
-            filterAndSort();
+            filterAndSort(true);
         });
     }
-    if (sortSelect) sortSelect.addEventListener('change', filterAndSort);
-    if (learnFilterSelect) learnFilterSelect.addEventListener('change', filterAndSort);
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+            filterAndSort(true);
+            hideReorderButton();
+        });
+    }
+    if (learnFilterSelect) {
+        learnFilterSelect.addEventListener('change', () => {
+            filterAndSort(true);
+        });
+    }
 
 if (searchToggle && controls) {
         searchToggle.addEventListener('click', () => {

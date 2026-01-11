@@ -1114,6 +1114,13 @@ function adjustColorBrightness(hexColor, percent) {
                 analyzeBtn.click();
             }
             
+            // Recalculate parity with new settings
+            if (typeof needsParityRecalculation === 'function' && needsParityRecalculation()) {
+                if (typeof calculateAndCacheAllParity === 'function') {
+                    calculateAndCacheAllParity();
+                }
+            }
+            
             // Re-render cards and modals
             if (typeof render === 'function') {
                 render();
@@ -1361,7 +1368,6 @@ function adjustColorBrightness(hexColor, percent) {
         function setCornerStickerMode(mode) {
     cornerStickerMode = mode;
     saveState();
-    console.log('Corner sticker mode set to:', mode);
 }
 
         // Back button handler for config modal using unified system

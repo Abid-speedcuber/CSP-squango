@@ -660,7 +660,14 @@ function adjustPriority(name, delta) {
     plannedLevels.set(name, newLevel);
     saveState();
     updateProgress();
-    render();
+    
+    // Show reorder button if in priority mode
+    if (currentSortMode === 'priority') {
+        needsReorder = true;
+        showReorderButton();
+    } else {
+        render(true);
+    }
 }
 
 function togglePlanned(name, level = 1, event = null) {
@@ -671,7 +678,14 @@ function togglePlanned(name, level = 1, event = null) {
         const nextLevel = currentLevel % 7 + 1;
         plannedLevels.set(name, nextLevel);
         saveState();
-        render();
+        
+        // Show reorder button if in priority mode
+        if (currentSortMode === 'priority') {
+            needsReorder = true;
+            showReorderButton();
+        } else {
+            render(true);
+        }
     } else if (event && event.button === 0) { // Left click
         event.preventDefault();
         showPriorityMenu(name, event);
@@ -720,7 +734,14 @@ function showPriorityMenu(name, event) {
         option.onclick = () => {
             plannedLevels.set(name, level);
             saveState();
-            render();
+            
+            // Show reorder button if in priority mode
+            if (currentSortMode === 'priority') {
+                needsReorder = true;
+                showReorderButton();
+            } else {
+                render(true);
+            }
             menu.remove();
         };
         menu.appendChild(option);
@@ -768,7 +789,6 @@ function showPriorityMenu(name, event) {
 */
 
 function renderCard(item) {
-    console.log('=== RENDERING CARD:', item.name, '===');
     const prob = (item.probability / 3678 * 100).toFixed(3);
     const isLearned = learnedCases.has(item.name);
     const isLearning = learningCases.has(item.name);
@@ -786,82 +806,18 @@ function renderCard(item) {
     
     const comment = comments.get(item.name) || '';
     
-    // Get all algorithms (custom or default)
-    const customAlgs = customAlgorithms.get(item.name);
-    console.log('Custom algorithms for', item.name, ':', customAlgs);
-    console.log('Item.odd from database:', item.odd);
-    console.log('Item.even from database:', item.even);
-    const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
-    const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
-    console.log('oddAlgos to use:', oddAlgos);
-    console.log('evenAlgos to use:', evenAlgos);
-    const allAlgorithms = [...oddAlgos, ...evenAlgos];
-    console.log('allAlgorithms combined:', allAlgorithms);
+    // Use cached parity calculations
+    const cachedAlgs = cachedParityAlgorithms.get(item.name);
+    const oddAlgos = cachedAlgs ? cachedAlgs.odd : [];
+    const evenAlgos = cachedAlgs ? cachedAlgs.even : [];
     
     // Get custom SVGs if they exist
     const customSVG = customSVGs.get(item.name);
     const topSVG = customSVG ? customSVG.top : item.top;
     const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
     
-    // Dynamically categorize algorithms by testing with parity tracer
-    let dynamicOddAlgos = [];
-    let dynamicEvenAlgos = [];
-    
-    console.log('Parity analyzer available?', typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined');
-    console.log('Starting dynamic categorization for', allAlgorithms.length, 'algorithms');
-    
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-        for (const alg of allAlgorithms) {
-            console.log('Processing algorithm:', alg);
-            if (!alg || alg.trim() === '') {
-                console.log('Skipping algorithm (empty):', alg);
-                continue;
-            }
-            
-            // Special case: "Done!" is always even parity (solved state)
-            if (alg === 'Done!') {
-                console.log('Found "Done!" - adding to EVEN algorithms');
-                dynamicEvenAlgos.push(alg);
-                continue;
-            }
-            
-            try {
-                const setup = invertScramble(alg);
-                console.log('Setup scramble:', setup);
-                
-                // Use the parity analyzer to get parity result
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-                    topColor: colorScheme.topColor,
-                    bottomColor: colorScheme.bottomColor,
-                    frontColor: colorScheme.frontColor,
-                    rightColor: colorScheme.rightColor,
-                    backColor: colorScheme.backColor,
-                    leftColor: colorScheme.leftColor
-                }, cornerStickerMode);
-                
-                console.log('Parity result for algorithm:', alg, '→', parityText);
-                
-                if (parityText === 'Odd') {
-                    dynamicOddAlgos.push(alg);
-                    console.log('Added to ODD algorithms');
-                } else if (parityText === 'Even') {
-                    dynamicEvenAlgos.push(alg);
-                    console.log('Added to EVEN algorithms');
-                } else {
-                    console.warn('Unexpected parity result:', parityText);
-                }
-            } catch (error) {
-                console.error('Error testing algorithm:', alg, error);
-            }
-        }
-    }
-    
-    // If no algorithms were categorized, show placeholder
-    console.log('Final dynamicOddAlgos:', dynamicOddAlgos);
-    console.log('Final dynamicEvenAlgos:', dynamicEvenAlgos);
-    const oddAlgoDisplay = dynamicOddAlgos.length > 0 ? renderAlgorithmWithPopup(dynamicOddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
-    const evenAlgoDisplay = dynamicEvenAlgos.length > 0 ? renderAlgorithmWithPopup(dynamicEvenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
-    console.log('=== END RENDERING CARD:', item.name, '===\n');
+    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
@@ -912,7 +868,67 @@ function renderCard(item) {
     `;
 }
 
-function render() {
+function render(softRender = false) {
+    if (!softRender) {
+        // Hard render: recalculate parity if needed
+        if (needsParityRecalculation()) {
+            calculateAndCacheAllParity();
+        }
+    }
+    
     grid.innerHTML = filteredData.map(renderCard).join('');
+}
+
+function showReorderButton() {
+    // Remove existing button if any
+    let reorderBtn = document.getElementById('reorderButton');
+    if (reorderBtn) return; // Already showing
+    
+    reorderBtn = document.createElement('button');
+    reorderBtn.id = 'reorderButton';
+    reorderBtn.textContent = 'Re-order Cases';
+    reorderBtn.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        background: #007bff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 0.95rem;
+        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        z-index: 1000;
+        transition: all 0.2s;
+    `;
+    
+    reorderBtn.onmouseover = () => {
+        reorderBtn.style.transform = 'translateY(-2px)';
+        reorderBtn.style.boxShadow = '0 6px 16px rgba(0, 123, 255, 0.4)';
+        reorderBtn.style.background = '#0056b3';
+    };
+    
+    reorderBtn.onmouseout = () => {
+        reorderBtn.style.transform = 'translateY(0)';
+        reorderBtn.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.3)';
+        reorderBtn.style.background = '#007bff';
+    };
+    
+    reorderBtn.onclick = () => {
+        filterAndSort(true);
+        hideReorderButton();
+        needsReorder = false;
+    };
+    
+    document.body.appendChild(reorderBtn);
+}
+
+function hideReorderButton() {
+    const reorderBtn = document.getElementById('reorderButton');
+    if (reorderBtn) {
+        reorderBtn.remove();
+    }
 }
 
