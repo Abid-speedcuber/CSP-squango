@@ -886,10 +886,55 @@ function renderCard(item) {
     const oddAlgos = cachedAlgs ? cachedAlgs.odd : [];
     const evenAlgos = cachedAlgs ? cachedAlgs.even : [];
     
-    // Get custom SVGs if they exist
-    const customSVG = customSVGs.get(item.name);
-    const topSVG = customSVG ? customSVG.top : item.top;
-    const bottomSVG = customSVG ? customSVG.bottom : item.bottom;
+    // Get SVGs from customSVGDefinitions (source of truth)
+    // item.top and item.bottom are actually JavaScript code strings that need to be evaluated
+    // They look like: "window['Square_top']" or just the SVG string directly
+    
+    // First, let's see if item.top/bottom are variable references or direct SVG
+    let topSVG, bottomSVG;
+    
+    // Try to extract variable name from patterns like "window['Square_top']" or "Square_top"
+    const topMatch = item.top.match(/window\[['"]([^'"]+)['"]\]/) || item.top.match(/^([A-Z]\w+(?:_(?:top|bottom))?)$/);
+    const bottomMatch = item.bottom.match(/window\[['"]([^'"]+)['"]\]/) || item.bottom.match(/^([A-Z]\w+(?:_(?:top|bottom))?)$/);
+    
+    const topSVGVar = topMatch ? topMatch[1] : null;
+    const bottomSVGVar = bottomMatch ? bottomMatch[1] : null;
+    
+    // Only log first card for debugging
+    if (item.name === 'Square/Square') {
+        console.log('[SVG Debug - Square/Square]', {
+            'item.top (raw)': item.top.substring(0, 100),
+            'item.bottom (raw)': item.bottom.substring(0, 100),
+            topVar: topSVGVar,
+            bottomVar: bottomSVGVar,
+            hasTopInCustom: topSVGVar ? !!customSVGDefinitions[topSVGVar] : false,
+            hasBottomInCustom: bottomSVGVar ? !!customSVGDefinitions[bottomSVGVar] : false,
+            availableVars: Object.keys(customSVGDefinitions).slice(0, 10)
+        });
+    }
+    
+    // If we found a variable name, use it from customSVGDefinitions; otherwise use item.top/bottom directly
+    if (topSVGVar && customSVGDefinitions[topSVGVar]) {
+        topSVG = customSVGDefinitions[topSVGVar];
+    } else {
+        // Fallback: evaluate the code or use as-is
+        try {
+            topSVG = eval(item.top);
+        } catch (e) {
+            topSVG = item.top;
+        }
+    }
+    
+    if (bottomSVGVar && customSVGDefinitions[bottomSVGVar]) {
+        bottomSVG = customSVGDefinitions[bottomSVGVar];
+    } else {
+        // Fallback: evaluate the code or use as-is
+        try {
+            bottomSVG = eval(item.bottom);
+        } catch (e) {
+            bottomSVG = item.bottom;
+        }
+    }
     
     const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';

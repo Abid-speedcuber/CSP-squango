@@ -52,8 +52,7 @@ window.setCornerStickerMode = function(mode) {
     saveState();
 };
 let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
-let customSVGDefinitions = {}; // stores {svg_2_2_2: "svgString", Kite_top: "svgString", etc}
-let customSVGs = new Map(); // stores {caseName: {top: svgString, bottom: svgString}}
+let customSVGDefinitions = {}; // stores {svg_2_2_2: "svgString", Kite_top: "svgString", etc} - this is the source of truth
 let cachedParityAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
 let lastParityCalculationSettings = null; // Track settings that affect parity calculation
 
@@ -198,7 +197,9 @@ try {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         customSVGDefinitions = state.customSVGDefinitions || {};
-        customSVGs = new Map(Object.entries(state.customSVGs || {}));
+        
+        // Initialize customSVGDefinitions from svg.js if empty
+        initializeCustomSVGDefinitions();
         
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {
@@ -224,6 +225,48 @@ try {
     console.error('Error loading saved state:', e);
 }
 
+// Initialize custom SVG definitions after loading state
+initializeCustomSVGDefinitions();
+
+
+// Function to initialize custom SVG definitions from svg.js
+function initializeCustomSVGDefinitions() {
+    const svgVarNames = [
+        'svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 
+        'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 
+        'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 
+        'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 
+        'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 
+        'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 
+        'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 
+        'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 
+        'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'
+    ];
+    
+    let populatedCount = 0;
+    const missing = [];
+    
+    svgVarNames.forEach(varName => {
+        if (!customSVGDefinitions[varName] || customSVGDefinitions[varName].trim() === '') {
+            if (typeof window[varName] !== 'undefined') {
+                customSVGDefinitions[varName] = window[varName];
+                populatedCount++;
+            } else {
+                missing.push(varName);
+            }
+        }
+    });
+    
+    console.log('[SVG Init]', {
+        total: svgVarNames.length,
+        populated: populatedCount,
+        existing: svgVarNames.length - populatedCount - missing.length,
+        missing: missing.length,
+        missingVars: missing
+    });
+    
+    saveState();
+}
 
 // Set defaults if this is first load
 if (isFirstLoad) {
@@ -287,7 +330,6 @@ function saveState() {
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
             customSVGDefinitions: customSVGDefinitions,
-            customSVGs: Object.fromEntries(customSVGs),
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
         }));
@@ -319,8 +361,7 @@ function exportData() {
         lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        customSVGDefinitions: customSVGDefinitions,
-        customSVGs: Object.fromEntries(customSVGs)
+        customSVGDefinitions: customSVGDefinitions
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -355,7 +396,9 @@ function importData(jsonStr) {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         customSVGDefinitions = state.customSVGDefinitions || {};
-        customSVGs = new Map(Object.entries(state.customSVGs || {}));
+        
+        // Initialize customSVGDefinitions from svg.js if empty
+        initializeCustomSVGDefinitions();
         
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {

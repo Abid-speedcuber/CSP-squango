@@ -1041,9 +1041,32 @@ function saveCustomSVGs() {
     const textarea = document.getElementById('customSVGsTextarea');
     try {
         const parsed = JSON.parse(textarea.value);
+        
+        let repopulatedCount = 0;
+        const customVars = [];
+        
+        Object.keys(parsed).forEach(varName => {
+            if (!parsed[varName] || parsed[varName].trim() === '') {
+                if (typeof window[varName] !== 'undefined') {
+                    parsed[varName] = window[varName];
+                    repopulatedCount++;
+                }
+            } else {
+                customVars.push(varName);
+            }
+        });
+        
+        console.log('[SVG Save]', {
+            totalKeys: Object.keys(parsed).length,
+            customVars: customVars,
+            repopulated: repopulatedCount
+        });
+        
         customSVGDefinitions = parsed;
         saveState();
-        alert('Custom SVG definitions saved! Refresh page to see changes.');
+        render(true);
+        
+        alert('Custom SVG definitions saved!');
         closeCustomizeSVGsModal();
     } catch (e) {
         alert('Invalid JSON: ' + e.message);
