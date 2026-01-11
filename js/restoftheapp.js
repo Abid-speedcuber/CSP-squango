@@ -52,7 +52,7 @@ window.setCornerStickerMode = function(mode) {
     saveState();
 };
 let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
-let customSVGDefinitions = {}; // stores ALL 39 SVGs - this is the ONLY source of truth, svg.js is just for initial population
+// svgData is now the source of truth, initialized from DEFAULT_SVGS in svg.js
 let cachedParityAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
 let lastParityCalculationSettings = null; // Track settings that affect parity calculation
 
@@ -196,10 +196,11 @@ try {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
-        customSVGDefinitions = state.customSVGDefinitions || {};
         
-        // Initialize customSVGDefinitions from svg.js if empty
-        initializeCustomSVGDefinitions();
+        // Load custom SVG data
+        if (state.svgData) {
+            window.svgData = state.svgData;
+        }
         
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {
@@ -225,50 +226,19 @@ try {
     console.error('Error loading saved state:', e);
 }
 
-// Function to initialize custom SVG definitions from svg.js
-function initializeCustomSVGDefinitions() {
-    const svgVarNames = [
-        'svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 
-        'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 
-        'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 
-        'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 
-        'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 
-        'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 
-        'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 
-        'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 
-        'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'
-    ];
+// Function to initialize SVG data from defaults if needed
+function initializeSVGData() {
+    if (!window.svgData) {
+        window.svgData = { ...DEFAULT_SVGS };
+    }
     
-    let populatedCount = 0;
-    const missing = [];
-    
-    // ALWAYS populate ALL variables from svg.js if they don't exist or are empty
-    svgVarNames.forEach(varName => {
-        if (!customSVGDefinitions[varName] || customSVGDefinitions[varName].trim() === '') {
-            if (typeof window[varName] !== 'undefined') {
-                customSVGDefinitions[varName] = window[varName];
-                populatedCount++;
-            } else {
-                missing.push(varName);
-            }
+    // Ensure all 39 SVG keys exist
+    const svgKeys = Object.keys(DEFAULT_SVGS);
+    svgKeys.forEach(key => {
+        if (!window.svgData[key]) {
+            window.svgData[key] = DEFAULT_SVGS[key];
         }
     });
-    
-    console.log('[SVG Init]', {
-        total: svgVarNames.length,
-        populated: populatedCount,
-        alreadyCustom: svgVarNames.length - populatedCount - missing.length,
-        missing: missing.length
-    });
-    
-    // Now override window variables with our customSVGDefinitions
-    svgVarNames.forEach(varName => {
-        if (customSVGDefinitions[varName]) {
-            window[varName] = customSVGDefinitions[varName];
-        }
-    });
-    
-    saveState();
 }
 
 // Set defaults if this is first load
@@ -332,7 +302,7 @@ function saveState() {
             perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
-            customSVGDefinitions: customSVGDefinitions,
+            svgData: window.svgData,
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
         }));
@@ -364,7 +334,7 @@ function exportData() {
         lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        customSVGDefinitions: customSVGDefinitions
+        svgData: window.svgData
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -398,10 +368,11 @@ function importData(jsonStr) {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
-        customSVGDefinitions = state.customSVGDefinitions || {};
         
-        // Initialize customSVGDefinitions from svg.js if empty
-        initializeCustomSVGDefinitions();
+        // Load custom SVG data
+        if (state.svgData) {
+            window.svgData = state.svgData;
+        }
         
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {
@@ -459,43 +430,6 @@ function initializeDOMReferences() {
         progressText: !!progressText,
         safetyText: !!safetyText
     };
-}
-
-
-// Override SVG getters on data items
-function applySVGOverrides() {
-    data.forEach(item => {
-        // Store original references
-        if (!item._originalTop) item._originalTop = item.top;
-        if (!item._originalBottom) item._originalBottom = item.bottom;
-        
-        // Check all SVG variables to find which one matches
-        const svgVars = ['svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 
-            'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 
-            'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 
-            'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 
-            'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 
-            'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 
-            'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 
-            'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 
-            'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'];
-        
-        // Find which variable item.top came from
-        for (const varName of svgVars) {
-            if (window[varName] === item._originalTop && customSVGDefinitions[varName]) {
-                item.top = customSVGDefinitions[varName];
-                break;
-            }
-        }
-        
-        // Find which variable item.bottom came from
-        for (const varName of svgVars) {
-            if (window[varName] === item._originalBottom && customSVGDefinitions[varName]) {
-                item.bottom = customSVGDefinitions[varName];
-                break;
-            }
-        }
-    });
 }
 
 // Dynamic SVG scaling based on viewport width

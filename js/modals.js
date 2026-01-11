@@ -998,12 +998,8 @@ function saveEditedCase(caseName, originalName) {
 }
 
 function openCustomizeSVGsModal() {
-    const svgVars = ['svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'];
-    
-    const currentValues = {};
-    svgVars.forEach(varName => {
-        currentValues[varName] = customSVGDefinitions[varName] || '';
-    });
+    // svgData is the source of truth - show current active SVGs
+    const currentValues = { ...window.svgData };
     
     const modal = document.createElement('div');
     modal.className = 'modal active';
@@ -1019,6 +1015,7 @@ function openCustomizeSVGsModal() {
                 <textarea id="customSVGsTextarea" style="width: 100%; height: 400px; font-family: monospace; font-size: 11px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">${JSON.stringify(currentValues, null, 2)}</textarea>
                 <div style="text-align: center; margin-top: 15px;">
                     <button onclick="saveCustomSVGs()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Save</button>
+                    <button onclick="resetSVGsToDefault()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px;">Reset to Default</button>
                     <button onclick="closeCustomizeSVGsModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
@@ -1042,48 +1039,17 @@ function saveCustomSVGs() {
     try {
         const parsed = JSON.parse(textarea.value);
         
-        const svgVarNames = [
-            'svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 
-            'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 
-            'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 
-            'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 
-            'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 
-            'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 
-            'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 
-            'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 
-            'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'
-        ];
+        // Validate that all 39 required keys exist
+        const requiredKeys = Object.keys(DEFAULT_SVGS);
+        const missingKeys = requiredKeys.filter(key => !parsed[key] || parsed[key].trim() === '');
         
-        let repopulatedCount = 0;
+        if (missingKeys.length > 0) {
+            alert(`Error: Missing or empty SVG definitions for: ${missingKeys.join(', ')}\n\nAll 39 SVG definitions must be present.`);
+            return;
+        }
         
-        // For each variable, if empty or invalid, repopulate from svg.js
-        svgVarNames.forEach(varName => {
-            if (!parsed[varName] || parsed[varName].trim() === '') {
-                // Get fresh copy from svg.js (before we overwrote it)
-                const svgJsScript = document.querySelector('script[src*="svg.js"]');
-                if (svgJsScript) {
-                    // Reload svg.js to get original - or use a backup
-                    // For now, just don't save empty values
-                    console.warn(`${varName} is empty, keeping existing value`);
-                    parsed[varName] = customSVGDefinitions[varName];
-                }
-                repopulatedCount++;
-            }
-        });
-        
-        console.log('[SVG Save]', {
-            totalKeys: Object.keys(parsed).length,
-            repopulated: repopulatedCount
-        });
-        
-        customSVGDefinitions = parsed;
-        
-        // Override window variables
-        svgVarNames.forEach(varName => {
-            if (customSVGDefinitions[varName]) {
-                window[varName] = customSVGDefinitions[varName];
-            }
-        });
+        // Update svgData
+        window.svgData = parsed;
         
         saveState();
         render(true);
@@ -1093,6 +1059,19 @@ function saveCustomSVGs() {
     } catch (e) {
         alert('Invalid JSON: ' + e.message);
     }
+}
+
+function resetSVGsToDefault() {
+    if (!confirm('Are you sure you want to reset all SVG definitions to default? This cannot be undone.')) {
+        return;
+    }
+    
+    window.svgData = { ...DEFAULT_SVGS };
+    saveState();
+    render(true);
+    
+    alert('SVG definitions reset to default!');
+    closeCustomizeSVGsModal();
 }
 
 function openNotesModal(caseName) {

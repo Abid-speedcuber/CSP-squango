@@ -886,9 +886,9 @@ function renderCard(item) {
     const oddAlgos = cachedAlgs ? cachedAlgs.odd : [];
     const evenAlgos = cachedAlgs ? cachedAlgs.even : [];
     
-    // SVGs are already in item.top and item.bottom (customization applied via applySVGOverrides)
-    const topSVG = item.top;
-    const bottomSVG = item.bottom;
+    // Fetch SVGs dynamically from svgData using string keys
+    const topSVG = window.svgData[item.top] || '';
+    const bottomSVG = window.svgData[item.bottom] || '';
     
     const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';

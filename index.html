@@ -310,7 +310,7 @@
 
         window.addEventListener('load', async () => {
             // Initialize SVGs FIRST - after svg.js is guaranteed to be loaded
-            initializeCustomSVGDefinitions();
+            initializeSVGData();
             
             // Set saved sort mode before parity calculation
             const sortSelect = document.getElementById('sort');
