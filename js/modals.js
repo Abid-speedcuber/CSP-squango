@@ -1055,3 +1055,111 @@ function saveNotes(caseName) {
     render();
     closeNotesModal();
 }
+
+// General Notes Modal Functions
+function openGeneralNotesModal() {
+    // Close any existing modals
+    const existingMenu = document.getElementById('caseContextMenu');
+    if (existingMenu) existingMenu.remove();
+    
+    pushModalState('generalNotesModal', closeGeneralNotesModal);
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.id = 'generalNotesModal';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh; margin-top: 30px; display: flex; flex-direction: column;">
+            <div class="modal-header" style="flex-shrink: 0;">
+                <span class="modal-title">General Notes</span>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
+                    <button class="close-btn" onclick="closeGeneralNotesModal()">&times;</button>
+                </div>
+            </div>
+            <div class="modal-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
+                <div id="generalNotesView" style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background: #fafafa; min-height: 400px; overflow: auto;"></div>
+                <div id="generalNotesEdit" style="flex: 1; display: none; flex-direction: column;">
+                    <div style="margin-bottom: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 0.9rem; color: #856404;">
+                        <strong>⚠️ Warning:</strong> This editor supports HTML, CSS, SVG, and JavaScript. Code will execute when you save and view. Use with caution!
+                    </div>
+                    <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; min-height: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;"></textarea>
+                    <div style="text-align: center; margin-top: 15px;">
+                        <button onclick="saveGeneralNotes()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                        <button onclick="cancelEditGeneralNotes()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    
+    // Render the saved content
+    renderGeneralNotes();
+}
+
+function closeGeneralNotesModal() {
+    const modal = document.getElementById('generalNotesModal');
+    if (modal) {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+    }
+}
+
+function renderGeneralNotes() {
+    const viewDiv = document.getElementById('generalNotesView');
+    if (viewDiv) {
+        if (generalNotes.trim()) {
+            viewDiv.innerHTML = generalNotes;
+            
+            // Execute any script tags in the content
+            const scripts = viewDiv.querySelectorAll('script');
+            scripts.forEach(script => {
+                const newScript = document.createElement('script');
+                if (script.src) {
+                    newScript.src = script.src;
+                } else {
+                    newScript.textContent = script.textContent;
+                }
+                script.parentNode.replaceChild(newScript, script);
+            });
+        } else {
+            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center; margin-top: 50px;">No notes yet. Click Edit to add your first note!</p>';
+        }
+    }
+}
+
+function toggleEditGeneralNotes() {
+    const viewDiv = document.getElementById('generalNotesView');
+    const editDiv = document.getElementById('generalNotesEdit');
+    const textarea = document.getElementById('generalNotesTextarea');
+    const editBtn = document.getElementById('editGeneralNotesBtn');
+    
+    if (viewDiv.style.display !== 'none') {
+        // Switch to edit mode
+        viewDiv.style.display = 'none';
+        editDiv.style.display = 'flex';
+        textarea.value = generalNotes;
+        editBtn.textContent = 'View';
+        editBtn.style.background = '#6c757d';
+    } else {
+        // Switch to view mode
+        viewDiv.style.display = 'block';
+        editDiv.style.display = 'none';
+        editBtn.textContent = 'Edit';
+        editBtn.style.background = '#007bff';
+        renderGeneralNotes();
+    }
+}
+
+function saveGeneralNotes() {
+    const textarea = document.getElementById('generalNotesTextarea');
+    generalNotes = textarea.value;
+    saveState();
+    toggleEditGeneralNotes(); // Switch back to view mode
+}
+
+function cancelEditGeneralNotes() {
+    toggleEditGeneralNotes(); // Just switch back to view mode without saving
+}

@@ -65,6 +65,7 @@ let showPaths = true;         // Shape paths always shown
 let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
+let generalNotes = ''; // HTML content for general notes
 // --- End New Case Name Settings ---
 let useShortLR = false;
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
@@ -196,6 +197,7 @@ try {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
+        generalNotes = state.generalNotes || '';
         
         // Load custom SVG data
         if (state.svgData) {
@@ -305,6 +307,7 @@ function saveState() {
             svgData: window.svgData,
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
+            generalNotes: generalNotes,
         }));
     } catch (e) {
         console.error('Error saving state:', e);
@@ -334,7 +337,8 @@ function exportData() {
         lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        svgData: window.svgData
+        svgData: window.svgData,
+        generalNotes: generalNotes
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -368,6 +372,7 @@ function importData(jsonStr) {
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
+        generalNotes = state.generalNotes || '';
         
         // Load custom SVG data
         if (state.svgData) {
@@ -381,6 +386,8 @@ function importData(jsonStr) {
         if (state.lastParityCalculationSettings) {
             lastParityCalculationSettings = state.lastParityCalculationSettings;
         }
+        
+        generalNotes = state.generalNotes || '';
         
         if (state.showHints !== undefined) {
             showHints = state.showHints;
