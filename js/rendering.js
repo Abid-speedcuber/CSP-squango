@@ -424,6 +424,8 @@ function showContextMenu(caseName, event) {
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
     
+    const isLearned = learnedCases.has(caseName);
+    const isLearning = learningCases.has(caseName);
     const priorityLevel = plannedLevels.get(caseName) || 4;
     const priorityNames = ['Top', 'Most', 'More', 'Normal', 'Less', 'Least', 'Meh'];
     
@@ -438,26 +440,56 @@ function showContextMenu(caseName, event) {
         z-index: 10000;
         padding: 4px 0;
         min-width: 180px;
+        max-width: 200px;
     `;
     
-    const menuItems = [
-        {
-            label: '↑ Move Up in Priority',
-            action: () => {
-                adjustPriority(caseName, -1);
-                menu.remove();
+    // Add status indicator at top
+    const statusIndicator = document.createElement('div');
+    statusIndicator.style.cssText = `
+        padding: 6px 16px;
+        font-size: 0.75rem;
+        color: #666;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 4px;
+        text-align: center;
+        font-weight: 600;
+    `;
+    
+    if (isLearned) {
+        statusIndicator.textContent = 'Learned';
+    } else if (isLearning) {
+        statusIndicator.textContent = 'Learning';
+    } else {
+        statusIndicator.textContent = `Priority: ${priorityNames[priorityLevel - 1]}`;
+    }
+    menu.appendChild(statusIndicator);
+    
+    const menuItems = [];
+    
+    // Only show priority adjustment for planned cases
+    if (!isLearned && !isLearning) {
+        menuItems.push(
+            {
+                label: '↑ Move Up in Priority',
+                action: () => {
+                    adjustPriority(caseName, -1);
+                    menu.remove();
+                },
+                disabled: priorityLevel === 1
             },
-            disabled: priorityLevel === 1
-        },
-        {
-            label: '↓ Move Down in Priority',
-            action: () => {
-                adjustPriority(caseName, 1);
-                menu.remove();
+            {
+                label: '↓ Move Down in Priority',
+                action: () => {
+                    adjustPriority(caseName, 1);
+                    menu.remove();
+                },
+                disabled: priorityLevel === 7
             },
-            disabled: priorityLevel === 7
-        },
-        { divider: true },
+            { divider: true }
+        );
+    }
+    
+    menuItems.push(
         {
             label: 'Add Notes',
             action: () => {
@@ -479,7 +511,7 @@ function showContextMenu(caseName, event) {
                 openEditCaseModal(caseName);
             }
         }
-    ];
+    );
     
     menuItems.forEach(item => {
         if (item.divider) {
@@ -511,37 +543,39 @@ function showContextMenu(caseName, event) {
         }
     });
     
-    // Add current priority indicator at bottom
-    const priorityIndicator = document.createElement('div');
-    priorityIndicator.style.cssText = `
-        padding: 6px 16px;
-        font-size: 0.75rem;
-        color: #666;
-        border-top: 1px solid #e9ecef;
-        margin-top: 4px;
-        text-align: center;
-    `;
-    priorityIndicator.textContent = `Current: ${priorityNames[priorityLevel - 1]}`;
-    menu.appendChild(priorityIndicator);
-    
     document.body.appendChild(menu);
     
-    // Position the menu
+    // Position the menu with proper boundary checking
     const rect = event.target.closest('.icon-btn').getBoundingClientRect();
     let top = rect.bottom + 5;
-    let left = rect.left;
+    let left = rect.right - 180; // Align to right edge of button, accounting for menu width
     
-    // Adjust if menu goes off screen
+    // Wait for menu to be in DOM to get accurate dimensions
     setTimeout(() => {
         const menuRect = menu.getBoundingClientRect();
-        if (menuRect.bottom > window.innerHeight) {
+        
+        // Check bottom boundary
+        if (top + menuRect.height > window.innerHeight - 10) {
             top = rect.top - menuRect.height - 5;
         }
-        if (menuRect.right > window.innerWidth) {
+        
+        // Check top boundary
+        if (top < 10) {
+            top = 10;
+        }
+        
+        // Recalculate left with actual menu width
+        left = rect.right - menuRect.width;
+        
+        // Check right boundary (shouldn't be needed with right-align, but just in case)
+        if (left + menuRect.width > window.innerWidth - 10) {
             left = window.innerWidth - menuRect.width - 10;
         }
-        if (left < 10) left = 10;
-        if (top < 10) top = 10;
+        
+        // Check left boundary
+        if (left < 10) {
+            left = 10;
+        }
         
         menu.style.top = top + 'px';
         menu.style.left = left + 'px';
@@ -553,9 +587,18 @@ function showContextMenu(caseName, event) {
             if (!menu.contains(e.target) && e.target !== event.target) {
                 menu.remove();
                 document.removeEventListener('mousedown', closeMenu);
+                window.removeEventListener('scroll', scrollCloseMenu, true);
             }
         };
+        
+        const scrollCloseMenu = () => {
+            menu.remove();
+            document.removeEventListener('mousedown', closeMenu);
+            window.removeEventListener('scroll', scrollCloseMenu, true);
+        };
+        
         document.addEventListener('mousedown', closeMenu);
+        window.addEventListener('scroll', scrollCloseMenu, true);
     }, 100);
 }
 
@@ -603,6 +646,10 @@ function updateProgress() {
 }
 
 function toggleLearned(name, event = null) {
+    // Close any open context menu
+    const existingMenu = document.getElementById('caseContextMenu');
+    if (existingMenu) existingMenu.remove();
+    
     const isRightClick = event && event.button === 2;
     
     if (isRightClick) {
@@ -639,7 +686,21 @@ function toggleLearned(name, event = null) {
     }
     saveState();
     updateProgress();
-    render();
+    
+    // Re-render the specific card
+    const cardElement = document.querySelector(`[data-case-name="${name}"]`);
+    if (cardElement) {
+        const item = data.find(d => d.name === name);
+        if (item) {
+            cardElement.outerHTML = renderCard(item);
+        }
+    }
+    
+    // Show reorder button if in priority mode
+    if (currentSortMode === 'priority') {
+        needsReorder = true;
+        showReorderButton();
+    }
 }
 
 function adjustPriority(name, delta) {
@@ -661,12 +722,19 @@ function adjustPriority(name, delta) {
     saveState();
     updateProgress();
     
+    // Re-render the specific card
+    const cardElement = document.querySelector(`[data-case-name="${name}"]`);
+    if (cardElement) {
+        const item = data.find(d => d.name === name);
+        if (item) {
+            cardElement.outerHTML = renderCard(item);
+        }
+    }
+    
     // Show reorder button if in priority mode
     if (currentSortMode === 'priority') {
         needsReorder = true;
         showReorderButton();
-    } else {
-        render(true);
     }
 }
 
@@ -735,12 +803,19 @@ function showPriorityMenu(name, event) {
             plannedLevels.set(name, level);
             saveState();
             
+            // Re-render the specific card
+            const cardElement = document.querySelector(`[data-case-name="${name}"]`);
+            if (cardElement) {
+                const item = data.find(d => d.name === name);
+                if (item) {
+                    cardElement.outerHTML = renderCard(item);
+                }
+            }
+            
             // Show reorder button if in priority mode
             if (currentSortMode === 'priority') {
                 needsReorder = true;
                 showReorderButton();
-            } else {
-                render(true);
             }
             menu.remove();
         };
@@ -832,7 +907,7 @@ function renderCard(item) {
     const displayName = getDisplayName(item.name);
 
     return `
-        <div class="card ${cardClass}">
+        <div class="card ${cardClass}" data-case-name="${item.name}">
             <div class="card-header">
                 <div class="card-title">
                     ${displayName}
