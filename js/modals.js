@@ -1042,27 +1042,49 @@ function saveCustomSVGs() {
     try {
         const parsed = JSON.parse(textarea.value);
         
-        let repopulatedCount = 0;
-        const customVars = [];
+        const svgVarNames = [
+            'svg_2_2_2', 'svg_3_1_2', 'svg_3_2_1', 'svg_3_3', 'svg_4_1_1', 'svg_4_4', 
+            'svg_5_3', 'svg_6', 'svg_6_2', 'svg_7_1', 'svg_8', 
+            'Kite_top', 'Kite_bottom', 'Barrel_top', 'Barrel_bottom', 
+            'Mushroom_top', 'Mushroom_bottom', 'Scallop_top', 'Scallop_bottom', 
+            'Shield_top', 'Shield_bottom', 'Left_fist_top', 'Left_fist_bottom', 
+            'Right_fist_top', 'Right_fist_bottom', 'Left_pawn_top', 'Left_pawn_bottom', 
+            'Right_pawn_top', 'Right_pawn_bottom', 'Square_top', 'Square_bottom', 
+            'Star', 'Perpendicular_edges', 'Parallel_edges', 'Paired_edges', 
+            'Left_4_2', 'Right_4_2', 'Left_5_1', 'Right_5_1'
+        ];
         
-        Object.keys(parsed).forEach(varName => {
+        let repopulatedCount = 0;
+        
+        // For each variable, if empty or invalid, repopulate from svg.js
+        svgVarNames.forEach(varName => {
             if (!parsed[varName] || parsed[varName].trim() === '') {
-                if (typeof window[varName] !== 'undefined') {
-                    parsed[varName] = window[varName];
-                    repopulatedCount++;
+                // Get fresh copy from svg.js (before we overwrote it)
+                const svgJsScript = document.querySelector('script[src*="svg.js"]');
+                if (svgJsScript) {
+                    // Reload svg.js to get original - or use a backup
+                    // For now, just don't save empty values
+                    console.warn(`${varName} is empty, keeping existing value`);
+                    parsed[varName] = customSVGDefinitions[varName];
                 }
-            } else {
-                customVars.push(varName);
+                repopulatedCount++;
             }
         });
         
         console.log('[SVG Save]', {
             totalKeys: Object.keys(parsed).length,
-            customVars: customVars,
             repopulated: repopulatedCount
         });
         
         customSVGDefinitions = parsed;
+        
+        // Override window variables
+        svgVarNames.forEach(varName => {
+            if (customSVGDefinitions[varName]) {
+                window[varName] = customSVGDefinitions[varName];
+            }
+        });
+        
         saveState();
         render(true);
         
