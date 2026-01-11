@@ -400,9 +400,9 @@ function importData(jsonStr) {
         saveState();
         updateProgress();
         render();
-        alert('Data imported successfully!');
+        showToast('Data imported successfully!', 3000, 'success');
     } catch (e) {
-        alert('Error importing data: ' + e.message);
+        showToast('Error importing data: ' + e.message, 3000, 'error');
     }
 }
 

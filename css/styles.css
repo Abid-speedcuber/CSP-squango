@@ -21,14 +21,15 @@ header {
 }
 
 h1 {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 3rem;
+    margin-bottom: 5px;
     color: #333;
 }
 
 .subtitle {
     color: #666;
-    font-size: 1rem;
+    font-size: 1.1rem;
+    margin-bottom: 10px;
 }
 
 .controls {
@@ -152,6 +153,7 @@ select {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: nowrap;
 }
 
 .card.learned .card-header {
@@ -276,7 +278,8 @@ select {
     font-size: 0.9rem;
     word-wrap: break-word;
     overflow-wrap: break-word;
-    white-space: normal;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .topbar {
@@ -325,22 +328,61 @@ body.modal-open .floating-settings-btn {
     right: 20px;
     z-index: 999;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: white;
+    border-radius: 24px;
+    padding: 0;
+    box-shadow: 0 4px 12px rgba(123, 123, 123, 0.4);
+}
+
+.floating-buttons-container.expanded {
+    gap: 8px;
+    padding: 8px;
+    border-radius: 28px;
 }
 
 .floating-buttons-container .floating-settings-btn,
-.floating-buttons-container .homepage-info-btn {
+.floating-buttons-container .menu-action-btn {
     position: relative;
     top: 0;
     right: 0;
-    margin-bottom: 10px;
+    margin-bottom: 0;
+    box-shadow: none;
 }
 
-.floating-buttons-container .homepage-info-btn {
-    top: 0 !important;
-}
-
-.hide-instructions .homepage-info-btn {
+.floating-buttons-container .menu-action-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: white;
+    color: black;
+    border: none;
+    cursor: pointer;
     display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.floating-buttons-container.expanded .menu-action-btn {
+    display: flex;
+}
+
+.floating-buttons-container .menu-action-btn:hover {
+    background: #f5f5f5;
+    transform: scale(1.05);
+}
+
+.floating-buttons-container .menu-action-btn img {
+    width: 24px;
+    height: 24px;
+}
+
+.hide-instructions .menu-action-btn.instruction-btn {
+    display: none !important;
 }
 
 .modal.active {
@@ -506,6 +548,14 @@ details summary::marker {
     .tablet-title {
         display: block;
     }
+    
+    h1 {
+        font-size: 2.5rem;
+    }
+    
+    .subtitle {
+        font-size: 1rem;
+    }
 }
 
 @media (max-width: 570px) {
@@ -531,8 +581,8 @@ details summary::marker {
     position: fixed;
     top: 20px;
     right: 20px;
-    width: 56px;
-    height: 56px;
+    width: 48px;
+    height: 48px;
     border-radius: 50%;
     background: white;
     color: black;
@@ -576,8 +626,8 @@ body.modal-open .homepage-info-btn {
 }
 
 .floating-settings-btn svg {
-    width: 34px;
-    height: 34px;
+    width: 24px;
+    height: 24px;
 }
 
 /* Mobile Responsive Styles */
@@ -587,8 +637,13 @@ body.modal-open .homepage-info-btn {
     }
 
     h1 {
-        font-size: 1.5rem;
-        margin-bottom: 5px;
+        font-size: 2rem;
+        margin-bottom: 3px;
+    }
+    
+    .subtitle {
+        font-size: 0.9rem;
+        margin-bottom: 8px;
     } 
 
     .floating-settings-btn {
@@ -686,21 +741,16 @@ body.modal-open .homepage-info-btn {
 
     .card-header {
         padding: 10px;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+        flex-direction: row;
+        align-items: center;
+        gap: 0;
+        flex-wrap: nowrap;
     }
 
     .card-title {
         font-size: 1rem;
-        width: 100%;
-    }
-
-    .card-header > div:last-child {
-        width: 100%;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex: 1;
+        min-width: 0;
     }
 
     .card-body {

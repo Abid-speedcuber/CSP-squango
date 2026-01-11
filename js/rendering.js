@@ -919,17 +919,19 @@ function renderCard(item) {
     return `
         <div class="card ${cardClass}" data-case-name="${item.name}">
             <div class="card-header">
-                <div class="card-title">
-                    ${displayName}
-                </div>
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div class="probability">${prob}%</div>
-                    <div class="card-header-actions">
-                        <div class="icon-btn" onmousedown="event.stopPropagation(); toggleLearned('${item.name.replace(/'/g, "\\'")}', event)" oncontextmenu="event.preventDefault();">
-                            ${learnedIcon}
-                        </div>
-                        <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: #666;">
-                            ${threeDotsIcon}
+                <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                    <div class="card-title">
+                        ${displayName}
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                        <div class="probability">${prob}%</div>
+                        <div class="card-header-actions">
+                            <div class="icon-btn" onmousedown="event.stopPropagation(); toggleLearned('${item.name.replace(/'/g, "\\'")}', event)" oncontextmenu="event.preventDefault();">
+                                ${learnedIcon}
+                            </div>
+                            <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: #666;">
+                                ${threeDotsIcon}
+                            </div>
                         </div>
                     </div>
                 </div>

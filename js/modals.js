@@ -590,7 +590,7 @@ function saveColorScheme() {
         render();
     }
     
-    alert('Color scheme and image size saved! It will be applied to future training scrambles.');
+    showToast('Color scheme and image size saved!', 3000, 'success');
 }
 
 function resetColorScheme() {
@@ -607,7 +607,7 @@ function resetColorScheme() {
     scrambleImageSize = 200;
     saveState();
     openColorSchemeModal(); // Refresh the modal to show updated selection
-    alert('Color scheme and image size reset to default!');
+    showToast('Color scheme reset to default!', 3000, 'success');
 }
 
 // Apply initial hint visibility state on load
@@ -616,7 +616,7 @@ applyHintVisibility();
 // New parity analysis using ParityTracerLibrary
 function openNewParityAnalysis(scramble) {
     if (typeof window.ParityTracerLibrary === 'undefined') {
-        alert('Parity Tracer library not loaded');
+        showToast('Parity Tracer library not loaded', 3000, 'error');
         return;
     }
     
@@ -1163,3 +1163,69 @@ function saveGeneralNotes() {
 function cancelEditGeneralNotes() {
     toggleEditGeneralNotes(); // Just switch back to view mode without saving
 }
+
+// Toast notification system
+window.showToast = function(message, duration = 3000, type = 'info') {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
+        color: white;
+        padding: 12px 24px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        font-size: 0.95rem;
+        font-weight: 500;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.style.opacity = '1', 10);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+};
+
+// Confirmation modal
+window.showConfirmation = function(message, onConfirm, onCancel) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.style.zIndex = '10001';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; margin-top: 100px;">
+            <div class="modal-header" style="background: #f8f9fa;">
+                <span class="modal-title">Confirm Action</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
+                <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                    <button id="confirmCancel" style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
+                    <button id="confirmOk" style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">OK</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    
+    document.getElementById('confirmOk').onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onConfirm) onConfirm();
+    };
+    
+    document.getElementById('confirmCancel').onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onCancel) onCancel();
+    };
+};

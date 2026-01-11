@@ -39,15 +39,14 @@
             <h1 class="desktop-title">SquanGo CSP</h1>
             <h1 class="tablet-title">SquanGo CSP</h1>
             <h1 class="mobile-title">SquanGo CSP</h1>
+            <div class="subtitle">By Abid Ibn Ashraf</div>
             <div id="floatingButtonsContainer" class="floating-buttons-container">
                 <button id="menuBtn" class="floating-settings-btn" aria-label="Menu"><img
-                        src="res/menu.svg" height="28px" width="28px"></button>
-                <div id="menuDropdown" class="menu-dropdown" style="display: none;">
-                    <button class="menu-item" onclick="openSettingsModal()"><img src="res/settings.svg" height="20px" width="20px"> Settings</button>
-                    <button class="menu-item" onclick="openNewParityAnalysis('')"><img src="res/tracer.svg" height="20px" width="20px"> Parity Tracer</button>
-                    <button class="menu-item" onclick="openGeneralNotesModal()"><img src="res/notes.svg" height="20px" width="20px"> Notes</button>
-                    <button class="menu-item" onclick="showHomepageInfoModal()"><img src="res/info.svg" height="20px" width="20px"> Instructions</button>
-                </div>
+                        src="res/menu.svg" height="24px" width="24px"></button>
+                <button class="menu-action-btn" onclick="openSettingsModal(); collapseMenu();"><img src="res/settings.svg"></button>
+                <button class="menu-action-btn" onclick="openNewParityAnalysis(''); collapseMenu();"><img src="res/tracer.svg"></button>
+                <button class="menu-action-btn" onclick="openGeneralNotesModal(); collapseMenu();"><img src="res/notes.svg"></button>
+                <button class="menu-action-btn instruction-btn" onclick="showHomepageInfoModal(); collapseMenu();"><img src="res/info.svg"></button>
             </div>
         </header>
 
@@ -256,20 +255,28 @@
 
             // Setup menu button
             const menuBtn = document.getElementById('menuBtn');
-            const menuDropdown = document.getElementById('menuDropdown');
-            if (menuBtn && menuDropdown) {
+            const menuContainer = document.getElementById('floatingButtonsContainer');
+            if (menuBtn && menuContainer) {
                 menuBtn.onclick = (e) => {
                     e.stopPropagation();
-                    menuDropdown.style.display = menuDropdown.style.display === 'none' ? 'block' : 'none';
+                    menuContainer.classList.toggle('expanded');
                 };
                 
                 // Close menu when clicking outside
                 document.addEventListener('click', (e) => {
-                    if (!menuBtn.contains(e.target) && !menuDropdown.contains(e.target)) {
-                        menuDropdown.style.display = 'none';
+                    if (!menuContainer.contains(e.target)) {
+                        menuContainer.classList.remove('expanded');
                     }
                 });
             }
+            
+            // Collapse menu function
+            window.collapseMenu = function() {
+                const menuContainer = document.getElementById('floatingButtonsContainer');
+                if (menuContainer) {
+                    menuContainer.classList.remove('expanded');
+                }
+            };
 
             // Apply instruction button visibility
             if (hideInstructions) {
