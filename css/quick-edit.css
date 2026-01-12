@@ -96,11 +96,198 @@
     filter: brightness(0) invert(1);
 }
 
-.quick-edit-find-replace {
-    padding: 8px 12px;
-    background: #fff3cd;
-    border-bottom: 1px solid #ffc107;
-    flex-shrink: 0;
+.quick-edit-find-replace-popup {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    width: 420px;
+    max-width: calc(100vw - 40px);
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    z-index: 10001;
+    display: none;
+}
+
+.find-replace-header {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.close-find-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.close-find-btn:hover {
+    background: #e9ecef;
+    color: #495057;
+}
+
+.find-replace-inputs {
+    padding: 12px 15px;
+}
+
+.find-input-row,
+.replace-input-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.find-input-row input,
+.replace-input-row input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.find-input-row input:focus,
+.replace-input-row input:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.1);
+}
+
+.find-nav-buttons,
+.replace-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.find-nav-buttons button {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+    background: white;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.find-nav-buttons button:hover {
+    background: #f8f9fa;
+    border-color: #007bff;
+}
+
+.find-nav-buttons button img {
+    width: 16px;
+    height: 16px;
+    filter: brightness(0) saturate(100%) invert(30%) sepia(10%) saturate(500%) hue-rotate(180deg);
+}
+
+.replace-buttons button {
+    padding: 6px 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.replace-buttons button:hover {
+    background: #0056b3;
+}
+
+.find-replace-footer {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+}
+
+.scope-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #6c757d;
+}
+
+.scope-selector label {
+    font-weight: 600;
+}
+
+.scope-selector select {
+    padding: 4px 8px;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    background: white;
+    cursor: pointer;
+}
+
+.scope-selector select:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#quickEditMatchCount {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Highlight styles for matches */
+.find-match-highlight {
+    background: #ffeaa7;
+    border-radius: 2px;
+}
+
+.find-match-current {
+    background: #fdcb6e;
+    font-weight: 600;
+    box-shadow: 0 0 0 2px #e17055;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .quick-edit-find-replace-popup {
+        top: 60px;
+        right: 10px;
+        left: 10px;
+        width: auto;
+        max-width: none;
+    }
+    
+    .replace-buttons button {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
 }
 
 .find-replace-content {

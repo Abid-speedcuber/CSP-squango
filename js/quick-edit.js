@@ -1,12 +1,13 @@
 // Quick Edit System for batch editing cases
 
 let quickEditState = {
-    currentTab: 'general', // 'general' or 'algorithms'
+    currentTab: 'general',
     findReplaceOpen: false,
-    findReplaceScope: null, // 'name', 'subtitle', 'notes' for general tab, null for algorithms
+    findReplaceScope: null,
     currentFindIndex: -1,
     findMatches: [],
-    lastFocusedCell: null
+    lastFocusedCell: null,
+    allMatchRanges: [] // Store all text ranges for multiple matches per cell
 };
 
 function openQuickEditModal() {
@@ -48,22 +49,44 @@ function openQuickEditModal() {
                 </div>
             </div>
             
-            <div class="quick-edit-find-replace" id="quickEditFindReplace" style="display: none;">
-                <div class="find-replace-content">
-                    <input type="text" id="quickEditFindInput" placeholder="Find">
-                    <input type="text" id="quickEditReplaceInput" placeholder="Replace">
-                    <div class="find-replace-buttons">
-                        <button onclick="findNextQuickEdit()">Next</button>
-                        <button onclick="replaceQuickEdit()">Replace</button>
-                        <button onclick="replaceAllQuickEdit()">Replace All</button>
-                        <button onclick="closeQuickEditFindReplace()">Close</button>
-                    </div>
-                    <div class="find-replace-info">
-                        <span id="quickEditMatchCount">0 matches</span>
-                        <span id="quickEditScopeInfo"></span>
-                    </div>
-                </div>
+ <div class="quick-edit-find-replace-popup" id="quickEditFindReplace" style="display: none;">
+    <div class="find-replace-header">
+        <span>Find and Replace</span>
+        <button class="close-find-btn" onclick="closeQuickEditFindReplace()" title="Close (Esc)">×</button>
+    </div>
+    <div class="find-replace-inputs">
+        <div class="find-input-row">
+            <input type="text" id="quickEditFindInput" placeholder="Find" oninput="liveSearchQuickEdit()">
+            <div class="find-nav-buttons">
+                <button onclick="findPreviousQuickEdit()" title="Previous match">
+                    <img src="res/previous.svg" alt="Previous">
+                </button>
+                <button onclick="findNextQuickEdit()" title="Next match">
+                    <img src="res/next.svg" alt="Next">
+                </button>
             </div>
+        </div>
+        <div class="replace-input-row">
+            <input type="text" id="quickEditReplaceInput" placeholder="Replace" onkeypress="handleReplaceEnter(event)">
+            <div class="replace-buttons">
+                <button onclick="replaceQuickEdit()" title="Replace (Enter)">Replace</button>
+                <button onclick="replaceAllQuickEdit()" title="Replace All">Replace All</button>
+            </div>
+        </div>
+    </div>
+    <div class="find-replace-footer">
+        <div class="scope-selector">
+            <label>Scope:</label>
+            <select id="quickEditScopeSelector" onchange="changeFindScope()">
+                <option value="name">Display Name</option>
+                <option value="subtitle">Subtitle</option>
+                <option value="notes">Notes</option>
+                <option value="all">All Algorithms</option>
+            </select>
+        </div>
+        <span id="quickEditMatchCount">No matches</span>
+    </div>
+</div>
             
             <div class="quick-edit-body">
                 <div class="quick-edit-content" id="quickEditGeneralTab">
@@ -291,7 +314,7 @@ function switchQuickEditTab(tab) {
 function openQuickEditFindReplace() {
     const findReplace = document.getElementById('quickEditFindReplace');
     const findInput = document.getElementById('quickEditFindInput');
-    const scopeInfo = document.getElementById('quickEditScopeInfo');
+    const scopeSelector = document.getElementById('quickEditScopeSelector');
     
     if (!quickEditState.lastFocusedCell) {
         showToast('Please select a cell first', 2000, 'info');
@@ -301,19 +324,22 @@ function openQuickEditFindReplace() {
     findReplace.style.display = 'block';
     quickEditState.findReplaceOpen = true;
     
-    // Update scope info
+    // Set scope selector based on current tab
     if (quickEditState.currentTab === 'general') {
-        const scopeNames = {
-            'name': 'Display Name',
-            'subtitle': 'Subtitle',
-            'notes': 'Notes'
+        scopeSelector.disabled = false;
+        const scopeMap = {
+            'name': 'name',
+            'subtitle': 'subtitle',
+            'notes': 'notes'
         };
-        scopeInfo.textContent = `Scope: ${scopeNames[quickEditState.findReplaceScope] || 'All'}`;
+        scopeSelector.value = scopeMap[quickEditState.findReplaceScope] || 'name';
     } else {
-        scopeInfo.textContent = 'Scope: All Algorithms';
+        scopeSelector.disabled = true;
+        scopeSelector.value = 'all';
     }
     
     findInput.focus();
+    findInput.select();
 }
 
 function closeQuickEditFindReplace() {
@@ -327,21 +353,20 @@ function closeQuickEditFindReplace() {
     clearFindHighlights();
 }
 
-function clearFindHighlights() {
-    const modal = document.getElementById('quickEditModal');
-    if (!modal) return;
-    
-    const cells = modal.querySelectorAll('.editable');
-    cells.forEach(cell => {
-        cell.style.background = '';
-    });
-}
-
-function findNextQuickEdit() {
+function liveSearchQuickEdit() {
     const findInput = document.getElementById('quickEditFindInput');
     const searchTerm = findInput.value;
     
-    if (!searchTerm) return;
+    // Clear previous highlights
+    clearFindHighlights();
+    quickEditState.findMatches = [];
+    quickEditState.allMatchRanges = [];
+    quickEditState.currentFindIndex = -1;
+    
+    if (!searchTerm) {
+        document.getElementById('quickEditMatchCount').textContent = 'No matches';
+        return;
+    }
     
     // Get all cells in scope
     const modal = document.getElementById('quickEditModal');
@@ -359,33 +384,110 @@ function findNextQuickEdit() {
         cells = Array.from(modal.querySelectorAll('.alg-cell'));
     }
     
-    // Find matches
-    quickEditState.findMatches = cells.filter(cell => 
-        cell.textContent.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Find all matches with their positions
+    const searchLower = searchTerm.toLowerCase();
+    cells.forEach(cell => {
+        const text = cell.textContent;
+        const textLower = text.toLowerCase();
+        let pos = 0;
+        
+        while ((pos = textLower.indexOf(searchLower, pos)) !== -1) {
+            quickEditState.findMatches.push(cell);
+            quickEditState.allMatchRanges.push({ cell, start: pos, end: pos + searchTerm.length });
+            pos += searchTerm.length;
+        }
+    });
     
     if (quickEditState.findMatches.length === 0) {
-        document.getElementById('quickEditMatchCount').textContent = '0 matches';
+        document.getElementById('quickEditMatchCount').textContent = 'No matches';
         return;
     }
     
-    // Move to next match
-    quickEditState.currentFindIndex = (quickEditState.currentFindIndex + 1) % quickEditState.findMatches.length;
-    const currentMatch = quickEditState.findMatches[quickEditState.currentFindIndex];
+    // Highlight all matches
+    highlightAllMatches();
     
-    // Clear previous highlights
-    clearFindHighlights();
+    // Select first match
+    quickEditState.currentFindIndex = 0;
+    highlightCurrentMatch();
     
-    // Highlight current match
-    currentMatch.style.background = '#fff3cd';
-    currentMatch.focus();
-    
-    // Update match count
+    // Update count
     document.getElementById('quickEditMatchCount').textContent = 
-        `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length} matches`;
+        `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
+}
+
+function highlightAllMatches() {
+    quickEditState.allMatchRanges.forEach(range => {
+        const span = document.createElement('span');
+        span.className = 'find-match-highlight';
+        
+        const text = range.cell.textContent;
+        range.cell.innerHTML = 
+            text.substring(0, range.start) +
+            `<span class="find-match-highlight">${text.substring(range.start, range.end)}</span>` +
+            text.substring(range.end);
+    });
+}
+
+function highlightCurrentMatch() {
+    // Remove previous current highlight
+    document.querySelectorAll('.find-match-current').forEach(el => {
+        el.classList.remove('find-match-current');
+    });
     
-    // Scroll into view
-    currentMatch.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (quickEditState.currentFindIndex >= 0 && quickEditState.currentFindIndex < quickEditState.findMatches.length) {
+        const currentCell = quickEditState.findMatches[quickEditState.currentFindIndex];
+        const highlights = currentCell.querySelectorAll('.find-match-highlight');
+        
+        // Find which highlight in this cell corresponds to this match
+        let cellMatchIndex = 0;
+        for (let i = 0; i < quickEditState.currentFindIndex; i++) {
+            if (quickEditState.findMatches[i] === currentCell) {
+                cellMatchIndex++;
+            }
+        }
+        
+        if (highlights[cellMatchIndex]) {
+            highlights[cellMatchIndex].classList.add('find-match-current');
+            highlights[cellMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+}
+
+function clearFindHighlights() {
+    const modal = document.getElementById('quickEditModal');
+    if (!modal) return;
+    
+    // Restore original text content for all cells that have highlights
+    const cells = modal.querySelectorAll('.editable');
+    cells.forEach(cell => {
+        if (cell.querySelector('.find-match-highlight')) {
+            cell.textContent = cell.textContent; // Removes all HTML, keeps just text
+        }
+    });
+}
+
+function findNextQuickEdit() {
+    if (quickEditState.findMatches.length === 0) return;
+    
+    quickEditState.currentFindIndex = (quickEditState.currentFindIndex + 1) % quickEditState.findMatches.length;
+    highlightCurrentMatch();
+    
+    document.getElementById('quickEditMatchCount').textContent = 
+        `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
+}
+
+function findPreviousQuickEdit() {
+    if (quickEditState.findMatches.length === 0) return;
+    
+    quickEditState.currentFindIndex = quickEditState.currentFindIndex - 1;
+    if (quickEditState.currentFindIndex < 0) {
+        quickEditState.currentFindIndex = quickEditState.findMatches.length - 1;
+    }
+    
+    highlightCurrentMatch();
+    
+    document.getElementById('quickEditMatchCount').textContent = 
+        `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
 }
 
 function replaceQuickEdit() {
@@ -452,6 +554,27 @@ function replaceAllQuickEdit() {
     
     showToast(`Replaced ${replaceCount} occurrences`, 2000, 'success');
     closeQuickEditFindReplace();
+}
+
+function handleReplaceEnter(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        replaceQuickEdit();
+    }
+}
+
+function changeFindScope() {
+    const scopeSelector = document.getElementById('quickEditScopeSelector');
+    const newScope = scopeSelector.value;
+    
+    if (quickEditState.currentTab === 'general') {
+        quickEditState.findReplaceScope = newScope;
+    } else {
+        quickEditState.findReplaceScope = null; // algorithms tab ignores scope
+    }
+    
+    // Re-run search with new scope
+    liveSearchQuickEdit();
 }
 
 function saveQuickEditChanges() {
@@ -579,3 +702,7 @@ window.replaceAllQuickEdit = replaceAllQuickEdit;
 window.saveQuickEditChanges = saveQuickEditChanges;
 window.openQuickEditFindReplace = openQuickEditFindReplace;
 window.closeQuickEditFindReplace = closeQuickEditFindReplace;
+window.findPreviousQuickEdit = findPreviousQuickEdit;
+window.liveSearchQuickEdit = liveSearchQuickEdit;
+window.handleReplaceEnter = handleReplaceEnter;
+window.changeFindScope = changeFindScope;
