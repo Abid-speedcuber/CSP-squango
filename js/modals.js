@@ -937,7 +937,10 @@ function openEditCaseModal(caseName) {
     setTimeout(() => {
         const inputs = modal.querySelectorAll('.alg-input');
         inputs.forEach(input => {
-            updateParityLabel(input);
+            // Initial update
+            if (document.activeElement !== input) {
+                updateParityLabel(input);
+            }
             
             input.addEventListener('focus', () => {
                 const parityLabel = input.parentElement.querySelector('.parity-label');
@@ -949,15 +952,19 @@ function openEditCaseModal(caseName) {
             });
             
             input.addEventListener('input', () => {
-                // Always update on input, but check focus before showing
-                setTimeout(() => {
+                // Clear timeout if exists
+                if (input.parityTimeout) {
+                    clearTimeout(input.parityTimeout);
+                }
+                // Update after a short delay if not focused
+                input.parityTimeout = setTimeout(() => {
                     if (document.activeElement !== input) {
                         updateParityLabel(input);
                     }
-                }, 100);
+                }, 300);
             });
         });
-    }, 100);
+    }, 200);
 }
 
 // Helper function to update parity label
@@ -966,7 +973,7 @@ function updateParityLabel(input) {
     if (!parityLabel) return;
     
     const alg = input.value.trim();
-    if (!alg || alg === 'Done!' || alg === input.dataset.original) {
+    if (!alg || alg === 'Done!') {
         parityLabel.textContent = '';
         return;
     }
@@ -989,8 +996,10 @@ function updateParityLabel(input) {
         
         parityLabel.textContent = parityText.toLowerCase();
         parityLabel.style.color = parityText === 'Odd' ? '#dc3545' : '#28a745';
+        parityLabel.style.fontWeight = '600';
     } catch (error) {
         parityLabel.textContent = '';
+        console.error('Parity calculation error:', error);
     }
 }
 
@@ -1022,11 +1031,14 @@ window.addNewAlgorithmField = function() {
     });
     
     input.addEventListener('input', () => {
-        setTimeout(() => {
+        if (input.parityTimeout) {
+            clearTimeout(input.parityTimeout);
+        }
+        input.parityTimeout = setTimeout(() => {
             if (document.activeElement !== input) {
                 updateParityLabel(input);
             }
-        }, 100);
+        }, 300);
     });
     
     input.focus();

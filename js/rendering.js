@@ -312,6 +312,7 @@ function showAlgoPopup(element, algo, isPermanent) {
     
     const popup = document.createElement('div');
     popup.className = 'algo-popup' + (isPermanent ? ' permanent' : '');
+    popup.dataset.isPermanent = isPermanent;
     
     const setupId = 'popup-setup-' + Math.random().toString(36).substr(2, 9);
     
@@ -328,8 +329,6 @@ function showAlgoPopup(element, algo, isPermanent) {
             </div>
         ` : ''}
     `;
-    
-    // Don't add hover handlers - scroll will close regardless
     
     document.body.appendChild(popup);
     
@@ -371,29 +370,35 @@ function showAlgoPopup(element, algo, isPermanent) {
     popup.style.top = top + 'px';
     popup.style.left = left + 'px';
     
+    // Add scroll handler - immediate close for all popups
+    const scrollHandler = () => {
+        if (isPermanent) {
+            hideAlgoPopup(element, true);
+        } else {
+            hideAlgoPopup(element, false);
+        }
+        window.removeEventListener('scroll', scrollHandler, true);
+        if (clickHandler) document.removeEventListener('mousedown', clickHandler);
+    };
+    window.addEventListener('scroll', scrollHandler, true);
+    
+    let clickHandler = null;
     if (isPermanent) {
         activePopup = popup;
         activePopupElement = element;
         
         // Add click outside handler - immediate close
         setTimeout(() => {
-            const closePopup = (e) => {
+            clickHandler = (e) => {
                 if (!popup.contains(e.target) && e.target !== element) {
                     hideAlgoPopup(element, true);
-                    document.removeEventListener('mousedown', closePopup);
+                    document.removeEventListener('mousedown', clickHandler);
                     window.removeEventListener('scroll', scrollHandler, true);
                 }
             };
-            document.addEventListener('mousedown', closePopup);
+            document.addEventListener('mousedown', clickHandler);
         }, 100);
     }
-    
-    // Add scroll handler for both permanent and non-permanent - immediate close
-    const scrollHandler = () => {
-        hideAlgoPopup(element, isPermanent);
-        window.removeEventListener('scroll', scrollHandler, true);
-    };
-    window.addEventListener('scroll', scrollHandler, true);
 }
 
 function hideAlgoPopup(element, isPermanent) {
@@ -404,14 +409,15 @@ function hideAlgoPopup(element, isPermanent) {
             activePopupElement = null;
         }
     } else {
-        // Delay hiding to allow moving mouse to popup
-        popupHoverTimeout = setTimeout(() => {
-            const hoverPopup = document.querySelector('.algo-popup:not(.permanent)');
-            if (hoverPopup && !hoverPopup.matches(':hover')) {
-                hoverPopup.remove();
-            }
+        // Immediately remove hover popup
+        const hoverPopup = document.querySelector('.algo-popup:not(.permanent)');
+        if (hoverPopup) {
+            hoverPopup.remove();
+        }
+        if (popupHoverTimeout) {
+            clearTimeout(popupHoverTimeout);
             popupHoverTimeout = null;
-        }, 100);
+        }
     }
 }
 

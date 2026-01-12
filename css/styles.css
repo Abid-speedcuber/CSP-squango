@@ -331,13 +331,13 @@ body.modal-open .floating-buttons-container {
     padding: 0;
     box-shadow: 0 4px 12px rgba(123, 123, 123, 0.4);
     width: 48px;
+    align-items: center;
 }
 
 .floating-buttons-container.expanded {
     gap: 8px;
-    padding: 8px;
-    border-radius: 28px;
-    width: 64px;
+    padding: 8px 0;
+    border-radius: 24px;
 }
 
 .floating-buttons-container .floating-settings-btn,
