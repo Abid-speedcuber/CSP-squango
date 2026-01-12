@@ -7,6 +7,43 @@ function wrapAlgorithmTokens(algo) {
     return algo.replace(/(\([^)]+\))/g, '<span style="white-space: nowrap;">$1</span>');
 }
 
+// Helper function to style algorithm with gray setup/finish moves
+function styleAlgorithmWithGrayMoves(algo) {
+    if (!algo || typeof algo !== 'string' || algo === 'Done!') return algo;
+    
+    const parts = algo.split('/');
+    
+    // If only one part or empty, return as is
+    if (parts.length <= 1) {
+        return wrapAlgorithmTokens(algo);
+    }
+    
+    // Check if starts with slash (first part empty)
+    const startsWithSlash = parts[0].trim() === '';
+    // Check if ends with slash (last part empty)
+    const endsWithSlash = parts[parts.length - 1].trim() === '';
+    
+    let styledParts = parts.map((part, idx) => {
+        // Skip styling for empty parts (from leading/trailing slashes)
+        if (part.trim() === '') return part;
+        
+        // First non-empty part (setup) - blue
+        if (idx === 0 && !startsWithSlash) {
+            return `<span style="color: #006affff;">${wrapAlgorithmTokens(part)}</span>`;
+        }
+        // Last non-empty part (finish) - light gray
+        else if (idx === parts.length - 1 && !endsWithSlash) {
+            return `<span style="color: #cccccc;">${wrapAlgorithmTokens(part)}</span>`;
+        }
+        // Middle parts - normal color
+        else {
+            return wrapAlgorithmTokens(part);
+        }
+    });
+    
+    return styledParts.join('/');
+}
+
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                                NAME DISPLAY                                ║
@@ -254,7 +291,7 @@ function renderShapePath(path) {
 }
 
 function renderAlgorithm(algoArray) {
-    return algoArray.map(algo => `<div class="algo-line">${wrapAlgorithmTokens(algo)}</div>`).join('');
+    return algoArray.map(algo => `<div class="algo-line">${styleAlgorithmWithGrayMoves(algo)}</div>`).join('');
 }
 
 function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
@@ -266,7 +303,7 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
-                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${wrapAlgorithmTokens(algo)}</div>`;
+                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${styleAlgorithmWithGrayMoves(algo)}</div>`;
     }).join('');
 }
 
