@@ -920,6 +920,7 @@ function renderCard(item) {
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div class="card-title">
                         ${displayName}
+                        ${perCaseSubtitles.has(item.name) ? `<div style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                         <div class="probability">${prob}%</div>

@@ -61,6 +61,7 @@ let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
 let customCaseNames = new Map();  // Stores {shape: "CustomText"}
 let swapShapeLR = new Map();      // Stores {shape: true/false} for swapping L/R at the base shape level
 let perCaseCustomNames = new Map(); // Stores {caseName: "CustomName"}
+let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
 let showPaths = true;         // Shape paths always shown
 let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = true; // Priority learning always enabled
@@ -195,6 +196,7 @@ try {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
         }
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
+        perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
@@ -302,6 +304,7 @@ function saveState() {
             scrambleImageSize: scrambleImageSize,
             customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
             perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
+            perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
             svgData: window.svgData,
@@ -333,6 +336,7 @@ function exportData() {
         scrambleImageSize: scrambleImageSize,
         customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
         perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
+        perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
         cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
         lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
@@ -370,6 +374,7 @@ function importData(jsonStr) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
         }
         perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
+        perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';

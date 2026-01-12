@@ -981,9 +981,14 @@ function openEditCaseModal(caseName) {
                         <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
                     </button>
                 </div>
+                ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: #888; margin-top: 4px;">${perCaseSubtitles.get(caseName)}</div>` : ''}
                 <button class="close-btn" onclick="closeEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Case Subtitle (optional):</label>
+                    <input type="text" id="caseSubtitleInput" value="${perCaseSubtitles.get(caseName) || ''}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; margin-bottom: 15px;">
+                </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algorithms:</label>
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
@@ -991,7 +996,7 @@ function openEditCaseModal(caseName) {
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
                                 <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
                                 <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
-                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0ff; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
                                     <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
                                 </button>
                             </div>
@@ -1193,6 +1198,17 @@ function closeEditCaseModal() {
 }
 
 function saveEditedCase(caseName, originalName) {
+    // Save subtitle
+    const subtitleInput = document.getElementById('caseSubtitleInput');
+    if (subtitleInput) {
+        const subtitle = subtitleInput.value.trim();
+        if (subtitle) {
+            perCaseSubtitles.set(caseName, subtitle);
+        } else {
+            perCaseSubtitles.delete(caseName);
+        }
+    }
+    
     const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
     
     // Collect all algorithms
