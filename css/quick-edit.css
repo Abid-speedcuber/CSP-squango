@@ -1,17 +1,24 @@
 /* Quick Edit Styles */
-.quick-edit-screen {
-    width: 95vw;
-    max-width: 1400px;
-    height: 90vh;
+.quick-edit-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     background: white;
-    border-radius: 12px;
+    z-index: 10000;
+}
+
+.quick-edit-screen {
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     overflow: hidden;
 }
 
 .quick-edit-header {
-    padding: 20px 30px;
+    padding: 8px 12px;
     background: #2d3748;
     color: white;
     display: flex;
@@ -20,45 +27,77 @@
     flex-shrink: 0;
 }
 
+.quick-edit-header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.quick-edit-header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .quick-edit-header h2 {
     margin: 0;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     font-weight: 600;
 }
 
 .quick-edit-tabs {
     display: flex;
-    gap: 0;
-    background: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-    padding: 0 30px;
-    flex-shrink: 0;
+    gap: 4px;
 }
 
 .quick-edit-tab {
-    padding: 12px 24px;
-    background: none;
+    padding: 6px 16px;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
+    border-radius: 4px;
     cursor: pointer;
     font-weight: 600;
-    font-size: 0.95rem;
-    color: #6c757d;
-    border-bottom: 3px solid transparent;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
     transition: all 0.2s;
 }
 
 .quick-edit-tab:hover {
-    color: #007bff;
-    background: rgba(0, 123, 255, 0.05);
+    color: white;
+    background: rgba(255, 255, 255, 0.15);
 }
 
 .quick-edit-tab.active {
-    color: #007bff;
-    border-bottom-color: #007bff;
+    color: white;
+    background: rgba(0, 123, 255, 0.8);
+}
+
+.quick-edit-icon-btn {
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+}
+
+.quick-edit-icon-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.quick-edit-icon-btn img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1);
 }
 
 .quick-edit-find-replace {
-    padding: 15px 30px;
+    padding: 8px 12px;
     background: #fff3cd;
     border-bottom: 1px solid #ffc107;
     flex-shrink: 0;
@@ -67,25 +106,25 @@
 .find-replace-content {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex-wrap: wrap;
 }
 
 .find-replace-content input {
-    padding: 8px 12px;
+    padding: 6px 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 0.9rem;
-    min-width: 200px;
+    min-width: 180px;
 }
 
 .find-replace-buttons {
     display: flex;
-    gap: 8px;
+    gap: 6px;
 }
 
 .find-replace-buttons button {
-    padding: 8px 16px;
+    padding: 6px 12px;
     background: #007bff;
     color: white;
     border: none;
@@ -110,7 +149,7 @@
 
 .find-replace-info {
     display: flex;
-    gap: 15px;
+    gap: 12px;
     font-size: 0.85rem;
     color: #666;
 }
@@ -118,7 +157,12 @@
 .quick-edit-body {
     flex: 1;
     overflow: auto;
-    padding: 20px 30px;
+    padding: 0;
+}
+
+.quick-edit-content {
+    height: 100%;
+    overflow: auto;
 }
 
 .quick-edit-table {
@@ -135,7 +179,7 @@
 }
 
 .quick-edit-table th {
-    padding: 12px;
+    padding: 8px 10px;
     text-align: left;
     font-weight: 600;
     color: #495057;
@@ -143,7 +187,7 @@
 }
 
 .quick-edit-table td {
-    padding: 10px 12px;
+    padding: 6px 10px;
     border-bottom: 1px solid #e9ecef;
     vertical-align: middle;
 }
@@ -156,7 +200,7 @@
 
 .quick-edit-table td.editable {
     cursor: text;
-    min-height: 40px;
+    min-height: 32px;
     transition: background 0.2s;
 }
 

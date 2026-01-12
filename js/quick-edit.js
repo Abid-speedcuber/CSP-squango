@@ -13,21 +13,39 @@ function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
     
+    // Store initial state for reverting
+    window.quickEditInitialState = {
+        perCaseCustomNames: new Map(perCaseCustomNames),
+        perCaseSubtitles: new Map(perCaseSubtitles),
+        comments: new Map(comments),
+        customAlgorithms: new Map(customAlgorithms)
+    };
+    
     const modal = document.createElement('div');
-    modal.className = 'modal active';
+    modal.className = 'quick-edit-fullscreen';
     modal.id = 'quickEditModal';
-    modal.style.background = 'rgba(0, 0, 0, 0.5)';
     
     modal.innerHTML = `
         <div class="quick-edit-screen">
             <div class="quick-edit-header">
-                <h2>Quick Edit - All Cases</h2>
-                <button class="close-btn" onclick="closeQuickEditModal()">&times;</button>
-            </div>
-            
-            <div class="quick-edit-tabs">
-                <button class="quick-edit-tab active" data-tab="general" onclick="switchQuickEditTab('general')">General Info</button>
-                <button class="quick-edit-tab" data-tab="algorithms" onclick="switchQuickEditTab('algorithms')">Algorithms</button>
+                <div class="quick-edit-header-left">
+                    <h2>Quick Edit - All Cases</h2>
+                    <div class="quick-edit-tabs">
+                        <button class="quick-edit-tab active" data-tab="general" onclick="switchQuickEditTab('general')">General Info</button>
+                        <button class="quick-edit-tab" data-tab="algorithms" onclick="switchQuickEditTab('algorithms')">Algorithms</button>
+                    </div>
+                </div>
+                <div class="quick-edit-header-right">
+                    <button class="quick-edit-icon-btn" onclick="revertQuickEditChanges()" title="Revert to last save">
+                        <img src="res/revert.svg" alt="Revert">
+                    </button>
+                    <button class="quick-edit-icon-btn" onclick="saveQuickEditChanges()" title="Save changes">
+                        <img src="res/save.svg" alt="Save">
+                    </button>
+                    <button class="quick-edit-icon-btn" onclick="closeQuickEditModal()" title="Exit">
+                        <img src="res/exit.svg" alt="Exit">
+                    </button>
+                </div>
             </div>
             
             <div class="quick-edit-find-replace" id="quickEditFindReplace" style="display: none;">
@@ -83,11 +101,6 @@ function openQuickEditModal() {
                     </table>
                 </div>
             </div>
-            
-            <div class="quick-edit-footer">
-                <button class="quick-edit-save-btn" onclick="saveQuickEditChanges()">Save All Changes</button>
-                <button class="quick-edit-cancel-btn" onclick="closeQuickEditModal()">Cancel</button>
-            </div>
         </div>
     `;
     
@@ -103,7 +116,7 @@ function openQuickEditModal() {
 
 function generateGeneralTableRows() {
     return data.map(item => {
-        const displayName = perCaseCustomNames.has(item.name) ? perCaseCustomNames.get(item.name) : 'default';
+        const displayName = perCaseCustomNames.has(item.name) ? perCaseCustomNames.get(item.name) : getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
         
@@ -182,13 +195,18 @@ function setupQuickEditCellHandlers() {
             cell.addEventListener('blur', function() {
                 updateAlgorithmCellParity(this);
             });
-            
-            // Initial parity update
-            if (this.textContent.trim()) {
-                updateAlgorithmCellParity(cell);
-            }
         }
     });
+    
+    // Update parity for all algorithm cells after setup
+    setTimeout(() => {
+        const algCells = modal.querySelectorAll('.alg-cell');
+        algCells.forEach(cell => {
+            if (cell.textContent.trim()) {
+                updateAlgorithmCellParity(cell);
+            }
+        });
+    }, 100);
 }
 
 function updateAlgorithmCellParity(cell) {
@@ -452,8 +470,10 @@ function saveQuickEditChanges() {
         const subtitle = subtitleCell.textContent.trim();
         const notes = notesCell.textContent.trim();
         
-        // Save display name
-        if (displayName && displayName !== 'default') {
+        const defaultDisplayName = getDisplayName(caseName);
+        
+        // Save display name (only if different from default)
+        if (displayName && displayName !== defaultDisplayName) {
             perCaseCustomNames.set(caseName, displayName);
         } else {
             perCaseCustomNames.delete(caseName);
@@ -494,6 +514,14 @@ function saveQuickEditChanges() {
         }
     });
     
+    // Update initial state checkpoint
+    window.quickEditInitialState = {
+        perCaseCustomNames: new Map(perCaseCustomNames),
+        perCaseSubtitles: new Map(perCaseSubtitles),
+        comments: new Map(comments),
+        customAlgorithms: new Map(customAlgorithms)
+    };
+    
     // Recalculate parity
     calculateAndCacheAllParity();
     
@@ -501,7 +529,6 @@ function saveQuickEditChanges() {
     saveState();
     render();
     
-    closeQuickEditModal();
     showToast('All changes saved successfully!', 2000, 'success');
 }
 
@@ -523,8 +550,27 @@ function closeQuickEditModal() {
     };
 }
 
+function revertQuickEditChanges() {
+    if (!window.quickEditInitialState) return;
+    
+    showConfirmation('Are you sure you want to revert all changes to the last save point?', () => {
+        // Restore initial state
+        perCaseCustomNames = new Map(window.quickEditInitialState.perCaseCustomNames);
+        perCaseSubtitles = new Map(window.quickEditInitialState.perCaseSubtitles);
+        comments = new Map(window.quickEditInitialState.comments);
+        customAlgorithms = new Map(window.quickEditInitialState.customAlgorithms);
+        
+        // Close and reopen modal to refresh
+        closeQuickEditModal();
+        openQuickEditModal();
+        
+        showToast('Reverted to last save point', 2000, 'info');
+    });
+}
+
 // Make functions globally accessible
 window.openQuickEditModal = openQuickEditModal;
+window.revertQuickEditChanges = revertQuickEditChanges;
 window.closeQuickEditModal = closeQuickEditModal;
 window.switchQuickEditTab = switchQuickEditTab;
 window.findNextQuickEdit = findNextQuickEdit;
