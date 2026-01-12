@@ -25,11 +25,11 @@ function generateModalHTML() {
     
     modalContainer.innerHTML = `
         <div id="settingsModal" class="modal">
-            <div class="modal-content" style="max-width: 450px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;">
-                <div class="modal-header" style="flex-shrink: 0; background: #2d3748; color: white; padding: 20px 25px;">
+            <div class="modal-content" style="max-width: 480px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
+                <div class="modal-header" style="flex-shrink: 0; background: white; color: #2d3748; padding: 24px 28px; border-bottom: 2px solid #e9ecef;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="modal-title" style="font-size: 1.6rem; font-weight: 700; color: white;">Personalization</span>
-                        <button onclick="showSettingsInfoModal()" class="settings-info-btn" style="background: rgba(255, 255, 255, 0.15); border: none; color: white; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
+                        <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">Personalization</span>
+                        <button onclick="showSettingsInfoModal()" class="settings-info-btn" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Personalization Guide" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -37,30 +37,31 @@ function generateModalHTML() {
                             </svg>
                         </button>
                     </div>
-                    <button class="close-btn" onclick="closeSettingsModal()" style="color: white; opacity: 0.9;">&times;</button>
+                    <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
                 </div>
-                <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 25px; background: #fafafa;">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
                     
                     <!-- Display Options Section -->
-                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Display Options</h3>
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding: 10px 0;">
-                            <label for="hintToggle" style="color: #4a5568; font-weight: 500;">Show Tracing Guides</label>
-                            <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Display Options</h3>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                            <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
+                            <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
-                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 10px 0;">
-                            <label for="hideInstructionsToggle" style="color: #4a5568; font-weight: 500;">Hide Instruction Buttons</label>
-                            <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.4); cursor: pointer;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
+                            <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                     </div>
 
                     <!-- Customization Section -->
-                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Customization</h3>
-                        <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Color Scheme Settings</button>
-                        <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
-                        <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Tracing Guides</button>
-                    </div>                   
+                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px;">
+                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Customization</h3>
+                        <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
+                        <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Case Name Settings</button>
+                        <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Customize Tracing Guides</button>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -846,39 +847,23 @@ function showSettingsInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Enable <strong>"Show Tracing Guides"</strong> to display tracing paths on cubeshape images.</div>
+                        <div class="training-info-text"><strong>"Show Tracing Guides"</strong> displays visual tracing paths on cubeshape images to help you learn Kale's parity tracing method.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Enable <strong>"Show Shape Paths"</strong> to see how the cubeshape transforms step-by-step as you execute the algorithm.</div>
+                        <div class="training-info-text"><strong>"Hide Instruction Buttons"</strong> removes all help buttons (ⓘ) throughout the app once you're familiar with the features.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text"><strong>"Dynamically Decide Even/Odd"</strong> determines parity based on your personal tracing path, making the app fully personalized to your solving style.</div>
+                        <div class="training-info-text"><strong>"Color Scheme Settings"</strong> customizes your cube's colors for parity analysis and scramble images. Changing colors will recalculate all parity determinations to match your scheme.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>"Priority Based Learning"</strong> enables you to group cases into priority levels for a more organized learning experience.</div>
+                        <div class="training-info-text"><strong>"Case Name Settings"</strong> lets you rename cases with custom names or choose from preset alternatives (e.g., "Pair" instead of "Paired Edges", "L-Shape" instead of "Perpendicular Edges").</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>"Color Scheme Settings"</strong> allows you to select your preferred color scheme for parity tracing and scramble image generation.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">6</div>
-                        <div class="training-info-text"><strong>"Case Name Settings"</strong> lets you customize the display name for any case to match your preferences.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">7</div>
-                        <div class="training-info-text"><strong>"Hide Instruction Buttons"</strong> removes all instruction buttons throughout the app once you're familiar with the features.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">8</div>
-                        <div class="training-info-text"><strong>"Export Data"</strong> saves all your progress, preferences, and custom settings to a JSON file for backup or transfer.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">9</div>
-                        <div class="training-info-text"><strong>"Import Data"</strong> restores your previously exported progress and settings from a JSON file.</div>
+                        <div class="training-info-text"><strong>"Customize Tracing Guides"</strong> allows you to edit the appearance of tracing paths, including colors, line styles, and starting positions for each cubeshape.</div>
                     </div>
                 </div>
             </div>

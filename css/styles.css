@@ -230,9 +230,27 @@ select {
     transform: translateX(-7%);
 }
 
+@media (min-width: 200px) and (max-width: 320px) {
+    .card-svg-container > div {
+        transform: translateX(-30%);
+    }
+}
+
 @media (min-width: 440px) and (max-width: 649px) {
     .card-svg-container > div {
         transform: translateX(7%);
+    }
+}
+
+@media (min-width: 810px) and (max-width: 1000px) {
+    .card-svg-container > div {
+        transform: translateX(5%);
+    }
+}
+
+@media (min-width: 1000px) and (max-width: 1040px) {
+    .card-svg-container > div {
+        transform: translateX(13%);
     }
 }
 
@@ -335,8 +353,8 @@ body.modal-open .floating-buttons-container {
 }
 
 .floating-buttons-container.expanded {
-    gap: 8px;
-    padding: 8px 0;
+    gap: 2px;
+    padding: 0;
     border-radius: 24px;
 }
 
@@ -366,6 +384,10 @@ body.modal-open .floating-buttons-container {
 
 .floating-buttons-container.expanded .menu-action-btn {
     display: flex;
+}
+
+.floating-buttons-container.expanded .floating-settings-btn {
+    display: none;
 }
 
 .floating-buttons-container .menu-action-btn:hover {
