@@ -28,7 +28,7 @@ function generateModalHTML() {
             <div class="modal-content" style="max-width: 450px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;">
                 <div class="modal-header" style="flex-shrink: 0; background: #2d3748; color: white; padding: 20px 25px;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="modal-title" style="font-size: 1.6rem; font-weight: 700; color: white;">Settings</span>
+                        <span class="modal-title" style="font-size: 1.6rem; font-weight: 700; color: white;">Personalization</span>
                         <button onclick="showSettingsInfoModal()" class="settings-info-btn" style="background: rgba(255, 255, 255, 0.15); border: none; color: white; cursor: pointer; padding: 6px; border-radius: 6px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
@@ -60,27 +60,7 @@ function generateModalHTML() {
                         <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Color Scheme Settings</button>
                         <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Case Name Settings</button>
                         <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Customize Tracing Guides</button>
-                    </div>
-
-                    <!-- Data Management Section -->
-                    <div style="background: white; border-radius: 10px; padding: 20px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Data Management</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                            <button onclick="exportData()" style="padding: 12px 16px; background: #4a5568; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">Export Data</button>
-                            <label style="padding: 12px 16px; background: #4a5568; color: white; border-radius: 8px; cursor: pointer; text-align: center; font-size: 0.95rem; font-weight: 600; margin: 0; display: flex; align-items: center; justify-content: center; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(74, 85, 104, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(74, 85, 104, 0.4)'; this.style.background='#2d3748'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(74, 85, 104, 0.3)'; this.style.background='#4a5568'">
-                                Import Data
-                                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0])">
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- About Section -->
-                    <div style="background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
-                        <h3 style="margin: 0 0 18px 0; font-size: 1.1rem; color: #2d3748; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">About</h3>
-                        <button onclick="openSuggestModal()" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; margin-bottom: 12px; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(108, 117, 125, 0.4)'; this.style.background='#5a6268'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(108, 117, 125, 0.3)'; this.style.background='#6c757d'">Suggest Updates / Report Bugs</button>
-                        <button onclick="openConfessionModal()" style="padding: 12px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; width: 100%; font-weight: 600; font-size: 1rem; transition: transform 0.2s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(108, 117, 125, 0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(108, 117, 125, 0.4)'; this.style.background='#5a6268'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(108, 117, 125, 0.3)'; this.style.background='#6c757d'">Confession and credits</button>
-                    </div>
-
+                    </div>                   
                 </div>
             </div>
         </div>
@@ -254,6 +234,119 @@ function generateModalHTML() {
     </div>
   </div>
 </div>
+
+        <div id="profileModal" class="modal" style="background: transparent;">
+            <div class="modal-content" style="max-width: 300px; margin: 70px 20px 20px auto; margin-right: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
+                <div class="modal-body" style="padding: 0; background: white; border-radius: 16px;">
+                    <!-- Profile Header -->
+                    <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
+                        <img src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px;">
+                        <h3 style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
+                    </div>
+                    
+                    <!-- Progress Stats -->
+                    <div style="padding: 15px;">
+                        <!-- Cases Learned Progress -->
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileLearnedProgress" style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
+                                    <span id="profileLearnedText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Coverage Progress -->
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileCoverageProgress" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
+                                    <span id="profileCoverageText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Safety Progress -->
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileSafetyProgress" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
+                                    <span id="profileSafetyText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Management -->
+                    <div style="padding: 0 15px 15px; border-top: 1px solid #e9ecef; padding-top: 15px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                            <button onclick="exportData(); closeProfileModal();" style="padding: 8px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">Export</button>
+                            <label style="padding: 8px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; text-align: center; font-size: 0.8rem; font-weight: 600; margin: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                                Import
+                                <input type="file" id="profileImportFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0]); closeProfileModal();">
+                            </label>
+                        </div>
+                        <button onclick="openAboutModal(); closeProfileModal();" style="padding: 8px 16px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">About</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="aboutModal" class="modal">
+            <div class="modal-content" style="max-width: 650px; margin-top: 60px; border-radius: 12px; overflow: hidden;">
+                <div class="modal-header" style="background: #2d3748; color: white; padding: 20px 25px;">
+                    <span class="modal-title" style="font-size: 1.4rem; font-weight: 600;">About SquanGo CSP</span>
+                    <button class="close-btn" onclick="closeAboutModal()" style="color: white; opacity: 0.9;">&times;</button>
+                </div>
+                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fafafa; padding: 25px 30px; color: #2d3748; line-height: 1.6;">
+                    
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Developer</p>
+                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Created by <strong>Abid Ibn Ashraf</strong></p>
+                        <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20General%20Inquiry&body=Hey!%0D%0A%0D%0AI%20wanted%20to%20reach%20out%20about%20the%20Square-1%20Parity%20app.%0D%0A" 
+                          style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; transition: background 0.2s;" 
+                          onmouseover="this.style.background='#5a6268'" 
+                          onmouseout="this.style.background='#6c757d'">Contact Me</a>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">How This Was Built</p>
+                        <p style="margin: 0; font-size: 0.95rem; color: #6c757d;">Full transparency: this app is built almost entirely with AI. I probably manually wrote like 60 lines of code myself. The AI I mainly used was Claude Sonnet 4.5 and a bit of ChatGPT o1. Turns out with enough willpower, you can build pretty much anything with AI these days.</p>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Main Credit</p>
+                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Most of the credit goes to <strong>Eva Kato (Hashtag Cuber)</strong> and her CSP website. This started as a personal tool to keep me motivated while learning CSP, so I borrowed the layout and algorithm data from her GitHub repo. When I realized the community might find it useful, I reached out to Eva and she was super chill about letting me publish it. Big W for Hashtag Cuber.</p>
+                        <a href="https://hashtagcuber.com/csp/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Check out her CSP website →</a>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Scramble Generator</p>
+                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">The Square-1 scramble generator code is from csTimer's GitHub, written by Shuang Chen (cs0x7f) under GPL-3.0 license.</p>
+                        <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View the code on GitHub →</a>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Feedback & Bug Reports</p>
+                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">If you have suggestions for new features or have encountered any issues such as bugs, incorrect algorithms, or mislabeled cases, please report them via email.</p>
+                        <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20Feedback%20or%20Bug%20Report&body=Hello,%0D%0A%0D%0AI%20would%20like%20to%20report%20the%20following:%0D%0A%0D%0A---%0D%0A(Please%20describe%20your%20suggestion%20or%20issue%20here)%0D%0A%0D%0AApp%20Version:%20v1.0%0D%0ADevice/Browser:%20" 
+                          style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; transition: background 0.2s;" 
+                          onmouseover="this.style.background='#5a6268'" 
+                          onmouseout="this.style.background='#6c757d'">Send Feedback</a>
+                    </div>
+
+                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px;">
+                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Open Source</p>
+                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">This application is open source. You can view the code, suggest improvements, or create your own modified version.</p>
+                        <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View on GitHub →</a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
     `;
     
     document.body.appendChild(modalContainer);
@@ -747,7 +840,7 @@ function showSettingsInfoModal() {
         infoModal.innerHTML = `
             <div class="training-info-content">
                 <div class="training-info-header">
-                    <span class="training-info-title">Settings Guide</span>
+                    <span class="training-info-title">Personalization Guide</span>
                     <button class="training-info-close" onclick="closeSettingsInfoModal()">&times;</button>
                 </div>
                 <div class="training-info-body">
@@ -821,7 +914,7 @@ function showHomepageInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Click the <strong>menu button</strong> (top right) to access Settings, Parity Tracer, Notes, and Instructions.</div>
+                        <div class="training-info-text">Click the <strong>profile button</strong> (top right) to view your progress stats, export/import data, and access the About page. Click other menu buttons for Personalization, Parity Tracer, and Notes.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
@@ -1372,3 +1465,87 @@ window.showConfirmation = function(message, onConfirm, onCancel) {
         if (onCancel) onCancel();
     };
 };
+
+// Profile Modal Functions
+function openProfileModal() {
+    const modal = document.getElementById('profileModal');
+    modal.style.display = 'block';
+    
+    // Update progress bars
+    updateProfileStats();
+    
+    // Add click outside handler
+    setTimeout(() => {
+        const clickHandler = (e) => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (!modalContent.contains(e.target)) {
+                closeProfileModal();
+                document.removeEventListener('mousedown', clickHandler);
+                window.removeEventListener('scroll', scrollHandler, true);
+            }
+        };
+        
+        const scrollHandler = () => {
+            closeProfileModal();
+            document.removeEventListener('mousedown', clickHandler);
+            window.removeEventListener('scroll', scrollHandler, true);
+        };
+        
+        document.addEventListener('mousedown', clickHandler);
+        window.addEventListener('scroll', scrollHandler, true);
+    }, 100);
+}
+
+function closeProfileModal() {
+    const modal = document.getElementById('profileModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+function updateProfileStats() {
+    const totalCases = data.length;
+    const learnedCount = learnedCases.size;
+    const learnedPercent = (learnedCount / totalCases) * 100;
+    
+    const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
+    const learnedProbability = data
+        .filter(item => learnedCases.has(item.name))
+        .reduce((sum, item) => sum + item.probability, 0);
+    
+    const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
+    
+    const x = learnedCount;
+    const exp = Math.exp;
+    const numerator = 1 / (1 + exp(-12 * ((x - 1) / 89 - 0.4170435672))) - 1 / (1 + exp(-12 * (0 - 0.4170435672)));
+    const denominator = 1 / (1 + exp(-12 * (1 - 0.4170435672))) - 1 / (1 + exp(-12 * (0 - 0.4170435672)));
+    const c = 80 + 14 * (numerator / denominator);
+    const safety = coverage * c / 100 + 0.5 * (100 - coverage);
+    
+    // Update learned progress
+    document.getElementById('profileLearnedProgress').style.width = learnedPercent + '%';
+    document.getElementById('profileLearnedText').textContent = learnedCount + '/90';
+    
+    // Update coverage progress
+    document.getElementById('profileCoverageProgress').style.width = coverage + '%';
+    document.getElementById('profileCoverageText').textContent = coverage.toFixed(1) + '%';
+    
+    // Update safety progress
+    document.getElementById('profileSafetyProgress').style.width = (Math.round(safety * 2) / 2) + '%';
+    document.getElementById('profileSafetyText').textContent = (Math.round(safety * 2) / 2).toFixed(1) + '%';
+}
+
+// About Modal Functions
+function openAboutModal() {
+    const modal = document.getElementById('aboutModal');
+    modal.style.display = 'block';
+    document.body.classList.add('modal-open');
+    
+    pushModalState('aboutModal', closeAboutModal);
+}
+
+function closeAboutModal() {
+    const modal = document.getElementById('aboutModal');
+    modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
+}

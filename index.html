@@ -43,40 +43,13 @@
             <div id="floatingButtonsContainer" class="floating-buttons-container">
                 <button id="menuBtn" class="floating-settings-btn" aria-label="Menu"><img
                         src="res/menu.svg" height="24px" width="24px"></button>
+                <button class="menu-action-btn" onclick="openProfileModal(); collapseMenu();"><img src="res/avatar.svg"></button>
                 <button class="menu-action-btn" onclick="openSettingsModal(); collapseMenu();"><img src="res/settings.svg"></button>
                 <button class="menu-action-btn" onclick="openNewParityAnalysis(''); collapseMenu();"><img src="res/tracer.svg"></button>
                 <button class="menu-action-btn" onclick="openGeneralNotesModal(); collapseMenu();"><img src="res/notes.svg"></button>
                 <button class="menu-action-btn instruction-btn" onclick="showHomepageInfoModal(); collapseMenu();"><img src="res/info.svg"></button>
             </div>
-        </header>
-
-        <div class="topbar">
-            <div style="text-align: center;">
-                <div class="desktop-stats" style="margin-bottom: 8px; font-size: 1.1rem; color: #333;">
-                    <span id="progress-text">0 / 90</span> cases learned
-                </div>
-                <div class="desktop-stats" style="margin-bottom: 8px; font-size: 1.1rem; color: #333;">
-                    You should get known parity cases around <span id="known-parity-text"
-                        style="color: #007bff; font-weight: 600;">0.000%</span> of the solves
-                </div>
-                <div class="desktop-stats" style="font-size: 1.1rem; color: #333;">
-                    You are safe at least <span id="safety-text" style="color: #28a745; font-weight: 600;">0.000%</span>
-                    of the times
-                </div>
-                <div class="mobile-stats" style="font-size: 0.9rem; color: #333; text-align: center;">
-                    <span id="progress-text-mobile">0/90</span> • Coverage: <span id="known-parity-text-mobile"
-                        style="color: #007bff; font-weight: 600;">0%</span> • Safe: <span id="safety-text-mobile"
-                        style="color: #28a745; font-weight: 600;">0%</span>
-                </div>
-                <!--<div style="margin-top: 15px;">
-            <button onclick="exportData()" style="padding: 8px 16px; margin-right: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Export Data</button>
-            <label style="padding: 8px 16px; background: #28a745; color: white; border-radius: 4px; cursor: pointer; display: inline-block;">
-                Import Data
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0])">
-            </label>
-        </div>-->
-            </div>
-        </div>
+        </header>     
 
         <div class="controls">
             <button id="searchToggle" class="search-toggle-btn"

@@ -417,8 +417,6 @@ let searchInput = null;
 let sortSelect = null;
 let learnFilterSelect = null;
 let grid = null;
-let progressText = null;
-let safetyText = null;
 
 // Initialize DOM references
 function initializeDOMReferences() {
@@ -426,16 +424,12 @@ function initializeDOMReferences() {
     sortSelect = document.getElementById('sort');
     learnFilterSelect = document.getElementById('learnFilter');
     grid = document.getElementById('grid');
-    progressText = document.getElementById('progress-text');
-    safetyText = document.getElementById('safety-text');
 
     const refsFound = {
         searchInput: !!searchInput,
         sortSelect: !!sortSelect,
         learnFilterSelect: !!learnFilterSelect,
-        grid: !!grid,
-        progressText: !!progressText,
-        safetyText: !!safetyText
+        grid: !!grid
     };
 }
 

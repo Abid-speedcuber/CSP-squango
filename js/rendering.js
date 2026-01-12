@@ -628,8 +628,6 @@ function updateProgress() {
     const totalCases = data.length;
     const learnedCount = learnedCases.size;
 
-    progressText.textContent = `${learnedCount} / ${totalCases}`;
-
     const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
     const learnedProbability = data
         .filter(item => learnedCases.has(item.name))
@@ -646,18 +644,14 @@ function updateProgress() {
 
     // Calculate safety
     const safety = p * c / 100 + 0.5 * (100 - p);
-
-    document.getElementById('known-parity-text').textContent = p.toFixed(1) + '%';
-    safetyText.textContent = (Math.round(safety * 2) / 2).toFixed(1) + '%';
     
-    // Update mobile stats
-    const mobileProgress = document.getElementById('progress-text-mobile');
-    const mobileKnown = document.getElementById('known-parity-text-mobile');
-    const mobileSafety = document.getElementById('safety-text-mobile');
-    
-    if (mobileProgress) mobileProgress.textContent = `${learnedCount}/${totalCases}`;
-    if (mobileKnown) mobileKnown.textContent = p.toFixed(1) + '%';
-    if (mobileSafety) mobileSafety.textContent = (Math.round(safety * 2) / 2).toFixed(1) + '%';
+    // Update profile modal if open
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal && profileModal.style.display === 'block') {
+        if (typeof updateProfileStats === 'function') {
+            updateProfileStats();
+        }
+    }
 }
 
 function toggleLearned(name, event = null) {
