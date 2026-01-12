@@ -1,0 +1,265 @@
+/* Quick Edit Styles */
+.quick-edit-screen {
+    width: 95vw;
+    max-width: 1400px;
+    height: 90vh;
+    background: white;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.quick-edit-header {
+    padding: 20px 30px;
+    background: #2d3748;
+    color: white;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.quick-edit-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.quick-edit-tabs {
+    display: flex;
+    gap: 0;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    padding: 0 30px;
+    flex-shrink: 0;
+}
+
+.quick-edit-tab {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #6c757d;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+}
+
+.quick-edit-tab:hover {
+    color: #007bff;
+    background: rgba(0, 123, 255, 0.05);
+}
+
+.quick-edit-tab.active {
+    color: #007bff;
+    border-bottom-color: #007bff;
+}
+
+.quick-edit-find-replace {
+    padding: 15px 30px;
+    background: #fff3cd;
+    border-bottom: 1px solid #ffc107;
+    flex-shrink: 0;
+}
+
+.find-replace-content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.find-replace-content input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    min-width: 200px;
+}
+
+.find-replace-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.find-replace-buttons button {
+    padding: 8px 16px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.find-replace-buttons button:hover {
+    background: #0056b3;
+}
+
+.find-replace-buttons button:last-child {
+    background: #6c757d;
+}
+
+.find-replace-buttons button:last-child:hover {
+    background: #5a6268;
+}
+
+.find-replace-info {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.quick-edit-body {
+    flex: 1;
+    overflow: auto;
+    padding: 20px 30px;
+}
+
+.quick-edit-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.quick-edit-table thead {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 10;
+}
+
+.quick-edit-table th {
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.quick-edit-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.quick-edit-table td.uneditable {
+    background: #f8f9fa;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+.quick-edit-table td.editable {
+    cursor: text;
+    min-height: 40px;
+    transition: background 0.2s;
+}
+
+.quick-edit-table td.editable:hover {
+    background: #f8f9fa;
+}
+
+.quick-edit-table td.editable:focus {
+    outline: 2px solid #007bff;
+    outline-offset: -2px;
+    background: white;
+}
+
+.quick-edit-table tr:hover td {
+    background: #f8f9fa;
+}
+
+.quick-edit-table tr:hover td.editable:hover {
+    background: #e9ecef;
+}
+
+.quick-edit-footer {
+    padding: 20px 30px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.quick-edit-save-btn,
+.quick-edit-cancel-btn {
+    padding: 12px 32px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.quick-edit-save-btn {
+    background: #28a745;
+    color: white;
+}
+
+.quick-edit-save-btn:hover {
+    background: #218838;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+}
+
+.quick-edit-cancel-btn {
+    background: #6c757d;
+    color: white;
+}
+
+.quick-edit-cancel-btn:hover {
+    background: #5a6268;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quick-edit-screen {
+        width: 100vw;
+        height: 100vh;
+        border-radius: 0;
+    }
+    
+    .quick-edit-header {
+        padding: 15px 20px;
+    }
+    
+    .quick-edit-header h2 {
+        font-size: 1.2rem;
+    }
+    
+    .quick-edit-tabs {
+        padding: 0 20px;
+    }
+    
+    .quick-edit-body {
+        padding: 15px 20px;
+    }
+    
+    .quick-edit-table {
+        font-size: 0.8rem;
+    }
+    
+    .quick-edit-table th,
+    .quick-edit-table td {
+        padding: 8px;
+    }
+    
+    .find-replace-content {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .find-replace-content input {
+        min-width: 100%;
+    }
+}
