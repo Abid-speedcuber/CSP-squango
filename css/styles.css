@@ -317,10 +317,6 @@ body.modal-open .floating-buttons-container {
     right: calc(20px + var(--scrollbar-width, 0px));
 }
 
-body.modal-open .floating-settings-btn {
-    right: calc(20px + var(--scrollbar-width, 0px));
-}
-
 .floating-buttons-container {
     position: fixed;
     top: 20px;
@@ -334,12 +330,14 @@ body.modal-open .floating-settings-btn {
     border-radius: 24px;
     padding: 0;
     box-shadow: 0 4px 12px rgba(123, 123, 123, 0.4);
+    width: 48px;
 }
 
 .floating-buttons-container.expanded {
     gap: 8px;
     padding: 8px;
     border-radius: 28px;
+    width: 64px;
 }
 
 .floating-buttons-container .floating-settings-btn,
@@ -582,6 +580,8 @@ details summary::marker {
     right: 20px;
     width: 48px;
     height: 48px;
+    min-width: 48px;
+    min-height: 48px;
     border-radius: 50%;
     background: white;
     color: black;
@@ -595,6 +595,7 @@ details summary::marker {
     transition: all 0.3s ease, transform 0.3s ease;
     padding: 0;
     transform-origin: top right;
+    flex-shrink: 0;
 }
 
 .homepage-info-btn {
@@ -624,9 +625,11 @@ body.modal-open .homepage-info-btn {
     }
 }
 
-.floating-settings-btn svg {
+.floating-settings-btn svg,
+.floating-settings-btn img {
     width: 24px;
     height: 24px;
+    flex-shrink: 0;
 }
 
 /* Mobile Responsive Styles */

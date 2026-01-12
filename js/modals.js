@@ -821,35 +821,39 @@ function showHomepageInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Click the underlined <strong>"Parity"</strong> text in the header to open Kale's parity tracing tool.</div>
+                        <div class="training-info-text">Click the <strong>menu button</strong> (top right) to access Settings, Parity Tracer, Notes, and Instructions.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Click on any case name to view detailed information including setup moves, shape paths, and training options.</div>
+                        <div class="training-info-text">Click the <strong>checkmark</strong> to cycle: Unlearned → Learning → Learned. Right-click to reverse: Learned → Learning → Unlearned.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">Click the checkmark to cycle a case through: Unlearned → Learning → Learned. Right-click to jump directly from Unlearned to Learned.</div>
+                        <div class="training-info-text">Click the <strong>three dots menu</strong> on any case to adjust priority, add notes, train the case, or edit algorithms.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">Enable <strong>Priority Based Learning</strong> in Settings to assign priority levels to cases using the arrow buttons.</div>
+                        <div class="training-info-text"><strong>Hover</strong> over any algorithm to see its setup and shape path. <strong>Click</strong> to keep the popup open, then click the setup to analyze parity.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text">The <strong style="color: #007bff;">blue percentage</strong> at the top shows the total probability of all your learned cases - this is your chance of encountering known parity cases.</div>
+                        <div class="training-info-text">The <strong style="color: #007bff;">blue percentage</strong> shows your coverage - the probability of encountering a known parity case.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
-                        <div class="training-info-text">The <strong style="color: #28a745;">green percentage</strong> indicates how often you can expect no parity issues (since you naturally avoid parity half the time on unknown cases).</div>
+                        <div class="training-info-text">The <strong style="color: #28a745;">green percentage</strong> shows your safety - accounting for both known cases and the 50% chance of avoiding parity on unknown cases.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">7</div>
-                        <div class="training-info-text">Use the <strong>"Show All"</strong> dropdown to filter cases - show only learned, exclude learned, or view all cases.</div>
+                        <div class="training-info-text">Use <strong>Priority</strong> sorting to organize cases by learning priority (1-7). Adjust priorities via the three dots menu.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">8</div>
-                        <div class="training-info-text">Look for instruction buttons (like this one) throughout the app for contextual help. You can hide them anytime from Settings.</div>
+                        <div class="training-info-text">Use <strong>Color Scheme Settings</strong> to customize cube colors for parity tracing and scramble images to match your preferences.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">9</div>
+                        <div class="training-info-text"><strong>Export/Import Data</strong> in Settings to backup your progress or transfer between devices.</div>
                     </div>
                 </div>
             </div>
@@ -945,9 +949,12 @@ function openEditCaseModal(caseName) {
             });
             
             input.addEventListener('input', () => {
-                if (document.activeElement !== input) {
-                    updateParityLabel(input);
-                }
+                // Always update on input, but check focus before showing
+                setTimeout(() => {
+                    if (document.activeElement !== input) {
+                        updateParityLabel(input);
+                    }
+                }, 100);
             });
         });
     }, 100);
@@ -1012,6 +1019,14 @@ window.addNewAlgorithmField = function() {
     
     input.addEventListener('blur', () => {
         updateParityLabel(input);
+    });
+    
+    input.addEventListener('input', () => {
+        setTimeout(() => {
+            if (document.activeElement !== input) {
+                updateParityLabel(input);
+            }
+        }, 100);
     });
     
     input.focus();
