@@ -15,7 +15,9 @@ const SVGEditor = {
     historyIndices: {},
     isSidebarCollapsed: false,
     touchStartPos: null,
-    currentZoom: 100
+    currentZoom: 100,
+    keysPressed: new Set(),
+    keyMoveInterval: null
 },
 
     init() {
@@ -100,30 +102,53 @@ if (zoomSlider) {
         window.addEventListener('resize', () => this.updateResponsiveUI());
 
         // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (!document.getElementById('svgEditorModal') || 
-                document.getElementById('svgEditorModal').style.display === 'none') return;
+document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('svgEditorModal') || 
+        document.getElementById('svgEditorModal').style.display === 'none') return;
 
-            if (e.key === 'Escape') {
-                this.close();
-            } else if (e.ctrlKey && e.key === 'z') {
-                e.preventDefault();
-                this.undo();
-            } else if (e.ctrlKey && e.key === 'y') {
-                e.preventDefault();
-                this.redo();
-            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                if (this.state.selectedElements.size > 0) {
-                    e.preventDefault();
-                    this.moveSelectedWithKeyboard(e.key);
-                }
-            } else if (e.key === 'Tab') {
-                if (this.state.currentSvg !== null) {
-                    e.preventDefault();
-                    this.selectNextElement(e.shiftKey);
-                }
+    if (e.key === 'Escape') {
+        this.close();
+    } else if (e.ctrlKey && e.key === 'z') {
+        e.preventDefault();
+        this.undo();
+    } else if (e.ctrlKey && e.key === 'y') {
+        e.preventDefault();
+        this.redo();
+    } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        if (this.state.selectedElements.size > 0) {
+            e.preventDefault();
+            this.state.keysPressed.add(e.key);
+            
+            // Start continuous movement if not already running
+            if (!this.state.keyMoveInterval) {
+                this.startKeyboardMovement();
             }
-        });
+        }
+    } else if (e.key === 'Tab') {
+        if (this.state.currentSvg !== null) {
+            e.preventDefault();
+            this.selectNextElement(e.shiftKey);
+        }
+    }
+});
+
+document.addEventListener('keyup', (e) => {
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        this.state.keysPressed.delete(e.key);
+        
+        // Stop movement if no arrow keys are pressed
+        if (this.state.keysPressed.size === 0 && this.state.keyMoveInterval) {
+            clearInterval(this.state.keyMoveInterval);
+            this.state.keyMoveInterval = null;
+            
+            // Save history after movement stops
+            const svg = document.querySelector('#svgEditorCanvas svg');
+            if (svg) {
+                this.saveHistory(this.cloneSVG(svg));
+            }
+        }
+    }
+});
     },
 
     updateResponsiveUI() {
@@ -275,7 +300,7 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
         }
     },
 
-   makeLabelsSelectable(svg) {
+makeLabelsSelectable(svg) {
     const labels = svg.querySelectorAll('.label-toggle');
     
     labels.forEach(label => {
@@ -283,41 +308,55 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
         label.style.outline = '2px solid transparent';
         label.style.outlineOffset = '8px';
         label.style.transition = 'outline 0.2s';
+        label.style.pointerEvents = 'bounding-box';
         
-        // Create invisible larger hitbox
+        // Add padding attribute to increase clickable area
         const bbox = label.getBBox();
-        const padding = 10;
-        const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        hitbox.setAttribute('x', bbox.x - padding);
-        hitbox.setAttribute('y', bbox.y - padding);
-        hitbox.setAttribute('width', bbox.width + padding * 2);
-        hitbox.setAttribute('height', bbox.height + padding * 2);
-        hitbox.setAttribute('fill', 'transparent');
-        hitbox.setAttribute('stroke', 'none');
-        hitbox.style.cursor = 'move';
-        hitbox.style.pointerEvents = 'all';
+        const padding = 15;
         
-        label.parentNode.insertBefore(hitbox, label);
+        // Create a transparent background rect for better hit detection
+        const hitRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        hitRect.setAttribute('x', bbox.x - padding);
+        hitRect.setAttribute('y', bbox.y - padding);
+        hitRect.setAttribute('width', bbox.width + padding * 2);
+        hitRect.setAttribute('height', bbox.height + padding * 2);
+        hitRect.setAttribute('fill', 'transparent');
+        hitRect.setAttribute('stroke', 'none');
+        hitRect.style.pointerEvents = 'all';
+        hitRect.classList.add('label-hitbox');
+        hitRect._targetLabel = label; // Store reference to the actual label
         
-        const handleInteraction = (e, isTouch = false) => {
+        // Insert hitRect as first child of parent to keep it behind
+        if (label.parentNode) {
+            label.parentNode.insertBefore(hitRect, label.parentNode.firstChild);
+        }
+
+        const handleMouseEnter = () => {
             if (!this.state.selectedElements.has(label)) {
                 label.style.outline = '2px solid #4a9eff';
             }
         };
-        
-        const handleLeave = () => {
+
+        const handleMouseLeave = () => {
             if (!this.state.selectedElements.has(label)) {
                 label.style.outline = '2px solid transparent';
             }
         };
 
-        hitbox.addEventListener('mouseenter', () => handleInteraction());
-        hitbox.addEventListener('mouseleave', handleLeave);
-        hitbox.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
-        hitbox.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
+        // Attach events to both hitRect and label
+        hitRect.addEventListener('mouseenter', handleMouseEnter);
+        hitRect.addEventListener('mouseleave', handleMouseLeave);
+        hitRect.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+            this.handleLabelMouseDown(e, label);
+        });
+        hitRect.addEventListener('touchstart', (e) => {
+            e.stopPropagation();
+            this.handleLabelTouchStart(e, label);
+        }, { passive: false });
 
-        label.addEventListener('mouseenter', () => handleInteraction());
-        label.addEventListener('mouseleave', handleLeave);
+        label.addEventListener('mouseenter', handleMouseEnter);
+        label.addEventListener('mouseleave', handleMouseLeave);
         label.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
         label.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
     });
@@ -565,26 +604,50 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
     },
 
     moveSelectedWithKeyboard(key) {
+    const svg = document.querySelector('#svgEditorCanvas svg');
+    if (!svg || this.state.selectedElements.size === 0) return;
+
+    let dx = 0, dy = 0;
+    const step = 1;
+
+    switch(key) {
+        case 'ArrowUp': dy = -step; break;
+        case 'ArrowDown': dy = step; break;
+        case 'ArrowLeft': dx = -step; break;
+        case 'ArrowRight': dx = step; break;
+    }
+
+    this.state.selectedElements.forEach(el => {
+        const startState = this.captureElementState(el);
+        this.updateElementPosition(el, startState, dx, dy);
+    });
+
+    this.saveHistory(this.cloneSVG(svg));
+},
+
+startKeyboardMovement() {
+    this.state.keyMoveInterval = setInterval(() => {
+        if (this.state.keysPressed.size === 0) return;
+        
         const svg = document.querySelector('#svgEditorCanvas svg');
         if (!svg || this.state.selectedElements.size === 0) return;
 
+        // Calculate vector sum of all pressed arrow keys
         let dx = 0, dy = 0;
         const step = 1;
 
-        switch(key) {
-            case 'ArrowUp': dy = -step; break;
-            case 'ArrowDown': dy = step; break;
-            case 'ArrowLeft': dx = -step; break;
-            case 'ArrowRight': dx = step; break;
-        }
+        if (this.state.keysPressed.has('ArrowUp')) dy -= step;
+        if (this.state.keysPressed.has('ArrowDown')) dy += step;
+        if (this.state.keysPressed.has('ArrowLeft')) dx -= step;
+        if (this.state.keysPressed.has('ArrowRight')) dx += step;
 
+        // Move all selected elements
         this.state.selectedElements.forEach(el => {
             const startState = this.captureElementState(el);
             this.updateElementPosition(el, startState, dx, dy);
         });
-
-        this.saveHistory(this.cloneSVG(svg));
-    },
+    }, 50); // Update every 50ms for smooth movement
+},
 
     selectNextElement(reverse = false) {
         const svg = document.querySelector('#svgEditorCanvas svg');
@@ -612,12 +675,14 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
     },
 
     cloneSVG(svg) {
-        const clone = svg.cloneNode(true);
-        clone.querySelectorAll('.label-toggle').forEach(el => {
-            el.style.outline = '2px solid transparent';
-        });
-        return clone;
-    },
+    const clone = svg.cloneNode(true);
+    clone.querySelectorAll('.label-toggle').forEach(el => {
+        el.style.outline = '2px solid transparent';
+    });
+    // Remove hitboxes from clone to avoid duplication
+    clone.querySelectorAll('.label-hitbox').forEach(el => el.remove());
+    return clone;
+},
 
     saveHistory(svgElement) {
         const name = this.state.currentSvg;
@@ -652,20 +717,24 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
     },
 
     restoreHistory() {
-        const name = this.state.currentSvg;
-        if (name === null || !this.state.histories[name]) return;
+    const name = this.state.currentSvg;
+    if (name === null || !this.state.histories[name]) return;
 
-        const svgElement = this.state.histories[name][this.state.historyIndices[name]];
-        const content = document.getElementById('svgEditorContent');
-        if (!content) return;
+    const svgElement = this.state.histories[name][this.state.historyIndices[name]];
+    const content = document.getElementById('svgEditorContent');
+    if (!content) return;
 
-        content.innerHTML = '';
-        const newSvg = svgElement.cloneNode(true);
-        content.appendChild(newSvg);
+    content.innerHTML = '';
+    const newSvg = svgElement.cloneNode(true);
+    
+    // Remove any old hitboxes from cloned SVG
+    newSvg.querySelectorAll('.label-hitbox').forEach(el => el.remove());
+    
+    content.appendChild(newSvg);
 
-        this.makeLabelsSelectable(newSvg);
-        this.state.selectedElements.clear();
-    },
+    this.makeLabelsSelectable(newSvg);
+    this.state.selectedElements.clear();
+},
 
     saveToMemory() {
         const name = this.state.currentSvg;
@@ -732,22 +801,29 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
     },
 
     close() {
-        // Save current before closing
-        if (this.state.currentSvg !== null) {
-            this.saveToMemory();
-        }
-
-        const modal = document.getElementById('svgEditorModal');
-        if (modal) {
-            modal.style.display = 'none';
-            document.body.classList.remove('modal-open');
-        }
-
-        // Reset state
-        this.state.currentSvg = null;
-        this.state.selectedElements.clear();
-        this.state.isSidebarCollapsed = false;
+    // Save current before closing
+    if (this.state.currentSvg !== null) {
+        this.saveToMemory();
     }
+
+    const modal = document.getElementById('svgEditorModal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    // Clean up keyboard movement
+    if (this.state.keyMoveInterval) {
+        clearInterval(this.state.keyMoveInterval);
+        this.state.keyMoveInterval = null;
+    }
+
+    // Reset state
+    this.state.currentSvg = null;
+    this.state.selectedElements.clear();
+    this.state.isSidebarCollapsed = false;
+    this.state.keysPressed.clear();
+}
 };
 
 // Initialize when DOM is ready
