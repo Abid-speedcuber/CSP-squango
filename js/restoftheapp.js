@@ -67,6 +67,7 @@ let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
 let generalNotes = ''; // HTML content for general notes
+window.allowCaseEdit = false; // Toggle for allowing case edits (not exported)
 // --- End New Case Name Settings ---
 let useShortLR = false;
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
@@ -214,6 +215,12 @@ try {
             lastParityCalculationSettings = state.lastParityCalculationSettings;
         }
     }
+    
+    // Load allowCaseEdit separately (not part of export/import)
+    const allowCaseEditSaved = localStorage.getItem('allowCaseEdit');
+    if (allowCaseEditSaved !== null) {
+        window.allowCaseEdit = allowCaseEditSaved === 'true';
+    }
 
     // Initialize all cases as planned with priority 4 (Normal) if not already set
     data.forEach(item => {
@@ -281,6 +288,7 @@ if (!caseNameSettings.has('Parallel Edges')) {
 
 function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
+    localStorage.setItem('allowCaseEdit', window.allowCaseEdit.toString());
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({
             learned: Array.from(learnedCases),

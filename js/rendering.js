@@ -511,7 +511,7 @@ function showContextMenu(caseName, event) {
     if (!isLearned && !isLearning) {
         menuItems.push(
             {
-                label: '↑ Move Up in Priority',
+                label: 'Move Up in Priority',
                 action: () => {
                     adjustPriority(caseName, -1);
                     // Don't close menu
@@ -521,7 +521,7 @@ function showContextMenu(caseName, event) {
                 disabled: priorityLevel === 1
             },
             {
-                label: '↓ Move Down in Priority',
+                label: 'Move Down in Priority',
                 action: () => {
                     adjustPriority(caseName, 1);
                     // Don't close menu
@@ -548,14 +548,21 @@ function showContextMenu(caseName, event) {
                 menu.remove();
                 openTrainingModal(caseName);
             }
-        },
-        {
+        }
+    );
+    
+    // Only add Edit Case option if allowCaseEdit is true
+    if (window.allowCaseEdit) {
+        menuItems.push({
             label: 'Edit Case',
             action: () => {
                 menu.remove();
                 openEditCaseModal(caseName);
             }
-        },
+        });
+    }
+    
+    menuItems.push(
         { divider: true },
         {
             label: 'Close',
