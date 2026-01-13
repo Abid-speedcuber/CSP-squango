@@ -11,8 +11,9 @@ body {
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
+    padding: 0 20px;
 }
 
 header {
@@ -38,6 +39,52 @@ h1 {
     margin-bottom: 30px;
     align-items: center;
     position: relative;
+    width: 100%;
+}
+
+/* Match grid max-width for 1 column mode */
+@media (max-width: 569px) {
+    .controls {
+        max-width: 430px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Match grid max-width for 2 column mode */
+@media (min-width: 570px) and (max-width: 1039px) {
+    .controls {
+        max-width: 900px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Match grid max-width for 3 column mode */
+@media (min-width: 1040px) and (max-width: 1659px) {
+    .controls {
+        max-width: 1540px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Match grid max-width for 4 column mode */
+@media (min-width: 1660px) and (max-width: 2099px) {
+    .controls {
+        max-width: 2040px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Match grid max-width for 5 column mode */
+@media (min-width: 2100px) and (max-width: 2599px) {
+    .controls {
+        max-width: 2540px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 .search-toggle-btn {
@@ -88,37 +135,60 @@ select {
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
-    gap: min(20px, 2vw);
+    gap: 20px;
+    width: 100%;
 }
 
-@media (min-width: 1400px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(max(320px, 22vw), 1fr));
-    }
-}
-
-@media (min-width: 1040px) and (max-width: 1399px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(max(320px, 30vw), 1fr));
-    }
-}
-
-@media (min-width: 1000px) and (max-width: 1039px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(max(320px, 30vw), 1fr));
-    }
-}
-
-@media (min-width: 650px) and (max-width: 999px) {
-    .grid {
-        grid-template-columns: repeat(auto-fill, minmax(max(280px, 42vw), 1fr));
-    }
-}
-
-@media (max-width: 649px) {
+/* 1 column mode: 0-570px, max card width 430px */
+@media (max-width: 569px) {
     .grid {
         grid-template-columns: 1fr;
+        max-width: 430px;
+        margin: 0 auto;
+    }
+}
+
+/* 2 column mode: 570-1039px, card width 270-430px */
+@media (min-width: 570px) and (max-width: 1039px) {
+    .grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 900px;
+        margin: 0 auto;
+    }
+}
+
+/* 3 column mode: 1040-1659px, card width 330-500px */
+@media (min-width: 1040px) and (max-width: 1659px) {
+    .grid {
+        grid-template-columns: repeat(3, 1fr);
+        max-width: 1540px;
+        margin: 0 auto;
+    }
+}
+
+/* 4 column mode: 1660-2099px, card width 415-500px */
+@media (min-width: 1660px) and (max-width: 2099px) {
+    .grid {
+        grid-template-columns: repeat(4, 1fr);
+        max-width: 2040px;
+        margin: 0 auto;
+    }
+}
+
+/* 5+ column mode: 2100px+, min card width 420px */
+@media (min-width: 2100px) {
+    .grid {
+        grid-template-columns: repeat(5, 1fr);
+        max-width: 2540px;
+        margin: 0 auto;
+    }
+}
+
+/* 6+ column mode: 2600px+ */
+@media (min-width: 2600px) {
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        max-width: none;
     }
 }
 
@@ -219,51 +289,25 @@ select {
 }
 
 .card-svg-container {
+    width: 100%;
+    aspect-ratio: 2 / 1 !important;
     display: flex;
-    justify-content: center;
-    align-items: center;
     overflow: hidden;
-    min-height: 200px;
+    position: relative;
 }
 
 .card-svg-container > div {
-    transform: translateX(-7%);
+    width: 50%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-@media (min-width: 200px) and (max-width: 320px) {
-    .card-svg-container > div {
-        transform: translateX(-30%);
-    }
-}
-
-@media (min-width: 440px) and (max-width: 649px) {
-    .card-svg-container > div {
-        transform: translateX(7%);
-    }
-}
-
-@media (min-width: 810px) and (max-width: 1000px) {
-    .card-svg-container > div {
-        transform: translateX(5%);
-    }
-}
-
-@media (min-width: 1000px) and (max-width: 1040px) {
-    .card-svg-container > div {
-        transform: translateX(13%);
-    }
-}
-
-@media (min-width: 1000px) and (max-width: 1039px) {
-    .card-svg-container {
-        min-height: 230px;
-    }
-}
-
-@media (max-width: 649px) and (min-width: 570px) {
-    .card-svg-container {
-        min-height: 250px;
-    }
+.card-svg-container svg {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .card-svg-container svg {
@@ -717,6 +761,7 @@ body.modal-open .homepage-info-btn {
 
     .search-toggle-btn {
         display: flex;
+        flex-shrink: 0;
     }
 
     input[type="text"] {
@@ -750,6 +795,31 @@ body.modal-open .homepage-info-btn {
         flex: 1;
         min-width: 0;
         transition: opacity 0.3s ease;
+    }
+}
+
+/* Fix overlap at 578-600px range */
+@media (min-width: 571px) and (max-width: 620px) {
+    .controls {
+        gap: 6px;
+    }
+    
+    select {
+        padding: 8px 8px;
+        font-size: 0.85rem;
+        min-width: 100px;
+    }
+    
+    .search-toggle-btn {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        flex-shrink: 0;
+    }
+    
+    .search-toggle-btn img {
+        width: 20px;
+        height: 20px;
     }
 
     /* Smaller grid gap */

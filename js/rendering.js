@@ -29,7 +29,7 @@ function styleAlgorithmWithGrayMoves(algo) {
         
         // First non-empty part (setup) - blue
         if (idx === 0 && !startsWithSlash) {
-            return `<span style="color: #006affff;">${wrapAlgorithmTokens(part)}</span>`;
+            return `<span style="color: #6d739cff;">${wrapAlgorithmTokens(part)}</span>`;
         }
         // Last non-empty part (finish) - light gray
         else if (idx === parts.length - 1 && !endsWithSlash) {

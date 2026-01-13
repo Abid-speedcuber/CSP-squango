@@ -449,87 +449,12 @@ function initializeDOMReferences() {
 // Dynamic SVG scaling based on viewport width
 let resizeTimer;
 function updateSVGScaling() {
-    const viewportWidth = window.innerWidth;
-    let scale;
-
-    // Calculate scale based on viewport width
-    if (viewportWidth >= 1400) {
-        // Large screens: base scale
-        scale = Math.min(1, viewportWidth / 1400);
-    } else if (viewportWidth >= 1040) {
-        // Medium-large screens (3 columns to 2 columns transition)
-        scale = Math.min(1, viewportWidth / 1200);
-    } else if (viewportWidth >= 1000) {
-        // Transition zone: 3 col → 2 col - scale boost then decrease
-        // At 1040px: scale = 1.15, gradually decreases to 1.0 at 1000px
-        const boostFactor = 1.15 - ((1040 - viewportWidth) / (1040 - 1000)) * 0.15;
-        scale = Math.max(1.0, boostFactor);
-    } else if (viewportWidth >= 650) {
-        // Medium screens (2 columns)
-        scale = Math.min(1, viewportWidth / 900);
-    } else if (viewportWidth >= 570) {
-        // Single column mode - scale boost then decrease
-        // At 649px: scale = 1.25, gradually decreases to 1.0 at 570px
-        const boostFactor = 1.25 - ((649 - viewportWidth) / (649 - 570)) * 0.25;
-        scale = Math.max(1.0, boostFactor);
-    } else if (viewportWidth >= 400) {
-        // Below 570px: continue scaling down from 1.0
-        scale = Math.max(0.8, viewportWidth / 570);
-    } else {
-        // Extra small screens
-        scale = Math.max(0.65, viewportWidth / 500);
-    }
-
-    // Apply scale to all card SVGs with will-change for better performance
-    document.querySelectorAll('.card-svg-container svg').forEach(svg => {
-        svg.style.transform = `scale(${scale})`;
-        svg.style.transformOrigin = 'center center';
-        svg.style.willChange = 'transform';
-    });
-
-    // Apply scale to modal SVGs (both in detail modal and other modals)
-    document.querySelectorAll('.modal-images svg, .modal-body svg').forEach(svg => {
-        // Keep modal SVGs at full size until 768px, then scale down
-        let modalScale = 1;
-        if (viewportWidth < 768) {
-            if (viewportWidth < 400) {
-                modalScale = Math.max(0.6, viewportWidth / 600);
-            } else if (viewportWidth < 570) {
-                modalScale = Math.max(0.75, viewportWidth / 650);
-            } else {
-                modalScale = Math.max(0.85, viewportWidth / 768);
-            }
-        }
-        svg.style.transform = `scale(${modalScale})`;
-        svg.style.transformOrigin = 'center center';
-        svg.style.willChange = 'transform';
-    });
-
-    // Update floating buttons container size for narrow screens
-    const floatingBtnsContainer = document.getElementById('floatingButtonsContainer');
-    if (floatingBtnsContainer) {
-        if (viewportWidth < 400) {
-            const btnScale = Math.max(0.5, viewportWidth / 600);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
-        } else if (viewportWidth < 570) {
-            const btnScale = Math.max(0.6, viewportWidth / 700);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
-        } else if (viewportWidth < 768) {
-            const btnScale = Math.max(0.75, viewportWidth / 850);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
-        } else {
-            floatingBtnsContainer.style.transform = 'scale(1)';
-        }
-    }
+    // No longer needed - CSS handles scaling with aspect-ratio
 }
 
 // Debounced resize handler for better performance
 function handleResize() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(updateSVGScaling, 50);
+    // Reserved for future resize logic if needed
 }
 
 // Update on load and resize
