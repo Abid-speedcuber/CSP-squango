@@ -1,40 +1,99 @@
-// Defines all aliases and UI options
-const shapeAliases = {
-    "Muffin": { aliases: ["muffin", "mushroom"], options: ["Muffin", "Mushroom"] },
-    "6": { aliases: ["6", "6-0", "60"], options: ["6", "6-0", "60"] },
-    "8": { aliases: ["8", "8-0", "80", "dome"], options: ["8", "8-0", "80", "Dome"] },
-    "4-4": { aliases: ["4-4", "44", "eye", "seashell"], options: ["4-4", "44", "Eye", "Seashell"] },
-    "7-1": { aliases: ["7-1", "71", "observatory"], options: ["7-1", "71", "Observatory"] },
-    "5-3": { aliases: ["5-3", "53"], options: ["5-3", "53"] },
-    "2-2-2": { aliases: ["2-2-2", "222", "fan", "trefoil", "radioactive"], options: ["2-2-2", "222", "Fan", "Trefoil", "Radioactive"] },
-    "6-2": { aliases: ["6-2", "62"], options: ["6-2", "62"] },
-    "Perpendicular Edges": { aliases: ["perpendicular edges", "l-shape", "l shape", "arrow"], options: ["Perpendicular Edges", "L-Shape", "Arrow"] },
-    "Parallel Edges": { aliases: ["parallel edges", "line", "crown"], options: ["Parallel Edges", "Line", "Crown"] },
-    "Paired Edges": { aliases: ["paired edges", "pair"], options: ["Paired Edges", "Pair"] },
-    "5-1": { aliases: ["5-1", "51", "tree"], options: ["5-1", "51", "Tree"] },
-    "4-2": { aliases: ["4-2", "42", "knight"], options: ["4-2", "42", "Knight"] },
-    "3-3": { aliases: ["3-3", "33", "missile"], options: ["3-3", "33", "Missile"] },
-    "4-1-1": { aliases: ["4-1-1", "411", "squid", "jellyfish"], options: ["4-1-1", "411", "Squid", "Jellyfish"] },
-    "3-1-2": { aliases: ["3-1-2", "312"], options: ["3-1-2", "312"] },
-    "3-2-1": { aliases: ["3-2-1", "321"], options: ["3-2-1", "321"] },
-    "Pawn": { aliases: ["pawn", "paw"], options: ["Pawn", "Paw"] },
-    "Kite": { aliases: ["kite"], options: ["Kite"] },
-    "Square": { aliases: ["square"], options: ["Square"] },
-    "Star": { aliases: ["star"], options: ["Star"] },
-    "Barrel": { aliases: ["barrel"], options: ["Barrel"] },
-    "Scallop": { aliases: ["scallop"], options: ["Scallop"] },
-    "Shield": { aliases: ["shield"], options: ["Shield"] },
-    "Fist": { aliases: ["fist"], options: ["Fist"] }
+// Default display names for all 90 cases (used for fresh installs)
+const defaultDisplayNames = {
+    "8/Star": "8/Star",
+    "7-1/Star": "7-1/Star",   
+    "6-2/Star": "6-2/Star",
+    "5-3/Star": "5-3/Star",
+    "4-4/Star": "4-4/Star",
+    "2-2-2/Paired Edges": "2-2-2/Pair",
+    "2-2-2/Parallel Edges": "2-2-2/Line",
+    "2-2-2/Perpendicular Edges": "2-2-2/L",
+    "3-1-2/Paired Edges": "3-1-2/Pair",
+    "3-1-2/Parallel Edges": "3-1-2/Line",
+    "3-1-2/Perpendicular Edges": "3-1-2/L",
+    "3-2-1/Paired Edges": "3-2-1/Pair",
+    "3-2-1/Parallel Edges": "3-2-1/Line",
+    "3-2-1/Perpendicular Edges": "3-2-1/L",
+    "3-3/Paired Edges": "3-3/Pair",
+    "3-3/Parallel Edges": "3-3/Line",
+    "3-3/Perpendicular Edges": "3-3/L",
+    "4-1-1/Paired Edges": "4-1-1/Pair",   
+    "4-1-1/Parallel Edges": "4-1-1/Line",    
+    "4-1-1/Perpendicular Edges": "4-1-1/L",
+    "Left 4-2/Paired Edges": "Left 4-2/Pair",
+    "Left 4-2/Parallel Edges": "Left 4-2/Line",
+    "Left 4-2/Perpendicular Edges": "Left 4-2/L",
+    "Right 4-2/Paired Edges": "Right 4-2/Pair",
+    "Right 4-2/Parallel Edges": "Right 4-2/Line",
+    "Right 4-2/Perpendicular Edges": "Right 4-2/L",
+    "Left 5-1/Paired Edges": "Left 5-1/Pair",
+    "Left 5-1/Parallel Edges": "Left 5-1/Line",
+    "Left 5-1/Perpendicular Edges": "Left 5-1/L",
+    "Right 5-1/Paired Edges": "Right 5-1/Pair",
+    "Right 5-1/Parallel Edges": "Right 5-1/Line",
+    "Right 5-1/Perpendicular Edges": "Right 5-1/L",
+    "6/Paired Edges": "6/Pair",
+    "6/Parallel Edges": "6/Line",
+    "6/Perpendicular Edges": "6/L",
+    "Barrel/Barrel": "Barrel/Barrel",
+    "Barrel/Square": "Barrel/Square",
+    "Barrel/Left Fist": "Barrel/Left Fist",
+    "Barrel/Right Fist": "Barrel/Right Fist",
+    "Kite/Barrel": "Kite/Barrel",
+    "Kite/Kite": "Kite/Kite",
+    "Kite/Square": "kite/Square", 
+    "Kite/Left Fist": "Kite/Left Fist",
+    "Kite/Right Fist": "Kite/Right Fist",
+    "Muffin/Barrel": "Muffin/Barrel",
+    "Muffin/Kite": "Muffin/Kite",
+    "Muffin/Muffin": "Muffin/Muffin",
+    "Muffin/Square": "Muffin/Square",
+    "Muffin/Left Fist": "Muffin/Left Fist",
+    "Muffin/Right Fist": "Muffin/Right Fist",
+    "Shield/Barrel": "Shield/Barrel",    
+    "Shield/Kite": "Shield/Kite",
+    "Shield/Muffin": "Shield/Muffin",
+    "Shield/Shield": "Shield/Shield",
+    "Shield/Square": "Shield/Square",
+    "Shield/Left Fist": "Shield/Left Fist",
+    "Shield/Right Fist": "Shield/Right Fist",
+    "Scallop/Barrel": "Scallop/Barrel",
+    "Scallop/Kite": "Scallop/Kite",
+    "Scallop/Muffin": "Scallop/Muffin",
+    "Scallop/Shield": "Scallop/Shield",
+    "Scallop/Scallop": "Scallop/Scallop",
+    "Scallop/Square": "Scallop/Square",
+    "Scallop/Left Fist": "Scallop/Left Fist",
+    "Scallop/Right Fist": "Scallop/Right Fist",
+    "Scallop/Left Pawn": "Scallop/Left Pawn",
+    "Scallop/Right Pawn": "Scallop/Right Pawn",
+    "Square/Square": "Square/Square",
+    "Left Fist/Square": "Left Fist/Square",    
+    "Left Fist/Left Fist": "Left Fist/Left Fist",
+    "Left Fist/Right Fist": "Left Fist/Right Fist",
+    "Right Fist/Square": "Right Fist/Square",
+    "Right Fist/Right Fist": "Right Fist/Right Fist",
+    "Left Pawn/Barrel": "Left Pawn/Barrel",
+    "Left Pawn/Kite": "Left Pawn/Kite",
+    "Left Pawn/Muffin": "Left Pawn/Muffin",
+    "Left Pawn/Shield": "Left Pawn/Shield",
+    "Left Pawn/Square": "Left Pawn/Square",
+    "Left Pawn/Left Fist": "Left Pawn/Left Fist",
+    "Left Pawn/Right Fist": "Left Pawn/Right Fist",    
+    "Left Pawn/Left Pawn": "Left Pawn/Left Pawn",
+    "Left Pawn/Right Pawn": "Left Pawn/Right Pawn",    
+    "Right Pawn/Barrel": "Right Pawn/Barrel",
+    "Right Pawn/Kite": "Right Pawn/Kite",
+    "Right Pawn/Muffin": "Right Pawn/Muffin",
+    "Right Pawn/Shield": "Right Pawn/Shield",
+    "Right Pawn/Square": "Right Pawn/Square",
+    "Right Pawn/Left Fist": "Right Pawn/Left Fist",    
+    "Right Pawn/Right Fist": "Right Pawn/Right Fist",   
+    "Right Pawn/Right Pawn": "Right Pawn/Right Pawn",
 };
 
-// Alphabetized list of base shapes for the settings UI
-const baseShapes = [
-    "2-2-2", "3-1-2", "3-2-1", "3-3", "4-1-1", "4-2", "4-4", "5-1", "5-3", "6", "6-2", "7-1", "8",
-    "Barrel", "Fist", "Kite", "Muffin", "Paired Edges", "Parallel Edges", "Pawn",
-    "Perpendicular Edges", "Scallop", "Shield", "Square", "Star"
-];
-// Shapes that can have Left/Right prefix
-const shapesWithLR = ["Pawn", "Fist", "4-2", "5-1"];
+// Display names - THE single source of truth (initialized from defaults or loaded from save)
+let displayNames = {};
 
 let filteredData = [...data];
 let learnedCases = new Set();
@@ -42,7 +101,6 @@ let learningCases = new Set();
 let plannedCases = new Set();
 let comments = new Map(); // stores {caseName: "comment text"}
 let plannedLevels = new Map(); // stores {caseName: 1-6}
-let perCaseSwapLR = new Map(); // stores {caseName: true/false} for per-case L/R swap
 let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
 
@@ -56,20 +114,12 @@ let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}
 let cachedParityAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
 let lastParityCalculationSettings = null; // Track settings that affect parity calculation
 
-// User's saved preferences
-let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
-let customCaseNames = new Map();  // Stores {shape: "CustomText"}
-let swapShapeLR = new Map();      // Stores {shape: true/false} for swapping L/R at the base shape level
-let perCaseCustomNames = new Map(); // Stores {caseName: "CustomName"}
 let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
 let showPaths = true;         // Shape paths always shown
-let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
 let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
 let generalNotes = ''; // HTML content for general notes
 window.allowCaseEdit = false; // Toggle for allowing case edits (not exported)
-// --- End New Case Name Settings ---
-let useShortLR = false;
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
 let currentSortMode = localStorage.getItem('sortMode') || 'probability';
 let needsReorder = false;
@@ -180,15 +230,8 @@ try {
         plannedCases = new Set(state.planned || []);
         comments = new Map(Object.entries(state.comments || {}));
         plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
-        perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
         parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
-        // Load new name settings
-        caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
-        customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
-        swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
         showPaths = true; // Always true now
-        useShortLR = state.useShortLR !== undefined ? state.useShortLR : true;
-        lrPosition = state.lrPosition || 'front';
         enablePriorityLearning = true; // Always true now
         hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
@@ -196,11 +239,24 @@ try {
         if (state.customShapesForParityTracerLibrary) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
         }
-        perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
+        
+        // Load display names
+        if (state.displayNames) {
+            displayNames = state.displayNames;
+            // Add any new cases from defaults (for app updates)
+            for (const caseName in defaultDisplayNames) {
+                if (!displayNames[caseName]) {
+                    displayNames[caseName] = defaultDisplayNames[caseName];
+                }
+            }
+        } else {
+            // Legacy migration: if no displayNames, initialize from defaults
+            displayNames = { ...defaultDisplayNames };
+        }
         
         // Load custom SVG data
         if (state.svgData) {
@@ -254,36 +310,15 @@ function initializeSVGData() {
 
 // Set defaults if this is first load
 if (isFirstLoad) {
-    // Set showHints to true for first load
     showHints = true;
     localStorage.setItem('showHints', 'true');
-    // Default case name settings
-    caseNameSettings.set('Paired Edges', 'Pair');
-    caseNameSettings.set('Perpendicular Edges', 'L-Shape');
-    caseNameSettings.set('Parallel Edges', 'Line');
-
-    // Default toggles
-    useShortLR = true;
-    lrPosition = 'front';
     showPaths = true;
-    showHints = true;  // Changed to true for tracing guides
-    useDynamicParity = false;
     enablePriorityLearning = true;
-
-    // Note: sortSelect.value will be set after DOM is ready
-
+    
+    // Initialize display names from defaults
+    displayNames = { ...defaultDisplayNames };
+    
     saveState();
-}
-
-// Apply case name defaults if not already set (for existing users too)
-if (!caseNameSettings.has('Paired Edges')) {
-    caseNameSettings.set('Paired Edges', 'Pair');
-}
-if (!caseNameSettings.has('Perpendicular Edges')) {
-    caseNameSettings.set('Perpendicular Edges', 'L-Shape');
-}
-if (!caseNameSettings.has('Parallel Edges')) {
-    caseNameSettings.set('Parallel Edges', 'Line');
 }
 
 function saveState() {
@@ -296,22 +331,14 @@ function saveState() {
             planned: Array.from(plannedCases),
             comments: Object.fromEntries(comments),
             plannedLevels: Object.fromEntries(plannedLevels),
-            perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
-            perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
             parityOrientations: Object.fromEntries(parityOrientations),
-            // Save new name settings
-            caseNameSettings: Object.fromEntries(caseNameSettings),
-            customCaseNames: Object.fromEntries(customCaseNames),
-            swapShapeLR: Object.fromEntries(swapShapeLR),
             showPaths: true,
-            useShortLR: useShortLR,
-            lrPosition: lrPosition,
             enablePriorityLearning: true,
+            displayNames: displayNames,
             hideInstructions: hideInstructions,
             colorScheme: colorScheme,
             scrambleImageSize: scrambleImageSize,
             customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
-            perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
             perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
@@ -332,18 +359,14 @@ function exportData() {
         planned: Array.from(plannedCases),
         comments: Object.fromEntries(comments),
         plannedLevels: Object.fromEntries(plannedLevels),
-        perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
         parityOrientations: Object.fromEntries(parityOrientations),
-        caseNameSettings: Object.fromEntries(caseNameSettings),
-        customCaseNames: Object.fromEntries(customCaseNames),
-        swapShapeLR: Object.fromEntries(swapShapeLR),
         showPaths: true,
+        displayNames: displayNames,
         showHints: showHints,
         hideInstructions: hideInstructions,
         colorScheme: colorScheme,
         scrambleImageSize: scrambleImageSize,
         customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
-        perCaseCustomNames: Object.fromEntries(perCaseCustomNames),
         perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
         cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
         lastParityCalculationSettings: lastParityCalculationSettings,
@@ -370,18 +393,26 @@ function importData(jsonStr) {
         plannedCases = new Set(state.planned || []);
         comments = new Map(Object.entries(state.comments || {}));
         plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
-        perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
         parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
-        caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
-        customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
-        swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        showPaths = true; // Always true now
+        showPaths = true;
+        
+        // Load display names
+        if (state.displayNames) {
+            displayNames = state.displayNames;
+            // Add any new cases from defaults (for app updates)
+            for (const caseName in defaultDisplayNames) {
+                if (!displayNames[caseName]) {
+                    displayNames[caseName] = defaultDisplayNames[caseName];
+                }
+            }
+        } else {
+            displayNames = { ...defaultDisplayNames };
+        }
         hideInstructions = state.hideInstructions || false;
         colorScheme = state.colorScheme || colorScheme;
         if (state.customShapesForParityTracerLibrary) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
         }
-        perCaseCustomNames = new Map(Object.entries(state.perCaseCustomNames || {}));
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));

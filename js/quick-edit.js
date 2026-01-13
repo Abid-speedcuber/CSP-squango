@@ -16,7 +16,7 @@ function openQuickEditModal() {
     
     // Store initial state for reverting
     window.quickEditInitialState = {
-        perCaseCustomNames: new Map(perCaseCustomNames),
+        displayNames: { ...displayNames },
         perCaseSubtitles: new Map(perCaseSubtitles),
         comments: new Map(comments),
         customAlgorithms: new Map(customAlgorithms)
@@ -139,7 +139,7 @@ function openQuickEditModal() {
 
 function generateGeneralTableRows() {
     return data.map(item => {
-        const displayName = perCaseCustomNames.has(item.name) ? perCaseCustomNames.get(item.name) : getDisplayName(item.name);
+        const displayName = getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
         
@@ -210,6 +210,51 @@ function setupQuickEditCellHandlers() {
                 }
             } else {
                 quickEditState.findReplaceScope = null; // No scope for algorithms tab
+            }
+        });
+        
+        // Handle keydown for navigation
+        cell.addEventListener('keydown', function(e) {
+            // Shift+Enter for line break in notes field
+            if (e.key === 'Enter' && e.shiftKey && this.dataset.field === 'notes') {
+                e.preventDefault();
+                document.execCommand('insertLineBreak');
+                return;
+            }
+            
+            // Enter to move to next row
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const currentRow = this.closest('tr');
+                const nextRow = currentRow.nextElementSibling;
+                if (nextRow) {
+                    const sameFieldCell = nextRow.querySelector(`[data-field="${this.dataset.field}"]`);
+                    if (sameFieldCell) {
+                        sameFieldCell.focus();
+                    }
+                }
+                return;
+            }
+            
+            // Tab to move to next column
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const currentRow = this.closest('tr');
+                const cells = Array.from(currentRow.querySelectorAll('.editable'));
+                const currentIndex = cells.indexOf(this);
+                
+                if (e.shiftKey) {
+                    // Shift+Tab to move to previous column
+                    if (currentIndex > 0) {
+                        cells[currentIndex - 1].focus();
+                    }
+                } else {
+                    // Tab to move to next column
+                    if (currentIndex < cells.length - 1) {
+                        cells[currentIndex + 1].focus();
+                    }
+                }
+                return;
             }
         });
         
@@ -373,12 +418,14 @@ function liveSearchQuickEdit() {
     let cells;
     
     if (quickEditState.currentTab === 'general') {
+        const scopeSelector = document.getElementById('quickEditScopeSelector');
+        const scope = scopeSelector ? scopeSelector.value : 'name';
         const fieldMap = {
             'name': 'displayName',
             'subtitle': 'subtitle',
             'notes': 'notes'
         };
-        const field = fieldMap[quickEditState.findReplaceScope];
+        const field = fieldMap[scope];
         cells = Array.from(modal.querySelectorAll(`.editable[data-field="${field}"]`));
     } else {
         cells = Array.from(modal.querySelectorAll('.alg-cell'));
@@ -525,12 +572,14 @@ function replaceAllQuickEdit() {
     let cells;
     
     if (quickEditState.currentTab === 'general') {
+        const scopeSelector = document.getElementById('quickEditScopeSelector');
+        const scope = scopeSelector ? scopeSelector.value : 'name';
         const fieldMap = {
             'name': 'displayName',
             'subtitle': 'subtitle',
             'notes': 'notes'
         };
-        const field = fieldMap[quickEditState.findReplaceScope];
+        const field = fieldMap[scope];
         cells = Array.from(modal.querySelectorAll(`.editable[data-field="${field}"]`));
     } else {
         cells = Array.from(modal.querySelectorAll('.alg-cell'));
@@ -565,6 +614,8 @@ function handleReplaceEnter(event) {
 
 function changeFindScope() {
     const scopeSelector = document.getElementById('quickEditScopeSelector');
+    if (!scopeSelector) return;
+    
     const newScope = scopeSelector.value;
     
     if (quickEditState.currentTab === 'general') {
@@ -593,13 +644,9 @@ function saveQuickEditChanges() {
         const subtitle = subtitleCell.textContent.trim();
         const notes = notesCell.textContent.trim();
         
-        const defaultDisplayName = getDisplayName(caseName);
-        
-        // Save display name (only if different from default)
-        if (displayName && displayName !== defaultDisplayName) {
-            perCaseCustomNames.set(caseName, displayName);
-        } else {
-            perCaseCustomNames.delete(caseName);
+        // Save display name
+        if (displayName) {
+            displayNames[caseName] = displayName;
         }
         
         // Save subtitle
@@ -639,7 +686,7 @@ function saveQuickEditChanges() {
     
     // Update initial state checkpoint
     window.quickEditInitialState = {
-        perCaseCustomNames: new Map(perCaseCustomNames),
+        displayNames: { ...displayNames },
         perCaseSubtitles: new Map(perCaseSubtitles),
         comments: new Map(comments),
         customAlgorithms: new Map(customAlgorithms)
@@ -678,7 +725,7 @@ function revertQuickEditChanges() {
     
     showConfirmation('Are you sure you want to revert all changes to the last save point?', () => {
         // Restore initial state
-        perCaseCustomNames = new Map(window.quickEditInitialState.perCaseCustomNames);
+        displayNames = { ...window.quickEditInitialState.displayNames };
         perCaseSubtitles = new Map(window.quickEditInitialState.perCaseSubtitles);
         comments = new Map(window.quickEditInitialState.comments);
         customAlgorithms = new Map(window.quickEditInitialState.customAlgorithms);

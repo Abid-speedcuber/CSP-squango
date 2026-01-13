@@ -1,3 +1,49 @@
+// Helper function to sanitize note HTML (allow only <b>, <u>, <a>, and line breaks)
+function sanitizeNoteHTML(html) {
+    if (!html) return '';
+    
+    // Create a temporary div to parse HTML
+    const temp = document.createElement('div');
+    temp.innerHTML = html;
+    
+    // Function to recursively process nodes
+    function processNode(node) {
+        if (node.nodeType === Node.TEXT_NODE) {
+            return node.textContent;
+        }
+        
+        if (node.nodeType === Node.ELEMENT_NODE) {
+            const tagName = node.tagName.toLowerCase();
+            
+            if (tagName === 'b' || tagName === 'strong') {
+                return `<b>${Array.from(node.childNodes).map(processNode).join('')}</b>`;
+            }
+            
+            if (tagName === 'u') {
+                return `<u>${Array.from(node.childNodes).map(processNode).join('')}</u>`;
+            }
+            
+            if (tagName === 'a') {
+                const href = node.getAttribute('href') || '';
+                // Sanitize href to prevent javascript: URLs
+                const safeHref = href.startsWith('javascript:') ? '' : href;
+                return `<a href="${safeHref}" target="_blank" rel="noopener noreferrer">${Array.from(node.childNodes).map(processNode).join('')}</a>`;
+            }
+            
+            if (tagName === 'br') {
+                return '\n';
+            }
+            
+            // For any other tags, just return the text content
+            return Array.from(node.childNodes).map(processNode).join('');
+        }
+        
+        return '';
+    }
+    
+    return Array.from(temp.childNodes).map(processNode).join('');
+}
+
 // Helper function to wrap algorithm tokens to prevent breaking inside parentheses
 function wrapAlgorithmTokens(algo) {
     if (!algo || typeof algo !== 'string') return algo;
@@ -45,153 +91,90 @@ function styleAlgorithmWithGrayMoves(algo) {
 }
 
 /*
-╔════════════════════════════════════════════════════════════════════════════╗
+╔═══════════════════════════════════════════════════════════════════════════╗
 ║                                NAME DISPLAY                                ║
-╚════════════════════════════════════════════════════════════════════════════╝
+╚═══════════════════════════════════════════════════════════════════════════╝
 */
 
-// --- Naming Helper Functions ---
-
 /**
- * Gets the display name for a single part (e.g., "Left Pawn")
- * based on user settings.
+ * Gets the display name for a case.
+ * Single source of truth - displayNames object.
  */
-function getDisplayPart(part, caseName = null) {
-    let prefix = '';
-    let base = part;
-
-    if (part.startsWith('Left ')) {
-        prefix = 'Left ';
-        base = part.substring(5);
-    } else if (part.startsWith('Right ')) {
-        prefix = 'Right ';
-        base = part.substring(6);
-    }
-
-    // Apply shape-level L/R swap if toggled for this base shape
-    const shouldSwap = swapShapeLR.get(base) || false;
-    if (shouldSwap && prefix) {
-        if (prefix === 'Left ') prefix = 'Right ';
-        else if (prefix === 'Right ') prefix = 'Left ';
-    }
-
-    // Apply short notation if enabled
-    if (useShortLR && prefix) {
-        if (prefix === 'Left ') prefix = 'L. ';
-        else if (prefix === 'Right ') prefix = 'R. ';
-    }
-
-    // Get the user's chosen name for the base shape
-    const baseSetting = caseNameSettings.get(base) || base; // Default to canonical
-    let finalBaseName;
-
-    if (baseSetting === 'Custom') {
-        finalBaseName = customCaseNames.get(base) || base; // Fallback to base
-    } else {
-        finalBaseName = baseSetting;
-    }
-
-    // Apply position setting (front or back)
-    if (lrPosition === 'back' && prefix) {
-        return finalBaseName + ' ' + prefix.trim();
-    }
-
-    return prefix + finalBaseName;
+function getDisplayName(caseName) {
+    return displayNames[caseName] || caseName;
 }
 
 /**
- * Gets the full display name for a case (e.g., "Muffin/Square")
- * based on user settings.
+ * Gets short display name for compact views.
  */
-function getDisplayName(originalName) {
-    // Check for per-case custom name first
-    if (perCaseCustomNames.has(originalName)) {
-        return perCaseCustomNames.get(originalName);
-    }
-    
-    const parts = originalName.split('/');
-    if (parts.length === 2) {
-        const [top, bottom] = parts;
-        return `${getDisplayPart(top, originalName)}/${getDisplayPart(bottom, originalName)}`;
-    }
-    return originalName; // Fallback
-}
-
-/**
- * Gets all possible aliases for a single part for searching.
- * Includes L/R swapped versions.
- */
-function getAliases(part) {
-    let base = part;
-    let prefixes = ['']; // Default for non-prefixed shapes
-
-    if (part.startsWith('Left ')) {
-        base = part.substring(5);
-        prefixes = ['left ', 'right ']; // Search for both
-    } else if (part.startsWith('Right ')) {
-        base = part.substring(6);
-        prefixes = ['left ', 'right ']; // Search for both
-    }
-
-    const config = shapeAliases[base];
-    if (!config) return [part.toLowerCase()]; // Fallback
-
-    const baseAliases = config.aliases;
-    let results = [];
-
-    for (const p of prefixes) {
-        for (const alias of baseAliases) {
-            results.push((p + alias).trim()); // .trim() for the '' prefix case
-        }
-    }
-    return results;
-}
-
-// --- End New Naming Helper Functions ---
-
-function getShortDisplayName(canonicalName) {
-    // Get the full display name first (respects user settings)
-    const fullName = getDisplayPart(canonicalName);
-    
-    // Apply short name rules
+function getShortDisplayName(fullName) {
     let shortName = fullName;
     
-    // Handle Left/Right prefixes
-    if (shortName.startsWith('Left ')) {
-        shortName = 'L. ' + shortName.substring(5);
-    } else if (shortName.startsWith('Right ')) {
-        shortName = 'R. ' + shortName.substring(6);
-    }
-    
-    // Apply specific replacements (case-insensitive matching)
+    // Apply specific replacements
     const replacements = {
         'Paired Edges': 'Pair',
-        'Pair': 'Pair', // In case user renamed it
         'Perpendicular Edges': 'L',
         'L-Shape': 'L',
-        'Arrow': 'L',
         'Parallel Edges': 'Line',
-        'Crown': 'Line',
         'Square': 'Sq',
         'Muffin': 'Muff',
-        'Mushroom': 'Muff',
         'Barrel': 'Barr',
-        'Scallop': 'Scal'
+        'Scallop': 'Scal',
+        'Left': 'L.',
+        'Right': 'R.'
     };
     
-    // Check each replacement
     for (const [pattern, replacement] of Object.entries(replacements)) {
         const regex = new RegExp(pattern, 'gi');
         shortName = shortName.replace(regex, replacement);
     }
     
-    // Remove hyphens from numbers (e.g., 3-2-1 → 321, 4-4 → 44)
+    // Remove hyphens from numbers
     shortName = shortName.replace(/(\d)-(\d)/g, '$1$2');
     
     return shortName;
 }
 
-
+/**
+ * Gets all possible search aliases for a case name.
+ */
+function getAliases(caseName) {
+    const displayName = getDisplayName(caseName);
+    const aliases = [
+        caseName.toLowerCase(), 
+        displayName.toLowerCase()
+    ];
+    
+    // Add variations
+    if (displayName.includes('/')) {
+        const parts = displayName.split('/');
+        aliases.push(...parts.map(p => p.trim().toLowerCase()));
+    }
+    
+    // Add number variations (e.g., "4-2" -> "42")
+    aliases.push(displayName.replace(/-/g, '').toLowerCase());
+    aliases.push(caseName.replace(/-/g, '').toLowerCase());
+    
+    // Add common shape variations
+    const variations = {
+        'perpendicular': ['l-shape', 'l shape', 'arrow'],
+        'l-shape': ['perpendicular', 'arrow'],
+        'parallel': ['line', 'crown'],
+        'line': ['parallel', 'crown'],
+        'paired': ['pair'],
+        'pair': ['paired'],
+        'muffin': ['mushroom'],
+        'mushroom': ['muffin']
+    };
+    
+    for (const [key, alts] of Object.entries(variations)) {
+        if (displayName.toLowerCase().includes(key)) {
+            aliases.push(...alts);
+        }
+    }
+    
+    return [...new Set(aliases)];
+}
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                             ALGORITHM DISPLAY                              ║
@@ -468,7 +451,7 @@ function showContextMenu(caseName, event) {
     const isLearned = learnedCases.has(caseName);
     const isLearning = learningCases.has(caseName);
     const priorityLevel = plannedLevels.get(caseName) || 4;
-    const priorityNames = ['Top', 'Most', 'More', 'Normal', 'Less', 'Least', 'Meh'];
+    const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
     
     const menu = document.createElement('div');
     menu.id = 'caseContextMenu';
@@ -819,7 +802,7 @@ function showPriorityMenu(name, event) {
     if (existingMenu) existingMenu.remove();
     
     const currentLevel = plannedLevels.get(name) || 4;
-    const priorityNames = ['Top', 'Most', 'More', 'Normal', 'Less', 'Least', 'Meh'];
+    const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
     
     const menu = document.createElement('div');
     menu.id = 'priorityMenu';
@@ -992,7 +975,7 @@ function renderCard(item) {
                     <span class="algo-label">Even:</span>
                     ${evenAlgoDisplay}
                 </div>
-                ${comment ? `<div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-style: italic;">${comment}</div>` : ''}
+                ${comment ? `<div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-style: italic; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
             </div>
         </div>
     `;

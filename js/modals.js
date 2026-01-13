@@ -56,7 +56,6 @@ function generateModalHTML() {
                         
                         <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
                             <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
-                            <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Case Name Settings</button>
                             <button onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Parity Tracing Personalization</button>
                         </div>
                     </div>
@@ -76,37 +75,6 @@ function generateModalHTML() {
                         </div>
                     </div>
 
-                </div>
-            </div>
-        </div>
-
-        <div id="caseNameModal" class="modal">
-            <div class="modal-content" style="max-width: 800px; margin-top: 50px;">
-                <div class="modal-header">
-                    <span class="modal-title">Case Name Settings</span>
-                    <button class="close-btn" onclick="closeCaseNameModal()">&times;</button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div style="margin-bottom: 20px; padding: 15px; background: #f0f9ff; border-radius: 8px; border: 2px solid #007bff;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-                            <label for="shortLRToggle" style="font-weight: 600; color: #2d3748;">Show short version of Left/Right (L. /R. ):</label>
-                            <input type="checkbox" id="shortLRToggle" onchange="toggleShortLR(this.checked)" style="transform: scale(1.3); cursor: pointer;">
-                        </div>
-                        <div style="border-top: 1px solid #cbd5e0; padding-top: 12px;">
-                            <div style="font-weight: 600; color: #2d3748; margin-bottom: 8px;">Position of Left/Right prefix:</div>
-                            <div style="display: flex; gap: 15px;">
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    <input type="radio" id="lrPositionFront" name="lrPosition" value="front" onchange="setLRPosition('front')" checked style="cursor: pointer;">
-                                    <label for="lrPositionFront" style="cursor: pointer;">On Front (Left 4-2)</label>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 5px;">
-                                    <input type="radio" id="lrPositionBack" name="lrPosition" value="back" onchange="setLRPosition('back')" style="cursor: pointer;">
-                                    <label for="lrPositionBack" style="cursor: pointer;">On Back (4-2 Left)</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="caseNameSettingsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;"></div>
                 </div>
             </div>
         </div>
@@ -364,143 +332,6 @@ function saveModalData(name) {
     closeModal();
 }
 
-
-
-/*
-╔════════════════════════════════════════════════════════════════════════════╗
-║                               CASE NAME MODAL                              ║
-╚════════════════════════════════════════════════════════════════════════════╝
-*/
-
-function openCaseNameModal() {
-    const caseNameModal = document.getElementById('caseNameModal');
-    if (!caseNameModal) return;
-    
-    caseNameModal.style.display = 'block';
-    document.body.classList.add('modal-open');
-    
-    const shortLRToggle = document.getElementById('shortLRToggle');
-    if (shortLRToggle) shortLRToggle.checked = useShortLR;
-    
-    const lrPositionFront = document.getElementById('lrPositionFront');
-    if (lrPositionFront) lrPositionFront.checked = (lrPosition === 'front');
-    
-    const lrPositionBack = document.getElementById('lrPositionBack');
-    if (lrPositionBack) lrPositionBack.checked = (lrPosition === 'back');
-    populateCaseNameSettings();
-    
-    pushModalState('caseNameModal', closeCaseNameModal);
-}
-
-function closeCaseNameModal() {
-    const caseNameModal = document.getElementById('caseNameModal');
-    if (!caseNameModal) return;
-    caseNameModal.style.display = 'none';
-    document.body.classList.remove('modal-open');
-}
-
-function populateCaseNameSettings() {
-    const container = document.getElementById('caseNameSettingsContainer');
-    container.innerHTML = '';
-
-    for (const shape of baseShapes) {
-        const config = shapeAliases[shape];
-        if (!config) continue;
-
-        let defaultSetting = shape;
-        if (shape === "Paired Edges") defaultSetting = "Pair";
-        else if (shape === "Perpendicular Edges") defaultSetting = "L-Shape";
-        else if (shape === "Parallel Edges") defaultSetting = "Line";
-        const currentSetting = caseNameSettings.get(shape) || defaultSetting;
-        const currentCustom = customCaseNames.get(shape) || '';
-        const hasLR = shapesWithLR.includes(shape);
-        const isSwapped = swapShapeLR.get(shape) || false;
-
-        let radiosHTML = '';
-        for (const option of config.options) {
-            const id = `name-${shape}-${option}`.replace(/\s/g, '-');
-            const checked = (currentSetting === option) ? 'checked' : '';
-            radiosHTML += `
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="${id}" name="name-${shape}" value="${option}" ${checked} onclick="updateCaseNameSetting('${shape}', '${option}')">
-                    <label for="${id}" style="cursor: pointer;">${option}</label>
-                </div>
-            `;
-        }
-
-        // Add the "Custom" radio
-        const customId = `name-${shape}-Custom`;
-        const customChecked = (currentSetting === 'Custom') ? 'checked' : '';
-        const customInputId = `custom-name-${shape}`;
-        radiosHTML += `
-            <div style="display: flex; align-items: center; gap: 5px; flex-wrap: wrap;">
-                <input type="radio" id="${customId}" name="name-${shape}" value="Custom" ${customChecked} onclick="updateCaseNameSetting('${shape}', 'Custom')">
-                <label for="${customId}" style="cursor: pointer;">Custom:</label>
-                <input type="text" id="${customInputId}" value="${currentCustom}" oninput="updateCustomCaseName('${shape}', this.value)" style="width: 100px; padding: 3px 5px; font-size: 0.9rem; border: 1px solid #ccc; border-radius: 3px;">
-            </div>
-        `;
-
-        // Add L/R swap toggle if applicable
-        let swapHTML = '';
-        if (hasLR) {
-            swapHTML = `
-                <div style="display: flex; align-items: center; gap: 5px; margin-top: 8px; padding-top: 8px; border-top: 1px solid #eee;">
-                    <input type="checkbox" id="swap-${shape}" ${isSwapped ? 'checked' : ''} onchange="toggleShapeSwapLR('${shape}', this.checked)" style="transform: scale(1.2); cursor: pointer;">
-                    <label for="swap-${shape}" style="cursor: pointer; font-size: 0.9rem;">Swap Left/Right</label>
-                </div>
-            `;
-        }
-
-        const settingHTML = `
-            <div style="border: 1px solid #eee; padding: 10px; border-radius: 5px; background: #fcfcfc;">
-                <strong style="color: #007bff; margin-bottom: 8px; display: block; border-bottom: 1px solid #eee; padding-bottom: 5px;">${shape}</strong>
-                <div style="display: flex; flex-direction: column; gap: 5px;">
-                    ${radiosHTML}
-                    ${swapHTML}
-                </div>
-            </div>
-        `;
-        container.innerHTML += settingHTML;
-    }
-}
-
-function updateCaseNameSetting(shape, value) {
-    caseNameSettings.set(shape, value);
-    saveState();
-    render(); // Re-render cards with new names
-}
-
-function updateCustomCaseName(shape, value) {
-    customCaseNames.set(shape, value.trim());
-    // Also ensure the 'Custom' radio is selected if they type
-    caseNameSettings.set(shape, 'Custom');
-    const customRadio = document.getElementById(`name-${shape}-Custom`);
-    if (customRadio) customRadio.checked = true;
-    saveState();
-    render(); // Re-render cards with new names
-}
-
-function toggleShapeSwapLR(shape, isChecked) {
-    if (isChecked) {
-        swapShapeLR.set(shape, true);
-    } else {
-        swapShapeLR.delete(shape);
-    }
-    saveState();
-    render(); // Re-render cards with new names
-}
-
-function toggleShortLR(isChecked) {
-    useShortLR = isChecked;
-    saveState();
-    render();
-}
-
-function setLRPosition(position) {
-    lrPosition = position;
-    saveState();
-    render();
-}
 
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
@@ -1036,9 +867,10 @@ window.saveCaseRename = function(caseName) {
     
     const newName = input.value.trim();
     if (newName) {
-        perCaseCustomNames.set(caseName, newName);
+        displayNames[caseName] = newName;
     } else {
-        perCaseCustomNames.delete(caseName);
+        // Restore to default
+        displayNames[caseName] = defaultDisplayNames[caseName] || caseName;
     }
     
     saveState();
