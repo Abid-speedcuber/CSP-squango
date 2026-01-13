@@ -6,16 +6,17 @@
 
 const SVGEditor = {
     state: {
-        currentSvg: null,
-        selectedElements: new Set(),
-        dragging: false,
-        dragStart: { x: 0, y: 0 },
-        elementStarts: new Map(),
-        histories: {},
-        historyIndices: {},
-        isSidebarCollapsed: false,
-        touchStartPos: null
-    },
+    currentSvg: null,
+    selectedElements: new Set(),
+    dragging: false,
+    dragStart: { x: 0, y: 0 },
+    elementStarts: new Map(),
+    histories: {},
+    historyIndices: {},
+    isSidebarCollapsed: false,
+    touchStartPos: null,
+    currentZoom: 100
+},
 
     init() {
         this.createEditorHTML();
@@ -41,15 +42,23 @@ const SVGEditor = {
                             <div id="svgEditorList" style="padding: 15px;"></div>
                         </div>
                         <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f5f5f5;">
-                            <div id="svgEditorToolbar" style="background: white; padding: 12px 20px; border-bottom: 1px solid #ddd; display: none; flex-shrink: 0;">
-                                <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                                    <span id="svgEditorCurrentName" style="font-weight: 600; color: #2d3748; flex: 1; min-width: 150px;"></span>
-                                    <button id="svgEditorSave" class="btn" style="background: #28a745;">Save</button>
-                                    <button id="svgEditorReset" class="btn" style="background: #dc3545;">Reset to Default</button>
-                                    <button id="svgEditorUndo" class="btn" style="background: #6c757d;">Undo</button>
-                                    <button id="svgEditorRedo" class="btn" style="background: #6c757d;">Redo</button>
-                                </div>
-                            </div>
+
+<div id="svgEditorToolbar" style="background: white; padding: 12px 20px; border-bottom: 1px solid #ddd; display: none; flex-shrink: 0;">
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <span id="svgEditorCurrentName" style="font-weight: 600; color: #2d3748; flex: 1; min-width: 150px;"></span>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 0.9rem; color: #495057; font-weight: 500;">Zoom:</span>
+            <input type="range" id="svgEditorZoom" min="50" max="200" value="100" step="10" style="width: 120px; cursor: pointer;">
+            <span id="svgEditorZoomValue" style="font-size: 0.9rem; color: #495057; min-width: 45px;">100%</span>
+        </div>
+        <div style="display: flex; gap: 8px; margin-left: auto;">
+            <button id="svgEditorUndo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/revert.svg" style="width: 16px; height: 16px;">Undo</button>
+            <button id="svgEditorRedo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/redo.svg" style="width: 16px; height: 16px;">Redo</button>
+            <button id="svgEditorReset" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/reset.svg" style="width: 16px; height: 16px;">Reset</button>
+            <button id="svgEditorSave" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/save.svg" style="width: 16px; height: 16px;">Save</button>
+        </div>
+    </div>
+</div>
                             <div id="svgEditorCanvas" style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative;">
                                 <div class="empty-state" style="text-align: center; color: #666;">
                                     <h2 style="margin-bottom: 10px;">Select an SVG to Edit</h2>
@@ -75,12 +84,16 @@ const SVGEditor = {
         const undoBtn = document.getElementById('svgEditorUndo');
         const redoBtn = document.getElementById('svgEditorRedo');
         const sidebarToggle = document.getElementById('svgEditorSidebarToggle');
+const zoomSlider = document.getElementById('svgEditorZoom');
 
-        if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
-        if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
-        if (undoBtn) undoBtn.onclick = () => this.undo();
-        if (redoBtn) redoBtn.onclick = () => this.redo();
-        if (sidebarToggle) sidebarToggle.onclick = () => this.toggleSidebar();
+if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
+if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
+if (undoBtn) undoBtn.onclick = () => this.undo();
+if (redoBtn) redoBtn.onclick = () => this.redo();
+if (sidebarToggle) sidebarToggle.onclick = () => this.toggleSidebar();
+if (zoomSlider) {
+    zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
+}
 
         // Handle responsive sidebar toggle button
         this.updateResponsiveUI();
@@ -135,80 +148,78 @@ const SVGEditor = {
     },
 
     toggleSidebar() {
-        const sidebar = document.getElementById('svgEditorSidebar');
-        this.state.isSidebarCollapsed = !this.state.isSidebarCollapsed;
-        
-        if (this.state.isSidebarCollapsed) {
-            sidebar.style.transform = 'translateX(-100%)';
-        } else {
-            sidebar.style.transform = 'translateX(0)';
-        }
-    },
+    const sidebar = document.getElementById('svgEditorSidebar');
+    this.state.isSidebarCollapsed = !this.state.isSidebarCollapsed;
+    
+    if (this.state.isSidebarCollapsed) {
+        sidebar.style.transform = 'translateX(-100%)';
+    } else {
+        sidebar.style.transform = 'translateX(0)';
+    }
+},
+
+updateZoom(value) {
+    this.state.currentZoom = parseInt(value);
+    const container = document.getElementById('svgEditorContainer');
+    const zoomValue = document.getElementById('svgEditorZoomValue');
+    
+    if (container) {
+        container.style.transform = `scale(${this.state.currentZoom / 100})`;
+    }
+    if (zoomValue) {
+        zoomValue.textContent = this.state.currentZoom + '%';
+    }
+},
 
     loadSVGList() {
-        const listContainer = document.getElementById('svgEditorList');
-        if (!listContainer || !window.svgData) return;
+    const listContainer = document.getElementById('svgEditorList');
+    if (!listContainer || !window.svgData) return;
 
-        listContainer.innerHTML = '';
-        const svgNames = Object.keys(window.svgData).sort();
+    listContainer.innerHTML = '';
+    const svgNames = Object.keys(window.svgData).sort();
 
-        svgNames.forEach(name => {
-            const item = document.createElement('div');
-            item.className = 'svg-editor-item';
-            item.style.cssText = `
-                padding: 12px;
-                margin-bottom: 8px;
-                background: #f8f9fa;
-                border-radius: 5px;
-                cursor: pointer;
-                transition: all 0.2s;
-                border: 2px solid transparent;
-            `;
+    svgNames.forEach(name => {
+        const item = document.createElement('div');
+        item.className = 'svg-editor-item';
+        item.style.cssText = `
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        `;
 
-            const itemName = document.createElement('div');
-            itemName.style.cssText = 'font-weight: 600; margin-bottom: 8px; color: #2d3748; font-size: 0.9rem;';
-            itemName.textContent = name;
+        const itemName = document.createElement('div');
+        itemName.style.cssText = 'font-weight: 600; color: #2d3748; font-size: 0.9rem;';
+        itemName.textContent = name;
 
-            const preview = document.createElement('div');
-            preview.style.cssText = `
-                width: 100%;
-                height: 100px;
-                background: white;
-                border-radius: 3px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                border: 1px solid #e0e0e0;
-            `;
-            preview.innerHTML = window.svgData[name];
+        item.appendChild(itemName);
 
-            item.appendChild(itemName);
-            item.appendChild(preview);
-
-            item.addEventListener('mouseenter', () => {
-                if (!item.classList.contains('active')) {
-                    item.style.background = '#e9ecef';
-                }
-            });
-
-            item.addEventListener('mouseleave', () => {
-                if (!item.classList.contains('active')) {
-                    item.style.background = '#f8f9fa';
-                }
-            });
-
-            item.addEventListener('click', () => this.loadSVG(name));
-
-            listContainer.appendChild(item);
+        item.addEventListener('mouseenter', () => {
+            if (!item.classList.contains('active')) {
+                item.style.background = '#e9ecef';
+            }
         });
-    },
+
+        item.addEventListener('mouseleave', () => {
+            if (!item.classList.contains('active')) {
+                item.style.background = '#f8f9fa';
+            }
+        });
+
+        item.addEventListener('click', () => this.loadSVG(name));
+
+        listContainer.appendChild(item);
+    });
+},
 
     loadSVG(svgName) {
         // Save current if needed
         if (this.state.currentSvg !== null && this.state.currentSvg !== svgName) {
             this.saveToMemory();
         }
-
         this.state.currentSvg = svgName;
         this.state.selectedElements.clear();
 
@@ -233,12 +244,18 @@ const SVGEditor = {
         document.getElementById('svgEditorCurrentName').textContent = svgName;
 
         // Load SVG to canvas
-        const canvas = document.getElementById('svgEditorCanvas');
-        canvas.innerHTML = `
-            <div id="svgEditorContainer" style="position: relative; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-                <div id="svgEditorContent">${window.svgData[svgName]}</div>
-            </div>
-        `;
+const canvas = document.getElementById('svgEditorCanvas');
+canvas.innerHTML = `
+    <div id="svgEditorContainer" style="position: relative; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transform: scale(${this.state.currentZoom / 100}); transition: transform 0.2s;">
+        <div id="svgEditorContent">${window.svgData[svgName]}</div>
+    </div>
+`;
+
+// Update zoom slider
+const zoomSlider = document.getElementById('svgEditorZoom');
+const zoomValue = document.getElementById('svgEditorZoomValue');
+if (zoomSlider) zoomSlider.value = this.state.currentZoom;
+if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
 
         const svg = canvas.querySelector('svg');
         if (svg) {
@@ -258,31 +275,53 @@ const SVGEditor = {
         }
     },
 
-    makeLabelsSelectable(svg) {
-        const labels = svg.querySelectorAll('.label-toggle');
+   makeLabelsSelectable(svg) {
+    const labels = svg.querySelectorAll('.label-toggle');
+    
+    labels.forEach(label => {
+        label.style.cursor = 'move';
+        label.style.outline = '2px solid transparent';
+        label.style.outlineOffset = '8px';
+        label.style.transition = 'outline 0.2s';
         
-        labels.forEach(label => {
-            label.style.cursor = 'move';
-            label.style.outline = '2px solid transparent';
-            label.style.outlineOffset = '4px';
-            label.style.transition = 'outline 0.2s';
+        // Create invisible larger hitbox
+        const bbox = label.getBBox();
+        const padding = 10;
+        const hitbox = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        hitbox.setAttribute('x', bbox.x - padding);
+        hitbox.setAttribute('y', bbox.y - padding);
+        hitbox.setAttribute('width', bbox.width + padding * 2);
+        hitbox.setAttribute('height', bbox.height + padding * 2);
+        hitbox.setAttribute('fill', 'transparent');
+        hitbox.setAttribute('stroke', 'none');
+        hitbox.style.cursor = 'move';
+        hitbox.style.pointerEvents = 'all';
+        
+        label.parentNode.insertBefore(hitbox, label);
+        
+        const handleInteraction = (e, isTouch = false) => {
+            if (!this.state.selectedElements.has(label)) {
+                label.style.outline = '2px solid #4a9eff';
+            }
+        };
+        
+        const handleLeave = () => {
+            if (!this.state.selectedElements.has(label)) {
+                label.style.outline = '2px solid transparent';
+            }
+        };
 
-            label.addEventListener('mouseenter', () => {
-                if (!this.state.selectedElements.has(label)) {
-                    label.style.outline = '2px solid #4a9eff';
-                }
-            });
+        hitbox.addEventListener('mouseenter', () => handleInteraction());
+        hitbox.addEventListener('mouseleave', handleLeave);
+        hitbox.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
+        hitbox.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
 
-            label.addEventListener('mouseleave', () => {
-                if (!this.state.selectedElements.has(label)) {
-                    label.style.outline = '2px solid transparent';
-                }
-            });
-
-            label.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
-            label.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
-        });
-    },
+        label.addEventListener('mouseenter', () => handleInteraction());
+        label.addEventListener('mouseleave', handleLeave);
+        label.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
+        label.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
+    });
+},
 
     handleLabelMouseDown(e, label) {
         e.stopPropagation();

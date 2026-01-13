@@ -1099,6 +1099,7 @@ function saveEditedCase(caseName, originalName) {
 }
 
 function openCustomizeSVGsModal() {
+    closeSettingsModal();
     SVGEditor.open();
 }
 
