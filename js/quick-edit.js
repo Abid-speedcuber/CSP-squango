@@ -37,6 +37,9 @@ function openQuickEditModal() {
                     </div>
                 </div>
                 <div class="quick-edit-header-right">
+                    <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
+                        <img src="res/search.svg" alt="Find">
+                    </button>
                     <button class="quick-edit-icon-btn" onclick="revertQuickEditChanges()" title="Revert to last save">
                         <img src="res/revert.svg" alt="Revert">
                     </button>
@@ -81,6 +84,7 @@ function openQuickEditModal() {
                 <option value="name">Display Name</option>
                 <option value="subtitle">Subtitle</option>
                 <option value="notes">Notes</option>
+                <option value="global">Global (All General)</option>
                 <option value="all">All Algorithms</option>
             </select>
         </div>
@@ -361,25 +365,25 @@ function openQuickEditFindReplace() {
     const findInput = document.getElementById('quickEditFindInput');
     const scopeSelector = document.getElementById('quickEditScopeSelector');
     
-    if (!quickEditState.lastFocusedCell) {
-        showToast('Please select a cell first', 2000, 'info');
-        return;
-    }
-    
     findReplace.style.display = 'block';
     quickEditState.findReplaceOpen = true;
     
     // Set scope selector based on current tab
     if (quickEditState.currentTab === 'general') {
         scopeSelector.disabled = false;
-        const scopeMap = {
-            'name': 'name',
-            'subtitle': 'subtitle',
-            'notes': 'notes'
-        };
-        scopeSelector.value = scopeMap[quickEditState.findReplaceScope] || 'name';
+        if (quickEditState.lastFocusedCell) {
+            const field = quickEditState.lastFocusedCell.dataset.field;
+            const scopeMap = {
+                'displayName': 'name',
+                'subtitle': 'subtitle',
+                'notes': 'notes'
+            };
+            scopeSelector.value = scopeMap[field] || 'global';
+        } else {
+            scopeSelector.value = 'global';
+        }
     } else {
-        scopeSelector.disabled = true;
+        scopeSelector.disabled = false;
         scopeSelector.value = 'all';
     }
     
@@ -419,14 +423,20 @@ function liveSearchQuickEdit() {
     
     if (quickEditState.currentTab === 'general') {
         const scopeSelector = document.getElementById('quickEditScopeSelector');
-        const scope = scopeSelector ? scopeSelector.value : 'name';
-        const fieldMap = {
-            'name': 'displayName',
-            'subtitle': 'subtitle',
-            'notes': 'notes'
-        };
-        const field = fieldMap[scope];
-        cells = Array.from(modal.querySelectorAll(`.editable[data-field="${field}"]`));
+        const scope = scopeSelector ? scopeSelector.value : 'global';
+        
+        if (scope === 'global') {
+            // Search all general fields
+            cells = Array.from(modal.querySelectorAll('#quickEditGeneralTab .editable'));
+        } else {
+            const fieldMap = {
+                'name': 'displayName',
+                'subtitle': 'subtitle',
+                'notes': 'notes'
+            };
+            const field = fieldMap[scope];
+            cells = Array.from(modal.querySelectorAll(`.editable[data-field="${field}"]`));
+        }
     } else {
         cells = Array.from(modal.querySelectorAll('.alg-cell'));
     }
@@ -555,8 +565,8 @@ function replaceQuickEdit() {
         updateAlgorithmCellParity(currentMatch);
     }
     
-    // Move to next match
-    findNextQuickEdit();
+    // Re-run search to update matches without closing
+    liveSearchQuickEdit();
 }
 
 function replaceAllQuickEdit() {
@@ -572,8 +582,11 @@ function replaceAllQuickEdit() {
     let cells;
     
     if (quickEditState.currentTab === 'general') {
-        const scopeSelector = document.getElementById('quickEditScopeSelector');
-        const scope = scopeSelector ? scopeSelector.value : 'name';
+        const scopeSelector= document.getElementById('quickEditScopeSelector');
+const scope = scopeSelector ? scopeSelector.value : 'global';
+    if (scope === 'global') {
+        cells = Array.from(modal.querySelectorAll('#quickEditGeneralTab .editable'));
+    } else {
         const fieldMap = {
             'name': 'displayName',
             'subtitle': 'subtitle',
@@ -581,28 +594,31 @@ function replaceAllQuickEdit() {
         };
         const field = fieldMap[scope];
         cells = Array.from(modal.querySelectorAll(`.editable[data-field="${field}"]`));
-    } else {
-        cells = Array.from(modal.querySelectorAll('.alg-cell'));
     }
-    
-    let replaceCount = 0;
-    const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
-    
-    cells.forEach(cell => {
-        const text = cell.textContent;
-        if (regex.test(text)) {
-            cell.textContent = text.replace(regex, replaceTerm);
-            replaceCount++;
-            
-            // Update parity if it's an algorithm cell
-            if (cell.classList.contains('alg-cell')) {
-                updateAlgorithmCellParity(cell);
-            }
+} else {
+    cells = Array.from(modal.querySelectorAll('.alg-cell'));
+}
+
+let replaceCount = 0;
+const regex = new RegExp(searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+
+cells.forEach(cell => {
+    const text = cell.textContent;
+    if (regex.test(text)) {
+        cell.textContent = text.replace(regex, replaceTerm);
+        replaceCount++;
+        
+        // Update parity if it's an algorithm cell
+        if (cell.classList.contains('alg-cell')) {
+            updateAlgorithmCellParity(cell);
         }
-    });
-    
-    showToast(`Replaced ${replaceCount} occurrences`, 2000, 'success');
-    closeQuickEditFindReplace();
+    }
+});
+
+showToast(`Replaced ${replaceCount} occurrences`, 2000, 'success');
+
+// Re-run search to update display
+liveSearchQuickEdit();
 }
 
 function handleReplaceEnter(event) {
@@ -617,12 +633,7 @@ function changeFindScope() {
     if (!scopeSelector) return;
     
     const newScope = scopeSelector.value;
-    
-    if (quickEditState.currentTab === 'general') {
-        quickEditState.findReplaceScope = newScope;
-    } else {
-        quickEditState.findReplaceScope = null; // algorithms tab ignores scope
-    }
+    quickEditState.findReplaceScope = newScope;
     
     // Re-run search with new scope
     liveSearchQuickEdit();

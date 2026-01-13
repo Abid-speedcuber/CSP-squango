@@ -17,7 +17,8 @@ const SVGEditor = {
     touchStartPos: null,
     currentZoom: 100,
     keysPressed: new Set(),
-    keyMoveInterval: null
+    keyMoveInterval: null,
+    unsavedSvgs: new Set()
 },
 
     init() {
@@ -57,6 +58,7 @@ const SVGEditor = {
             <button id="svgEditorUndo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/revert.svg" style="width: 16px; height: 16px;">Undo</button>
             <button id="svgEditorRedo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/redo.svg" style="width: 16px; height: 16px;">Redo</button>
             <button id="svgEditorReset" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/reset.svg" style="width: 16px; height: 16px;">Reset</button>
+            <button id="svgEditorSaveAll" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/save.svg" style="width: 16px; height: 16px;">Save All</button>
             <button id="svgEditorSave" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/save.svg" style="width: 16px; height: 16px;">Save</button>
         </div>
     </div>
@@ -82,6 +84,7 @@ const SVGEditor = {
 
     setupEventListeners() {
         const saveBtn = document.getElementById('svgEditorSave');
+        const saveAllBtn = document.getElementById('svgEditorSaveAll');
         const resetBtn = document.getElementById('svgEditorReset');
         const undoBtn = document.getElementById('svgEditorUndo');
         const redoBtn = document.getElementById('svgEditorRedo');
@@ -89,6 +92,7 @@ const SVGEditor = {
 const zoomSlider = document.getElementById('svgEditorZoom');
 
 if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
+if (saveAllBtn) saveAllBtn.onclick = () => this.saveAll();
 if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
 if (undoBtn) undoBtn.onclick = () => this.undo();
 if (redoBtn) redoBtn.onclick = () => this.redo();
@@ -206,14 +210,15 @@ updateZoom(value) {
     svgNames.forEach(name => {
         const item = document.createElement('div');
         item.className = 'svg-editor-item';
+        const isUnsaved = this.state.unsavedSvgs.has(name);
         item.style.cssText = `
             padding: 12px;
             margin-bottom: 8px;
-            background: #f8f9fa;
+            background: ${isUnsaved ? '#e3f2fd' : '#f8f9fa'};
             border-radius: 5px;
             cursor: pointer;
             transition: all 0.2s;
-            border: 2px solid transparent;
+            border: 2px solid ${isUnsaved ? '#2196f3' : 'transparent'};
         `;
 
         const itemName = document.createElement('div');
@@ -224,13 +229,13 @@ updateZoom(value) {
 
         item.addEventListener('mouseenter', () => {
             if (!item.classList.contains('active')) {
-                item.style.background = '#e9ecef';
+                item.style.background = isUnsaved ? '#bbdefb' : '#e9ecef';
             }
         });
 
         item.addEventListener('mouseleave', () => {
             if (!item.classList.contains('active')) {
-                item.style.background = '#f8f9fa';
+                item.style.background = isUnsaved ? '#e3f2fd' : '#f8f9fa';
             }
         });
 
@@ -696,6 +701,10 @@ startKeyboardMovement() {
         this.state.histories[name] = this.state.histories[name].slice(0, this.state.historyIndices[name] + 1);
         this.state.histories[name].push(svgElement);
         this.state.historyIndices[name]++;
+        
+        // Mark as unsaved
+        this.state.unsavedSvgs.add(name);
+        this.loadSVGList();
     },
 
     undo() {
@@ -765,8 +774,49 @@ startKeyboardMovement() {
 
         // Re-render main app
         render(true);
+        
+        // Mark as saved
+        this.state.unsavedSvgs.delete(name);
+        this.loadSVGList();
 
         showToast(`"${name}" saved successfully!`, 2000, 'success');
+    },
+    
+    saveAll() {
+        if (this.state.unsavedSvgs.size === 0) {
+            showToast('No unsaved changes', 2000, 'info');
+            return;
+        }
+        
+        const count = this.state.unsavedSvgs.size;
+        
+        // Save all unsaved SVGs
+        this.state.unsavedSvgs.forEach(name => {
+            const svg = document.querySelector(`#svgEditorCanvas svg[data-svg-name="${name}"]`);
+            if (svg) {
+                const clone = svg.cloneNode(true);
+                clone.querySelectorAll('.label-toggle').forEach(el => {
+                    el.style.outline = '';
+                    el.style.cursor = '';
+                    el.style.transition = '';
+                });
+                window.svgData[name] = clone.outerHTML;
+            }
+        });
+        
+        // Clear unsaved set
+        this.state.unsavedSvgs.clear();
+        
+        // Save to localStorage
+        saveState();
+        
+        // Re-render main app
+        render(true);
+        
+        // Refresh sidebar
+        this.loadSVGList();
+        
+        showToast(`Saved ${count} tracing guide(s) successfully!`, 2000, 'success');
     },
 
     resetCurrent() {
@@ -803,6 +853,21 @@ startKeyboardMovement() {
     },
 
     close() {
+    // Check for unsaved changes
+    if (this.state.unsavedSvgs.size > 0) {
+        showConfirmation(
+            `You have ${this.state.unsavedSvgs.size} unsaved tracing guide(s). Close without saving?`,
+            () => {
+                this.forceClose();
+            }
+        );
+        return;
+    }
+    
+    this.forceClose();
+},
+
+forceClose() {
     // Save current before closing
     if (this.state.currentSvg !== null) {
         this.saveToMemory();
@@ -825,6 +890,7 @@ startKeyboardMovement() {
     this.state.selectedElements.clear();
     this.state.isSidebarCollapsed = false;
     this.state.keysPressed.clear();
+    this.state.unsavedSvgs.clear();
 }
 };
 
