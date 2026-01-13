@@ -766,16 +766,16 @@ startKeyboardMovement() {
         // Re-render main app
         render(true);
 
-        alert(`"${name}" saved successfully!`);
+        showToast(`"${name}" saved successfully!`, 2000, 'success');
     },
 
     resetCurrent() {
         const name = this.state.currentSvg;
         if (name === null) return;
 
-        if (!confirm(`Reset "${name}" to default? This cannot be undone.`)) {
-            return;
-        }
+        showConfirmation(
+        `Reset "${name}" to default? This cannot be undone.`,
+        () => {
 
         // Reset to default
         window.svgData[name] = DEFAULT_SVGS[name];
@@ -787,8 +787,10 @@ startKeyboardMovement() {
         // Reload in editor
         this.loadSVG(name);
 
-        alert(`"${name}" reset to default!`);
-    },
+        showToast(`"${name}" reset to default!`, 2000, 'success');
+      }
+    );
+},
 
     open() {
         const modal = document.getElementById('svgEditorModal');
