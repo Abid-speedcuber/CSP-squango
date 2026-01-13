@@ -927,6 +927,7 @@ function adjustColorBrightness(hexColor, percent) {
       justify-content: center;
       scrollbar-width: none;
       -ms-overflow-style: none;
+      overflow: hidden;
     `;
 
         const configContent = document.createElement('div');
@@ -950,7 +951,7 @@ function adjustColorBrightness(hexColor, percent) {
         const headerTitle = document.createElement('div');
         headerTitle.style.cssText = 'display: flex; align-items: center; gap: 10px;';
         headerTitle.innerHTML = `
-            <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Configure Shape Orientations</h2>
+            <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Tracing Scheme Settings</h2>
             <button class="config-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Configuration Guide">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -1067,6 +1068,7 @@ function adjustColorBrightness(hexColor, percent) {
         const saveBtnHover = isDark ? adjustColorBrightness(config.backgroundColor, 25) : adjustColorBrightness(config.backgroundColor, -15);
         const saveBtn = document.createElement('button');
         saveBtn.textContent = 'Save & Apply';
+        saveBtn.id = 'configSaveBtn';
         saveBtn.style.cssText = `
       padding: 0.75rem 2rem;
       border: 2px solid ${borderColor};
@@ -1087,7 +1089,7 @@ function adjustColorBrightness(hexColor, percent) {
             saveBtn.style.background = saveBtnBg;
         };
 
-        saveBtn.onclick = () => {
+        const performSave = () => {
             // Save shape patterns and corner sticker mode
             saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
             if (typeof saveState === 'function') {
@@ -1098,6 +1100,7 @@ function adjustColorBrightness(hexColor, percent) {
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
+            if (floatingSaveBtn) floatingSaveBtn.remove();
             window.removeEventListener('resize', resizeHandler);
             configModalDiv.removeEventListener('scroll', scrollHandler);
             const backdrop = document.querySelector('.parity-tracer-backdrop');
@@ -1109,9 +1112,11 @@ function adjustColorBrightness(hexColor, percent) {
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
             
             // Re-trigger analysis in the parity modal if it exists
-            const analyzeBtn = modalElement.querySelector(`button[id$="-analyze"]`);
-            if (analyzeBtn) {
-                analyzeBtn.click();
+            if (modalElement) {
+                const analyzeBtn = modalElement.querySelector(`button[id$="-analyze"]`);
+                if (analyzeBtn) {
+                    analyzeBtn.click();
+                }
             }
             
             // Recalculate parity with new settings
@@ -1151,8 +1156,12 @@ function adjustColorBrightness(hexColor, percent) {
                 }
             }
             
-            alert('Settings saved! All parity calculations have been updated.');
+            if (typeof showToast === 'function') {
+                showToast('Settings saved! All parity calculations have been updated.', 3000, 'success');
+            }
         };
+        
+        saveBtn.onclick = performSave;
 
         const resetBtnBg = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -8);
         const resetBtnHover = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -12);
@@ -1189,6 +1198,138 @@ function adjustColorBrightness(hexColor, percent) {
         
         buttonsDiv.appendChild(saveBtn);
         buttonsDiv.appendChild(resetBtn);
+        
+        // Create floating save button
+        const floatingSaveBtn = document.createElement('button');
+        floatingSaveBtn.className = 'config-floating-save-btn';
+        floatingSaveBtn.style.cssText = `
+            position: fixed;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10010;
+            border: none;
+            background: ${saveBtnBg};
+            color: ${textColor};
+            transition: all 0.2s;
+            padding: 0;
+        `;
+        floatingSaveBtn.innerHTML = '<img src="res/save.svg" style="width: 24px; height: 24px;">';
+        
+        floatingSaveBtn.onmouseover = () => {
+            floatingSaveBtn.style.background = saveBtnHover;
+            floatingSaveBtn.style.transform = 'scale(1.1)';
+        };
+        
+        floatingSaveBtn.onmouseout = () => {
+            floatingSaveBtn.style.background = saveBtnBg;
+            floatingSaveBtn.style.transform = 'scale(1)';
+        };
+        
+        floatingSaveBtn.onclick = performSave;
+        
+        document.body.appendChild(floatingSaveBtn);
+        
+        // Track if data has changed
+        let dataChanged = false;
+        
+        // Function to update floating save button visibility
+        function updateFloatingSaveBtn() {
+            try {
+                const contentRect = configContent.getBoundingClientRect();
+                const saveBtnRect = saveBtn.getBoundingClientRect();
+                const saveBtnVisible = saveBtnRect.top >= 0 && saveBtnRect.bottom <= window.innerHeight;
+                
+                console.log('=== Floating Save Button Debug ===');
+                console.log('dataChanged:', dataChanged);
+                console.log('saveBtnVisible:', saveBtnVisible);
+                console.log('contentRect:', {
+                    top: contentRect.top,
+                    right: contentRect.right,
+                    bottom: contentRect.bottom,
+                    left: contentRect.left,
+                    width: contentRect.width,
+                    height: contentRect.height
+                });
+                console.log('saveBtnRect:', {
+                    top: saveBtnRect.top,
+                    bottom: saveBtnRect.bottom
+                });
+                console.log('viewport:', {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+                
+                if (dataChanged && !saveBtnVisible) {
+                    floatingSaveBtn.style.display = 'flex';
+                    // NUCLEAR: Calculate position from viewport, not relative values
+                    const viewportWidth = window.innerWidth;
+                    const viewportHeight = window.innerHeight;
+                    const modalRight = contentRect.right;
+                    const modalBottom = contentRect.bottom;
+                    
+                    const calculatedRight = viewportWidth - modalRight + 16;
+                    const calculatedBottom = viewportHeight - modalBottom + 16;
+                    
+                    console.log('Calculated position:', {
+                        right: calculatedRight,
+                        bottom: calculatedBottom
+                    });
+                    
+                    // Fixed offset from modal edge
+                    floatingSaveBtn.style.right = `${calculatedRight}px`;
+                    floatingSaveBtn.style.bottom = `${calculatedBottom}px`;
+                    floatingSaveBtn.style.position = 'fixed';
+                    
+                    console.log('Applied styles:', {
+                        right: floatingSaveBtn.style.right,
+                        bottom: floatingSaveBtn.style.bottom,
+                        display: floatingSaveBtn.style.display
+                    });
+                } else {
+                    floatingSaveBtn.style.display = 'none';
+                    console.log('Button hidden - dataChanged:', dataChanged, 'saveBtnVisible:', saveBtnVisible);
+                }
+                console.log('=================================');
+            } catch (e) {
+                console.error('Error updating floating save button:', e);
+            }
+        }
+        
+        // Listen for scroll on config content
+        configContent.addEventListener('scroll', updateFloatingSaveBtn);
+        window.addEventListener('resize', updateFloatingSaveBtn);
+        
+        // NUCLEAR: Continuous updates until position stabilizes
+        let updateCount = 0;
+        const maxUpdates = 20;
+        const updateInterval = setInterval(() => {
+            updateFloatingSaveBtn();
+            updateCount++;
+            if (updateCount >= maxUpdates) {
+                clearInterval(updateInterval);
+            }
+        }, 100);
+        
+        // Also do immediate updates
+        updateFloatingSaveBtn();
+        setTimeout(updateFloatingSaveBtn, 0);
+        
+        // Mark data as changed when radio buttons change
+        setTimeout(() => {
+            const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    dataChanged = true;
+                    setTimeout(updateFloatingSaveBtn, 50);
+                });
+            });
+        }, 100);
 
         // Setup config info button handler
         setTimeout(() => {
@@ -1351,16 +1492,85 @@ function adjustColorBrightness(hexColor, percent) {
             });
         }, 100);
 
-        const closeConfigModal = () => {
-            configModalDiv.remove();
-            configFloatingCloseBtn.remove();
-            configStyle.remove();
+        const closeConfigModal = (skipConfirmation = false) => {
+            // Check for unsaved changes
+            if (dataChanged && !skipConfirmation) {
+                // Prevent closing
+                event?.preventDefault();
+                event?.stopPropagation();
+                
+                // Show custom choice buttons using a creative approach
+                const choiceContainer = document.createElement('div');
+                choiceContainer.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: white;
+                    padding: 24px;
+                    border-radius: 12px;
+                    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+                    z-index: 2147483647;
+                    min-width: 300px;
+                `;
+                
+                choiceContainer.innerHTML = `
+                    <h3 style="margin: 0 0 12px 0; color: #333; font-size: 1.1rem;">Unsaved Changes</h3>
+                    <p style="margin: 0 0 20px 0; color: #666; font-size: 0.95rem;">You have unsaved changes. What would you like to do?</p>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button class="discard-btn" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Discard</button>
+                        <button class="cancel-btn" style="padding: 8px 16px; background: #f8f9fa; color: #333; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                        <button class="save-btn" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save</button>
+                    </div>
+                `;
+                
+                // Add it OUTSIDE all modal structures
+                const tempContainer = document.createElement('div');
+                tempContainer.id = 'temp-confirm-container-ultimate';
+                tempContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483646; display: flex; align-items: center; justify-content: center;';
+                tempContainer.appendChild(choiceContainer);
+                document.body.appendChild(tempContainer);
+                
+                choiceContainer.querySelector('.discard-btn').onclick = () => {
+                    tempContainer.remove();
+                    closeConfigModal(true);
+                };
+                
+                choiceContainer.querySelector('.cancel-btn').onclick = () => {
+                    tempContainer.remove();
+                };
+                
+                choiceContainer.querySelector('.save-btn').onclick = () => {
+                    tempContainer.remove();
+                    performSave();
+                };
+                
+                return;
+            }
+            
+            // Clean up scroll listeners first
+            configContent.removeEventListener('scroll', updateFloatingSaveBtn);
             window.removeEventListener('resize', resizeHandler);
             configModalDiv.removeEventListener('scroll', scrollHandler);
             const backdrop = document.querySelector('.parity-tracer-backdrop');
             if (backdrop) {
                 backdrop.removeEventListener('scroll', scrollHandler);
             }
+            
+            // Clear any update intervals
+            if (typeof updateInterval !== 'undefined') {
+                clearInterval(updateInterval);
+            }
+            
+            // Remove elements
+            if (floatingSaveBtn && floatingSaveBtn.parentNode) {
+                floatingSaveBtn.remove();
+            }
+            configModalDiv.remove();
+            configFloatingCloseBtn.remove();
+            configStyle.remove();
+            
+            // Restore main modal buttons if they exist
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
             if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
@@ -1375,7 +1585,7 @@ function adjustColorBrightness(hexColor, percent) {
             pushModalState('parityConfigModal', closeConfigModal);
         }
 
-        configFloatingCloseBtn.onclick = closeConfigModal;
+        configFloatingCloseBtn.onclick = () => closeConfigModal();
 
         configModalDiv.onclick = (e) => {
             if (e.target === configModalDiv) {
@@ -1396,10 +1606,12 @@ function adjustColorBrightness(hexColor, percent) {
                         const clickedIndex = parseInt(e.target.getAttribute('data-piece-index'));
 
                         if (!isNaN(clickedIndex)) {
-                            // Save scroll position before update
-                            const scrollPos = configModalDiv.scrollTop;
+                                // Save scroll position before update
+                                const scrollPos = configModalDiv.scrollTop;
 
-                            setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
+                                setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
+                                dataChanged = true;
+                                updateFloatingSaveBtn();
 
                             // Find the card element
                             const cardElement = e.target.closest('.shape-config-item');
@@ -1439,6 +1651,9 @@ function adjustColorBrightness(hexColor, percent) {
         }, 100);
 
         document.body.appendChild(configModalDiv);
+        
+        // Force a reflow to ensure the modal is in the DOM before we calculate positions
+        configModalDiv.offsetHeight;
     }
 
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
@@ -1573,11 +1788,14 @@ function adjustColorBrightness(hexColor, percent) {
       display: flex;
       align-items: center;
       justify-content: center;
+      overflow: hidden;
     `;
 
         // Create modal structure
         const modal = document.createElement('div');
         modal.className = 'parity-tracer-modal-container';
+        const vh = window.innerHeight;
+        const maxHeight = vh > 900 ? 'auto' : (vh > 600 ? '90vh' : '85vh');
         modal.style.cssText = `
       position: relative;
       background: ${config.backgroundColor};
@@ -1586,7 +1804,7 @@ function adjustColorBrightness(hexColor, percent) {
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       max-width: 600px;
       width: 90%;
-      height: 540px;
+      max-height: ${maxHeight};
       overflow-y: auto;
       z-index: 10006;
     `;
@@ -1748,15 +1966,44 @@ function adjustColorBrightness(hexColor, percent) {
             // Position buttons based on modal position
             function updateButtonPositions() {
                 const rect = modal.getBoundingClientRect();
-                closeBtnElement.style.top = `${rect.top + 8}px`;
-                closeBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
-                instructionBtnElement.style.bottom = `${window.innerHeight - rect.bottom + 66}px`;
-                instructionBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
-                settingsBtnElement.style.bottom = `${window.innerHeight - rect.bottom + 16}px`;
-                settingsBtnElement.style.right = `${window.innerWidth - rect.right + 6}px`;
+                console.log('=== Button Position Update ===');
+                console.log('Modal rect:', rect);
+                console.log('Viewport:', { width: window.innerWidth, height: window.innerHeight });
+                
+                const closeTop = rect.top + 8;
+                const closeRight = window.innerWidth - rect.right + 6;
+                const instrBottom = window.innerHeight - rect.bottom + 66;
+                const instrRight = window.innerWidth - rect.right + 6;
+                const settingsBottom = window.innerHeight - rect.bottom + 16;
+                const settingsRight = window.innerWidth - rect.right + 6;
+                
+                console.log('Calculated positions:', {
+                    close: { top: closeTop, right: closeRight },
+                    instruction: { bottom: instrBottom, right: instrRight },
+                    settings: { bottom: settingsBottom, right: settingsRight }
+                });
+                
+                closeBtnElement.style.top = `${closeTop}px`;
+                closeBtnElement.style.right = `${closeRight}px`;
+                instructionBtnElement.style.bottom = `${instrBottom}px`;
+                instructionBtnElement.style.right = `${instrRight}px`;
+                settingsBtnElement.style.bottom = `${settingsBottom}px`;
+                settingsBtnElement.style.right = `${settingsRight}px`;
+                
+                console.log('Applied positions:', {
+                    close: { top: closeBtnElement.style.top, right: closeBtnElement.style.right },
+                    instruction: { bottom: instructionBtnElement.style.bottom, right: instructionBtnElement.style.right },
+                    settings: { bottom: settingsBtnElement.style.bottom, right: settingsBtnElement.style.right }
+                });
+                console.log('==============================');
             }
 
-            updateButtonPositions();
+            // Force multiple updates with delays to catch layout settling
+            const buttonUpdateTimings = [0, 50, 100, 200, 300, 500];
+            buttonUpdateTimings.forEach(delay => {
+                setTimeout(updateButtonPositions, delay);
+            });
+            
             window.addEventListener('resize', updateButtonPositions);
             backdrop.addEventListener('scroll', updateButtonPositions);
 
@@ -1953,6 +2200,7 @@ function adjustColorBrightness(hexColor, percent) {
     // Export the single function
     globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
+        openConfigModal: showConfigurationModalWithLongName,
         version: '2.0.0'
     };
 

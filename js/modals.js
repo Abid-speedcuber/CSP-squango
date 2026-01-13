@@ -60,6 +60,7 @@ function generateModalHTML() {
                         <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
                         <button onclick="openCaseNameModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Case Name Settings</button>
                         <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Customize Tracing Guides</button>
+                        <button onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Parity Tracing Personalization</button>
                         <button onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Quick Edit</button>
                     </div>
 
@@ -1250,15 +1251,15 @@ window.showToast = function(message, duration = 3000, type = 'info') {
     const toast = document.createElement('div');
     toast.style.cssText = `
         position: fixed;
-        bottom: 30px;
+        top: 30px;
         left: 50%;
         transform: translateX(-50%);
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff'};
-        color: white;
+        background: ${type === 'success' ? '#c9ffd6ff' : type === 'error' ? '#ffd7dbff' : '#d1d1d1ff'};
+        color: Black;
         padding: 12px 24px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
+        z-index: 100000;
         font-size: 0.95rem;
         font-weight: 500;
         opacity: 0;
@@ -1393,4 +1394,35 @@ function closeAboutModal() {
     const modal = document.getElementById('aboutModal');
     modal.style.display = 'none';
     document.body.classList.remove('modal-open');
+}
+
+// Function to open parity tracing personalization from settings
+function openParityTracingPersonalization() {
+    closeSettingsModal();
+    
+    // Call the config modal directly via the exported library function
+    if (typeof window.ParityTracerLibrary === 'undefined' || !window.ParityTracerLibrary.openConfigModal) {
+        showToast('Configuration modal not available', 3000, 'error');
+        return;
+    }
+    
+    const config = {
+        backgroundColor: '#ffffff',
+        hideInstructionButton: hideInstructions,
+        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
+        instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
+        instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
+        topLayerMainColor: colorScheme.topColor,
+        topLayerColorFullName: getColorName(colorScheme.topColor),
+        topLayerColorAbbreviation: getColorName(colorScheme.topColor).charAt(0),
+        bottomLayerMainColor: colorScheme.bottomColor,
+        bottomLayerColorFullName: getColorName(colorScheme.bottomColor),
+        bottomLayerColorAbbreviation: getColorName(colorScheme.bottomColor).charAt(0),
+        frontFaceColorForVisualization: colorScheme.frontColor,
+        rightFaceColorForVisualization: colorScheme.rightColor,
+        backFaceColorForVisualization: colorScheme.backColor,
+        leftFaceColorForVisualization: colorScheme.leftColor
+    };
+    
+    window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }

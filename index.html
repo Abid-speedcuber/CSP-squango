@@ -16,12 +16,13 @@
 
 <body>
     <div id="loadingScreen"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif;">
-        <h1 style="font-size: 2.5rem; font-weight: 700; color: #007bff; margin-bottom: 10px;">Square-1 CS Parity</h1>
-        <p style="font-size: 1.2rem; color: #666; margin-bottom: 30px;">by Abid Ibn Ashraf</p>
-        <div style="width: 300px; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif;">
+        <h1 style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
+        <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
+        <p style="font-size: 0.9rem; color: #718096; margin-bottom: 35px; font-weight: 400;">inspired from hashtagcuber.com/csp/ by Eva Kato</p>
+        <div style="width: 320px; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
             <div id="loadingProgress"
-                style="width: 0%; height: 100%; background: linear-gradient(90deg, #007bff, #17a2b8); transition: width 0.3s ease;">
+                style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
             </div>
         </div>
     </div>
@@ -209,11 +210,17 @@
 
         // Select and display a random tip
         const tipElement = document.createElement('p');
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #555; margin-top: 20px; max-width: 500px; text-align: center; line-height: 1.5;';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; margin-top: 25px; max-width: 520px; text-align: center; line-height: 1.6; font-weight: 400;';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
         document.getElementById('loadingScreen').appendChild(tipElement);
+        
+        // Add credit text at the bottom
+        const creditElement = document.createElement('p');
+        creditElement.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 50px; text-align: center; font-weight: 400;';
+        creditElement.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
+        document.getElementById('loadingScreen').appendChild(creditElement);
 
         // Loading screen progress simulation
         let loadProgress = 0;
@@ -290,6 +297,8 @@
         }
 
         window.addEventListener('load', async () => {
+            const loadStartTime = Date.now();
+            
             // Initialize SVGs FIRST - after svg.js is guaranteed to be loaded
             initializeSVGData();
             
@@ -307,7 +316,12 @@
                 console.log('Using cached parity calculations');
             }
             
-            await new Promise(resolve => setTimeout(resolve, 300));
+            // Ensure minimum loading time of 3.5 seconds
+            const loadDuration = Date.now() - loadStartTime;
+            const minimumLoadTime = 2500;
+            const remainingTime = Math.max(0, minimumLoadTime - loadDuration);
+            
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
 
             clearInterval(loadingInterval);
             progressBar.style.width = '100%';
