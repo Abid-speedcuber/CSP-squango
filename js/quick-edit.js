@@ -7,7 +7,8 @@ let quickEditState = {
     currentFindIndex: -1,
     findMatches: [],
     lastFocusedCell: null,
-    allMatchRanges: [] // Store all text ranges for multiple matches per cell
+    allMatchRanges: [], // Store all text ranges for multiple matches per cell
+    visibleAlgColumns: 6 // Number of visible algorithm columns
 };
 
 function openQuickEditModal() {
@@ -110,16 +111,14 @@ function openQuickEditModal() {
                 </div>
                 
                 <div class="quick-edit-content" id="quickEditAlgorithmsTab" style="display: none;">
-                    <table class="quick-edit-table">
+                    <div class="algorithms-tab-controls">
+                        <button class="add-columns-btn" onclick="addAlgorithmColumns()">+ Add 2 Columns</button>
+                        <span class="column-count-indicator">Showing <span id="visibleColumnCount">6</span> columns</span>
+                    </div>
+                    <table class="quick-edit-table algorithms-table">
                         <thead>
-                            <tr>
-                                <th style="width: 15%;">Case Name</th>
-                                <th style="width: 14%;">Alg 1</th>
-                                <th style="width: 14%;">Alg 2</th>
-                                <th style="width: 14%;">Alg 3</th>
-                                <th style="width: 14%;">Alg 4</th>
-                                <th style="width: 14%;">Alg 5</th>
-                                <th style="width: 14%;">Alg 6</th>
+                            <tr id="algorithmTableHeader">
+                                <th class="display-name-header">Display Name</th>
                             </tr>
                         </thead>
                         <tbody id="quickEditAlgorithmsBody">
@@ -159,7 +158,10 @@ function generateGeneralTableRows() {
 }
 
 function generateAlgorithmsTableRows() {
+    const visibleCols = quickEditState.visibleAlgColumns || 6;
+    
     return data.map(item => {
+        const displayName = getDisplayName(item.name);
         const customAlgs = customAlgorithms.get(item.name);
         let allAlgs = [];
         
@@ -169,20 +171,63 @@ function generateAlgorithmsTableRows() {
             allAlgs = [...(item.odd || []), ...(item.even || [])];
         }
         
-        // Pad to 6 columns
-        while (allAlgs.length < 6) {
+        // Pad to visible columns (minimum 6)
+        const totalCols = Math.max(visibleCols, 6);
+        while (allAlgs.length < totalCols) {
             allAlgs.push('');
         }
         
         return `
             <tr data-case="${item.name}">
-                <td class="uneditable">${item.name}</td>
-                ${allAlgs.slice(0, 6).map((alg, idx) => `
-                    <td class="editable alg-cell" contenteditable="true" data-field="alg${idx}" data-original="${alg}">${alg}</td>
+                <td class="uneditable display-name-col">${displayName}</td>
+                ${allAlgs.slice(0, totalCols).map((alg, idx) => `
+                    <td class="editable alg-cell" contenteditable="true" data-field="alg${idx}" data-original="${alg}" style="${idx >= visibleCols ? 'display: none;' : ''}">${alg}</td>
                 `).join('')}
             </tr>
         `;
     }).join('');
+}
+
+function addAlgorithmColumns() {
+    quickEditState.visibleAlgColumns += 2;
+    updateAlgorithmTableHeaders();
+    updateAlgorithmTableCells();
+    document.getElementById('visibleColumnCount').textContent = quickEditState.visibleAlgColumns;
+}
+
+function updateAlgorithmTableHeaders() {
+    const headerRow = document.getElementById('algorithmTableHeader');
+    if (!headerRow) return;
+    
+    // Clear existing headers except first one
+    while (headerRow.children.length > 1) {
+        headerRow.removeChild(headerRow.lastChild);
+    }
+    
+    // Add headers for visible columns
+    for (let i = 0; i < quickEditState.visibleAlgColumns; i++) {
+        const th = document.createElement('th');
+        th.className = 'alg-header';
+        th.textContent = `Alg ${i + 1}`;
+        headerRow.appendChild(th);
+    }
+}
+
+function updateAlgorithmTableCells() {
+    const tbody = document.getElementById('quickEditAlgorithmsBody');
+    if (!tbody) return;
+    
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('.alg-cell');
+        cells.forEach((cell, idx) => {
+            if (idx < quickEditState.visibleAlgColumns) {
+                cell.style.display = '';
+            } else {
+                cell.style.display = 'none';
+            }
+        });
+    });
 }
 
 function setupQuickEditCellHandlers() {
@@ -262,10 +307,23 @@ function setupQuickEditCellHandlers() {
             }
         });
         
-        // Handle blur for algorithm cells to update parity color
+        // Handle blur for algorithm cells to normalize and update parity color
         if (cell.classList.contains('alg-cell')) {
             cell.addEventListener('blur', function() {
+                const rawText = this.textContent.trim();
+                if (rawText && rawText !== 'Done!') {
+                    // Normalize the scramble
+                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
+                    this.textContent = normalized;
+                }
                 updateAlgorithmCellParity(this);
+            });
+            
+            // Handle paste to strip formatting
+            cell.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                document.execCommand('insertText', false, text);
             });
         }
     });
@@ -285,29 +343,78 @@ function updateAlgorithmCellParity(cell) {
     const alg = cell.textContent.trim();
     if (!alg || alg === 'Done!') {
         cell.style.color = '';
+        cell.style.fontWeight = '';
         return;
     }
     
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+    // Check if required functions exist
+    if (typeof window.algToShapeIndex === 'undefined' || 
+        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         cell.style.color = '';
+        cell.style.fontWeight = '';
         return;
     }
     
     try {
-        const setup = invertScramble(alg);
-        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-            topColor: colorScheme.topColor,
-            bottomColor: colorScheme.bottomColor,
-            frontColor: colorScheme.frontColor,
-            rightColor: colorScheme.rightColor,
-            backColor: colorScheme.backColor,
-            leftColor: colorScheme.leftColor
-        }, cornerStickerMode);
+        // Get shape index from algorithm
+        const result = window.algToShapeIndex(alg);
+        const resultShapeIndex = result.shapeIndex;
         
-        cell.style.color = parityText === 'Odd' ? '#dc3545' : '#006400';
-        cell.style.fontWeight = '600';
+        // Find matching case in shapeIndexMap
+        let matchedCaseName = null;
+        for (const [caseName, indexStr] of Object.entries(shapeIndexMap)) {
+            if (parseInt(indexStr) === resultShapeIndex) {
+                matchedCaseName = caseName;
+                break;
+            }
+        }
+        
+        if (matchedCaseName) {
+            // Direct match - test parity (blue for even, green for odd)
+            const setup = invertScramble(alg);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor,
+                bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor,
+                rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor,
+                leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            
+            cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff'; // Green for odd, blue for even
+            cell.style.fontWeight = '600';
+        } else {
+            // No direct match - check shapeIndex array for org/mir
+            let foundInOrg = false;
+            let foundInMir = false;
+            
+            for (const shapeData of shapeIndex) {
+                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
+                    foundInOrg = true;
+                    break;
+                }
+                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
+                    foundInMir = true;
+                    break;
+                }
+            }
+            
+            if (foundInOrg) {
+                cell.style.color = '#ca9b0dff'; // Yellow for org
+                cell.style.fontWeight = '600';
+            } else if (foundInMir) {
+                cell.style.color = '#c05c0aff'; // Orange for mir
+                cell.style.fontWeight = '600';
+            } else {
+                // Not found anywhere
+                cell.style.color = '#71000bff'; // Red for invalid
+                cell.style.fontWeight = '600';
+            }
+        }
     } catch (error) {
-        cell.style.color = '';
+        // Error occurred (invalid shape, etc.)
+        cell.style.color = '#dc3545'; // Red for error
+        cell.style.fontWeight = '600';
     }
 }
 
@@ -352,6 +459,8 @@ function switchQuickEditTab(tab) {
     } else {
         generalTab.style.display = 'none';
         algorithmsTab.style.display = 'block';
+        // Initialize algorithm table headers when switching to algorithm tab
+        updateAlgorithmTableHeaders();
     }
     
     // Close find/replace when switching tabs
@@ -784,7 +893,8 @@ function forceCloseQuickEditModal() {
         currentFindIndex: -1,
         findMatches: [],
         lastFocusedCell: null,
-        allMatchRanges: []
+        allMatchRanges: [],
+        visibleAlgColumns: 6
     };
 }
 
@@ -821,3 +931,4 @@ window.findPreviousQuickEdit = findPreviousQuickEdit;
 window.liveSearchQuickEdit = liveSearchQuickEdit;
 window.handleReplaceEnter = handleReplaceEnter;
 window.changeFindScope = changeFindScope;
+window.addAlgorithmColumns = addAlgorithmColumns;
