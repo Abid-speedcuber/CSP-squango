@@ -1132,9 +1132,9 @@ window.showToast = function(message, duration = 3000, type = 'info') {
 window.showConfirmation = function(message, onConfirm, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
-    modal.style.zIndex = '10001';
+    modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px; margin-top: 100px;">
+        <div class="modal-content" style="max-width: 400px; margin: 0;">
             <div class="modal-header" style="background: #f8f9fa;">
                 <span class="modal-title">Confirm Action</span>
             </div>
@@ -1155,6 +1155,49 @@ window.showConfirmation = function(message, onConfirm, onCancel) {
         modal.remove();
         document.body.classList.remove('modal-open');
         if (onConfirm) onConfirm();
+    };
+    
+    document.getElementById('confirmCancel').onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onCancel) onCancel();
+    };
+};
+
+// Three-button confirmation modal (Save/Discard/Cancel)
+window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCancel) {
+    const modal = document.createElement('div');
+    modal.className = 'modal active';
+    modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
+    modal.innerHTML = `
+        <div class="modal-content" style="max-width: 400px; margin: 0;">
+            <div class="modal-header" style="background: #f8f9fa;">
+                <span class="modal-title">Unsaved Changes</span>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
+                <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
+                    <button id="confirmCancel" style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
+                    <button id="confirmDiscard" style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Discard</button>
+                    <button id="confirmSave" style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    document.body.classList.add('modal-open');
+    
+    document.getElementById('confirmSave').onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onSave) onSave();
+    };
+    
+    document.getElementById('confirmDiscard').onclick = () => {
+        modal.remove();
+        document.body.classList.remove('modal-open');
+        if (onDiscard) onDiscard();
     };
     
     document.getElementById('confirmCancel').onclick = () => {

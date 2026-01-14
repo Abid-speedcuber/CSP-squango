@@ -714,6 +714,62 @@ function saveQuickEditChanges() {
 }
 
 function closeQuickEditModal() {
+    // Check for unsaved changes
+    const modal = document.getElementById('quickEditModal');
+    if (!modal) return;
+    
+    // Check if any data has changed
+    let hasChanges = false;
+    
+    // Check general tab changes
+    const generalRows = modal.querySelectorAll('#quickEditGeneralBody tr');
+    generalRows.forEach(row => {
+        const cells = row.querySelectorAll('.editable');
+        cells.forEach(cell => {
+            const original = cell.dataset.original || '';
+            const current = cell.textContent.trim();
+            if (original !== current) {
+                hasChanges = true;
+            }
+        });
+    });
+    
+    // Check algorithms tab changes
+    const algoRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
+    algoRows.forEach(row => {
+        const cells = row.querySelectorAll('.alg-cell');
+        cells.forEach(cell => {
+            const original = cell.dataset.original || '';
+            const current = cell.textContent.trim();
+            if (original !== current) {
+                hasChanges = true;
+            }
+        });
+    });
+    
+    if (hasChanges) {
+        showSaveDiscardConfirmation(
+            'You have unsaved changes. What would you like to do?',
+            () => {
+                // Save
+                saveQuickEditChanges();
+                forceCloseQuickEditModal();
+            },
+            () => {
+                // Discard
+                forceCloseQuickEditModal();
+            },
+            () => {
+                // Cancel - do nothing
+            }
+        );
+        return;
+    }
+    
+    forceCloseQuickEditModal();
+}
+
+function forceCloseQuickEditModal() {
     const modal = document.getElementById('quickEditModal');
     if (modal) {
         modal.remove();
@@ -727,7 +783,8 @@ function closeQuickEditModal() {
         findReplaceScope: null,
         currentFindIndex: -1,
         findMatches: [],
-        lastFocusedCell: null
+        lastFocusedCell: null,
+        allMatchRanges: []
     };
 }
 

@@ -855,10 +855,19 @@ startKeyboardMovement() {
     close() {
     // Check for unsaved changes
     if (this.state.unsavedSvgs.size > 0) {
-        showConfirmation(
-            `You have ${this.state.unsavedSvgs.size} unsaved tracing guide(s). Close without saving?`,
+        showSaveDiscardConfirmation(
+            `You have ${this.state.unsavedSvgs.size} unsaved tracing guide(s). What would you like to do?`,
             () => {
+                // Save
+                this.saveAll();
                 this.forceClose();
+            },
+            () => {
+                // Discard
+                this.forceClose();
+            },
+            () => {
+                // Cancel - do nothing
             }
         );
         return;
