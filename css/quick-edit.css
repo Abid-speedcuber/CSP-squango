@@ -284,35 +284,6 @@
     min-width: 150px;
 }
 
-.algorithms-tab-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    margin-bottom: 10px;
-}
-
-.add-columns-btn {
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    transition: background-color 0.2s;
-}
-
-.add-columns-btn:hover {
-    background-color: #0056b3;
-}
-
-.column-count-indicator {
-    font-size: 14px;
-    color: #666;
-}
-
 .alg-header {
     font-family: 'Courier New', Courier, monospace;
     font-weight: 600;
@@ -320,6 +291,12 @@
 
 .display-name-header {
     font-family: inherit;
+}
+
+.add-columns-btn-header {
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
 }
 
 /* Mobile responsive */

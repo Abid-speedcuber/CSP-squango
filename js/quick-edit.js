@@ -38,6 +38,9 @@ function openQuickEditModal() {
                     </div>
                 </div>
                 <div class="quick-edit-header-right">
+                    <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
+                        +2
+                    </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
                     </button>
@@ -111,10 +114,6 @@ function openQuickEditModal() {
                 </div>
                 
                 <div class="quick-edit-content" id="quickEditAlgorithmsTab" style="display: none;">
-                    <div class="algorithms-tab-controls">
-                        <button class="add-columns-btn" onclick="addAlgorithmColumns()">+ Add 2 Columns</button>
-                        <span class="column-count-indicator">Showing <span id="visibleColumnCount">6</span> columns</span>
-                    </div>
                     <table class="quick-edit-table algorithms-table">
                         <thead>
                             <tr id="algorithmTableHeader">
@@ -189,7 +188,94 @@ function generateAlgorithmsTableRows() {
 }
 
 function addAlgorithmColumns() {
+    const tbody = document.getElementById('quickEditAlgorithmsBody');
+    if (!tbody) return;
+    
     quickEditState.visibleAlgColumns += 2;
+    
+    // For each row, ensure we have enough cells
+    const rows = tbody.querySelectorAll('tr');
+    rows.forEach(row => {
+        const caseName = row.dataset.case;
+        const existingCells = row.querySelectorAll('.alg-cell');
+        const currentCellCount = existingCells.length;
+        
+        // If we need more cells than we have, create them
+        if (currentCellCount < quickEditState.visibleAlgColumns) {
+            const displayNameCell = row.querySelector('.display-name-col');
+            
+            for (let idx = currentCellCount; idx < quickEditState.visibleAlgColumns; idx++) {
+                const td = document.createElement('td');
+                td.className = 'editable alg-cell';
+                td.contentEditable = 'true';
+                td.dataset.field = `alg${idx}`;
+                td.dataset.original = '';
+                td.dataset.colIndex = idx;
+                td.textContent = '';
+                
+                // Add event listeners
+                td.addEventListener('focus', function() {
+                    const range = document.createRange();
+                    range.selectNodeContents(this);
+                    const selection = window.getSelection();
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                    quickEditState.lastFocusedCell = this;
+                });
+                
+                td.addEventListener('blur', function() {
+                    const rawText = this.textContent.trim();
+                    if (rawText && rawText !== 'Done!') {
+                        const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
+                        this.textContent = normalized;
+                    }
+                    updateAlgorithmCellParity(this);
+                });
+                
+                td.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                    document.execCommand('insertText', false, text);
+                });
+                
+                td.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        const currentRow = this.closest('tr');
+                        const nextRow = currentRow.nextElementSibling;
+                        if (nextRow) {
+                            const sameFieldCell = nextRow.querySelector(`[data-field="${this.dataset.field}"]`);
+                            if (sameFieldCell) {
+                                sameFieldCell.focus();
+                            }
+                        }
+                        return;
+                    }
+                    
+                    if (e.key === 'Tab') {
+                        e.preventDefault();
+                        const currentRow = this.closest('tr');
+                        const cells = Array.from(currentRow.querySelectorAll('.editable'));
+                        const currentIndex = cells.indexOf(this);
+                        
+                        if (e.shiftKey) {
+                            if (currentIndex > 0) {
+                                cells[currentIndex - 1].focus();
+                            }
+                        } else {
+                            if (currentIndex < cells.length - 1) {
+                                cells[currentIndex + 1].focus();
+                            }
+                        }
+                        return;
+                    }
+                });
+                
+                row.appendChild(td);
+            }
+        }
+    });
+    
     updateAlgorithmTableHeaders();
     updateAlgorithmTableCells();
     document.getElementById('visibleColumnCount').textContent = quickEditState.visibleAlgColumns;
@@ -452,13 +538,16 @@ function switchQuickEditTab(tab) {
     // Show/hide content
     const generalTab = document.getElementById('quickEditGeneralTab');
     const algorithmsTab = document.getElementById('quickEditAlgorithmsTab');
+    const addColumnsBtn = document.querySelector('.add-columns-btn-header');
     
     if (tab === 'general') {
         generalTab.style.display = 'block';
         algorithmsTab.style.display = 'none';
+        if (addColumnsBtn) addColumnsBtn.style.display = 'none';
     } else {
         generalTab.style.display = 'none';
         algorithmsTab.style.display = 'block';
+        if (addColumnsBtn) addColumnsBtn.style.display = '';
         // Initialize algorithm table headers when switching to algorithm tab
         updateAlgorithmTableHeaders();
     }
@@ -782,6 +871,11 @@ function saveQuickEditChanges() {
         } else {
             comments.delete(caseName);
         }
+        
+        // Update data-original attributes for general tab
+        displayNameCell.dataset.original = displayName;
+        subtitleCell.dataset.original = subtitle;
+        notesCell.dataset.original = notes;
     });
     
     // Save algorithms
@@ -802,6 +896,11 @@ function saveQuickEditChanges() {
         } else {
             customAlgorithms.delete(caseName);
         }
+        
+        // Update data-original attributes for algorithm cells
+        algCells.forEach(cell => {
+            cell.dataset.original = cell.textContent.trim();
+        });
     });
     
     // Update initial state checkpoint
