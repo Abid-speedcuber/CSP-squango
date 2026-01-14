@@ -824,11 +824,16 @@ startKeyboardMovement() {
         if (name === null) return;
 
         showConfirmation(
-        `Reset "${name}" to default? This cannot be undone.`,
+        `Reset "${name}" to ${currentPreset} preset? This cannot be undone.`,
         () => {
 
-        // Reset to default
-        window.svgData[name] = DEFAULT_SVGS[name];
+        // Reset to preset default or absolute default
+        const defaults = getPresetDefaults();
+        if (defaults && defaults.svgData && defaults.svgData[name]) {
+            window.svgData[name] = defaults.svgData[name];
+        } else {
+            window.svgData[name] = DEFAULT_SVGS[name];
+        }
 
         // Save and re-render
         saveState();
@@ -836,8 +841,12 @@ startKeyboardMovement() {
 
         // Reload in editor
         this.loadSVG(name);
+        
+        // Mark as saved (no longer unsaved)
+        this.state.unsavedSvgs.delete(name);
+        this.loadSVGList();
 
-        showToast(`"${name}" reset to default!`, 2000, 'success');
+        showToast(`"${name}" reset to ${currentPreset} preset!`, 2000, 'success');
       }
     );
 },
@@ -856,7 +865,7 @@ startKeyboardMovement() {
     // Check for unsaved changes
     if (this.state.unsavedSvgs.size > 0) {
         showSaveDiscardConfirmation(
-            `You have ${this.state.unsavedSvgs.size} unsaved tracing guide(s). What would you like to do?`,
+            `You have ${this.state.unsavedSvgs.size} unsaved image(s). What would you like to do?`,
             () => {
                 // Save
                 this.saveAll();

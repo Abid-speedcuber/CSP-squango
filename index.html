@@ -299,6 +299,14 @@
         window.addEventListener('load', async () => {
             const loadStartTime = Date.now();
             
+            // Initialize preset FIRST
+            await initializePreset();
+            
+            // If first load, apply default preset silently
+            if (isFirstLoad) {
+                await applyPreset('Default_Preset', true, true);
+            }
+            
             // Initialize SVGs FIRST - after svg.js is guaranteed to be loaded
             initializeSVGData();
             

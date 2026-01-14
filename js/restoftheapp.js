@@ -1,3 +1,12 @@
+// Modular preset configuration - add new presets here
+window.PRESET_CONFIG = {
+    'Default_Preset': 'presets/Default_Preset.json',
+    'Abid\'s_Preset': 'presets/Abid\'s_Preset.json',
+    'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
+    // Add more presets here:
+    // 'Preset_Name': 'presets/preset_file.json',
+};
+
 // Default display names for all 90 cases (used for fresh installs)
 const defaultDisplayNames = {
     "8/Star": "8/Star",
@@ -135,11 +144,14 @@ let colorScheme = {
 };
 
 let scrambleImageSize = 200; // Default size
+let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
+let presetData = null; // Will store loaded preset data
 
 // Check if this is first load BEFORE loading state
 const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 
-// Function to calculate and cache parity for all cases
+// If first load, we'll apply default preset after initialization
+
 // Function to calculate and cache parity for all cases
 function calculateAndCacheAllParity() {
     
@@ -324,6 +336,7 @@ if (isFirstLoad) {
 function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
     localStorage.setItem('allowCaseEdit', window.allowCaseEdit.toString());
+    localStorage.setItem('currentPreset', currentPreset);
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({
             learned: Array.from(learnedCases),
@@ -349,6 +362,117 @@ function saveState() {
         }));
     } catch (e) {
         console.error('Error saving state:', e);
+    }
+}
+
+// Load preset data
+async function loadPresetData(presetName) {
+    try {
+        const presetPath = window.PRESET_CONFIG[presetName];
+        if (!presetPath) {
+            throw new Error(`Preset "${presetName}" not found in configuration`);
+        }
+        const response = await fetch(presetPath);
+        if (!response.ok) throw new Error('Preset file not found');
+        return await response.json();
+    } catch (error) {
+        console.error('Error loading preset:', error);
+        showToast('Error loading preset', 2000, 'error');
+        return null;
+    }
+}
+
+// Get default values from current preset
+function getPresetDefaults() {
+    if (!presetData) return null;
+    return presetData;
+}
+
+// Load preset data to use as defaults only (doesn't overwrite user data)
+async function loadPresetAsDefaults(presetName) {
+    const data = await loadPresetData(presetName);
+    if (!data) return false;
+    
+    currentPreset = presetName;
+    presetData = data;
+    localStorage.setItem('currentPreset', currentPreset);
+    
+    return true;
+}
+
+// Apply preset (overwrites all user data - only used on first load or explicit switch)
+window.applyPreset = async function(presetName, skipWarning = false, silent = false) {
+    const data = await loadPresetData(presetName);
+    if (!data) return;
+    
+    // Apply all preset data
+    learnedCases = new Set(data.learned || []);
+    learningCases = new Set(data.learning || []);
+    plannedCases = new Set(data.planned || []);
+    comments = new Map(Object.entries(data.comments || {}));
+    plannedLevels = new Map(Object.entries(data.plannedLevels || {}));
+    parityOrientations = new Map(Object.entries(data.parityOrientations || {}));
+    
+    if (data.displayNames) {
+        displayNames = data.displayNames;
+    }
+    
+    hideInstructions = data.hideInstructions || false;
+    colorScheme = data.colorScheme || colorScheme;
+    scrambleImageSize = data.scrambleImageSize || 200;
+    
+    if (data.customShapesForParityTracerLibrary) {
+        localStorage.setItem('customShapesForParityTracerLibrary', data.customShapesForParityTracerLibrary);
+    }
+    
+    perCaseSubtitles = new Map(Object.entries(data.perCaseSubtitles || {}));
+    cornerStickerMode = data.cornerStickerMode || 'counterclockwise';
+    customAlgorithms = new Map(Object.entries(data.customAlgorithms || {}));
+    generalNotes = data.generalNotes || '';
+    
+    if (data.svgData) {
+        window.svgData = data.svgData;
+    }
+    
+    if (data.cachedParityAlgorithms) {
+        cachedParityAlgorithms = new Map(Object.entries(data.cachedParityAlgorithms));
+    }
+    
+    if (data.lastParityCalculationSettings) {
+        lastParityCalculationSettings = data.lastParityCalculationSettings;
+    }
+    
+    if (data.showHints !== undefined) {
+        showHints = data.showHints;
+        localStorage.setItem('showHints', showHints);
+        applyHintVisibility();
+    }
+    
+    currentPreset = presetName;
+    presetData = data;
+    
+    saveState();
+    updateProgress();
+    
+    // Recalculate parity
+    if (needsParityRecalculation()) {
+        calculateAndCacheAllParity();
+    }
+    
+    render();
+    
+    if (!skipWarning && !silent) {
+        showToast(`Preset "${presetName}" applied successfully!`, 3000, 'success');
+    }
+}
+
+// Initialize preset on load (just loads as defaults, doesn't overwrite user data)
+window.initializePreset = async function() {
+    const savedPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
+    const success = await loadPresetAsDefaults(savedPreset);
+    if (!success) {
+        // Fallback to default if saved preset doesn't exist
+        await loadPresetAsDefaults('Default_Preset');
     }
 }
 
@@ -501,3 +625,14 @@ if (typeof originalRender === 'function') {
         setTimeout(updateSVGScaling, 10);
     };
 }
+
+// Initialize preset system when DOM is ready
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize preset on app load
+    await initializePreset();
+    
+    // Apply default preset silently on first load
+    if (isFirstLoad) {
+        await applyPreset('Default_Preset', true, true);
+    }
+});

@@ -75,6 +75,22 @@ function generateModalHTML() {
                         </div>
                     </div>
 
+                    <!-- Presets Section -->
+                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-top: 20px;">
+                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Presets</h3>
+                        
+                        <div style="margin-bottom: 12px;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Active Preset:</label>
+                            <select id="presetSelector" onchange="handlePresetChange(this.value)" style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;">
+                                <!-- Options will be populated dynamically from PRESET_CONFIG -->
+                            </select>
+                        </div>
+                        
+                        <div style="font-size: 0.85rem; color: #6c757d; margin-top: 12px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e9ecef;">
+                            <strong>Note:</strong> Presets define what "Reset to Default" uses. You can freely edit your data after choosing a preset - it won't be overwritten unless you switch presets.
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -362,7 +378,52 @@ if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
 const allowCaseEditToggle = document.getElementById('allowCaseEditToggle');
 if (allowCaseEditToggle) allowCaseEditToggle.checked = allowCaseEdit;
 
+    populatePresetDropdown();
+
 pushModalState('settingsModal', closeSettingsModal);
+}
+
+function handlePresetChange(presetName) {
+    if (presetName === currentPreset) return;
+    
+    // Validate preset exists in config
+    if (typeof window.PRESET_CONFIG === 'undefined' || !window.PRESET_CONFIG[presetName]) {
+        showToast('Invalid preset selected', 2000, 'error');
+        document.getElementById('presetSelector').value = currentPreset;
+        return;
+    }
+    
+    // Create a custom warning modal with export option
+    const warningModal = document.createElement('div');
+    warningModal.className = 'modal active';
+    warningModal.style.zIndex = '10002';
+    warningModal.innerHTML = `
+        <div class="modal-content" style="max-width: 500px; margin-top: 80px;">
+            <div class="modal-header" style="background: #fff3cd; border-bottom: 2px solid #fff3cd;">
+                <span class="modal-title" style="color: #856404;">Warning: Data Loss</span>
+                <button class="close-btn" onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: #333;">
+                    Switching to "<strong>${presetName}</strong>" preset will <strong>replace ALL your current data.</strong> We strongly recommend exporting your current data first.
+                </p>
+                <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #abd7b5ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                        Export Data First
+                    </button>
+                    <button onclick="this.closest('.modal').remove(); applyPreset(\`${presetName}\`, false, false);" style="padding: 10px 20px; background: #e8b1b6ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                        Switch Anyway
+                    </button>
+                    <button onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(warningModal);
+    document.body.classList.add('modal-open');
 }
 
 function closeSettingsModal() {
@@ -412,6 +473,27 @@ function togglePriorityLearning(isChecked) {
 function toggleAllowCaseEdit(isChecked) {
     window.allowCaseEdit = isChecked;
     localStorage.setItem('allowCaseEdit', isChecked.toString());
+}
+
+// Populate preset dropdown dynamically
+function populatePresetDropdown() {
+    const presetSelector = document.getElementById('presetSelector');
+    if (!presetSelector || typeof window.PRESET_CONFIG === 'undefined') return;
+    
+    presetSelector.innerHTML = '';
+    
+    for (const presetName in window.PRESET_CONFIG) {
+        const option = document.createElement('option');
+        option.value = presetName;
+        // Remove underscores and clean up display name
+        option.textContent = presetName.replace(/_/g, ' ').replace(/'/g, "'");
+        presetSelector.appendChild(option);
+    }
+    
+    // Set current preset as selected
+    if (typeof currentPreset !== 'undefined') {
+        presetSelector.value = currentPreset;
+    }
 }
 
 // Settings button click handler
@@ -476,20 +558,26 @@ function saveColorScheme() {
 }
 
 function resetColorScheme() {
-    colorScheme = {
-        topColor: '#000000',
-        bottomColor: '#FFFFFF',
-        frontColor: '#CC0000',
-        rightColor: '#00AA00',
-        backColor: '#FF8C00',
-        leftColor: '#0066CC',
-        dividerColor: '#7a0000',
-        circleColor: 'transparent'
-    };
-    scrambleImageSize = 200;
+    const defaults = getPresetDefaults();
+    if (defaults && defaults.colorScheme) {
+        colorScheme = defaults.colorScheme;
+        scrambleImageSize = defaults.scrambleImageSize || 200;
+    } else {
+        colorScheme = {
+            topColor: '#000000',
+            bottomColor: '#FFFFFF',
+            frontColor: '#CC0000',
+            rightColor: '#00AA00',
+            backColor: '#FF8C00',
+            leftColor: '#0066CC',
+            dividerColor: '#7a0000',
+            circleColor: 'transparent'
+        };
+        scrambleImageSize = 200;
+    }
     saveState();
     openColorSchemeModal(); // Refresh the modal to show updated selection
-    showToast('Color scheme reset to default!', 3000, 'success');
+    showToast(`Color scheme reset to ${currentPreset} preset!`, 3000, 'success');
 }
 
 // Apply initial hint visibility state on load
@@ -1177,9 +1265,9 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
             <div class="modal-body">
                 <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
                 <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
-                    <button id="confirmCancel" style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
-                    <button id="confirmDiscard" style="padding: 8px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Discard</button>
-                    <button id="confirmSave" style="padding: 8px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                    <button id="confirmCancel" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
+                    <button id="confirmDiscard" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Discard</button>
+                    <button id="confirmSave" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
                 </div>
             </div>
         </div>
