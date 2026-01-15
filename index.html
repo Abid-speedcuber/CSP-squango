@@ -19,7 +19,7 @@
         style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif;">
         <h1 style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
         <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
-        <p style="font-size: 0.9rem; color: #718096; margin-bottom: 35px; font-weight: 250;">inspired from hashtagcuber.com/csp/ by Eva Kato</p>
+        <div id="loadingTipContainer" style="margin-bottom: 25px;"></div>
         <div style="width: 320px; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
             <div id="loadingProgress"
                 style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
@@ -211,8 +211,9 @@
                 "Did you know square-1 was invented in 1990 by Karel Hršel and Vojtěch Kopský?",
                 "Six Seven",
                 "Did you know square-1 notation was created by Jaap Scherphuis, the creator of sq1optim?",
-                "Every position on a square-1 can be solved under 13 slices (12 ignoring the equator) and 31 face turns?!",
+                "Did you know, every position on a square-1 can be solved under 13 slices (12 ignoring the equator) and 31 face turns?!",
                 "WR: 4.63 avg-Sameer Aggarwal",
+                "WR: 3.41 single-Ryan Pilat.",
                 "Back to square one, literally!",
                 "Parity monster is hiding under you bed!!",
             ]
@@ -220,17 +221,23 @@
 
         // Select and display a random tip
         const tipElement = document.createElement('p');
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; margin-top: 25px; max-width: 520px; text-align: center; line-height: 1.6; font-weight: 400;';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 520px; text-align: center; line-height: 1.6; font-weight: 400;';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
-        document.getElementById('loadingScreen').appendChild(tipElement);
+        document.getElementById('loadingTipContainer').appendChild(tipElement);
         
-        // Add credit text at the bottom
-        const creditElement = document.createElement('p');
-        creditElement.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 50px; text-align: center; font-weight: 400;';
-        creditElement.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
-        document.getElementById('loadingScreen').appendChild(creditElement);
+        // Add Eva Kato credit
+        const evaCredit = document.createElement('p');
+        evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400;';
+        evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
+        document.getElementById('loadingScreen').appendChild(evaCredit);
+        
+        // Add Matt credit
+        const mattCredit = document.createElement('p');
+        mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400;';
+        mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
+        document.getElementById('loadingScreen').appendChild(mattCredit);
 
         // Loading screen progress simulation
         let loadProgress = 0;
