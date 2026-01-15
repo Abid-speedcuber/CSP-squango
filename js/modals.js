@@ -744,7 +744,7 @@ function openEditCaseModal(caseName) {
         allAlgs.push(...(item.odd || []), ...(item.even || []));
     }
     
-    const customName = perCaseCustomNames.get(caseName) || '';
+    const customName = displayNames[caseName] || '';
     
     // Close any existing context menu
     const existingMenu = document.getElementById('caseContextMenu');
@@ -962,6 +962,7 @@ window.saveCaseRename = function(caseName) {
     }
     
     saveState();
+    render();
     
     // Update the title in edit modal
     const titleElement = document.getElementById('editCaseTitle');
