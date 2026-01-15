@@ -814,20 +814,33 @@ function openEditCaseModal(caseName) {
             });
             
             input.addEventListener('blur', () => {
+                const rawText = input.value.trim();
+                if (rawText && rawText !== 'Done!') {
+                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
+                    input.value = normalized;
+                }
                 updateParityLabel(input);
             });
             
             input.addEventListener('input', () => {
-                // Clear timeout if exists
                 if (input.parityTimeout) {
                     clearTimeout(input.parityTimeout);
                 }
-                // Update after a short delay if not focused
                 input.parityTimeout = setTimeout(() => {
                     if (document.activeElement !== input) {
                         updateParityLabel(input);
                     }
                 }, 300);
+            });
+            
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+                const start = input.selectionStart;
+                const end = input.selectionEnd;
+                const currentValue = input.value;
+                input.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+                input.selectionStart = input.selectionEnd = start + text.length;
             });
         });
     }, 200);
@@ -841,31 +854,87 @@ function updateParityLabel(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') {
         parityLabel.textContent = '';
+        parityLabel.style.color = '';
+        parityLabel.style.fontWeight = '';
         return;
     }
     
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+    // Check if required functions exist
+    if (typeof window.algToShapeIndex === 'undefined' || 
+        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         parityLabel.textContent = '';
+        parityLabel.style.color = '';
+        parityLabel.style.fontWeight = '';
         return;
     }
     
     try {
-        const setup = invertScramble(alg);
-        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-            topColor: colorScheme.topColor,
-            bottomColor: colorScheme.bottomColor,
-            frontColor: colorScheme.frontColor,
-            rightColor: colorScheme.rightColor,
-            backColor: colorScheme.backColor,
-            leftColor: colorScheme.leftColor
-        }, cornerStickerMode);
+        // Get the current case being edited
+        const modal = document.getElementById('editCaseModal');
+        const caseName = modal ? modal.querySelector('.modal-title').textContent : '';
         
-        parityLabel.textContent = parityText.toLowerCase();
-        parityLabel.style.color = parityText === 'Odd' ? '#dc3545' : '#28a745';
-        parityLabel.style.fontWeight = '600';
+        // Get shape index from algorithm
+        const result = window.algToShapeIndex(alg);
+        const resultShapeIndex = result.shapeIndex;
+        
+        // Find matching case in shapeIndexMap
+        let matchedCaseName = null;
+        for (const [name, indexStr] of Object.entries(shapeIndexMap)) {
+            if (parseInt(indexStr) === resultShapeIndex) {
+                matchedCaseName = name;
+                break;
+            }
+        }
+        
+        if (matchedCaseName) {
+            // Direct match - test parity
+            const setup = invertScramble(alg);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor,
+                bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor,
+                rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor,
+                leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            
+            parityLabel.textContent = parityText.toLowerCase();
+            parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff'; // Green for odd, blue for even
+            parityLabel.style.fontWeight = '600';
+        } else {
+            // No direct match - check shapeIndex array for org/mir
+            let foundInOrg = false;
+            let foundInMir = false;
+            
+            for (const shapeData of shapeIndex) {
+                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
+                    foundInOrg = true;
+                    break;
+                }
+                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
+                    foundInMir = true;
+                    break;
+                }
+            }
+            
+            if (foundInOrg) {
+                parityLabel.textContent = 'angle mismatch';
+                parityLabel.style.color = '#ca9b0dff'; // Yellow
+                parityLabel.style.fontWeight = '600';
+            } else if (foundInMir) {
+                parityLabel.textContent = 'mirrored';
+                parityLabel.style.color = '#c05c0aff'; // Orange
+                parityLabel.style.fontWeight = '600';
+            } else {
+                parityLabel.textContent = 'invalid';
+                parityLabel.style.color = '#71000bff'; // Red
+                parityLabel.style.fontWeight = '600';
+            }
+        }
     } catch (error) {
-        parityLabel.textContent = '';
-        console.error('Parity calculation error:', error);
+        parityLabel.textContent = 'invalid';
+        parityLabel.style.color = '#71000bff'; // Red
+        parityLabel.style.fontWeight = '600';
     }
 }
 
@@ -879,7 +948,7 @@ window.addNewAlgorithmField = function() {
     newField.innerHTML = `
         <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
         <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
-        <button onclick="this.parentElement.remove()" style="padding: 6px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+        <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
     `;
@@ -893,6 +962,11 @@ window.addNewAlgorithmField = function() {
     });
     
     input.addEventListener('blur', () => {
+        const rawText = input.value.trim();
+        if (rawText && rawText !== 'Done!') {
+            const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
+            input.value = normalized;
+        }
         updateParityLabel(input);
     });
     
@@ -905,6 +979,16 @@ window.addNewAlgorithmField = function() {
                 updateParityLabel(input);
             }
         }, 300);
+    });
+    
+    input.addEventListener('paste', (e) => {
+        e.preventDefault();
+        const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const currentValue = input.value;
+        input.value = currentValue.substring(0, start) + text + currentValue.substring(end);
+        input.selectionStart = input.selectionEnd = start + text.length;
     });
     
     input.focus();
