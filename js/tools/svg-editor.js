@@ -35,7 +35,7 @@ const SVGEditor = {
                         <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                             <div style="display: flex; align-items: center; gap: 15px;">
                                 <button id="svgEditorSidebarToggle" class="btn" style="background: rgba(255,255,255,0.2); padding: 6px 12px; display: none;">☰</button>
-                                <span class="modal-title" style="font-size: 1.5rem; font-weight: 600;">Customize Tracing Guides</span>
+                                <span class="modal-title" style="font-size: 1.5rem; font-weight: 600; color: white;">Customize Tracing Guides</span>
                             </div>
                             <button class="close-btn" onclick="SVGEditor.close()" style="color: white; opacity: 0.9;">&times;</button>
                         </div>

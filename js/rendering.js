@@ -286,7 +286,8 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
-                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)">${styleAlgorithmWithGrayMoves(algo)}</div>`;
+                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)"
+                     style="display: block;">${styleAlgorithmWithGrayMoves(algo)}</div>`;
     }).join('');
 }
 
