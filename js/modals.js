@@ -231,57 +231,138 @@ function generateModalHTML() {
         </div>
 
         <div id="aboutModal" class="modal">
-            <div class="modal-content" style="max-width: 650px; margin-top: 60px; border-radius: 12px; overflow: hidden;">
-                <div class="modal-header" style="background: #2d3748; color: white; padding: 20px 25px;">
-                    <span class="modal-title" style="font-size: 1.4rem; font-weight: 600;">About SquanGo CSP</span>
-                    <button class="close-btn" onclick="closeAboutModal()" style="color: white; opacity: 0.9;">&times;</button>
-                </div>
-                <div class="modal-body" style="max-height: 70vh; overflow-y: auto; background: #fafafa; padding: 25px 30px; color: #2d3748; line-height: 1.6;">
-                    
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Developer</p>
-                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Created by <strong>Abid Ibn Ashraf</strong></p>
-                        <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20General%20Inquiry&body=Hey!%0D%0A%0D%0AI%20wanted%20to%20reach%20out%20about%20the%20Square-1%20Parity%20app.%0D%0A" 
-                          style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; transition: background 0.2s;" 
-                          onmouseover="this.style.background='#5a6268'" 
-                          onmouseout="this.style.background='#6c757d'">Contact Me</a>
-                    </div>
+  <div class="modal-content" style="
+      max-width: 700px;
+      margin-top: 60px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #ffffff;
+  ">
 
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">How This Was Built</p>
-                        <p style="margin: 0; font-size: 0.95rem; color: #6c757d;">Full transparency: this app is built almost entirely with AI. I probably manually wrote like 60 lines of code myself. The AI I mainly used was Claude Sonnet 4.5 and a bit of ChatGPT o1. Turns out with enough willpower, you can build pretty much anything with AI these days.</p>
-                    </div>
+    <!-- Header -->
+    <div style="
+        background: #1f2933;
+        color: #ffffff;
+        padding: 22px 26px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    ">
+      <span style="font-size: 1.5rem; font-weight: 600;">
+        About SquanGo CSP
+      </span>
+      <button class="close-btn" onclick="closeAboutModal()" style="
+          color: white;
+          font-size: 1.6rem;
+          opacity: 0.9;
+      ">&times;</button>
+    </div>
 
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Main Credit</p>
-                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">Most of the credit goes to <strong>Eva Kato (Hashtag Cuber)</strong> and her CSP website. This started as a personal tool to keep me motivated while learning CSP, so I borrowed the layout and algorithm data from her GitHub repo. When I realized the community might find it useful, I reached out to Eva and she was super chill about letting me publish it. Big W for Hashtag Cuber.</p>
-                        <a href="https://hashtagcuber.com/csp/" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Check out her CSP website →</a>
-                    </div>
+    <!-- Body -->
+    <div style="
+        padding: 28px 30px;
+        color: #2d3748;
+        line-height: 1.65;
+        max-height: 70vh;
+        overflow-y: auto;
+        background: #f8f9fa;
+    ">
 
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Scramble Generator</p>
-                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">The Square-1 scramble generator code is from csTimer's GitHub, written by Shuang Chen (cs0x7f) under GPL-3.0 license.</p>
-                        <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View the code on GitHub →</a>
-                    </div>
+      <!-- Intro -->
+      <section style="margin-bottom: 26px;">
+        <p style="margin: 0; font-size: 1rem; color: #4a5568;">
+          SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
+          who want structure, repetition, and zero fluff.  
+          It started as a personal motivation tool and slowly turned into something
+          worth sharing.
+        </p>
+      </section>
 
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Feedback & Bug Reports</p>
-                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">If you have suggestions for new features or have encountered any issues such as bugs, incorrect algorithms, or mislabeled cases, please report them via email.</p>
-                        <a href="mailto:abidashrafkhulna@gmail.com?subject=%5BSquare-1%20Parity%20App%5D%20Feedback%20or%20Bug%20Report&body=Hello,%0D%0A%0D%0AI%20would%20like%20to%20report%20the%20following:%0D%0A%0D%0A---%0D%0A(Please%20describe%20your%20suggestion%20or%20issue%20here)%0D%0A%0D%0AApp%20Version:%20v1.0%0D%0ADevice/Browser:%20" 
-                          style="display: inline-block; background: #6c757d; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.9rem; transition: background 0.2s;" 
-                          onmouseover="this.style.background='#5a6268'" 
-                          onmouseout="this.style.background='#6c757d'">Send Feedback</a>
-                    </div>
+      <!-- Developer -->
+      <section style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 22px;
+      ">
+        <p style="font-weight: 600; margin-bottom: 6px;">Developer</p>
+        <p style="margin: 0 0 10px 0; color: #6b7280;">
+          Created by <strong>Abid Ibn Ashraf</strong>
+        </p>
 
-                    <div style="background: white; border: 1px solid #dee2e6; border-radius: 8px; padding: 20px;">
-                        <p style="margin: 0 0 8px 0; font-weight: 600; color: #495057;">Open Source</p>
-                        <p style="margin: 0 0 12px 0; font-size: 0.95rem; color: #6c757d;">This application is open source. You can view the code, suggest improvements, or create your own modified version.</p>
-                        <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs" target="_blank" style="color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.95rem;">View on GitHub →</a>
-                    </div>
+        <p style="margin: 0; font-size: 0.95rem; color: #6b7280;">
+          Contact & feedback:
+          <strong>Discord — <span style="color:#1f2933;">abid_ibn_ashraf</span></strong>
+        </p>
+      </section>
 
-                </div>
-            </div>
-        </div>
+      <!-- Credits -->
+      <section style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 22px;
+      ">
+        <p style="font-weight: 600; margin-bottom: 10px;">Credits & Inspiration</p>
+
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+          Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
+          The overall Homepage layout, case images and most of the algorithm data are based on her work.
+        </p>
+
+        <p style="margin: 0; font-size: 0.95rem; color: #6b7280;">
+          Additional credit to <strong>Matt Mao</strong> — Square-1 NR average holder from China —
+          for helping me out in various way in this project. Matt's preset is built solemnly by him, and he helped me refine the site further.
+        </p>
+      </section>
+
+      <!-- Scramble -->
+      <section style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 20px;
+          margin-bottom: 22px;
+      ">
+        <p style="font-weight: 600; margin-bottom: 8px;">Scramble Generator</p>
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+          Square-1 scrambles are generated using code from
+          <strong>csTimer</strong>, written by Shuang Chen (cs0x7f),
+          licensed under GPL-3.0.
+        </p>
+
+        <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js"
+           target="_blank"
+           style="font-size: 0.95rem; font-weight: 500; color: #2563eb; text-decoration: none;">
+          View source on GitHub →
+        </a>
+      </section>
+
+      <!-- Open Source -->
+      <section style="
+          background: #ffffff;
+          border: 1px solid #e2e8f0;
+          border-radius: 10px;
+          padding: 20px;
+      ">
+        <p style="font-weight: 600; margin-bottom: 8px;">Open Source</p>
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+          SquanGo CSP is open source. You’re free to explore the code,
+          suggest improvements, or fork it for your own use.
+        </p>
+
+        <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs"
+           target="_blank"
+           style="font-size: 0.95rem; font-weight: 500; color: #2563eb; text-decoration: none;">
+          View repository on GitHub →
+        </a>
+      </section>
+
+    </div>
+  </div>
+</div>
     `;
     
     document.body.appendChild(modalContainer);
