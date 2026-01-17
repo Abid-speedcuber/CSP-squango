@@ -91,9 +91,26 @@ function sanitizeNoteHTML(html) {
     return Array.from(temp.childNodes).map(processNode).join('');
 }
 
+// Helper function to strip parenthesis if hideParenthesis is enabled
+function stripParenthesisIfNeeded(algo) {
+    if (!algo || typeof algo !== 'string') return algo;
+    if (hideParenthesis) {
+        return algo.replace(/[()]/g, '');
+    }
+    return algo;
+}
+
 // Helper function to wrap algorithm tokens to prevent breaking inside parentheses
 function wrapAlgorithmTokens(algo) {
     if (!algo || typeof algo !== 'string') return algo;
+    
+    // Strip parenthesis first if needed
+    algo = stripParenthesisIfNeeded(algo);
+    
+    // If parenthesis are hidden, wrap the number,number patterns
+    if (hideParenthesis) {
+        return algo.replace(/([-]?\d+,[-]?\d+)/g, '<span style="white-space: nowrap;">$1</span>');
+    }
     
     // Replace (number,number) patterns with non-breaking spans
     // This regex captures patterns like (0,3), (-1,2), etc.

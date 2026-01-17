@@ -53,6 +53,10 @@ function generateModalHTML() {
                             <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
                             <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+                            <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parenthesis</label>
+                            <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
+                        </div>
                         
                         <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
                             <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
@@ -456,6 +460,8 @@ function openSettingsModal() {
     
     const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
 if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
+if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
 const allowCaseEditToggle = document.getElementById('allowCaseEditToggle');
 if (allowCaseEditToggle) allowCaseEditToggle.checked = allowCaseEdit;
 
@@ -549,6 +555,12 @@ function applyInstructionVisibility() {
 function togglePriorityLearning(isChecked) {
     // Priority learning is always enabled now
     return;
+}
+
+function toggleHideParenthesis(isChecked) {
+    hideParenthesis = isChecked;
+    saveState();
+    render();
 }
 
 function toggleAllowCaseEdit(isChecked) {

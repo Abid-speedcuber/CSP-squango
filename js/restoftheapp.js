@@ -127,6 +127,7 @@ let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
 let showPaths = true;         // Shape paths always shown
 let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
+let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
 let generalNotes = ''; // HTML content for general notes
 window.allowCaseEdit = false; // Toggle for allowing case edits (not exported)
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
@@ -246,6 +247,7 @@ try {
         showPaths = true; // Always true now
         enablePriorityLearning = true; // Always true now
         hideInstructions = state.hideInstructions || false;
+        hideParenthesis = state.hideParenthesis || false;
         colorScheme = state.colorScheme || colorScheme;
         scrambleImageSize = state.scrambleImageSize || 200;
         if (state.customShapesForParityTracerLibrary) {
@@ -349,6 +351,7 @@ function saveState() {
             enablePriorityLearning: true,
             displayNames: displayNames,
             hideInstructions: hideInstructions,
+            hideParenthesis: hideParenthesis,
             colorScheme: colorScheme,
             scrambleImageSize: scrambleImageSize,
             customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary'),
@@ -418,6 +421,7 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     }
     
     hideInstructions = data.hideInstructions || false;
+    hideParenthesis = false;
     colorScheme = data.colorScheme || colorScheme;
     scrambleImageSize = data.scrambleImageSize || 200;
     
@@ -533,6 +537,7 @@ function importData(jsonStr) {
             displayNames = { ...defaultDisplayNames };
         }
         hideInstructions = state.hideInstructions || false;
+        hideParenthesis = false;
         colorScheme = state.colorScheme || colorScheme;
         if (state.customShapesForParityTracerLibrary) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
