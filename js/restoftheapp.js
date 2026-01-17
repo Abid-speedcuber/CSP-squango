@@ -128,6 +128,7 @@ let showPaths = true;         // Shape paths always shown
 let enablePriorityLearning = true; // Priority learning always enabled
 let hideInstructions = false; // Toggle for hiding instruction buttons
 let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
+let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
 let generalNotes = ''; // HTML content for general notes
 window.allowCaseEdit = false; // Toggle for allowing case edits (not exported)
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
@@ -639,5 +640,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Apply default preset silently on first load
     if (isFirstLoad) {
         await applyPreset('Default_Preset', true, true);
+    }
+    
+    // Apply algorithm font size
+    if (typeof applyAlgorithmFontSize === 'function') {
+        applyAlgorithmFontSize();
     }
 });

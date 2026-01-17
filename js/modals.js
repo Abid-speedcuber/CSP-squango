@@ -58,6 +58,15 @@ function generateModalHTML() {
                             <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Algorithm Font Size: <span id="algFontSizeValue">14</span>px</label>
+                            <input type="range" id="algFontSizeSlider" min="10" max="20" step="1" value="14" style="width: 100%; cursor: pointer;" oninput="updateAlgFontSizePreview(this.value)">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+                                <span>Small (10px)</span>
+                                <span>Large (20px)</span>
+                            </div>
+                        </div>
+                        
                         <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
                             <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
                             <button onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Parity Tracing Personalization</button>
@@ -462,6 +471,13 @@ function openSettingsModal() {
 if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
 const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
 if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
+
+const algFontSizeSlider = document.getElementById('algFontSizeSlider');
+if (algFontSizeSlider) {
+    algFontSizeSlider.value = algorithmFontSize;
+    document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
+}
+
 const allowCaseEditToggle = document.getElementById('allowCaseEditToggle');
 if (allowCaseEditToggle) allowCaseEditToggle.checked = allowCaseEdit;
 
@@ -635,6 +651,26 @@ function closeColorSchemeModal() {
 function updateImageSizePreview(value) {
     document.getElementById('sizeValue').textContent = value;
     scrambleImageSize = parseInt(value);
+}
+
+function updateAlgFontSizePreview(value) {
+    document.getElementById('algFontSizeValue').textContent = value;
+    algorithmFontSize = parseInt(value);
+    localStorage.setItem('algorithmFontSize', value);
+    applyAlgorithmFontSize();
+}
+
+function applyAlgorithmFontSize() {
+    const style = document.getElementById('algorithm-font-size-style') || document.createElement('style');
+    style.id = 'algorithm-font-size-style';
+    style.textContent = `
+        .algo-line, .algo-interactive {
+            font-size: ${algorithmFontSize}px !important;
+        }
+    `;
+    if (!style.parentNode) {
+        document.head.appendChild(style);
+    }
 }
 
 function saveColorScheme() {

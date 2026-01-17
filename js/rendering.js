@@ -95,7 +95,7 @@ function sanitizeNoteHTML(html) {
 function stripParenthesisIfNeeded(algo) {
     if (!algo || typeof algo !== 'string') return algo;
     if (hideParenthesis) {
-        return algo.replace(/[()]/g, '');
+        return algo.replace(/\(/g, ' ').replace(/\)/g, ' ');
     }
     return algo;
 }
