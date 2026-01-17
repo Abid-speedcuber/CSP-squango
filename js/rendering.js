@@ -1,4 +1,4 @@
-// Helper function to sanitize note HTML (allow only <b>, <u>, <a>, and line breaks)
+// Helper function to sanitize note HTML (allow various text formatting tags)
 function sanitizeNoteHTML(html) {
     if (!html) return '';
     
@@ -23,6 +23,53 @@ function sanitizeNoteHTML(html) {
                 return `<u>${Array.from(node.childNodes).map(processNode).join('')}</u>`;
             }
             
+            if (tagName === 'i' || tagName === 'em') {
+                return `<i>${Array.from(node.childNodes).map(processNode).join('')}</i>`;
+            }
+            
+            if (tagName === 's' || tagName === 'strike' || tagName === 'del') {
+                return `<s>${Array.from(node.childNodes).map(processNode).join('')}</s>`;
+            }
+            
+            if (tagName === 'sub') {
+                return `<sub>${Array.from(node.childNodes).map(processNode).join('')}</sub>`;
+            }
+            
+            if (tagName === 'sup') {
+                return `<sup>${Array.from(node.childNodes).map(processNode).join('')}</sup>`;
+            }
+            
+            if (tagName === 'big') {
+                return `<big>${Array.from(node.childNodes).map(processNode).join('')}</big>`;
+            }
+            
+            if (tagName === 'small') {
+                return `<small>${Array.from(node.childNodes).map(processNode).join('')}</small>`;
+            }
+            
+            if (tagName === 'font') {
+                const color = node.getAttribute('color') || '';
+                // Sanitize color to prevent malicious values
+                const safeColor = color.match(/^(#[0-9A-Fa-f]{3,6}|[a-zA-Z]+)$/) ? color : '';
+                if (safeColor) {
+                    return `<font color="${safeColor}">${Array.from(node.childNodes).map(processNode).join('')}</font>`;
+                }
+                return Array.from(node.childNodes).map(processNode).join('');
+            }
+            
+            if (tagName === 'span') {
+                const style = node.getAttribute('style') || '';
+                // Only allow color in style
+                const colorMatch = style.match(/color:\s*([#a-zA-Z0-9]+)/);
+                if (colorMatch) {
+                    const safeColor = colorMatch[1].match(/^(#[0-9A-Fa-f]{3,6}|[a-zA-Z]+)$/) ? colorMatch[1] : '';
+                    if (safeColor) {
+                        return `<span style="color: ${safeColor}">${Array.from(node.childNodes).map(processNode).join('')}</span>`;
+                    }
+                }
+                return Array.from(node.childNodes).map(processNode).join('');
+            }
+            
             if (tagName === 'a') {
                 const href = node.getAttribute('href') || '';
                 // Sanitize href to prevent javascript: URLs
@@ -31,7 +78,7 @@ function sanitizeNoteHTML(html) {
             }
             
             if (tagName === 'br') {
-                return '\n';
+                return '<br>';
             }
             
             // For any other tags, just return the text content
@@ -976,7 +1023,7 @@ function renderCard(item) {
                     <span class="algo-label">Even:</span>
                     ${evenAlgoDisplay}
                 </div>
-                ${comment ? `<div style="font-size: 0.65rem; color: #666; margin-top: 8px; font-style: italic; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
+                ${comment ? `<div style="font-size: 0.65rem; color: #333; margin-top: 8px; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
             </div>
         </div>
     `;

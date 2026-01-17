@@ -1234,6 +1234,7 @@ function saveNotes(caseName) {
     const noteText = textarea.value.trim();
     
     if (noteText) {
+        // Store raw HTML
         comments.set(caseName, noteText);
     } else {
         comments.delete(caseName);

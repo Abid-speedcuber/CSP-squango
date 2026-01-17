@@ -144,13 +144,14 @@ function generateGeneralTableRows() {
         const displayName = getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
+        const formattedNote = sanitizeNoteHTML(note);
         
         return `
             <tr data-case="${item.name}">
                 <td class="uneditable">${item.name}</td>
                 <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
                 <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
-                <td class="editable" contenteditable="true" data-field="notes" data-original="${note}">${note}</td>
+                <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
             </tr>
         `;
     }).join('');
@@ -324,6 +325,12 @@ function setupQuickEditCellHandlers() {
     const editableCells = modal.querySelectorAll('.editable');
     editableCells.forEach(cell => {
         cell.addEventListener('focus', function() {
+            // For notes cells, show raw HTML
+            if (this.classList.contains('notes-cell')) {
+                const rawHTML = this.dataset.rawHtml || '';
+                this.textContent = rawHTML;
+            }
+            
             // Select all text when cell is focused
             const range = document.createRange();
             range.selectNodeContents(this);
@@ -390,6 +397,16 @@ function setupQuickEditCellHandlers() {
                     }
                 }
                 return;
+            }
+        });
+        
+        // Handle blur for notes cells to show formatted HTML
+        cell.addEventListener('blur', function() {
+            if (this.classList.contains('notes-cell')) {
+                const rawHTML = this.textContent.trim();
+                this.dataset.rawHtml = rawHTML;
+                const formattedHTML = sanitizeNoteHTML(rawHTML);
+                this.innerHTML = formattedHTML;
             }
         });
         
@@ -851,7 +868,8 @@ function saveQuickEditChanges() {
         
         const displayName = displayNameCell.textContent.trim();
         const subtitle = subtitleCell.textContent.trim();
-        const notes = notesCell.textContent.trim();
+        // For notes, get the raw HTML from data attribute (updated on blur)
+        const notes = notesCell.dataset.rawHtml || notesCell.textContent.trim();
         
         // Save display name
         if (displayName) {
@@ -876,6 +894,7 @@ function saveQuickEditChanges() {
         displayNameCell.dataset.original = displayName;
         subtitleCell.dataset.original = subtitle;
         notesCell.dataset.original = notes;
+        notesCell.dataset.rawHtml = notes; // Also update rawHtml
     });
     
     // Save algorithms
@@ -935,7 +954,15 @@ function closeQuickEditModal() {
         const cells = row.querySelectorAll('.editable');
         cells.forEach(cell => {
             const original = cell.dataset.original || '';
-            const current = cell.textContent.trim();
+            let current;
+            
+            // For notes cells, use raw HTML
+            if (cell.classList.contains('notes-cell')) {
+                current = cell.dataset.rawHtml || '';
+            } else {
+                current = cell.textContent.trim();
+            }
+            
             if (original !== current) {
                 hasChanges = true;
             }
