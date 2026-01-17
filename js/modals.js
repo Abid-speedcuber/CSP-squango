@@ -1246,8 +1246,21 @@ window.attemptCloseEditCaseModal = function() {
     const modal = document.getElementById('editCaseModal');
     if (!modal) return;
     
-    const caseName = modal.querySelector('.modal-title').textContent;
-    const item = data.find(d => getDisplayName(d.name) === caseName || d.name === caseName);
+    const titleElement = modal.querySelector('.modal-title');
+    if (!titleElement) {
+        closeEditCaseModal();
+        return;
+    }
+    
+    // Find the actual case by searching through data
+    let item = null;
+    for (const dataItem of data) {
+        if (getDisplayName(dataItem.name) === titleElement.textContent || dataItem.name === titleElement.textContent) {
+            item = dataItem;
+            break;
+        }
+    }
+    
     if (!item) {
         closeEditCaseModal();
         return;
@@ -1275,8 +1288,8 @@ window.attemptCloseEditCaseModal = function() {
         }
     }
     
-    // Check if name/subtitle changed
-    const nameChanged = window.tempCaseRename && window.tempCaseRename.caseName === item.name;
+    // Check if name/subtitle changed (tempCaseRename exists means changes were made)
+    const nameChanged = !!(window.tempCaseRename && window.tempCaseRename.caseName === item.name);
     
     if (algsChanged || nameChanged) {
         showSaveDiscardConfirmation(
@@ -1289,6 +1302,7 @@ window.attemptCloseEditCaseModal = function() {
             null
         );
     } else {
+        window.tempCaseRename = null;
         closeEditCaseModal();
     }
 };
@@ -1382,6 +1396,7 @@ function openCustomizeSVGsModal() {
 
 function openNotesModal(caseName) {
     const comment = comments.get(caseName) || '';
+    window.originalNoteContent = comment; // Store original for comparison
     
     // Close any existing context menu
     const existingMenu = document.getElementById('caseContextMenu');
@@ -1393,16 +1408,25 @@ function openNotesModal(caseName) {
     modal.className = 'modal active';
     modal.id = 'notesModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px; margin-top: 50px;">
+        <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
             <div class="modal-header">
-                <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
-                <button class="close-btn" onclick="closeNotesModal()">&times;</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
+                    <button onclick="showNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </button>
+                </div>
+                <button class="close-btn" onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )">&times;</button>
             </div>
             <div class="modal-body">
-                <textarea id="notesTextarea" style="width: 100%; height: 150px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
+                <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
                 <div style="text-align: center; margin-top: 15px;">
                     <button onclick="saveNotes('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
-                    <button onclick="closeNotesModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1411,6 +1435,82 @@ function openNotesModal(caseName) {
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
 }
+
+window.attemptCloseNotesModal = function(caseName) {
+    const textarea = document.getElementById('notesTextarea');
+    const currentContent = textarea ? textarea.value.trim() : '';
+    const originalContent = window.originalNoteContent || '';
+    
+    if (currentContent !== originalContent) {
+        showSaveDiscardConfirmation(
+            'You have unsaved changes. Do you want to save them?',
+            () => saveNotes(caseName),
+            () => {
+                window.originalNoteContent = null;
+                closeNotesModal();
+            },
+            null
+        );
+    } else {
+        closeNotesModal();
+    }
+};
+
+window.showNotesInfoModal = function() {
+    let infoModal = document.getElementById('notesInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'notesInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Notes Guide</span>
+                    <button class="training-info-close" onclick="closeNotesInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">📝</div>
+                        <div class="training-info-text"><strong>What are Notes?</strong> Notes are personal reminders attached to specific cases. Use them to remember recognition tricks, finger tricks, or anything that helps you learn the case better.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">💡</div>
+                        <div class="training-info-text"><strong>Good Examples:</strong><br>
+                        • "Look for the bar on front-left"<br>
+                        • "Use right thumb for the (3,0) move"<br>
+                        • "Similar to case X but with flipped edges"<br>
+                        • "Practice slow first, speed comes later"</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">✏️</div>
+                        <div class="training-info-text"><strong>Text Formatting:</strong> Notes support basic HTML formatting:<br>
+                        • <code>&lt;b&gt;bold&lt;/b&gt;</code> or <code>&lt;strong&gt;bold&lt;/strong&gt;</code><br>
+                        • <code>&lt;i&gt;italic&lt;/i&gt;</code> or <code>&lt;em&gt;italic&lt;/em&gt;</code><br>
+                        • <code>&lt;u&gt;underline&lt;/u&gt;</code><br>
+                        • <code>&lt;s&gt;strikethrough&lt;/s&gt;</code><br>
+                        • <code>&lt;font color="red"&gt;colored text&lt;/font&gt;</code><br>
+                        • <code>&lt;br&gt;</code> for line breaks<br>
+                        • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for links</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">🎯</div>
+                        <div class="training-info-text"><strong>Keep it Simple:</strong> Short, focused notes work best. If you find yourself writing paragraphs, consider using the General Notes feature instead (accessible from the menu).</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+};
+
+window.closeNotesInfoModal = function() {
+    const modal = document.getElementById('notesInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+};
 
 function closeNotesModal() {
     const modal = document.getElementById('notesModal');
@@ -1454,7 +1554,7 @@ function openGeneralNotesModal() {
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
                     <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
-                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1531,7 +1631,7 @@ function toggleEditGeneralNotes() {
         editBtn.textContent = 'View';
         editBtn.style.background = '#6c757d';
         saveBtn.style.display = 'block';
-        infoBtn.style.display = 'flex';
+        if (infoBtn) infoBtn.style.display = 'flex';
     } else {
         // Attempt to switch to view mode (with unsaved changes check)
         attemptSwitchToViewMode();
@@ -1573,7 +1673,7 @@ function switchToViewMode() {
     editBtn.textContent = 'Edit';
     editBtn.style.background = '#007bff';
     saveBtn.style.display = 'none';
-    infoBtn.style.display = 'flex';
+    if (infoBtn) infoBtn.style.display = 'none';
     renderGeneralNotes();
 }
 
