@@ -1448,25 +1448,29 @@ function openGeneralNotesModal() {
     modal.className = 'modal active';
     modal.id = 'generalNotesModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 900px; max-height: 90vh; margin-top: 30px; display: flex; flex-direction: column;">
+        <div class="modal-content" style="max-width: 900px; height: 90vh; margin-top: 30px; display: flex; flex-direction: column;">
             <div class="modal-header" style="flex-shrink: 0;">
                 <span class="modal-title">General Notes</span>
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
-                    <button class="close-btn" onclick="closeGeneralNotesModal()">&times;</button>
+                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
+                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </button>
+                    <button class="close-btn" onclick="attemptCloseGeneralNotesModal()">&times;</button>
                 </div>
             </div>
-            <div class="modal-body" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column;">
-                <div id="generalNotesView" style="flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 4px; background: #fafafa; min-height: 400px; overflow: auto;"></div>
-                <div id="generalNotesEdit" style="flex: 1; display: none; flex-direction: column;">
+            <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
+                <div id="generalNotesView" style="flex: 1; padding: 20px; overflow-y: auto;"></div>
+                <div id="generalNotesEdit" style="flex: 1; display: none; flex-direction: column; padding: 20px; overflow: hidden;">
                     <div style="margin-bottom: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 0.9rem; color: #856404;">
                         <strong>⚠️ Warning:</strong> This editor supports HTML, CSS, SVG, and JavaScript. Code will execute when you save and view. Use with caution!
                     </div>
-                    <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; min-height: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: vertical;"></textarea>
-                    <div style="text-align: center; margin-top: 15px;">
-                        <button onclick="saveGeneralNotes()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
-                        <button onclick="cancelEditGeneralNotes()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
-                    </div>
+                    <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: none; overflow-y: auto;"></textarea>
                 </div>
             </div>
         </div>
@@ -1515,34 +1519,166 @@ function toggleEditGeneralNotes() {
     const editDiv = document.getElementById('generalNotesEdit');
     const textarea = document.getElementById('generalNotesTextarea');
     const editBtn = document.getElementById('editGeneralNotesBtn');
+    const saveBtn = document.getElementById('saveGeneralNotesBtn');
+    const infoBtn = document.getElementById('generalNotesInfoBtn');
     
     if (viewDiv.style.display !== 'none') {
         // Switch to edit mode
         viewDiv.style.display = 'none';
         editDiv.style.display = 'flex';
         textarea.value = generalNotes;
+        window.originalGeneralNotes = generalNotes; // Store original for comparison
         editBtn.textContent = 'View';
         editBtn.style.background = '#6c757d';
+        saveBtn.style.display = 'block';
+        infoBtn.style.display = 'flex';
     } else {
-        // Switch to view mode
-        viewDiv.style.display = 'block';
-        editDiv.style.display = 'none';
-        editBtn.textContent = 'Edit';
-        editBtn.style.background = '#007bff';
-        renderGeneralNotes();
+        // Attempt to switch to view mode (with unsaved changes check)
+        attemptSwitchToViewMode();
     }
+}
+
+function attemptSwitchToViewMode() {
+    const textarea = document.getElementById('generalNotesTextarea');
+    const currentContent = textarea ? textarea.value : '';
+    const originalContent = window.originalGeneralNotes || '';
+    
+    if (currentContent !== originalContent) {
+        showSaveDiscardConfirmation(
+            'You have unsaved changes. Do you want to save them?',
+            () => {
+                saveGeneralNotes();
+                switchToViewMode();
+            },
+            () => {
+                window.originalGeneralNotes = null;
+                switchToViewMode();
+            },
+            null
+        );
+    } else {
+        switchToViewMode();
+    }
+}
+
+function switchToViewMode() {
+    const viewDiv = document.getElementById('generalNotesView');
+    const editDiv = document.getElementById('generalNotesEdit');
+    const editBtn = document.getElementById('editGeneralNotesBtn');
+    const saveBtn = document.getElementById('saveGeneralNotesBtn');
+    const infoBtn = document.getElementById('generalNotesInfoBtn');
+    
+    viewDiv.style.display = 'block';
+    editDiv.style.display = 'none';
+    editBtn.textContent = 'Edit';
+    editBtn.style.background = '#007bff';
+    saveBtn.style.display = 'none';
+    infoBtn.style.display = 'flex';
+    renderGeneralNotes();
 }
 
 function saveGeneralNotes() {
     const textarea = document.getElementById('generalNotesTextarea');
     generalNotes = textarea.value;
+    window.originalGeneralNotes = generalNotes;
     saveState();
-    toggleEditGeneralNotes(); // Switch back to view mode
 }
 
-function cancelEditGeneralNotes() {
-    toggleEditGeneralNotes(); // Just switch back to view mode without saving
+window.attemptCloseGeneralNotesModal = function() {
+    const viewDiv = document.getElementById('generalNotesView');
+    if (viewDiv && viewDiv.style.display === 'none') {
+        // In edit mode
+        const textarea = document.getElementById('generalNotesTextarea');
+        const currentContent = textarea ? textarea.value : '';
+        const originalContent = window.originalGeneralNotes || '';
+        
+        if (currentContent !== originalContent) {
+            showSaveDiscardConfirmation(
+                'You have unsaved changes. Do you want to save them?',
+                () => {
+                    saveGeneralNotes();
+                    closeGeneralNotesModal();
+                },
+                () => {
+                    window.originalGeneralNotes = null;
+                    closeGeneralNotesModal();
+                },
+                null
+            );
+        } else {
+            closeGeneralNotesModal();
+        }
+    } else {
+        closeGeneralNotesModal();
+    }
+};
+
+window.showGeneralNotesInfoModal = function() {
+    let infoModal = document.getElementById('generalNotesInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'generalNotesInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content" style="max-width: 600px;">
+                <div class="training-info-header">
+                    <span class="training-info-title">HTML Formatting Guide</span>
+                    <button class="training-info-close" onclick="closeGeneralNotesInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body" style="max-height: 70vh; overflow-y: auto;">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text"><strong>Bold Text:</strong> <code>&lt;strong&gt;Your text&lt;/strong&gt;</code> or <code>&lt;b&gt;Your text&lt;/b&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text"><strong>Italic Text:</strong> <code>&lt;em&gt;Your text&lt;/em&gt;</code> or <code>&lt;i&gt;Your text&lt;/i&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text"><strong>Headings:</strong> <code>&lt;h1&gt;Large Heading&lt;/h1&gt;</code>, <code>&lt;h2&gt;Medium Heading&lt;/h2&gt;</code>, <code>&lt;h3&gt;Small Heading&lt;/h3&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text"><strong>Paragraphs:</strong> <code>&lt;p&gt;Your paragraph text&lt;/p&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text"><strong>Line Break:</strong> <code>&lt;br&gt;</code> (no closing tag needed)</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text"><strong>Links:</strong> <code>&lt;a href="https://example.com"&gt;Link text&lt;/a&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
+                        <div class="training-info-text"><strong>Lists:</strong> <code>&lt;ul&gt;&lt;li&gt;Item 1&lt;/li&gt;&lt;li&gt;Item 2&lt;/li&gt;&lt;/ul&gt;</code> for bullet points</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">8</div>
+                        <div class="training-info-text"><strong>Colored Text:</strong> <code>&lt;span style="color: red;"&gt;Red text&lt;/span&gt;</code></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">9</div>
+                        <div class="training-info-text"><strong>Horizontal Line:</strong> <code>&lt;hr&gt;</code> (no closing tag needed)</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">10</div>
+                        <div class="training-info-text"><strong>Code/Monospace:</strong> <code>&lt;code&gt;monospace text&lt;/code&gt;</code></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+infoModal.classList.add('active');
+};
+window.closeGeneralNotesInfoModal = function() {
+const modal = document.getElementById('generalNotesInfoModal');
+if (modal) {
+modal.classList.remove('active');
 }
+};
 
 // Toast notification system
 window.showToast = function(message, duration = 3000, type = 'info') {
