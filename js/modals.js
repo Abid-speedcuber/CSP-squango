@@ -874,6 +874,7 @@ function openEditCaseModal(caseName) {
     }
     
     const customName = displayNames[caseName] || '';
+    const customSubtitle = perCaseSubtitles.get(caseName) || '';
     
     // Close any existing context menu
     const existingMenu = document.getElementById('caseContextMenu');
@@ -887,20 +888,25 @@ function openEditCaseModal(caseName) {
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
             <div class="modal-header">
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="modal-title" id="editCaseTitle">${getDisplayName(caseName)}</span>
-                    <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}' )" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
-                        <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
-                    </button>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="modal-title" id="editCaseTitle">${getDisplayName(caseName)}</span>
+                        <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}', '${customSubtitle.replace(/'/g, "\\'")}' )" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                            <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
+                        </button>
+                        <button onclick="showEditCaseInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                        </button>
+                    </div>
+                    ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: #888; margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseName)}</div>` : '<div style="font-size: 0.85rem; color: #888; margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
                 </div>
-                ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: #888; margin-top: 4px;">${perCaseSubtitles.get(caseName)}</div>` : ''}
-                <button class="close-btn" onclick="closeEditCaseModal()">&times;</button>
+                <button class="close-btn" onclick="attemptCloseEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Case Subtitle (optional):</label>
-                    <input type="text" id="caseSubtitleInput" value="${perCaseSubtitles.get(caseName) || ''}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem; margin-bottom: 15px;">
-                </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algorithms:</label>
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
@@ -1124,22 +1130,28 @@ window.addNewAlgorithmField = function() {
 };
 
 // Function to open case rename modal
-window.openCaseRenameModal = function(caseName, currentName) {
+window.openCaseRenameModal = function(caseName, currentName, currentSubtitle = '') {
     const renameModal = document.createElement('div');
     renameModal.className = 'modal active';
     renameModal.id = 'caseRenameModal';
     renameModal.style.zIndex = '10002';
     renameModal.innerHTML = `
-        <div class="modal-content" style="max-width: 400px; margin-top: 100px;">
+        <div class="modal-content" style="max-width: 500px; margin-top: 100px;">
             <div class="modal-header">
-                <span class="modal-title">Rename Case</span>
+                <span class="modal-title">Edit Case Name & Subtitle</span>
                 <button class="close-btn" onclick="closeCaseRenameModal()">&times;</button>
             </div>
             <div class="modal-body">
-                <label style="display: block; margin-bottom: 8px; font-weight: 600;">Custom Name:</label>
-                <input type="text" id="caseRenameInput" value="${currentName}" placeholder="Leave empty for default name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Custom Name:</label>
+                    <input type="text" id="caseRenameInput" value="${currentName}" placeholder="Leave empty for default name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600;">Subtitle (optional):</label>
+                    <input type="text" id="caseSubtitleRenameInput" value="${currentSubtitle}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                </div>
                 <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="saveCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button onclick="applyCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
                     <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
@@ -1162,29 +1174,62 @@ window.closeCaseRenameModal = function() {
     if (modal) modal.remove();
 };
 
-window.saveCaseRename = function(caseName) {
-    const input = document.getElementById('caseRenameInput');
-    if (!input) return;
+window.applyCaseRename = function(caseName) {
+    const nameInput = document.getElementById('caseRenameInput');
+    const subtitleInput = document.getElementById('caseSubtitleRenameInput');
+    if (!nameInput || !subtitleInput) return;
     
-    const newName = input.value.trim();
-    if (newName) {
-        displayNames[caseName] = newName;
-    } else {
-        // Restore to default
-        displayNames[caseName] = defaultDisplayNames[caseName] || caseName;
+    const newName = nameInput.value.trim();
+    const newSubtitle = subtitleInput.value.trim();
+    
+    // Store in temporary variables for parent modal to use
+    window.tempCaseRename = {
+        caseName: caseName,
+        newName: newName,
+        newSubtitle: newSubtitle
+    };
+    
+    // Update the title and subtitle in edit modal immediately
+    const titleElement = document.getElementById('editCaseTitle');
+    const subtitleElement = document.getElementById('editCaseSubtitle');
+    
+    if (titleElement) {
+        titleElement.textContent = newName || defaultDisplayNames[caseName] || caseName;
     }
     
-    saveState();
-    render();
-    
-    // Update the title in edit modal
-    const titleElement = document.getElementById('editCaseTitle');
-    if (titleElement) {
-        titleElement.textContent = getDisplayName(caseName);
+    if (subtitleElement) {
+        if (newSubtitle) {
+            subtitleElement.textContent = newSubtitle;
+            subtitleElement.style.display = 'block';
+        } else {
+            subtitleElement.textContent = '';
+            subtitleElement.style.display = 'none';
+        }
     }
     
     closeCaseRenameModal();
-    showToast('Case name updated!', 2000, 'success');
+};
+
+window.saveCaseRename = function(caseName) {
+    // This function is now called from saveEditedCase
+    if (window.tempCaseRename && window.tempCaseRename.caseName === caseName) {
+        const newName = window.tempCaseRename.newName;
+        const newSubtitle = window.tempCaseRename.newSubtitle;
+        
+        if (newName) {
+            displayNames[caseName] = newName;
+        } else {
+            displayNames[caseName] = defaultDisplayNames[caseName] || caseName;
+        }
+        
+        if (newSubtitle) {
+            perCaseSubtitles.set(caseName, newSubtitle);
+        } else {
+            perCaseSubtitles.delete(caseName);
+        }
+        
+        window.tempCaseRename = null;
+    }
 };
 
 function closeEditCaseModal() {
@@ -1195,17 +1240,115 @@ function closeEditCaseModal() {
     }
 }
 
-function saveEditedCase(caseName, originalName) {
-    // Save subtitle
-    const subtitleInput = document.getElementById('caseSubtitleInput');
-    if (subtitleInput) {
-        const subtitle = subtitleInput.value.trim();
-        if (subtitle) {
-            perCaseSubtitles.set(caseName, subtitle);
-        } else {
-            perCaseSubtitles.delete(caseName);
+window.attemptCloseEditCaseModal = function() {
+    const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
+    const originalAlgs = [];
+    const modal = document.getElementById('editCaseModal');
+    if (!modal) return;
+    
+    const caseName = modal.querySelector('.modal-title').textContent;
+    const item = data.find(d => getDisplayName(d.name) === caseName || d.name === caseName);
+    if (!item) {
+        closeEditCaseModal();
+        return;
+    }
+    
+    const customAlgs = customAlgorithms.get(item.name);
+    if (customAlgs) {
+        originalAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
+    } else {
+        originalAlgs.push(...(item.odd || []), ...(item.even || []));
+    }
+    
+    const currentAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
+    
+    // Check if algorithms changed
+    let algsChanged = false;
+    if (originalAlgs.length !== currentAlgs.length) {
+        algsChanged = true;
+    } else {
+        for (let i = 0; i < originalAlgs.length; i++) {
+            if (originalAlgs[i] !== currentAlgs[i]) {
+                algsChanged = true;
+                break;
+            }
         }
     }
+    
+    // Check if name/subtitle changed
+    const nameChanged = window.tempCaseRename && window.tempCaseRename.caseName === item.name;
+    
+    if (algsChanged || nameChanged) {
+        showSaveDiscardConfirmation(
+            'You have unsaved changes. Do you want to save them?',
+            () => saveEditedCase(item.name, item.name),
+            () => {
+                window.tempCaseRename = null;
+                closeEditCaseModal();
+            },
+            null
+        );
+    } else {
+        closeEditCaseModal();
+    }
+};
+
+window.showEditCaseInfoModal = function() {
+    let infoModal = document.getElementById('editCaseInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'editCaseInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Algorithm Editor Guide</span>
+                    <button class="training-info-close" onclick="closeEditCaseInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text"><strong>Parity Labels:</strong> Each algorithm input shows a colored label indicating its parity. <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>. The label disappears while editing and reappears when you click away.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text"><strong>Angle Mismatch:</strong> If you see <span style="color: #ca9b0dff; font-weight: 600;">yellow "angle mismatch"</span>, the algorithm reaches the correct shape but from the wrong angle. You may need to add cube rotations (z, z', z2) to fix it.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text"><strong>Mirrored Cases:</strong> <span style="color: #c05c0aff; font-weight: 600;">Orange "mirrored"</span> means your algorithm solves the mirror of this case. Check if you're using the correct case or if the algorithm needs adjustment.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text"><strong>Invalid Algorithms:</strong> <span style="color: #71000bff; font-weight: 600;">Red "invalid"</span> indicates the algorithm doesn't match this case at all. Double-check your input for typos or incorrect moves.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text"><strong>Auto-Normalization:</strong> When you finish editing an algorithm (click away from the input), it's automatically normalized to standard Square-1 notation. Spaces, case variations, and formatting are corrected automatically.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text"><strong>Remember to Save:</strong> All changes (including name/subtitle edits) are only saved when you click "Save Changes" at the bottom. Closing without saving will prompt you to confirm.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+};
+
+window.closeEditCaseInfoModal = function() {
+    const modal = document.getElementById('editCaseInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+};
+
+function saveEditedCase(caseName, originalName) {
+    // Save name and subtitle from temp rename
+    saveCaseRename(caseName);
     
     const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
     
