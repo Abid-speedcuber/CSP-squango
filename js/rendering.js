@@ -1005,13 +1005,42 @@ function renderCard(item) {
     </svg>`;
     
     const displayName = getDisplayName(item.name);
+    
+    // Apply search highlighting
+    let highlightedName = displayName;
+    if (window.searchMatches && window.searchMatches.has(item.name)) {
+        const matchInfo = window.searchMatches.get(item.name);
+        
+        if (matchInfo.type === 'simple') {
+            // Simple highlighting - highlight the search term
+            const searchTerm = matchInfo.searchTerm;
+            const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+            highlightedName = displayName.replace(regex, '<mark style="background-color: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>');
+        } else if (matchInfo.type === 'slashed-normal') {
+            // Normal order: highlight matching parts in their positions
+            const parts = displayName.split('/');
+            if (parts.length === 2) {
+                const part1 = highlightPartialMatch(parts[0].trim(), matchInfo.searchPart1);
+                const part2 = highlightPartialMatch(parts[1].trim(), matchInfo.searchPart2);
+                highlightedName = `${part1}/${part2}`;
+            }
+        } else if (matchInfo.type === 'slashed-flipped') {
+            // Flipped order: highlight matching parts in flipped positions
+            const parts = displayName.split('/');
+            if (parts.length === 2) {
+                const part1 = highlightPartialMatch(parts[0].trim(), matchInfo.searchPart2);
+                const part2 = highlightPartialMatch(parts[1].trim(), matchInfo.searchPart1);
+                highlightedName = `${part1}/${part2}`;
+            }
+        }
+    }
 
     return `
         <div class="card ${cardClass}" data-case-name="${item.name}">
             <div class="card-header">
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div class="card-title">
-                        ${displayName}
+                        ${highlightedName}
                         ${perCaseSubtitles.has(item.name) ? `<div style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
@@ -1108,5 +1137,17 @@ function hideReorderButton() {
     if (reorderBtn) {
         reorderBtn.remove();
     }
+}
+
+// Helper function to escape regex special characters
+function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Helper function to highlight partial matches in a string
+function highlightPartialMatch(text, searchTerm) {
+    if (!searchTerm) return text;
+    const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
+    return text.replace(regex, '<mark style="background-color: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>');
 }
 

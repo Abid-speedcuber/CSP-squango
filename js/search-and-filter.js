@@ -1,7 +1,13 @@
+// Store search matches for highlighting
+window.searchMatches = new Map();
+
 function filterAndSort(softRender = false) {
     const searchTerm = searchInput.value.toLowerCase().trim();
     const sortType = sortSelect.value;
     const learnFilter = learnFilterSelect.value;
+    
+    // Clear previous search matches
+    window.searchMatches.clear();
     
     // Update current sort mode
     currentSortMode = sortType;
@@ -18,30 +24,72 @@ function filterAndSort(softRender = false) {
         if (!matchesLearnFilter) return false;
         if (!searchTerm) return true;
 
-        const displayName = getDisplayName(item.name).toLowerCase();
+        const displayName = getDisplayName(item.name);
+        const displayNameLower = displayName.toLowerCase();
         
-        // Handle '/' search (flipped matching)
-        if (searchTerm.includes('/')) {
-            const searchParts = searchTerm.split('/').map(p => p.trim());
-            const nameParts = item.name.split('/');
-            
-            if (searchParts.length === 2 && nameParts.length === 2) {
-                const [searchTop, searchBot] = searchParts;
-                const displayTop = getDisplayPart(nameParts[0], item.name).toLowerCase();
-                const displayBot = getDisplayPart(nameParts[1], item.name).toLowerCase();
-                
-                // Normal order: top/bottom
-                const normalMatch = displayTop.includes(searchTop) && displayBot.includes(searchBot);
-                
-                // Flipped order: bottom/top
-                const flippedMatch = displayBot.includes(searchTop) && displayTop.includes(searchBot);
-                
-                return normalMatch || flippedMatch;
+        // Check if title has slash
+        const titleHasSlash = displayName.includes('/');
+        const searchHasSlash = searchTerm.includes('/');
+        
+        // Case 1: Search without slash
+        if (!searchHasSlash) {
+            // Simple partial match anywhere in the display name
+            if (displayNameLower.includes(searchTerm)) {
+                // Store match info for highlighting
+                window.searchMatches.set(item.name, {
+                    type: 'simple',
+                    searchTerm: searchTerm
+                });
+                return true;
             }
+            return false;
         }
         
-        // Single term search - only match what's displayed
-        return displayName.includes(searchTerm);
+        // Case 2: Search has slash, title has slash
+        if (searchHasSlash && titleHasSlash) {
+            const searchParts = searchTerm.split('/').map(p => p.trim());
+            const titleParts = displayName.split('/').map(p => p.trim());
+            
+            // Only proceed if both have exactly 2 parts
+            if (searchParts.length === 2 && titleParts.length === 2) {
+                const [searchPart1, searchPart2] = searchParts;
+                const [titlePart1, titlePart2] = titleParts;
+                const titlePart1Lower = titlePart1.toLowerCase();
+                const titlePart2Lower = titlePart2.toLowerCase();
+                
+                // Normal order: first matches first AND second matches second
+                const normalMatch = titlePart1Lower.includes(searchPart1) && titlePart2Lower.includes(searchPart2);
+                
+                // Flipped order: first matches second AND second matches first
+                const flippedMatch = titlePart2Lower.includes(searchPart1) && titlePart1Lower.includes(searchPart2);
+                
+                if (normalMatch) {
+                    window.searchMatches.set(item.name, {
+                        type: 'slashed-normal',
+                        searchPart1: searchPart1,
+                        searchPart2: searchPart2
+                    });
+                    return true;
+                }
+                
+                if (flippedMatch) {
+                    window.searchMatches.set(item.name, {
+                        type: 'slashed-flipped',
+                        searchPart1: searchPart1,
+                        searchPart2: searchPart2
+                    });
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Case 3: Search has slash, title doesn't have slash
+        if (searchHasSlash && !titleHasSlash) {
+            return false;
+        }
+        
+        return false;
     });
 
     // Apply sorting
@@ -124,6 +172,12 @@ function attachSearchListeners() {
     const controls = document.querySelector('.controls');
     
     if (searchInput) {
+        // Disable autocomplete
+        searchInput.setAttribute('autocomplete', 'off');
+        searchInput.setAttribute('autocorrect', 'off');
+        searchInput.setAttribute('autocapitalize', 'off');
+        searchInput.setAttribute('spellcheck', 'false');
+        
         searchInput.addEventListener('input', () => {
             filterAndSort(true);
         });
