@@ -1075,15 +1075,75 @@ function renderCard(item) {
     `;
 }
 
+let renderTimeout = null;
+
 function render(softRender = false) {
-    if (!softRender) {
-        // Hard render: recalculate parity if needed
-        if (needsParityRecalculation()) {
-            calculateAndCacheAllParity();
-        }
+    // Clear any pending render
+    if (renderTimeout) {
+        clearTimeout(renderTimeout);
     }
     
-    grid.innerHTML = filteredData.map(renderCard).join('');
+    // Debounce rendering for better performance
+    renderTimeout = setTimeout(() => {
+        // Show loading indicator for hard renders
+        if (!softRender && needsParityRecalculation()) {
+            showRenderLoading();
+            
+            // Use requestAnimationFrame to prevent UI blocking
+            requestAnimationFrame(() => {
+                calculateAndCacheAllParity();
+                grid.innerHTML = filteredData.map(renderCard).join('');
+                hideRenderLoading();
+            });
+        } else {
+            grid.innerHTML = filteredData.map(renderCard).join('');
+        }
+        renderTimeout = null;
+    }, 50);
+}
+
+function showRenderLoading() {
+    let loadingDiv = document.getElementById('renderLoadingIndicator');
+    if (!loadingDiv) {
+        loadingDiv = document.createElement('div');
+        loadingDiv.id = 'renderLoadingIndicator';
+        loadingDiv.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 99999;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            color: #333;
+            font-weight: 500;
+        `;
+        loadingDiv.innerHTML = `
+            <div style="width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <span>Updating...</span>
+            <style>
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+            </style>
+        `;
+        document.body.appendChild(loadingDiv);
+    }
+    loadingDiv.style.display = 'flex';
+}
+
+function hideRenderLoading() {
+    const loadingDiv = document.getElementById('renderLoadingIndicator');
+    if (loadingDiv) {
+        loadingDiv.style.display = 'none';
+    }
 }
 
 function showReorderButton() {
