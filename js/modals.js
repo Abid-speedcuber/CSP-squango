@@ -27,16 +27,7 @@ function generateModalHTML() {
         <div id="settingsModal" class="modal">
             <div class="modal-content" style="max-width: 480px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
                 <div class="modal-header" style="flex-shrink: 0; background: white; color: #2d3748; padding: 24px 28px; border-bottom: 2px solid #e9ecef;">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">Personalization</span>
-                        <button onclick="showSettingsInfoModal()" class="settings-info-btn" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Personalization Guide" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="16" x2="12" y2="12"></line>
-                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                            </svg>
-                        </button>
-                    </div>
+                    <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">Personalization</span>
                     <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
                 </div>
                 <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
@@ -46,15 +37,33 @@ function generateModalHTML() {
                         <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Basic Personalization</h3>
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                            <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Show/hide the blue and green numbers from the case images to help you trace parity using Kale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
+                                </span>
+                            </div>
                             <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                            <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Hide instruction buttons (â"˜) across the app. The irony: pressing this will eventually hide this instruction button too!<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
+                                </span>
+                            </div>
                             <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                            <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parenthesis</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parenthesis</label>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Removes parenthesis and changes the font from monospace to proportional (Arial) for a more modern algorithm display.<br><br><strong>Keyboard shortcut:</strong> Alt+P</span>
+                                </span>
+                            </div>
                             <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         
@@ -67,15 +76,33 @@ function generateModalHTML() {
                             </div>
                         </div>
                         
-                        <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
-                            <button onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Color Scheme Settings</button>
-                            <button onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Parity Tracing Personalization</button>
+                                                <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
+                            <div onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Color Scheme Settings</span>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Your color scheme will be used in parity tracing and training. You can also set your scramble image size here.</span>
+                                </span>
+                            </div>
+                            <div onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Parity Tracing Personalization</span>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Advanced Personalization Section -->
                     <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px;">
-                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Advanced Personalization</h3>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <h3 style="margin: 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Advanced Personalization</h3>
+                            <span class="info-wrapper">
+                                <button class="settings-info-btn" aria-label="More info">i</button>
+                                <span class="info-box">You have no job here unless you absolutely know what you are doing. Be careful. This part is for preset creators only.</span>
+                            </span>
+                        </div>
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <label for="allowCaseEditToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Allow Case Edits</label>
@@ -83,24 +110,38 @@ function generateModalHTML() {
                         </div>
                         
                         <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
-                            <button onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Customize Tracing Guides</button>
-                            <button onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">Quick Edit</button>
+                            <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Customize Tracing Guides</span>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">Lets you move the little numbers around for each image to set your tracing guide.<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
+                                </span>
+                            </div>
+                            <div onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Quick Edit</span>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
 
                     <!-- Presets Section -->
                     <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-top: 20px;">
-                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Presets</h3>
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
+                            <h3 style="margin: 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Presets</h3>
+                            <span class="info-wrapper">
+                                <button class="settings-info-btn" aria-label="More info">i</button>
+                                <span class="info-box">Presets define what "Reset to Default" uses. You can freely edit your data after choosing a preset - it won't be overwritten unless you switch presets.<br><br>If you think your preset should be included here, contact me on Discord: <strong>@abid_ibn_ashraf</strong></span>
+                            </span>
+                        </div>
                         
                         <div style="margin-bottom: 12px;">
                             <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Active Preset:</label>
                             <select id="presetSelector" onchange="handlePresetChange(this.value)" style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;">
                                 <!-- Options will be populated dynamically from PRESET_CONFIG -->
                             </select>
-                        </div>
-                        
-                        <div style="font-size: 0.85rem; color: #6c757d; margin-top: 12px; padding: 10px; background: white; border-radius: 6px; border: 1px solid #e9ecef;">
-                            <strong>Note:</strong> Presets define what "Reset to Default" uses. You can freely edit your data after choosing a preset - it won't be overwritten unless you switch presets.
                         </div>
                     </div>
 
@@ -1780,6 +1821,35 @@ modal.classList.remove('active');
 }
 };
 
+// Info button click handlers (exactly like SquanGo site)
+document.addEventListener("click", (e) => {
+    // If clicking on info button, handle info display
+    if (e.target.classList.contains("settings-info-btn")) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Close all info boxes first
+        document.querySelectorAll(".info-box").forEach(box =>
+            box.classList.remove("show")
+        );
+        
+        // Open only the clicked one
+        e.target.nextElementSibling.classList.add("show");
+        return;
+    }
+    
+    // If clicking on info box itself, don't close it
+    if (e.target.classList.contains("info-box") || e.target.closest(".info-box")) {
+        e.stopPropagation();
+            return;
+}
+
+// Close all info boxes when clicking elsewhere
+document.querySelectorAll(".info-box").forEach(box =>
+    box.classList.remove("show")
+);
+});
+
 // Toast notification system
 window.showToast = function(message, duration = 3000, type = 'info') {
     const toast = document.createElement('div');
@@ -2003,3 +2073,53 @@ function openParityTracingPersonalization() {
     
     window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }
+
+// Quick info popup function
+window.showQuickInfo = function(message) {
+    // Remove any existing quick info
+    const existing = document.getElementById('quickInfoPopup');
+    if (existing) existing.remove();
+    
+    const popup = document.createElement('div');
+    popup.id = 'quickInfoPopup';
+    popup.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    `;
+    
+    popup.innerHTML = `
+        <div style="background: white; padding: 24px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
+            <div style="font-size: 1rem; line-height: 1.6; color: #333;">${message}</div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button onclick="document.getElementById('quickInfoPopup').remove()" style="padding: 10px 24px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Got it</button>
+            </div>
+        </div>
+    `;
+    
+    // Close on background click
+    popup.onclick = (e) => {
+        if (e.target === popup) {
+            popup.remove();
+        }
+    };
+    
+    // Close on Escape key
+    const escHandler = (e) => {
+        if (e.key === 'Escape') {
+            popup.remove();
+            document.removeEventListener('keydown', escHandler);
+        }
+    };
+    document.addEventListener('keydown', escHandler);
+    
+    document.body.appendChild(popup);
+};

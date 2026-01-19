@@ -360,6 +360,54 @@
 
             document.getElementById('loadingScreen').style.display = 'none';
         });
+
+                // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Check if Alt key is pressed
+            if (e.altKey) {
+                switch(e.key.toLowerCase()) {
+                    case 't': // Alt+T - Show tracing guides
+                        e.preventDefault();
+                        showHints = !showHints;
+                        localStorage.setItem('showHints', showHints);
+                        applyHintVisibility();
+                        const hintToggle = document.getElementById('hintToggle');
+                        if (hintToggle) hintToggle.checked = showHints;
+                        showToast(`Tracing guides ${showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
+                        break;
+                    case 'h': // Alt+H - Hide instructions
+                        e.preventDefault();
+                        hideInstructions = !hideInstructions;
+                        saveState();
+                        applyInstructionVisibility();
+                        const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
+                        if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+                        showToast(`Instruction buttons ${hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
+                        break;
+                    case 'p': // Alt+P - Hide parenthesis
+                        e.preventDefault();
+                        hideParenthesis = !hideParenthesis;
+                        saveState();
+                        render();
+                        const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
+                        if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
+                        showToast(`Parenthesis ${hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
+                        break;
+                    case 'w': // Alt+W - Parity tracing personalization
+                        e.preventDefault();
+                        openParityTracingPersonalization();
+                        break;
+                    case 'g': // Alt+G - Customize tracing guides
+                        e.preventDefault();
+                        openCustomizeSVGsModal();
+                        break;
+                    case 'q': // Alt+Q - Quick edit
+                        e.preventDefault();
+                        openQuickEditModal();
+                        break;
+                }
+            }
+        });
     </script>
 </body>
 

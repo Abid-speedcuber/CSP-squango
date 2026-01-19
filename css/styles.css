@@ -1182,3 +1182,58 @@ body.modal-open .homepage-info-btn {
         font-size: 0.85rem;
     }
 }
+
+/* Info button styles */
+.info-wrapper {
+    position: relative;
+    display: inline-block;
+    z-index: 10;
+}
+
+.settings-info-btn {
+    background: #999;
+    border: none;
+    cursor: default;
+    font-size: 0.75rem;
+    padding: 4px;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 10;
+}
+
+.settings-info-btn:hover {
+    background: #777;
+}
+
+.info-box {
+    position: absolute;
+    bottom: 120%;
+    right: 0;
+    min-width: 250px;
+    max-width: 300px;
+    background: rgba(0, 0, 0, 0.75);
+    color: white;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    display: none;
+    z-index: 1000;
+    line-height: 1.4;
+    margin-bottom: 5px;
+    pointer-events: none;
+}
+
+.info-box.show {
+    display: block;
+}
+
+.hide-instructions .info-wrapper {
+    display: none !important;
+}
