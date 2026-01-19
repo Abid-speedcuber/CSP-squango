@@ -1821,7 +1821,7 @@ modal.classList.remove('active');
 }
 };
 
-// Info button click handlers (exactly like SquanGo site)
+// Info button click handlers with fixed positioning
 document.addEventListener("click", (e) => {
     // If clicking on info button, handle info display
     if (e.target.classList.contains("settings-info-btn")) {
@@ -1834,7 +1834,32 @@ document.addEventListener("click", (e) => {
         );
         
         // Open only the clicked one
-        e.target.nextElementSibling.classList.add("show");
+        const infoBox = e.target.nextElementSibling;
+        infoBox.classList.add("show");
+        
+        // Position the info box near the button
+        const buttonRect = e.target.getBoundingClientRect();
+        let top = buttonRect.top - infoBox.offsetHeight - 5;
+        let left = buttonRect.right - infoBox.offsetWidth;
+        
+        // Adjust if goes off top of screen
+        if (top < 10) {
+            top = buttonRect.bottom + 5;
+        }
+        
+        // Adjust if goes off left of screen
+        if (left < 10) {
+            left = 10;
+        }
+        
+        // Adjust if goes off right of screen
+        if (left + infoBox.offsetWidth > window.innerWidth - 10) {
+            left = window.innerWidth - infoBox.offsetWidth - 10;
+        }
+        
+        infoBox.style.top = top + 'px';
+        infoBox.style.left = left + 'px';
+        
         return;
     }
     
