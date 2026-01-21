@@ -32,13 +32,20 @@
             <h1 class="tablet-title">SquanGo CSP</h1>
             <h1 class="mobile-title">SquanGo CSP</h1>
             <div class="subtitle">By Abid Ibn Ashraf</div>
+            <div id="floatingToolsContainer" class="floating-tools-container">
+                <button id="toolsBtn" class="floating-tools-btn" aria-label="Tools"><img
+                        src="res/tools.svg" height="24px" width="24px"></button>
+                <button class="tool-action-btn" onclick="openTrainingSelector(); collapseToolsMenu();"><img src="res/training.svg"></button>
+                <button class="tool-action-btn" onclick="openNewParityAnalysis(''); collapseToolsMenu();"><img src="res/tracing.svg"></button>
+                <button class="tool-action-btn" onclick="openInvertScrambleModal(); collapseToolsMenu();"><img src="res/invertscr.svg"></button>
+                <button class="tool-action-btn" onclick="openAnimateAlgModal(); collapseToolsMenu();"><img src="res/animate.svg"></button>
+                <button class="tool-action-btn" onclick="openGeneralNotesModal(); collapseToolsMenu();"><img src="res/notes.svg"></button>
+            </div>
             <div id="floatingButtonsContainer" class="floating-buttons-container">
                 <button id="menuBtn" class="floating-settings-btn" aria-label="Menu"><img
                         src="res/menu.svg" height="24px" width="24px"></button>
                 <button class="menu-action-btn" onclick="openProfileModal(); collapseMenu();"><img src="res/avatar.svg"></button>
                 <button class="menu-action-btn" onclick="openSettingsModal(); collapseMenu();"><img src="res/settings.svg"></button>
-                <button class="menu-action-btn" onclick="openNewParityAnalysis(''); collapseMenu();"><img src="res/tracer.svg"></button>
-                <button class="menu-action-btn" onclick="openGeneralNotesModal(); collapseMenu();"><img src="res/notes.svg"></button>
                 <button class="menu-action-btn instruction-btn" onclick="showHomepageInfoModal(); collapseMenu();"><img src="res/info.svg"></button>
             </div>
         </header>     
@@ -78,6 +85,7 @@
     <script src="js/tools/scramblegenerator.js"></script>
     <script src="js/tools/draw-scramble.js"></script>
     <script src="js/tools/scrambleFormatting.js"></script>
+    <script src="js/tools/animate-alg.js"></script>
     <script src="js/restoftheapp.js"></script>
     <script src="js/tools/shapeTracer.js"></script>
     <script src="js/rendering.js"></script>
@@ -241,6 +249,31 @@
 
         // Wait for DOM before calling these functions
         function finalizeInitialization() {
+
+            // Setup tools menu button
+            const toolsBtn = document.getElementById('toolsBtn');
+            const toolsContainer = document.getElementById('floatingToolsContainer');
+            if (toolsBtn && toolsContainer) {
+                toolsBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toolsContainer.classList.toggle('expanded');
+                };
+                
+                // Close tools menu when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!toolsContainer.contains(e.target)) {
+                        toolsContainer.classList.remove('expanded');
+                    }
+                });
+            }
+            
+            // Collapse tools menu function
+            window.collapseToolsMenu = function() {
+                const toolsContainer = document.getElementById('floatingToolsContainer');
+                if (toolsContainer) {
+                    toolsContainer.classList.remove('expanded');
+                }
+            };
 
             // Setup menu button
             const menuBtn = document.getElementById('menuBtn');

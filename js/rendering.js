@@ -341,7 +341,8 @@ function renderAlgorithm(algoArray) {
     return algoArray.map(algo => `<div class="algo-line">${styleAlgorithmWithGrayMoves(algo)}</div>`).join('');
 }
 
-function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
+function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
+    const fontStyle = fontFamily ? `font-family: ${fontFamily};` : '';
     return algoArray.map((algo, idx) => {
         const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
         return `<div class="algo-line algo-interactive" 
@@ -351,7 +352,7 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType) {
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
                      onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)"
-                     style="display: block;">${styleAlgorithmWithGrayMoves(algo)}</div>`;
+                     style="display: block; ${fontStyle}">${styleAlgorithmWithGrayMoves(algo)}</div>`;
     }).join('');
 }
 
@@ -401,12 +402,14 @@ function showAlgoPopup(element, algo, isPermanent) {
     
     const setupId = 'popup-setup-' + Math.random().toString(36).substr(2, 9);
     
+    const popupFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'monospace';
+    const displaySetup = stripParenthesisIfNeeded(setup);
     popup.innerHTML = `
         <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Setup:</div>
-        <div id="${setupId}" style="font-family: monospace; font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer;" title="Click to analyze parity">${setup}</div>
+        <div id="${setupId}" style="font-family: ${popupFontFamily}; font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer;" title="Click to analyze parity">${displaySetup}</div>
         ${shapePath ? `
             <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Shape Path:</div>
-            <div style="font-size: 0.75rem; line-height: 1.6;">
+            <div id="${setupId}_shapepath" style="font-size: 0.75rem; line-height: 1.6; cursor: pointer; padding: 4px; border-radius: 3px; transition: background 0.15s;" title="Click to animate algorithm">
                 ${shapePath.map((step, idx) => {
                     const arrow = idx < shapePath.length - 1 ? ' → ' : '';
                     return `<span style="background: #f0f9ff; padding: 1px 4px; border-radius: 2px; white-space: nowrap;">${step.top}/${step.bottom}</span>${arrow}`;
@@ -430,6 +433,22 @@ function showAlgoPopup(element, algo, isPermanent) {
         };
         setupElement.onmouseleave = () => {
             setupElement.style.background = '#f8f9fa';
+        };
+    }
+    
+    // Add click handler to shape path to open animate modal
+    const shapePathElement = document.getElementById(setupId + '_shapepath');
+    if (shapePathElement) {
+        shapePathElement.onclick = (e) => {
+            e.stopPropagation();
+            hideAlgoPopup(element, isPermanent);
+            openAnimateAlgModal(algo);
+        };
+        shapePathElement.onmouseenter = () => {
+            shapePathElement.style.background = '#f0f9ff';
+        };
+        shapePathElement.onmouseleave = () => {
+            shapePathElement.style.background = 'transparent';
         };
     }
     
@@ -991,8 +1010,9 @@ function renderCard(item) {
     const topSVG = window.svgData[item.top] || '';
     const bottomSVG = window.svgData[item.bottom] || '';
     
-    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
-    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even') : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const algoFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
+    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', algoFontFamily) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', algoFontFamily) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
     
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
@@ -1041,7 +1061,7 @@ function renderCard(item) {
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div class="card-title">
                         ${highlightedName}
-                        ${perCaseSubtitles.has(item.name) ? `<div style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
+                        ${perCaseSubtitles.has(item.name) ? `<div class="card-subtitle" style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                         <div class="probability">${prob}%</div>

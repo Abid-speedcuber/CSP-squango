@@ -1795,12 +1795,15 @@ function adjustColorBrightness(hexColor, percent) {
         const modal = document.createElement('div');
         modal.className = 'parity-tracer-modal-container';
         const vh = window.innerHeight;
+        const vw = window.innerWidth;
         const maxHeight = vh > 900 ? 'auto' : (vh > 600 ? '90vh' : '85vh');
+        const padding = vw <= 420 ? '1rem' : '1.5rem';
+        const borderRadius = vw <= 420 ? '12px' : '16px';
         modal.style.cssText = `
       position: relative;
       background: ${config.backgroundColor};
-      border-radius: 16px;
-      padding: 1.5rem;
+      border-radius: ${borderRadius};
+      padding: ${padding};
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       max-width: 600px;
       width: 90%;
@@ -1843,6 +1846,37 @@ function adjustColorBrightness(hexColor, percent) {
           transition: all 0.2s;
           height: 44px;
           margin: 0;
+          min-width: 0;
+        }
+        @media (max-width: 570px) {
+          .parity-tracer-input-container {
+            height: 40px;
+          }
+          .parity-tracer-input-container input {
+            padding: 0.5rem;
+            font-size: 0.8rem;
+            height: 40px;
+          }
+          .parity-tracer-input-container button {
+            padding: 0 0.75rem;
+            font-size: 0.85rem;
+            height: 40px;
+          }
+        }
+        @media (max-width: 420px) {
+          .parity-tracer-input-container {
+            height: 36px;
+          }
+          .parity-tracer-input-container input {
+            padding: 0.4rem;
+            font-size: 0.75rem;
+            height: 36px;
+          }
+          .parity-tracer-input-container button {
+            padding: 0 0.6rem;
+            font-size: 0.8rem;
+            height: 36px;
+          }
         }
         .parity-tracer-input-container input:focus {
           outline: none;

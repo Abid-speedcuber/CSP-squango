@@ -647,3 +647,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyAlgorithmFontSize();
     }
 });
+
+// Placeholder tool functions - to be implemented
+window.openTrainingSelector = function() {
+    // TODO: Implement training selector
+    showToast('Training selector - to be implemented', 2000, 'info');
+};
+
+window.openInvertScrambleModal = function() {
+    // TODO: Implement invert scramble modal
+    showToast('Invert scramble - to be implemented', 2000, 'info');
+};
+
+window.openAnimateAlgModal = function(algorithm = '') {
+    if (typeof window.Square1AlgorithmViewer === 'undefined') {
+        showToast('Algorithm viewer library not loaded', 2000, 'error');
+        return;
+    }
+    
+    const alg = algorithm || '(0,0)';
+    
+    const html = window.Square1AlgorithmViewer.createViewer(alg, {
+        topColor: colorScheme.topColor,
+        bottomColor: colorScheme.bottomColor,
+        frontColor: colorScheme.frontColor,
+        rightColor: colorScheme.rightColor,
+        backColor: colorScheme.backColor,
+        leftColor: colorScheme.leftColor
+    });
+    
+    document.body.insertAdjacentHTML('beforeend', html);
+};
