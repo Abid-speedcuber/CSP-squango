@@ -40,7 +40,7 @@ function generateModalHTML() {
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Show/hide the blue and green numbers from the case images to help you trace parity using Kale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
                                 </span>
                             </div>
@@ -50,7 +50,7 @@ function generateModalHTML() {
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Hide instruction buttons (â"˜) across the app. The irony: pressing this will eventually hide this instruction button too!<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
                                 </span>
                             </div>
@@ -60,7 +60,7 @@ function generateModalHTML() {
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parenthesis</label>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Removes parenthesis and changes the font from monospace to proportional (Arial) for a more modern algorithm display.<br><br><strong>Keyboard shortcut:</strong> Alt+P</span>
                                 </span>
                             </div>
@@ -80,14 +80,14 @@ function generateModalHTML() {
                             <div onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Your color scheme will be used in parity tracing and training. You can also set your scramble image size here.</span>
                                 </span>
                             </div>
                             <div onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Parity Tracing Personalization</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
                                 </span>
                             </div>
@@ -96,10 +96,10 @@ function generateModalHTML() {
 
                     <!-- Advanced Personalization Section -->
                     <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                            <h3 style="margin: 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Advanced Personalization</h3>
-                            <span class="info-wrapper">
-                                <button class="settings-info-btn" aria-label="More info">i</button>
+                        <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Customize Tracing Guides</span>
+                                <span class="info-wrapper">
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                 <span class="info-box">You have no job here unless you absolutely know what you are doing. Be careful. This part is for preset creators only.</span>
                             </span>
                         </div>
@@ -113,38 +113,19 @@ function generateModalHTML() {
                             <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Customize Tracing Guides</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Lets you move the little numbers around for each image to set your tracing guide.<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
                                 </span>
                             </div>
                             <div onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Quick Edit</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info">i</button>
+                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
                                 </span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Presets Section -->
-                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-top: 20px;">
-                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-                            <h3 style="margin: 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Presets</h3>
-                            <span class="info-wrapper">
-                                <button class="settings-info-btn" aria-label="More info">i</button>
-                                <span class="info-box">Presets define what "Reset to Default" uses. You can freely edit your data after choosing a preset - it won't be overwritten unless you switch presets.<br><br>If you think your preset should be included here, contact me on Discord: <strong>@abid_ibn_ashraf</strong></span>
-                            </span>
-                        </div>
-                        
-                        <div style="margin-bottom: 12px;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Active Preset:</label>
-                            <select id="presetSelector" onchange="handlePresetChange(this.value)" style="width: 100%; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; font-size: 0.95rem; background: white; cursor: pointer;">
-                                <!-- Options will be populated dynamically from PRESET_CONFIG -->
-                            </select>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
@@ -208,7 +189,7 @@ function generateModalHTML() {
                             <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
                     </div>
-                    <div style="margin-bottom: 20px; margin-top: 20px;">
+                    <div style="margin-bottom: 20px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
                         <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
                         <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
@@ -614,8 +595,8 @@ function toggleAllowCaseEdit(isChecked) {
 }
 
 // Populate preset dropdown dynamically
-function populatePresetDropdown() {
-    const presetSelector = document.getElementById('presetSelector');
+function populatePresetDropdown(selectorId = 'presetSelector') {
+    const presetSelector = document.getElementById(selectorId);
     if (!presetSelector || typeof window.PRESET_CONFIG === 'undefined') return;
     
     presetSelector.innerHTML = '';
@@ -2123,11 +2104,6 @@ function generateSidebarHTML() {
                     <img src="res/settings.svg" alt="Settings">
                     <span>Personalization</span>
                 </button>
-                <button class="sidebar-item instruction-btn" onclick="showHomepageInfoModal(); closeSidebar();">
-                    <img src="res/info.svg" alt="Instructions">
-                    <span>Instructions</span>
-                </button>
-                <div class="sidebar-divider"></div>
                 <button class="sidebar-item sidebar-mobile-only" onclick="openProfileModal(); closeSidebar();">
                     <img src="res/avatar.svg" alt="Profile">
                     <span>Profile</span>
@@ -2137,6 +2113,17 @@ function generateSidebarHTML() {
                     <span>Notes</span>
                 </button>
                 <div class="sidebar-divider sidebar-mobile-only"></div>
+                <div style="padding: 14px 20px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #2d3748; font-size: 0.9rem;">Active Preset:</label>
+                    <select id="sidebarPresetSelector" onchange="handlePresetChange(this.value)" style="width: 100%; padding: 8px 10px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer;">
+                        <!-- Options populated dynamically -->
+                    </select>
+                </div>
+                <button class="sidebar-item instruction-btn" onclick="showHomepageInfoModal(); closeSidebar();">
+                    <img src="res/info.svg" alt="Instructions">
+                    <span>Instructions</span>
+                </button>
+                <div class="sidebar-divider"></div>
                 <button class="sidebar-item" onclick="exportData(); closeSidebar();">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -2167,6 +2154,9 @@ function generateSidebarHTML() {
     `;
     
     document.body.appendChild(sidebar);
+    
+    // Populate preset dropdown
+    populatePresetDropdown('sidebarPresetSelector');
     
     // Apply instruction visibility
     if (hideInstructions) {

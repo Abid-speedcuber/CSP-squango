@@ -573,7 +573,7 @@ body.modal-open .floating-buttons-container {
 }
 
 .floating-buttons-container {
-    position: fixed;
+    position: absolute;
     top: 20px;
     right: 20px;
     z-index: 999;
@@ -618,12 +618,23 @@ body.modal-open .floating-buttons-container {
 .floating-buttons-container .floating-expand-btn,
 .floating-buttons-container .floating-retract-btn {
     width: 48px;
-    height: 24px;
+    height: 18px;
     border-radius: 0;
 }
 
 .floating-buttons-container .floating-expand-btn {
     border-radius: 0 0 24px 24px;
+    clip-path: polygon(
+        0% 0%,
+        100% 0%,
+        100% 100%,
+        calc(50% + 24px) 100%,
+        calc(50% + 24px) calc(100% - 24px),
+        50% calc(100% - 24px),
+        calc(50% - 24px) calc(100% - 24px),
+        calc(50% - 24px) 100%,
+        0% 100%
+    );
 }
 
 .floating-buttons-container .floating-retract-btn {
@@ -653,11 +664,7 @@ body.modal-open .floating-buttons-container {
 
 /* Hover effects */
 .floating-buttons-container .floating-profile-btn:hover,
-.floating-buttons-container .menu-action-btn:hover {
-    background: #f5f5f5;
-    transform: scale(1.05);
-}
-
+.floating-buttons-container .menu-action-btn:hover,
 .floating-buttons-container .floating-expand-btn:hover,
 .floating-buttons-container .floating-retract-btn:hover {
     background: #f5f5f5;
@@ -673,20 +680,17 @@ body.modal-open .floating-buttons-container {
     display: none !important;
 }
 
-/* Hide profile menu on mobile, show in sidebar instead */
-@media (max-width: 620px) {
-    .floating-buttons-container {
-        display: none;
-    }
-    
-    .sidebar-mobile-only {
-        display: flex !important;
-    }
-}
-
 @media (min-width: 621px) {
     .sidebar-mobile-only {
         display: none !important;
+    }
+}
+
+/* Fix modal positioning on mobile */
+@media (max-width: 620px) {
+    .modal-content {
+        margin: 20px auto !important;
+        max-width: calc(100% - 40px) !important;
     }
 }
 
@@ -703,6 +707,13 @@ body.modal-open .floating-buttons-container {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     pointer-events: auto;
     position: relative;
+}
+
+@media (max-width: 620px) {
+    .modal-content {
+        margin: 20px !important;
+        max-width: calc(100% - 40px) !important;
+    }
 }
 
 .modal-header {
@@ -916,6 +927,21 @@ details summary::marker {
 
 body.modal-open .homepage-info-btn {
     right: 20px;
+}
+
+@media (max-width: 620px) {
+    .floating-buttons-container {
+        display: none;
+    }
+    
+    .sidebar-mobile-only {
+        display: flex !important;
+    }
+    
+    #profileModal .modal-content {
+        margin: 50% auto !important;
+        transform: translateY(-50%);
+    }
 }
 
 @media (max-width: 570px) and (min-width: 621px) {
@@ -1532,25 +1558,31 @@ body.modal-open .homepage-info-btn {
 }
 
 .settings-info-btn {
-    background: #999;
-    border: none;
-    cursor: default;
-    font-size: 0.75rem;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    cursor: pointer;
     padding: 4px;
     border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    width: 20px;
-    height: 20px;
+    color: #495057;
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    min-height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     z-index: 10;
+    transition: all 0.2s;
 }
 
 .settings-info-btn:hover {
-    background: #777;
+    background: #e9ecef;
+}
+
+.settings-info-btn img {
+    width: 12px;
+    height: 12px;
 }
 
 .info-box {
