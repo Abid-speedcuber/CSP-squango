@@ -268,18 +268,6 @@ function generateModalHTML() {
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Data Management -->
-                    <div style="padding: 0 15px 15px; border-top: 1px solid #e9ecef; padding-top: 15px;">
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
-                            <button onclick="exportData(); closeProfileModal();" style="padding: 8px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">Export</button>
-                            <label style="padding: 8px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; text-align: center; font-size: 0.8rem; font-weight: 600; margin: 0; display: flex; align-items: center; justify-content: center; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
-                                Import
-                                <input type="file" id="profileImportFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0]); closeProfileModal();">
-                            </label>
-                        </div>
-                        <button onclick="openAboutModal(); closeProfileModal();" style="padding: 8px 16px; background: #f8f9fa; color: #2d3748; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.85rem; transition: all 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">About</button>
-                    </div>
                 </div>
             </div>
         </div>
@@ -1992,6 +1980,9 @@ function openProfileModal() {
     // Update progress bars
     updateProfileStats();
     
+    // Close the floating menu
+    collapseProfileMenu();
+    
     // Add click outside handler
     setTimeout(() => {
         const clickHandler = (e) => {
@@ -2098,6 +2089,112 @@ function openParityTracingPersonalization() {
     
     window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }
+
+// Sidebar functions
+function generateSidebarHTML() {
+    let sidebar = document.getElementById('appSidebar');
+    if (sidebar) return; // Already exists
+    
+    sidebar = document.createElement('div');
+    sidebar.id = 'appSidebar';
+    sidebar.className = 'app-sidebar';
+    sidebar.innerHTML = `
+        <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #2d3748;">Menu</h2>
+                <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="sidebar-body">
+                <button class="sidebar-item" onclick="openTrainingSelector(); closeSidebar();">
+                    <img src="res/training.svg" alt="Trainer">
+                    <span>Trainer</span>
+                </button>
+                <button class="sidebar-item" onclick="openNewParityAnalysis(''); closeSidebar();">
+                    <img src="res/tracing.svg" alt="Parity Tracer">
+                    <span>Parity Tracer</span>
+                </button>
+                <button class="sidebar-item" onclick="openSettingsModal(); closeSidebar();">
+                    <img src="res/settings.svg" alt="Settings">
+                    <span>Personalization</span>
+                </button>
+                <button class="sidebar-item instruction-btn" onclick="showHomepageInfoModal(); closeSidebar();">
+                    <img src="res/info.svg" alt="Instructions">
+                    <span>Instructions</span>
+                </button>
+                <div class="sidebar-divider"></div>
+                <button class="sidebar-item sidebar-mobile-only" onclick="openProfileModal(); closeSidebar();">
+                    <img src="res/avatar.svg" alt="Profile">
+                    <span>Profile</span>
+                </button>
+                <button class="sidebar-item sidebar-mobile-only" onclick="openGeneralNotesModal(); closeSidebar();">
+                    <img src="res/notes.svg" alt="Notes">
+                    <span>Notes</span>
+                </button>
+                <div class="sidebar-divider sidebar-mobile-only"></div>
+                <button class="sidebar-item" onclick="exportData(); closeSidebar();">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    <span>Export Data</span>
+                </button>
+                <label class="sidebar-item" style="cursor: pointer;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Import Data</span>
+                    <input type="file" id="sidebarImportFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0]); closeSidebar();">
+                </label>
+                <button class="sidebar-item" onclick="openAboutModal(); closeSidebar();">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                    <span>About</span>
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(sidebar);
+    
+    // Apply instruction visibility
+    if (hideInstructions) {
+        const instructionBtn = sidebar.querySelector('.instruction-btn');
+        if (instructionBtn) instructionBtn.style.display = 'none';
+    }
+}
+
+window.toggleSidebar = function() {
+    generateSidebarHTML();
+    const sidebar = document.getElementById('appSidebar');
+    if (sidebar) {
+        sidebar.classList.toggle('active');
+        if (sidebar.classList.contains('active')) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+    }
+};
+
+window.closeSidebar = function() {
+    const sidebar = document.getElementById('appSidebar');
+    if (sidebar) {
+        sidebar.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+};
 
 // Quick info popup function
 window.showQuickInfo = function(message) {
