@@ -615,19 +615,15 @@ function showContextMenu(caseName, event) {
                 menu.remove();
                 openTrainingModal(caseName);
             }
-        }
-    );
-    
-    // Only add Edit Case option if allowCaseEdit is true
-    if (window.allowCaseEdit) {
-        menuItems.push({
+        },
+        {
             label: 'Edit Case',
             action: () => {
                 menu.remove();
                 openEditCaseModal(caseName);
             }
-        });
-    }
+        }
+    );
     
     menuItems.push(
         { divider: true },

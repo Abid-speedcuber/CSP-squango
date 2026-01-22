@@ -130,7 +130,7 @@ let hideInstructions = false; // Toggle for hiding instruction buttons
 let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
 let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
 let generalNotes = ''; // HTML content for general notes
-window.allowCaseEdit = false; // Toggle for allowing case edits (not exported)
+window.enhancedAccess = localStorage.getItem('enhancedAccess') === 'true'; // Toggle for enhanced access (not exported)
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
 let currentSortMode = localStorage.getItem('sortMode') || 'probability';
 let needsReorder = false;
@@ -287,10 +287,10 @@ try {
         }
     }
     
-    // Load allowCaseEdit separately (not part of export/import)
-    const allowCaseEditSaved = localStorage.getItem('allowCaseEdit');
-    if (allowCaseEditSaved !== null) {
-        window.allowCaseEdit = allowCaseEditSaved === 'true';
+    // Load enhancedAccess separately (not part of export/import)
+    const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
+    if (enhancedAccessSaved !== null) {
+        window.enhancedAccess = enhancedAccessSaved === 'true';
     }
 
     // Initialize all cases as planned with priority 4 (Normal) if not already set
@@ -338,7 +338,7 @@ if (isFirstLoad) {
 
 function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
-    localStorage.setItem('allowCaseEdit', window.allowCaseEdit.toString());
+    localStorage.setItem('enhancedAccess', window.enhancedAccess.toString());
     localStorage.setItem('currentPreset', currentPreset);
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({

@@ -115,8 +115,14 @@ function generateModalHTML() {
                                 </span>
                             </div>
                             <div style="display: flex; align-items: center; justify-content: space-between;">
-                                <label for="allowCaseEditToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Allow Case Edits</label>
-                                <input type="checkbox" id="allowCaseEditToggle" onchange="toggleAllowCaseEdit(this.checked)" style="transform: scale(1.3); cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <label for="enhancedAccessToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Enable Enhanced Access</label>
+                                    <span class="info-wrapper">
+                                        <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
+                                        <span class="info-box">Enhanced access lets you change the algorithms of a case in the Edit Case modal and Quick Edit table.</span>
+                                    </span>
+                                </div>
+                                <input type="checkbox" id="enhancedAccessToggle" onchange="toggleEnhancedAccess(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                             </div>
                         </div>
                     </div>
@@ -479,8 +485,8 @@ if (algFontSizeSlider) {
     document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
 }
 
-const allowCaseEditToggle = document.getElementById('allowCaseEditToggle');
-if (allowCaseEditToggle) allowCaseEditToggle.checked = allowCaseEdit;
+const enhancedAccessToggle = document.getElementById('enhancedAccessToggle');
+if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
 
     populatePresetDropdown();
 
@@ -580,9 +586,9 @@ function toggleHideParenthesis(isChecked) {
     render();
 }
 
-function toggleAllowCaseEdit(isChecked) {
-    window.allowCaseEdit = isChecked;
-    localStorage.setItem('allowCaseEdit', isChecked.toString());
+function toggleEnhancedAccess(isChecked) {
+    window.enhancedAccess = isChecked;
+    localStorage.setItem('enhancedAccess', isChecked.toString());
 }
 
 // Populate preset dropdown dynamically
@@ -866,7 +872,7 @@ function openEditCaseModal(caseName) {
                 <button class="close-btn" onclick="attemptCloseEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 15px;" id="algorithmsSection">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algorithms:</label>
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
                         ${allAlgs.map((alg, idx) => `
@@ -879,7 +885,7 @@ function openEditCaseModal(caseName) {
                             </div>
                         `).join('')}
                     </div>
-                    <button onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
+                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
                 
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
@@ -892,6 +898,33 @@ function openEditCaseModal(caseName) {
     
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
+    
+    // Apply enhanced access restrictions
+    if (!window.enhancedAccess) {
+        const algorithmsSection = document.getElementById('algorithmsSection');
+        if (algorithmsSection) {
+            algorithmsSection.style.opacity = '0.5';
+            algorithmsSection.style.pointerEvents = 'none';
+        }
+        
+        const addAlgorithmBtn = document.getElementById('addAlgorithmBtn');
+        if (addAlgorithmBtn) {
+            addAlgorithmBtn.disabled = true;
+            addAlgorithmBtn.style.cursor = 'not-allowed';
+        }
+        
+        const algInputs = modal.querySelectorAll('.alg-input');
+        algInputs.forEach(input => {
+            input.contentEditable = 'false';
+            input.style.cursor = 'not-allowed';
+        });
+        
+        const deleteButtons = modal.querySelectorAll('#editAlgsList button');
+        deleteButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.style.cursor = 'not-allowed';
+        });
+    }
     
     // Setup parity detection for algorithm inputs
     setTimeout(() => {
