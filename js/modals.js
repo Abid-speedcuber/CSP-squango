@@ -774,23 +774,23 @@ function showHomepageInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Click the <strong>profile button</strong> (top right) to view your progress stats, export/import data, and access the About page. Click other menu buttons for Personalization, Parity Tracer, and Notes.</div>
+                        <div class="training-info-text">Enter <strong>Profile</strong> to see you progress stats</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Click the <strong>checkmark</strong> to cycle: Unlearned → Learning → Learned. Right-click to reverse: Learned → Learning → Unlearned.</div>
+                        <div class="training-info-text">Click the <b>checkmark</b> on a case to mark it as <b>learning</b>, click again <em>(or right click)</em> to mark it as learned.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">Click the <strong>three dots menu</strong> on any case to adjust priority, add notes, train the case, or edit algorithms.</div>
+                        <div class="training-info-text">The three dot menu of a case let's you change the <b>priority state</b> of a case; lets you <b>add notes</b> (for easier memorization and quick revision of a case), <b>train the case</b> (lets you choose the angle explicitely so that you can <em>targeted practice</em> all the awkward angles) and <b>Edit the case</b>(case title, subtitles, and even algorithms)</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Hover</strong> over any algorithm to see its setup and shape path. <strong>Click</strong> to keep the popup open, then click the setup to analyze parity.</div>
+                        <div class="training-info-text"><strong>Hover</strong> over any algorithm to see its setup and shape path. <strong>Click on the algorithm</strong> to keep the popup open. then click the setup to <b>analyze parity</b> of the setup, or click on the shape path to see <b>animated version</b> of the algorithm.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text">The <strong style="color: #007bff;">blue percentage</strong> shows your coverage - the probability of encountering a known parity case.</div>
+                        <div class="training-info-text">In profile <strong style="color: #007bff;">blue percentage</strong> shows your coverage - the probability of encountering a known parity case.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
@@ -1979,7 +1979,9 @@ function closeProfileModal() {
 function updateProfileStats() {
     const totalCases = data.length;
     const learnedCount = learnedCases.size;
+    const learningCount = learningCases.size;
     const learnedPercent = (learnedCount / totalCases) * 100;
+    const learningPercent = (learningCount / totalCases) * 100;
     
     const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
     const learnedProbability = data
@@ -1987,16 +1989,29 @@ function updateProfileStats() {
         .reduce((sum, item) => sum + item.probability, 0);
     
     const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
+    const safety = 50 + (coverage / 2);
     
-    const x = learnedCount;
-    const exp = Math.exp;
-    const numerator = 1 / (1 + exp(-12 * ((x - 1) / 89 - 0.4170435672))) - 1 / (1 + exp(-12 * (0 - 0.4170435672)));
-    const denominator = 1 / (1 + exp(-12 * (1 - 0.4170435672))) - 1 / (1 + exp(-12 * (0 - 0.4170435672)));
-    const c = 80 + 14 * (numerator / denominator);
-    const safety = coverage * c / 100 + 0.5 * (100 - coverage);
+    // Update learned progress (green for learned, yellow for learning)
+    const learnedBar = document.getElementById('profileLearnedProgress');
+    learnedBar.style.width = learnedPercent + '%';
+    learnedBar.style.background = '#28a745';
     
-    // Update learned progress
-    document.getElementById('profileLearnedProgress').style.width = learnedPercent + '%';
+    // Add learning progress (yellow overlay)
+    let learningBar = document.getElementById('profileLearningProgress');
+    if (!learningBar) {
+        learningBar = document.createElement('div');
+        learningBar.id = 'profileLearningProgress';
+        learningBar.style.position = 'absolute';
+        learningBar.style.left = '0';
+        learningBar.style.top = '0';
+        learningBar.style.height = '100%';
+        learningBar.style.background = '#ffc107';
+        learningBar.style.transition = 'width 0.3s ease';
+        learnedBar.parentElement.style.position = 'relative';
+        learnedBar.parentElement.appendChild(learningBar);
+    }
+    learningBar.style.width = (learnedPercent + learningPercent) + '%';
+    
     document.getElementById('profileLearnedText').textContent = learnedCount + '/90';
     
     // Update coverage progress
@@ -2004,8 +2019,8 @@ function updateProfileStats() {
     document.getElementById('profileCoverageText').textContent = coverage.toFixed(1) + '%';
     
     // Update safety progress
-    document.getElementById('profileSafetyProgress').style.width = (Math.round(safety * 2) / 2) + '%';
-    document.getElementById('profileSafetyText').textContent = (Math.round(safety * 2) / 2).toFixed(1) + '%';
+    document.getElementById('profileSafetyProgress').style.width = safety + '%';
+    document.getElementById('profileSafetyText').textContent = safety.toFixed(1) + '%';
 }
 
 // About Modal Functions
@@ -2088,6 +2103,10 @@ function generateSidebarHTML() {
                     <img src="res/avatar.svg" alt="Profile">
                     <span>Profile</span>
                 </button>
+                <button class="sidebar-item" onclick="openGeneralNotesModal(); closeSidebar();">
+                    <img src="res/notes.svg" alt="Notes">
+                    <span>Notes</span>
+                </button>
                 <button class="sidebar-item" onclick="openTrainingSelector(); closeSidebar();">
                     <img src="res/training.svg" alt="Trainer">
                     <span>Trainer</span>
@@ -2100,11 +2119,7 @@ function generateSidebarHTML() {
                     <img src="res/settings.svg" alt="Settings">
                     <span>Personalization</span>
                 </button>
-                <button class="sidebar-item sidebar-mobile-only" onclick="openGeneralNotesModal(); closeSidebar();">
-                    <img src="res/notes.svg" alt="Notes">
-                    <span>Notes</span>
-                </button>
-                <div class="sidebar-divider sidebar-mobile-only"></div>
+                <div class="sidebar-divider"></div>
                 <div style="padding: 0;">
                     <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: #2d3748; font-weight: 500;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;">

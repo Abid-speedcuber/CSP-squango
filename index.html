@@ -35,24 +35,9 @@
             <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
                 <img src="res/menu.svg" height="24px" width="24px">
             </button>
-            <div id="floatingButtonsContainer" class="floating-buttons-container">
-                <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="openProfileModal()">
-                    <img src="res/avatar.svg" height="24px" width="24px">
-                </button>
-                <button id="expandBtn" class="floating-expand-btn" aria-label="Expand">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                        <polyline points="6 9 12 15 18 9"></polyline>
-                    </svg>
-                </button>
-                <button class="menu-action-btn" onclick="openGeneralNotesModal(); collapseProfileMenu();">
-                    <img src="res/notes.svg">
-                </button>
-                <button id="retractBtn" class="floating-retract-btn" aria-label="Retract">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;">
-                        <polyline points="18 15 12 9 6 15"></polyline>
-                    </svg>
-                </button>
-            </div>
+            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="openProfileModal()">
+                <img src="res/avatar.svg" height="24px" width="24px">
+            </button>
         </header>     
 
         <div class="controls">
@@ -302,42 +287,6 @@
                 });
             }
             
-            // Setup profile menu expand/retract
-            const expandBtn = document.getElementById('expandBtn');
-            const retractBtn = document.getElementById('retractBtn');
-            const menuContainer = document.getElementById('floatingButtonsContainer');
-            
-            if (expandBtn && menuContainer) {
-                expandBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    menuContainer.classList.add('expanded');
-                };
-            }
-            
-            if (retractBtn && menuContainer) {
-                retractBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    menuContainer.classList.remove('expanded');
-                };
-            }
-            
-            // Close menu when clicking outside
-            if (menuContainer) {
-                document.addEventListener('click', (e) => {
-                    if (!menuContainer.contains(e.target)) {
-                        menuContainer.classList.remove('expanded');
-                    }
-                });
-            }
-            
-            // Collapse menu function
-            window.collapseProfileMenu = function() {
-                const menuContainer = document.getElementById('floatingButtonsContainer');
-                if (menuContainer) {
-                    menuContainer.classList.remove('expanded');
-                }
-            };
-
             // Apply instruction button visibility
             if (hideInstructions) {
                 const container = document.getElementById('floatingButtonsContainer');

@@ -55,11 +55,12 @@ const SVGEditor = {
             <span id="svgEditorZoomValue" style="font-size: 0.9rem; color: #495057; min-width: 45px;">100%</span>
         </div>
         <div style="display: flex; gap: 8px; margin-left: auto;">
-            <button id="svgEditorUndo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/revert.svg" style="width: 16px; height: 16px;">Undo</button>
-            <button id="svgEditorRedo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/redo.svg" style="width: 16px; height: 16px;">Redo</button>
-            <button id="svgEditorReset" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/reset.svg" style="width: 16px; height: 16px;">Reset</button>
-            <button id="svgEditorSaveAll" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/save.svg" style="width: 16px; height: 16px;">Save All</button>
-            <button id="svgEditorSave" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px 12px; display: flex; align-items: center; gap: 6px;"><img src="res/save.svg" style="width: 16px; height: 16px;">Save</button>
+            <button id="svgEditorInfo" class="btn instruction-btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Help"><img src="res/info.svg" style="width: 18px; height: 18px;"></button>
+            <button id="svgEditorSaveAll" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Save All"><img src="res/save.svg" style="width: 18px; height: 18px;"></button>
+            <button id="svgEditorUndo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Undo (Ctrl+Z)"><img src="res/revert.svg" style="width: 18px; height: 18px;"></button>
+            <button id="svgEditorRedo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Redo (Ctrl+Y)"><img src="res/redo.svg" style="width: 18px; height: 18px;"></button>
+            <button id="svgEditorReset" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Reset to Preset"><img src="res/reset.svg" style="width: 18px; height: 18px;"></button>
+            <button id="svgEditorSave" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Save Current"><img src="res/save.svg" style="width: 18px; height: 18px;"></button>
         </div>
     </div>
 </div>
@@ -89,7 +90,8 @@ const SVGEditor = {
         const undoBtn = document.getElementById('svgEditorUndo');
         const redoBtn = document.getElementById('svgEditorRedo');
         const sidebarToggle = document.getElementById('svgEditorSidebarToggle');
-const zoomSlider = document.getElementById('svgEditorZoom');
+        const zoomSlider = document.getElementById('svgEditorZoom');
+        const infoBtn = document.getElementById('svgEditorInfo');
 
 if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
 if (saveAllBtn) saveAllBtn.onclick = () => this.saveAll();
@@ -97,6 +99,7 @@ if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
 if (undoBtn) undoBtn.onclick = () => this.undo();
 if (redoBtn) redoBtn.onclick = () => this.redo();
 if (sidebarToggle) sidebarToggle.onclick = () => this.toggleSidebar();
+if (infoBtn) infoBtn.onclick = () => this.showInfo();
 if (zoomSlider) {
     zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
 }
@@ -276,7 +279,7 @@ updateZoom(value) {
         // Load SVG to canvas
 const canvas = document.getElementById('svgEditorCanvas');
 canvas.innerHTML = `
-    <div id="svgEditorContainer" style="position: relative; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transform: scale(${this.state.currentZoom / 100}); transition: transform 0.2s;">
+    <div id="svgEditorContainer" class="svg-editor-force-show-hints" style="position: relative; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transform: scale(${this.state.currentZoom / 100}); transition: transform 0.2s;">
         <div id="svgEditorContent">${window.svgData[svgName]}</div>
     </div>
 `;
@@ -859,6 +862,56 @@ startKeyboardMovement() {
             this.loadSVGList();
             pushModalState('svgEditorModal', () => this.close());
         }
+    },
+
+    showInfo() {
+        let infoModal = document.getElementById('svgEditorInfoModal');
+        if (!infoModal) {
+            infoModal = document.createElement('div');
+            infoModal.id = 'svgEditorInfoModal';
+            infoModal.className = 'training-info-modal';
+            infoModal.innerHTML = `
+                <div class="training-info-content">
+                    <div class="training-info-header">
+                        <span class="training-info-title">SVG Tracing Guide Editor</span>
+                        <button class="training-info-close" onclick="document.getElementById('svgEditorInfoModal').classList.remove('active')">&times;</button>
+                    </div>
+                    <div class="training-info-body">
+                        <div class="training-info-item">
+                            <div class="training-info-number">1</div>
+                            <div class="training-info-text"><strong>Select Labels:</strong> Click on any blue or green number to select it. Hold Ctrl/Cmd to select multiple labels.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">2</div>
+                            <div class="training-info-text"><strong>Move Labels:</strong> Drag selected labels with your mouse or use arrow keys for precise 1px adjustments. Hold arrow keys for continuous movement.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">3</div>
+                            <div class="training-info-text"><strong>Navigate:</strong> Press Tab to cycle through labels forward, Shift+Tab to cycle backward.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">4</div>
+                            <div class="training-info-text"><strong>Undo/Redo:</strong> Use the Undo and Redo buttons or Ctrl+Z and Ctrl+Y to step through your edit history.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">5</div>
+                            <div class="training-info-text"><strong>Reset:</strong> Click Reset to restore the current tracing guide to your preset's default configuration.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">6</div>
+                            <div class="training-info-text"><strong>Save:</strong> Click Save to save the current guide, or Save All to save all unsaved guides at once. Blue highlighting indicates unsaved changes.</div>
+                        </div>
+                        <div class="training-info-item">
+                            <div class="training-info-number">7</div>
+                            <div class="training-info-text"><strong>Zoom:</strong> Use the zoom slider to adjust the canvas size for easier editing.</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(infoModal);
+        }
+        
+        infoModal.classList.add('active');
     },
 
     close() {

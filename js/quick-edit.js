@@ -41,6 +41,9 @@ function openQuickEditModal() {
                     <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
                         +2
                     </button>
+                    <button class="quick-edit-icon-btn instruction-btn" onclick="showQuickEditInfoModal()" title="Help">
+                        <img src="res/info.svg" alt="Help">
+                    </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
                     </button>
@@ -140,7 +143,8 @@ function openQuickEditModal() {
 }
 
 function generateGeneralTableRows() {
-    return data.map(item => {
+    const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+    return sortedData.map(item => {
         const displayName = getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
@@ -159,8 +163,9 @@ function generateGeneralTableRows() {
 
 function generateAlgorithmsTableRows() {
     const visibleCols = quickEditState.visibleAlgColumns || 6;
+    const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
     
-    return data.map(item => {
+    return sortedData.map(item => {
         const displayName = getDisplayName(item.name);
         const customAlgs = customAlgorithms.get(item.name);
         let allAlgs = [];
@@ -222,6 +227,10 @@ function addAlgorithmColumns() {
                     selection.removeAllRanges();
                     selection.addRange(range);
                     quickEditState.lastFocusedCell = this;
+                });
+                
+                td.addEventListener('input', function() {
+                    updateAlgorithmCellParityLive(this);
                 });
                 
                 td.addEventListener('blur', function() {
@@ -412,6 +421,11 @@ function setupQuickEditCellHandlers() {
         
         // Handle blur for algorithm cells to normalize and update parity color
         if (cell.classList.contains('alg-cell')) {
+            cell.addEventListener('input', function() {
+                // Live color coding without normalization
+                updateAlgorithmCellParityLive(this);
+            });
+            
             cell.addEventListener('blur', function() {
                 const rawText = this.textContent.trim();
                 if (rawText && rawText !== 'Done!') {
@@ -521,6 +535,87 @@ function updateAlgorithmCellParity(cell) {
     }
 }
 
+function updateAlgorithmCellParityLive(cell) {
+    const alg = cell.textContent.trim();
+    if (!alg || alg === 'Done!') {
+        cell.style.color = '';
+        cell.style.fontWeight = '';
+        return;
+    }
+    
+    // Check if required functions exist
+    if (typeof window.algToShapeIndex === 'undefined' || 
+        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' ||
+        typeof window.ScrambleNormalizer === 'undefined') {
+        cell.style.color = '';
+        cell.style.fontWeight = '';
+        return;
+    }
+    
+    try {
+        // Normalize internally for color detection but don't change cell text
+        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+        
+        // Get shape index from normalized algorithm
+        const result = window.algToShapeIndex(normalized);
+        const resultShapeIndex = result.shapeIndex;
+        
+        // Find matching case in shapeIndexMap
+        let matchedCaseName = null;
+        for (const [caseName, indexStr] of Object.entries(shapeIndexMap)) {
+            if (parseInt(indexStr) === resultShapeIndex) {
+                matchedCaseName = caseName;
+                break;
+            }
+        }
+        
+        if (matchedCaseName) {
+            // Direct match - test parity
+            const setup = invertScramble(normalized);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor,
+                bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor,
+                rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor,
+                leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            
+            cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+            cell.style.fontWeight = '600';
+        } else {
+            // No direct match - check shapeIndex array
+            let foundInOrg = false;
+            let foundInMir = false;
+            
+            for (const shapeData of shapeIndex) {
+                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
+                    foundInOrg = true;
+                    break;
+                }
+                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
+                    foundInMir = true;
+                    break;
+                }
+            }
+            
+            if (foundInOrg) {
+                cell.style.color = '#ca9b0dff';
+                cell.style.fontWeight = '600';
+            } else if (foundInMir) {
+                cell.style.color = '#c05c0aff';
+                cell.style.fontWeight = '600';
+            } else {
+                cell.style.color = '#71000bff';
+                cell.style.fontWeight = '600';
+            }
+        }
+    } catch (error) {
+        cell.style.color = '#71000bff';
+        cell.style.fontWeight = '600';
+    }
+}
+
 function setupQuickEditKeyboardShortcuts() {
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
@@ -589,6 +684,13 @@ function openQuickEditFindReplace() {
     findReplace.style.display = 'block';
     quickEditState.findReplaceOpen = true;
     
+    // Switch notes to raw text mode
+    const notesCells = document.querySelectorAll('.notes-cell');
+    notesCells.forEach(cell => {
+        const rawHTML = cell.dataset.rawHtml || '';
+        cell.textContent = rawHTML;
+    });
+    
     // Set scope selector based on current tab
     if (quickEditState.currentTab === 'general') {
         scopeSelector.disabled = false;
@@ -621,6 +723,15 @@ function closeQuickEditFindReplace() {
     
     // Clear highlights
     clearFindHighlights();
+    
+    // Switch notes back to formatted mode
+    const notesCells = document.querySelectorAll('.notes-cell');
+    notesCells.forEach(cell => {
+        const rawHTML = cell.dataset.rawHtml || cell.textContent.trim();
+        cell.dataset.rawHtml = rawHTML;
+        const formattedHTML = sanitizeNoteHTML(rawHTML);
+        cell.innerHTML = formattedHTML;
+    });
 }
 
 function liveSearchQuickEdit() {
@@ -1047,6 +1158,59 @@ function revertQuickEditChanges() {
         showToast('Reverted to last save point', 2000, 'info');
     });
 }
+
+window.showQuickEditInfoModal = function() {
+    let infoModal = document.getElementById('quickEditInfoModal');
+    if (!infoModal) {
+        infoModal = document.createElement('div');
+        infoModal.id = 'quickEditInfoModal';
+        infoModal.className = 'training-info-modal';
+        infoModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Quick Edit Guide</span>
+                    <button class="training-info-close" onclick="closeQuickEditInfoModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text"><strong>Navigation:</strong> Use Tab to move to the next cell, Shift+Tab for previous. Enter moves down to the same field in the next row.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text"><strong>General Info Tab:</strong> Edit display names, subtitles, and notes for all cases. Notes support HTML formatting.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text"><strong>Algorithms Tab:</strong> Edit algorithms for all cases. Algorithms are auto-normalized on blur and color-coded by parity: <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>, <span style="color: #ca9b0dff; font-weight: 600;">Yellow = Angle Mismatch</span>, <span style="color: #c05c0aff; font-weight: 600;">Orange = Mirrored</span>, <span style="color: #71000bff; font-weight: 600;">Red = Invalid</span>.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F to open. Select scope to search in specific fields or globally. Use Previous/Next to navigate matches.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text"><strong>Add Columns:</strong> Click +2 in the Algorithms tab to add more algorithm columns as needed.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text"><strong>Save/Revert:</strong> Click Save to apply all changes. Click Revert to undo all changes since the last save. Exit without saving to discard.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(infoModal);
+    }
+    
+    infoModal.classList.add('active');
+};
+
+window.closeQuickEditInfoModal = function() {
+    const modal = document.getElementById('quickEditInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+};
 
 // Make functions globally accessible
 window.openQuickEditModal = openQuickEditModal;

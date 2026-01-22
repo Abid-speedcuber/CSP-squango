@@ -368,13 +368,15 @@
 
 .quick-edit-body {
     flex: 1;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: auto;
     padding: 0;
 }
 
 .quick-edit-content {
     height: 100%;
-    overflow: auto;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
 .quick-edit-table {

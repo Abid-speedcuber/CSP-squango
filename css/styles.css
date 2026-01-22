@@ -574,63 +574,6 @@ body.modal-open .floating-buttons-container {
     }
 }
 
-.floating-buttons-container {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    z-index: 999;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    background: white;
-    border-radius: 24px;
-    padding: 0;
-    box-shadow: 0 4px 12px rgba(123, 123, 123, 0.4);
-    width: 48px;
-    align-items: center;
-}
-
-.floating-buttons-container .floating-profile-btn,
-.floating-buttons-container .floating-expand-btn,
-.floating-buttons-container .floating-retract-btn,
-.floating-buttons-container .menu-action-btn {
-    position: relative;
-    top: 0;
-    right: 0;
-    margin-bottom: 0;
-    box-shadow: none;
-    background: white;
-    border: none;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
-    padding: 0;
-    color: #333;
-}
-
-.floating-buttons-container .floating-profile-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-}
-
-.floating-buttons-container .floating-expand-btn,
-.floating-buttons-container .floating-retract-btn {
-    width: 48px;
-    height: 18px;
-    border-radius: 0;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-}
-
-.floating-buttons-container:hover .floating-expand-btn,
-.floating-buttons-container.expanded .floating-retract-btn {
-    opacity: 1;
-}
-
 .floating-buttons-container .floating-expand-btn {
     border-radius: 0 0 24px 24px;
     clip-path: polygon(
@@ -658,11 +601,6 @@ body.modal-open .floating-buttons-container {
     display: none;
 }
 
-/* Expanded state */
-.floating-buttons-container.expanded .floating-expand-btn {
-    display: none;
-}
-
 .floating-buttons-container.expanded .menu-action-btn {
     display: flex;
 }
@@ -671,22 +609,9 @@ body.modal-open .floating-buttons-container {
     display: flex;
 }
 
-/* Hover effects */
-.floating-buttons-container .floating-profile-btn:hover,
-.floating-buttons-container .menu-action-btn:hover,
-.floating-buttons-container .floating-expand-btn:hover,
-.floating-buttons-container .floating-retract-btn:hover {
-    background: #f5f5f5;
-}
-
-.floating-buttons-container .menu-action-btn img,
-.floating-buttons-container .floating-profile-btn img {
-    width: 24px;
-    height: 24px;
-}
-
-.hide-instructions .menu-action-btn.instruction-btn {
-    display: none !important;
+/* Profile button hover */
+.floating-profile-btn:hover {
+    transform: scale(1.05);
 }
 
 @media (min-width: 621px) {
@@ -939,7 +864,7 @@ body.modal-open .homepage-info-btn {
 }
 
 @media (max-width: 620px) {
-    .floating-buttons-container {
+    .floating-profile-btn {
         display: none;
     }
     
@@ -954,7 +879,7 @@ body.modal-open .homepage-info-btn {
 }
 
 @media (max-width: 570px) and (min-width: 621px) {
-    .floating-buttons-container {
+    .floating-profile-btn {
         top: 15px;
         right: 15px;
     }
@@ -1090,13 +1015,7 @@ body.modal-open .homepage-info-btn {
         max-height: 24px;
     }
     
-    .floating-buttons-container {
-        width: 10vw;
-        min-width: 40px;
-        max-width: 48px;
-    }
-    
-    .floating-buttons-container .floating-profile-btn {
+    .floating-profile-btn {
         width: 10vw;
         height: 10vw;
         min-width: 40px;
@@ -1105,7 +1024,7 @@ body.modal-open .homepage-info-btn {
         max-height: 48px;
     }
     
-    .floating-buttons-container .floating-profile-btn img {
+    .floating-profile-btn img {
         width: 5vw;
         height: 5vw;
         min-width: 20px;
@@ -1654,4 +1573,9 @@ body.modal-open .homepage-info-btn {
 
 .hide-instructions .info-wrapper {
     display: none !important;
+}
+
+/* Force show hints in SVG editor */
+.svg-editor-force-show-hints .label-toggle {
+    display: block !important;
 }
