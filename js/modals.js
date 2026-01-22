@@ -33,8 +33,7 @@ function generateModalHTML() {
                 <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
                     
                     <!-- Basic Personalization Section -->
-                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px; margin-bottom: 20px;">
-                        <h3 style="margin: 0 0 16px 0; font-size: 1rem; color: #2d3748; font-weight: 700;">Basic Personalization</h3>
+                    <div style="margin-bottom: 20px;">
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -125,7 +124,6 @@ function generateModalHTML() {
                                 <input type="checkbox" id="enhancedAccessToggle" onchange="toggleEnhancedAccess(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                             </div>
                         </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -569,7 +567,7 @@ function toggleHideInstructions(isChecked) {
 }
 
 function applyInstructionVisibility() {
-    const instructionBtns = document.querySelectorAll('.settings-info-btn, .homepage-info-btn, .training-info-btn, .case-detail-info-btn');
+    const instructionBtns = document.querySelectorAll('.settings-info-btn, .homepage-info-btn, .training-info-btn, .case-detail-info-btn, .instruction-btn');
     instructionBtns.forEach(btn => {
         btn.style.display = hideInstructions ? 'none' : 'flex';
     });
@@ -1774,8 +1772,9 @@ modal.classList.remove('active');
 
 // Info button click handlers with fixed positioning
 document.addEventListener("click", (e) => {
-    // If clicking on info button, handle info display
-    if (e.target.classList.contains("settings-info-btn")) {
+    // If clicking on info button or its child img, handle info display
+    const infoBtn = e.target.closest(".settings-info-btn");
+    if (infoBtn) {
         e.preventDefault();
         e.stopPropagation();
         
@@ -1785,11 +1784,13 @@ document.addEventListener("click", (e) => {
         );
         
         // Open only the clicked one
-        const infoBox = e.target.nextElementSibling;
+        const infoBox = infoBtn.nextElementSibling;
+        if (!infoBox || !infoBox.classList.contains("info-box")) return;
+        
         infoBox.classList.add("show");
         
         // Position the info box near the button
-        const buttonRect = e.target.getBoundingClientRect();
+        const buttonRect = infoBtn.getBoundingClientRect();
         let top = buttonRect.top - infoBox.offsetHeight - 5;
         let left = buttonRect.right - infoBox.offsetWidth;
         
@@ -2083,6 +2084,10 @@ function generateSidebarHTML() {
                 </div>
             </div>
             <div class="sidebar-body">
+                <button class="sidebar-item sidebar-mobile-only" onclick="openProfileModal(); closeSidebar();">
+                    <img src="res/avatar.svg" alt="Profile">
+                    <span>Profile</span>
+                </button>
                 <button class="sidebar-item" onclick="openTrainingSelector(); closeSidebar();">
                     <img src="res/training.svg" alt="Trainer">
                     <span>Trainer</span>
@@ -2095,22 +2100,18 @@ function generateSidebarHTML() {
                     <img src="res/settings.svg" alt="Settings">
                     <span>Personalization</span>
                 </button>
-                <button class="sidebar-item sidebar-mobile-only" onclick="openProfileModal(); closeSidebar();">
-                    <img src="res/avatar.svg" alt="Profile">
-                    <span>Profile</span>
-                </button>
                 <button class="sidebar-item sidebar-mobile-only" onclick="openGeneralNotesModal(); closeSidebar();">
                     <img src="res/notes.svg" alt="Notes">
                     <span>Notes</span>
                 </button>
                 <div class="sidebar-divider sidebar-mobile-only"></div>
                 <div style="padding: 0;">
-                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: #f8f9fa; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
-                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
-                            <span style="font-size: 0.95rem; color: #2d3748; font-weight: 600;">Preset</span>
-                            <span id="currentPresetName" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;"></span>
-                        </div>
-                        <svg id="presetExpandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; transition: transform 0.3s;">
+                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: #2d3748; font-weight: 500;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                        </svg>
+                        <span style="flex: 1; text-align: left;" id="currentPresetName"></span>
+                        <svg id="presetExpandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; transition: transform 0.3s; flex-shrink: 0;">
                             <polyline points="6 9 12 15 18 9"></polyline>
                         </svg>
                     </div>
@@ -2152,10 +2153,7 @@ function generateSidebarHTML() {
     populatePresetDropdown('sidebarPresetSelector');
     
     // Apply instruction visibility
-    if (hideInstructions) {
-        const instructionBtn = sidebar.querySelector('.instruction-btn');
-        if (instructionBtn) instructionBtn.style.display = 'none';
-    }
+    applyInstructionVisibility();
     
     // Initialize preset selector
     initializePresetSelector();
@@ -2171,17 +2169,25 @@ function initializePresetSelector() {
     currentPresetName.textContent = currentPreset.replace(/_/g, ' ').replace(/'/g, "'");
     
     // Populate preset options
-    let optionsHTML = '';
+    presetOptions.innerHTML = '';
     for (const presetName in window.PRESET_CONFIG) {
         const displayName = presetName.replace(/_/g, ' ').replace(/'/g, "'");
         const isActive = presetName === currentPreset;
-        optionsHTML += `
-            <div onclick="handlePresetChange('${presetName}')" style="padding: 12px 20px; cursor: pointer; background: ${isActive ? '#e3f2fd' : 'transparent'}; color: ${isActive ? '#007bff' : '#2d3748'}; font-weight: ${isActive ? '600' : '500'}; font-size: 0.9rem; transition: background 0.2s;" onmouseover="if (!${isActive}) this.style.background='#f8f9fa'" onmouseout="if (!${isActive}) this.style.background='transparent'">
-                ${displayName}
-            </div>
-        `;
+        
+        const optionDiv = document.createElement('div');
+        optionDiv.style.cssText = `padding: 12px 20px; cursor: pointer; background: ${isActive ? '#e3f2fd' : 'transparent'}; color: ${isActive ? '#007bff' : '#2d3748'}; font-weight: ${isActive ? '600' : '500'}; font-size: 0.9rem; transition: background 0.2s;`;
+        optionDiv.textContent = displayName;
+        
+        optionDiv.addEventListener('click', () => handlePresetChange(presetName));
+        optionDiv.addEventListener('mouseover', () => {
+            if (!isActive) optionDiv.style.background = '#f8f9fa';
+        });
+        optionDiv.addEventListener('mouseout', () => {
+            if (!isActive) optionDiv.style.background = 'transparent';
+        });
+        
+        presetOptions.appendChild(optionDiv);
     }
-    presetOptions.innerHTML = optionsHTML;
 }
 
 window.togglePresetExpand = function() {
