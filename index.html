@@ -264,6 +264,44 @@
                 };
             }
             
+            // Setup search toggle for mobile
+            const searchToggle = document.getElementById('searchToggle');
+            const searchInput = document.getElementById('search');
+            const controls = document.querySelector('.controls');
+            
+            if (searchToggle && controls && searchInput) {
+                searchToggle.onclick = (e) => {
+                    e.stopPropagation();
+                    const isExpanded = controls.classList.toggle('search-expanded');
+                    
+                    if (isExpanded) {
+                        // Focus search input when expanded
+                        setTimeout(() => searchInput.focus(), 100);
+                    } else {
+                        // Clear and blur when collapsed
+                        searchInput.blur();
+                    }
+                };
+                
+                // Close search when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (controls.classList.contains('search-expanded') && 
+                        !controls.contains(e.target) && 
+                        e.target !== searchToggle) {
+                        controls.classList.remove('search-expanded');
+                        searchInput.blur();
+                    }
+                });
+                
+                // Close search on escape key
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        controls.classList.remove('search-expanded');
+                        searchInput.blur();
+                    }
+                });
+            }
+            
             // Setup profile menu expand/retract
             const expandBtn = document.getElementById('expandBtn');
             const retractBtn = document.getElementById('retractBtn');

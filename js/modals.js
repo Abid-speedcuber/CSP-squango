@@ -76,53 +76,47 @@ function generateModalHTML() {
                             </div>
                         </div>
                         
-                                                <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
+                                                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
+                            <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+                                <span>Small (100px)</span>
+                                <span>Large (400px)</span>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
                             <div onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Your color scheme will be used in parity tracing and training. You can also set your scramble image size here.</span>
+                                    <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
+                                    <span class="info-box">Your color scheme will be used in parity tracing and training.</span>
                                 </span>
                             </div>
-                            <div onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Parity Tracing Personalization</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
+                                    <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
                                 </span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Advanced Personalization Section -->
-                    <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 12px; padding: 20px;">
-                        <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
-                                <span>Customize Tracing Guides</span>
+                            <div onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                                <span>Quick Edit</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                <span class="info-box">You have no job here unless you absolutely know what you are doing. Be careful. This part is for preset creators only.</span>
-                            </span>
-                        </div>
-                        
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-                            <label for="allowCaseEditToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Allow Case Edits</label>
-                            <input type="checkbox" id="allowCaseEditToggle" onchange="toggleAllowCaseEdit(this.checked)" style="transform: scale(1.3); cursor: pointer;">
-                        </div>
-                        
-                        <div style="border-top: 1px solid #e9ecef; margin: 16px 0; padding-top: 16px;">
+                                    <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
+                                    <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
+                                </span>
+                            </div>
                             <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Customize Tracing Guides</span>
                                 <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
+                                    <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Lets you move the little numbers around for each image to set your tracing guide.<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
                                 </span>
                             </div>
-                            <div onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
-                                <span>Quick Edit</span>
-                                <span class="info-wrapper">
-                                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
-                                </span>
+                            <div style="display: flex; align-items: center; justify-content: space-between;">
+                                <label for="allowCaseEditToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Allow Case Edits</label>
+                                <input type="checkbox" id="allowCaseEditToggle" onchange="toggleAllowCaseEdit(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                             </div>
                         </div>
                     </div>
@@ -188,19 +182,7 @@ function generateModalHTML() {
                             <button class="color-btn" data-face="left" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
                             <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
-                    </div>
-                    <div style="margin-bottom: 20px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
-                        <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
-                        <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
-                            <span>Small (100px)</span>
-                            <span>Large (400px)</span>
-                        </div>
-                    </div>
-                    <div style="margin-top: 20px; text-align: center;">
-                        <button onclick="saveColorScheme()" style="padding: 10px 30px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 600;">Save Color Scheme</button>
-                        <button onclick="resetColorScheme()" style="padding: 10px 30px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; font-weight: 600; margin-left: 10px;">Reset to Default</button>
-                    </div>
+                    </div>          
                 </div>
             </div>
         </div>
@@ -408,6 +390,15 @@ function generateModalHTML() {
                     b.style.fontWeight = 'normal';
                 }
             });
+            
+            // Auto-save
+            saveState();
+            
+            // Recalculate parity if needed
+            if (needsParityRecalculation()) {
+                calculateAndCacheAllParity();
+                render();
+            }
         });
     });
 }
@@ -630,13 +621,6 @@ function openColorSchemeModal() {
     
     pushModalState('colorSchemeModal', closeColorSchemeModal);
     
-    // Set image size slider value
-    const slider = document.getElementById('imageSizeSlider');
-    if (slider) {
-        slider.value = scrambleImageSize;
-        document.getElementById('sizeValue').textContent = scrambleImageSize;
-    }
-    
     // Highlight currently selected colors
     document.querySelectorAll('.color-btn').forEach(btn => {
         const face = btn.getAttribute('data-face');
@@ -661,6 +645,7 @@ function closeColorSchemeModal() {
 function updateImageSizePreview(value) {
     document.getElementById('sizeValue').textContent = value;
     scrambleImageSize = parseInt(value);
+    saveState();
 }
 
 function updateAlgFontSizePreview(value) {
@@ -681,42 +666,6 @@ function applyAlgorithmFontSize() {
     if (!style.parentNode) {
         document.head.appendChild(style);
     }
-}
-
-function saveColorScheme() {
-    saveState();
-    closeColorSchemeModal();
-    
-    // Recalculate parity with new color scheme
-    if (needsParityRecalculation()) {
-        calculateAndCacheAllParity();
-        render();
-    }
-    
-    showToast('Color scheme and image size saved!', 3000, 'success');
-}
-
-function resetColorScheme() {
-    const defaults = getPresetDefaults();
-    if (defaults && defaults.colorScheme) {
-        colorScheme = defaults.colorScheme;
-        scrambleImageSize = defaults.scrambleImageSize || 200;
-    } else {
-        colorScheme = {
-            topColor: '#000000',
-            bottomColor: '#FFFFFF',
-            frontColor: '#CC0000',
-            rightColor: '#00AA00',
-            backColor: '#FF8C00',
-            leftColor: '#0066CC',
-            dividerColor: '#7a0000',
-            circleColor: 'transparent'
-        };
-        scrambleImageSize = 200;
-    }
-    saveState();
-    openColorSchemeModal(); // Refresh the modal to show updated selection
-    showToast(`Color scheme reset to ${currentPreset} preset!`, 3000, 'success');
 }
 
 // Apply initial hint visibility state on load
@@ -2113,12 +2062,18 @@ function generateSidebarHTML() {
                     <span>Notes</span>
                 </button>
                 <div class="sidebar-divider sidebar-mobile-only"></div>
-                <div style="padding: 14px 20px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 8px; color: #2d3748; font-size: 0.9rem;">Active Preset:</label>
-                    <select id="sidebarPresetSelector" onchange="handlePresetChange(this.value)" style="width: 100%; padding: 8px 10px; border: 1px solid #dee2e6; border-radius: 6px; font-size: 0.9rem; background: white; cursor: pointer;">
-                        <!-- Options populated dynamically -->
-                    </select>
-                </div>
+                <div style="padding: 0;">
+                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                        <div style="display: flex; flex-direction: column; align-items: flex-start;">
+<span style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">Preset</span>
+<span id="currentPresetName" style="font-size: 0.95rem; color: #2d3748; font-weight: 600;"></span>
+</div>
+<svg id="presetExpandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; transition: transform 0.3s;">
+<polyline points="6 9 12 15 18 9"></polyline>
+</svg>
+</div>
+<div id="presetOptions" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;"></div>
+</div>
                 <button class="sidebar-item instruction-btn" onclick="showHomepageInfoModal(); closeSidebar();">
                     <img src="res/info.svg" alt="Instructions">
                     <span>Instructions</span>
@@ -2163,7 +2118,51 @@ function generateSidebarHTML() {
         const instructionBtn = sidebar.querySelector('.instruction-btn');
         if (instructionBtn) instructionBtn.style.display = 'none';
     }
+    
+    // Initialize preset selector
+    initializePresetSelector();
 }
+
+function initializePresetSelector() {
+    const currentPresetName = document.getElementById('currentPresetName');
+    const presetOptions = document.getElementById('presetOptions');
+    
+    if (!currentPresetName || !presetOptions) return;
+    
+    // Set current preset name
+    currentPresetName.textContent = currentPreset.replace(/_/g, ' ').replace(/'/g, "'");
+    
+    // Populate preset options
+    let optionsHTML = '';
+    for (const presetName in window.PRESET_CONFIG) {
+        const displayName = presetName.replace(/_/g, ' ').replace(/'/g, "'");
+        const isActive = presetName === currentPreset;
+        optionsHTML += `
+            <div onclick="handlePresetChange('${presetName}')" style="padding: 12px 20px; cursor: pointer; background: ${isActive ? '#e3f2fd' : 'transparent'}; color: ${isActive ? '#007bff' : '#2d3748'}; font-weight: ${isActive ? '600' : '500'}; font-size: 0.9rem; transition: background 0.2s;" onmouseover="if (!${isActive}) this.style.background='#f8f9fa'" onmouseout="if (!${isActive}) this.style.background='transparent'">
+                ${displayName}
+            </div>
+        `;
+    }
+    presetOptions.innerHTML = optionsHTML;
+}
+
+window.togglePresetExpand = function() {
+    const presetOptions = document.getElementById('presetOptions');
+    const expandIcon = document.getElementById('presetExpandIcon');
+    
+    if (!presetOptions || !expandIcon) return;
+    
+    if (presetOptions.style.maxHeight === '0px' || presetOptions.style.maxHeight === '') {
+        // Calculate height based on number of presets
+        const numPresets = Object.keys(window.PRESET_CONFIG).length;
+        const height = numPresets * 48; // 48px per option
+        presetOptions.style.maxHeight = height + 'px';
+        expandIcon.style.transform = 'rotate(180deg)';
+    } else {
+        presetOptions.style.maxHeight = '0px';
+        expandIcon.style.transform = 'rotate(0deg)';
+    }
+};
 
 window.toggleSidebar = function() {
     generateSidebarHTML();
@@ -2171,9 +2170,9 @@ window.toggleSidebar = function() {
     if (sidebar) {
         sidebar.classList.toggle('active');
         if (sidebar.classList.contains('active')) {
-            document.body.style.overflow = 'hidden';
+            document.body.classList.add('sidebar-open');
         } else {
-            document.body.style.overflow = '';
+            document.body.classList.remove('sidebar-open');
         }
     }
 };
@@ -2182,7 +2181,7 @@ window.closeSidebar = function() {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
-        document.body.style.overflow = '';
+        document.body.classList.remove('sidebar-open');
     }
 };
 
