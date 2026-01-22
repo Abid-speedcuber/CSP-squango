@@ -2033,12 +2033,21 @@ function generateSidebarHTML() {
         <div class="sidebar-content">
             <div class="sidebar-header">
                 <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #2d3748;">Menu</h2>
-                <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button class="sidebar-close-btn instruction-btn" onclick="event.stopPropagation(); showHomepageInfoModal();" aria-label="Instructions" style="color: #495057;">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                    </button>
+                    <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
             </div>
             <div class="sidebar-body">
                 <button class="sidebar-item" onclick="openTrainingSelector(); closeSidebar();">
@@ -2063,21 +2072,17 @@ function generateSidebarHTML() {
                 </button>
                 <div class="sidebar-divider sidebar-mobile-only"></div>
                 <div style="padding: 0;">
-                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: #f8f9fa; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: background 0.2s;" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
                         <div style="display: flex; flex-direction: column; align-items: flex-start;">
-<span style="font-size: 0.8rem; color: #6c757d; font-weight: 500;">Preset</span>
-<span id="currentPresetName" style="font-size: 0.95rem; color: #2d3748; font-weight: 600;"></span>
-</div>
-<svg id="presetExpandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; transition: transform 0.3s;">
-<polyline points="6 9 12 15 18 9"></polyline>
-</svg>
-</div>
-<div id="presetOptions" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;"></div>
-</div>
-                <button class="sidebar-item instruction-btn" onclick="showHomepageInfoModal(); closeSidebar();">
-                    <img src="res/info.svg" alt="Instructions">
-                    <span>Instructions</span>
-                </button>
+                            <span style="font-size: 0.95rem; color: #2d3748; font-weight: 600;">Preset</span>
+                            <span id="currentPresetName" style="font-size: 0.8rem; color: #6c757d; font-weight: 500;"></span>
+                        </div>
+                        <svg id="presetExpandIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px; transition: transform 0.3s;">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </div>
+                    <div id="presetOptions" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;"></div>
+                </div>
                 <div class="sidebar-divider"></div>
                 <button class="sidebar-item" onclick="exportData(); closeSidebar();">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
@@ -2169,11 +2174,6 @@ window.toggleSidebar = function() {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.toggle('active');
-        if (sidebar.classList.contains('active')) {
-            document.body.classList.add('sidebar-open');
-        } else {
-            document.body.classList.remove('sidebar-open');
-        }
     }
 };
 
@@ -2181,7 +2181,6 @@ window.closeSidebar = function() {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
-        document.body.classList.remove('sidebar-open');
     }
 };
 
