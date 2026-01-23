@@ -30,43 +30,42 @@ const SVGEditor = {
     createEditorHTML() {
         const editorHTML = `
             <div id="svgEditorModal" class="modal" style="display: none;">
-                <div class="modal-content" style="max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; margin: 0; border-radius: 0; display: flex; flex-direction: column;">
-                    <div class="modal-header" style="flex-shrink: 0; background: #2d3748; color: white; padding: 15px 20px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <div style="display: flex; align-items: center; gap: 15px;">
-                                <button id="svgEditorSidebarToggle" class="btn" style="background: rgba(255,255,255,0.2); padding: 6px 12px; display: none;">☰</button>
-                                <span class="modal-title" style="font-size: 1.5rem; font-weight: 600; color: white;">Customize Tracing Guides</span>
-                            </div>
-                            <button class="close-btn" onclick="SVGEditor.close()" style="color: white; opacity: 0.9;">&times;</button>
+                <div class="modal-content">
+                    <div class="svg-editor-header">
+                        <div class="svg-editor-header-left">
+                            <button id="svgEditorSidebarToggle" class="svg-editor-sidebar-toggle">☰</button>
+                            <span class="svg-editor-title">Customize Tracing Guides</span>
+                        </div>
+                        <div class="svg-editor-header-right">
+                            <button id="svgEditorInfo" class="svg-editor-btn" title="Help"><img src="res/info.svg"></button>
+                            <button id="svgEditorResetAll" class="svg-editor-btn" title="Reset All to Preset"><img src="res/reset.svg"></button>
+                            <button id="svgEditorSaveAll" class="svg-editor-btn" title="Save All"><img src="res/save.svg"></button>
+                            <button class="svg-editor-close" onclick="SVGEditor.close()">&times;</button>
                         </div>
                     </div>
-                    <div style="display: flex; flex: 1; overflow: hidden;">
-                        <div id="svgEditorSidebar" style="width: 280px; background: white; border-right: 1px solid #ddd; overflow-y: auto; flex-shrink: 0;">
-                            <div id="svgEditorList" style="padding: 15px;"></div>
+                    <div class="svg-editor-container">
+                        <div id="svgEditorSidebar" class="svg-editor-sidebar">
+                            <div id="svgEditorList" class="svg-editor-sidebar-list"></div>
                         </div>
-                        <div style="flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #f5f5f5;">
-
-<div id="svgEditorToolbar" style="background: white; padding: 12px 20px; border-bottom: 1px solid #ddd; display: none; flex-shrink: 0;">
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <span id="svgEditorCurrentName" style="font-weight: 600; color: #2d3748; flex: 1; min-width: 150px;"></span>
-        <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 0.9rem; color: #495057; font-weight: 500;">Zoom:</span>
-            <input type="range" id="svgEditorZoom" min="50" max="200" value="100" step="10" style="width: 120px; cursor: pointer;">
-            <span id="svgEditorZoomValue" style="font-size: 0.9rem; color: #495057; min-width: 45px;">100%</span>
-        </div>
-        <div style="display: flex; gap: 8px; margin-left: auto;">
-            <button id="svgEditorInfo" class="btn instruction-btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Help"><img src="res/info.svg" style="width: 18px; height: 18px;"></button>
-            <button id="svgEditorSaveAll" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Save All"><img src="res/save.svg" style="width: 18px; height: 18px;"></button>
-            <button id="svgEditorUndo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Undo (Ctrl+Z)"><img src="res/revert.svg" style="width: 18px; height: 18px;"></button>
-            <button id="svgEditorRedo" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Redo (Ctrl+Y)"><img src="res/redo.svg" style="width: 18px; height: 18px;"></button>
-            <button id="svgEditorReset" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Reset to Preset"><img src="res/reset.svg" style="width: 18px; height: 18px;"></button>
-            <button id="svgEditorSave" class="btn" style="background: #f8f9fa; color: #495057; border: 1px solid #dee2e6; padding: 8px; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;" title="Save Current"><img src="res/save.svg" style="width: 18px; height: 18px;"></button>
-        </div>
-    </div>
-</div>
-                            <div id="svgEditorCanvas" style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: auto; position: relative;">
-                                <div class="empty-state" style="text-align: center; color: #666;">
-                                    <h2 style="margin-bottom: 10px;">Select an SVG to Edit</h2>
+                        <div class="svg-editor-overlay" onclick="SVGEditor.closeSidebar()"></div>
+                        <div class="svg-editor-main">
+                            <div class="svg-editor-toolbar">
+                                <div class="svg-editor-toolbar-left">
+                                    <span class="svg-editor-zoom-label">Zoom:</span>
+                                    <input type="range" id="svgEditorZoom" min="50" max="200" value="100" step="10" class="svg-editor-zoom-slider">
+                                    <span id="svgEditorZoomValue" class="svg-editor-zoom-value">100%</span>
+                                </div>
+                                <span id="svgEditorCurrentCase" class="svg-editor-current-case"></span>
+                                <div class="svg-editor-toolbar-right">
+                                    <button id="svgEditorUndo" class="svg-editor-btn" title="Undo (Ctrl+Z)"><img src="res/revert.svg"></button>
+                                    <button id="svgEditorRedo" class="svg-editor-btn" title="Redo (Ctrl+Y)"><img src="res/redo.svg"></button>
+                                    <button id="svgEditorReset" class="svg-editor-btn" title="Reset to Preset"><img src="res/reset.svg"></button>
+                                    <button id="svgEditorSave" class="svg-editor-btn" title="Save Current"><img src="res/save.svg"></button>
+                                </div>
+                            </div>
+                            <div id="svgEditorCanvas" class="svg-editor-canvas">
+                                <div class="svg-editor-empty">
+                                    <h2>Select an SVG to Edit</h2>
                                     <p>Choose a tracing guide from the list on the left</p>
                                     <p style="margin-top: 15px; font-size: 14px; color: #999;">
                                         Click on labels to select • Drag to move • Arrow keys for fine adjustments<br>
@@ -87,26 +86,27 @@ const SVGEditor = {
         const saveBtn = document.getElementById('svgEditorSave');
         const saveAllBtn = document.getElementById('svgEditorSaveAll');
         const resetBtn = document.getElementById('svgEditorReset');
+        const resetAllBtn = document.getElementById('svgEditorResetAll');
         const undoBtn = document.getElementById('svgEditorUndo');
         const redoBtn = document.getElementById('svgEditorRedo');
         const sidebarToggle = document.getElementById('svgEditorSidebarToggle');
         const zoomSlider = document.getElementById('svgEditorZoom');
         const infoBtn = document.getElementById('svgEditorInfo');
 
-if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
-if (saveAllBtn) saveAllBtn.onclick = () => this.saveAll();
-if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
-if (undoBtn) undoBtn.onclick = () => this.undo();
-if (redoBtn) redoBtn.onclick = () => this.redo();
-if (sidebarToggle) sidebarToggle.onclick = () => this.toggleSidebar();
-if (infoBtn) infoBtn.onclick = () => this.showInfo();
-if (zoomSlider) {
-    zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
-}
-
-        // Handle responsive sidebar toggle button
-        this.updateResponsiveUI();
-        window.addEventListener('resize', () => this.updateResponsiveUI());
+        if (saveBtn) saveBtn.onclick = () => this.saveCurrent();
+        if (saveAllBtn) saveAllBtn.onclick = () => this.saveAll();
+        if (resetBtn) resetBtn.onclick = () => this.resetCurrent();
+        if (resetAllBtn) resetAllBtn.onclick = () => this.resetAll();
+        if (undoBtn) undoBtn.onclick = () => this.undo();
+        if (redoBtn) redoBtn.onclick = () => this.redo();
+        if (sidebarToggle) sidebarToggle.onclick = () => this.toggleSidebarMobile();
+        if (infoBtn) infoBtn.onclick = () => this.showInfo();
+        if (zoomSlider) {
+            zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
+        }
+        
+        // Setup zoom controls on canvas
+        this.setupZoomControls();
 
         // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
@@ -158,37 +158,71 @@ document.addEventListener('keyup', (e) => {
 });
     },
 
-    updateResponsiveUI() {
-        const sidebarToggle = document.getElementById('svgEditorSidebarToggle');
-        const sidebar = document.getElementById('svgEditorSidebar');
+    setupZoomControls() {
+        const canvas = document.getElementById('svgEditorCanvas');
+        if (!canvas) return;
         
-        if (window.innerWidth < 768) {
-            sidebarToggle.style.display = 'block';
-            if (this.state.isSidebarCollapsed) {
-                sidebar.style.transform = 'translateX(-100%)';
-                sidebar.style.position = 'absolute';
-                sidebar.style.zIndex = '10';
-                sidebar.style.height = 'calc(100vh - 60px)';
+        // Alt + Mouse wheel zoom
+        canvas.addEventListener('wheel', (e) => {
+            if (e.altKey) {
+                e.preventDefault();
+                const delta = e.deltaY > 0 ? -10 : 10;
+                const newZoom = Math.max(50, Math.min(200, this.state.currentZoom + delta));
+                this.updateZoom(newZoom);
             }
-        } else {
-            sidebarToggle.style.display = 'none';
-            sidebar.style.transform = 'translateX(0)';
-            sidebar.style.position = 'relative';
-            sidebar.style.zIndex = 'auto';
-            this.state.isSidebarCollapsed = false;
-        }
+        }, { passive: false });
+        
+        // Pinch to zoom for touch devices
+        let lastDistance = 0;
+        let isPinching = false;
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                isPinching = true;
+                lastDistance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+            }
+        });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && isPinching) {
+                e.preventDefault();
+                const distance = Math.hypot(
+                    e.touches[0].pageX - e.touches[1].pageX,
+                    e.touches[0].pageY - e.touches[1].pageY
+                );
+                const delta = distance - lastDistance;
+                const zoomChange = delta * 0.5;
+                const newZoom = Math.max(50, Math.min(200, this.state.currentZoom + zoomChange));
+                this.updateZoom(newZoom);
+                lastDistance = distance;
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length < 2) {
+                isPinching = false;
+            }
+        });
     },
 
     toggleSidebar() {
-    const sidebar = document.getElementById('svgEditorSidebar');
-    this.state.isSidebarCollapsed = !this.state.isSidebarCollapsed;
+        const sidebar = document.getElementById('svgEditorSidebar');
+        if (window.innerWidth > 570) return; // Only works on mobile
+        
+        sidebar.classList.toggle('open');
+    },
     
-    if (this.state.isSidebarCollapsed) {
-        sidebar.style.transform = 'translateX(-100%)';
-    } else {
-        sidebar.style.transform = 'translateX(0)';
-    }
-},
+    toggleSidebarMobile() {
+        this.toggleSidebar();
+    },
+    
+    closeSidebar() {
+        const sidebar = document.getElementById('svgEditorSidebar');
+        sidebar.classList.remove('open');
+    },
 
 updateZoom(value) {
     this.state.currentZoom = parseInt(value);
@@ -200,6 +234,10 @@ updateZoom(value) {
     }
     if (zoomValue) {
         zoomValue.textContent = this.state.currentZoom + '%';
+    }
+    const zoomSlider = document.getElementById('svgEditorZoom');
+    if (zoomSlider) {
+        zoomSlider.value = this.state.currentZoom;
     }
 },
 
@@ -214,34 +252,13 @@ updateZoom(value) {
         const item = document.createElement('div');
         item.className = 'svg-editor-item';
         const isUnsaved = this.state.unsavedSvgs.has(name);
-        item.style.cssText = `
-            padding: 12px;
-            margin-bottom: 8px;
-            background: ${isUnsaved ? '#e3f2fd' : '#f8f9fa'};
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 2px solid ${isUnsaved ? '#2196f3' : 'transparent'};
-        `;
+        if (isUnsaved) item.classList.add('unsaved');
 
         const itemName = document.createElement('div');
-        itemName.style.cssText = 'font-weight: 600; color: #2d3748; font-size: 0.9rem;';
+        itemName.className = 'svg-editor-item-name';
         itemName.textContent = name;
 
         item.appendChild(itemName);
-
-        item.addEventListener('mouseenter', () => {
-            if (!item.classList.contains('active')) {
-                item.style.background = isUnsaved ? '#bbdefb' : '#e9ecef';
-            }
-        });
-
-        item.addEventListener('mouseleave', () => {
-            if (!item.classList.contains('active')) {
-                item.style.background = isUnsaved ? '#e3f2fd' : '#f8f9fa';
-            }
-        });
-
         item.addEventListener('click', () => this.loadSVG(name));
 
         listContainer.appendChild(item);
@@ -259,8 +276,6 @@ updateZoom(value) {
         // Update sidebar selection
         document.querySelectorAll('.svg-editor-item').forEach(item => {
             item.classList.remove('active');
-            item.style.border = '2px solid transparent';
-            item.style.background = '#f8f9fa';
         });
 
         const items = document.querySelectorAll('.svg-editor-item');
@@ -268,27 +283,24 @@ updateZoom(value) {
         const index = svgNames.indexOf(svgName);
         if (items[index]) {
             items[index].classList.add('active');
-            items[index].style.border = '2px solid #4a9eff';
-            items[index].style.background = '#e3f2fd';
         }
-
-        // Show toolbar
-        document.getElementById('svgEditorToolbar').style.display = 'flex';
-        document.getElementById('svgEditorCurrentName').textContent = svgName;
+        
+        // Update current case name in toolbar (for mobile)
+        const currentCaseEl = document.getElementById('svgEditorCurrentCase');
+        if (currentCaseEl) {
+            currentCaseEl.textContent = svgName;
+        }
 
         // Load SVG to canvas
 const canvas = document.getElementById('svgEditorCanvas');
 canvas.innerHTML = `
-    <div id="svgEditorContainer" class="svg-editor-force-show-hints" style="position: relative; background: white; border-radius: 8px; padding: 40px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transform: scale(${this.state.currentZoom / 100}); transition: transform 0.2s;">
+    <div id="svgEditorContainer" class="svg-editor-canvas-content svg-editor-force-show-hints" style="transform: scale(${this.state.currentZoom / 100});">
         <div id="svgEditorContent">${window.svgData[svgName]}</div>
     </div>
 `;
 
-// Update zoom slider
-const zoomSlider = document.getElementById('svgEditorZoom');
-const zoomValue = document.getElementById('svgEditorZoomValue');
-if (zoomSlider) zoomSlider.value = this.state.currentZoom;
-if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
+// Update zoom display
+this.updateZoom(this.state.currentZoom);
 
         const svg = canvas.querySelector('svg');
         if (svg) {
@@ -301,10 +313,9 @@ if (zoomValue) zoomValue.textContent = this.state.currentZoom + '%';
             }
         }
 
-        // Collapse sidebar on mobile after selection
-        if (window.innerWidth < 768) {
-            this.state.isSidebarCollapsed = true;
-            document.getElementById('svgEditorSidebar').style.transform = 'translateX(-100%)';
+        // Close sidebar on mobile after selection
+        if (window.innerWidth <= 570) {
+            this.closeSidebar();
         }
     },
 
@@ -696,6 +707,7 @@ startKeyboardMovement() {
         const name = this.state.currentSvg;
         if (name === null) return;
 
+        // Only keep history for current session, per SVG
         if (!this.state.histories[name]) {
             this.state.histories[name] = [];
             this.state.historyIndices[name] = -1;
@@ -704,6 +716,12 @@ startKeyboardMovement() {
         this.state.histories[name] = this.state.histories[name].slice(0, this.state.historyIndices[name] + 1);
         this.state.histories[name].push(svgElement);
         this.state.historyIndices[name]++;
+        
+        // Limit history to 50 entries per SVG
+        if (this.state.histories[name].length > 50) {
+            this.state.histories[name].shift();
+            this.state.historyIndices[name]--;
+        }
         
         // Mark as unsaved
         this.state.unsavedSvgs.add(name);
@@ -914,6 +932,40 @@ startKeyboardMovement() {
         infoModal.classList.add('active');
     },
 
+        resetAll() {
+        showConfirmation(
+            `Reset ALL tracing guides to ${currentPreset} preset? This cannot be undone.`,
+            () => {
+                // Reset all SVGs to preset default or absolute default
+                const defaults = getPresetDefaults();
+                const svgNames = Object.keys(window.svgData);
+                
+                svgNames.forEach(name => {
+                    if (defaults && defaults.svgData && defaults.svgData[name]) {
+                        window.svgData[name] = defaults.svgData[name];
+                    } else {
+                        window.svgData[name] = DEFAULT_SVGS[name];
+                    }
+                });
+                
+                // Clear all unsaved changes
+                this.state.unsavedSvgs.clear();
+                
+                // Save and re-render
+                saveState();
+                render(true);
+                
+                // Reload list and current SVG if any
+                this.loadSVGList();
+                if (this.state.currentSvg) {
+                    this.loadSVG(this.state.currentSvg);
+                }
+                
+                showToast(`All tracing guides reset to ${currentPreset} preset!`, 2000, 'success');
+            }
+        );
+    },
+
     close() {
     // Check for unsaved changes
     if (this.state.unsavedSvgs.size > 0) {
@@ -956,12 +1008,14 @@ forceClose() {
         this.state.keyMoveInterval = null;
     }
 
-    // Reset state
+    // Reset state AND clear all history
     this.state.currentSvg = null;
     this.state.selectedElements.clear();
     this.state.isSidebarCollapsed = false;
     this.state.keysPressed.clear();
     this.state.unsavedSvgs.clear();
+    this.state.histories = {};
+    this.state.historyIndices = {};
 }
 };
 

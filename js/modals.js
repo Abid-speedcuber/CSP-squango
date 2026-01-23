@@ -1939,13 +1939,12 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
 // Profile Modal Functions
 function openProfileModal() {
     const modal = document.getElementById('profileModal');
+    if (!modal) return;
+    
     modal.style.display = 'block';
     
     // Update progress bars
     updateProfileStats();
-    
-    // Close the floating menu
-    collapseProfileMenu();
     
     // Add click outside handler
     setTimeout(() => {
@@ -1975,6 +1974,9 @@ function closeProfileModal() {
         modal.style.display = 'none';
     }
 }
+
+// Make openProfileModal globally accessible
+window.openProfileModal = openProfileModal;
 
 function updateProfileStats() {
     const totalCases = data.length;
