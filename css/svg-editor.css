@@ -82,6 +82,7 @@
 .svg-editor-btn img {
     width: 18px;
     height: 18px;
+    filter: brightness(0) invert(1);
 }
 
 .svg-editor-close {
@@ -236,6 +237,7 @@
 .svg-editor-toolbar .svg-editor-btn img {
     width: 18px;
     height: 18px;
+    filter: none;
 }
 
 /* Canvas */
