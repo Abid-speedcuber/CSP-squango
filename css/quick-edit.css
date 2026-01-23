@@ -30,7 +30,13 @@
 .quick-edit-header-left {
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 12px;
+}
+
+.quick-edit-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .quick-edit-header-right {
@@ -43,6 +49,16 @@
     margin: 0;
     font-size: 1.2rem;
     font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+}
+
+.quick-edit-subtitle {
+    display: none;
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    margin-top: 2px;
 }
 
 .quick-edit-tabs {
@@ -477,6 +493,27 @@
     background: #5a6268;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+}
+
+/* Tablet adjustments */
+@media (max-width: 630px) {
+    .quick-edit-tabs {
+        display: none !important;
+    }
+    
+    .quick-edit-subtitle {
+        display: block;
+    }
+    
+    .quick-edit-header-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+    
+    .quick-edit-title-wrapper {
+        gap: 8px;
+    }
 }
 
 /* Responsive adjustments */

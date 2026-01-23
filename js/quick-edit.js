@@ -31,7 +31,13 @@ function openQuickEditModal() {
         <div class="quick-edit-screen">
             <div class="quick-edit-header">
                 <div class="quick-edit-header-left">
-                    <h2>Quick Edit</h2>
+                    <div class="quick-edit-title-wrapper">
+                        <h2 onclick="toggleQuickEditTab()">Quick Edit</h2>
+                        <button class="quick-edit-icon-btn instruction-btn" onclick="showQuickEditInfoModal()" title="Help">
+                            <img src="res/info.svg" alt="Help">
+                        </button>
+                    </div>
+                    <div class="quick-edit-subtitle" id="quickEditSubtitle">General Info</div>
                     <div class="quick-edit-tabs">
                         <button class="quick-edit-tab active" data-tab="general" onclick="switchQuickEditTab('general')">General Info</button>
                         <button class="quick-edit-tab" data-tab="algorithms" onclick="switchQuickEditTab('algorithms')">Algorithms</button>
@@ -40,9 +46,6 @@ function openQuickEditModal() {
                 <div class="quick-edit-header-right">
                     <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
                         +2
-                    </button>
-                    <button class="quick-edit-icon-btn instruction-btn" onclick="showQuickEditInfoModal()" title="Help">
-                        <img src="res/info.svg" alt="Help">
                     </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
@@ -650,6 +653,12 @@ function switchQuickEditTab(tab) {
         }
     });
     
+    // Update subtitle
+    const subtitle = document.getElementById('quickEditSubtitle');
+    if (subtitle) {
+        subtitle.textContent = tab === 'general' ? 'General Info' : 'Algorithms';
+    }
+    
     // Show/hide content
     const generalTab = document.getElementById('quickEditGeneralTab');
     const algorithmsTab = document.getElementById('quickEditAlgorithmsTab');
@@ -671,6 +680,14 @@ function switchQuickEditTab(tab) {
     if (quickEditState.findReplaceOpen) {
         closeQuickEditFindReplace();
     }
+}
+
+function toggleQuickEditTab() {
+    // Only toggle on mobile (when tabs are hidden)
+    if (window.innerWidth > 630) return;
+    
+    const newTab = quickEditState.currentTab === 'general' ? 'algorithms' : 'general';
+    switchQuickEditTab(newTab);
 }
 
 function openQuickEditFindReplace() {
@@ -1214,6 +1231,7 @@ window.openQuickEditModal = openQuickEditModal;
 window.revertQuickEditChanges = revertQuickEditChanges;
 window.closeQuickEditModal = closeQuickEditModal;
 window.switchQuickEditTab = switchQuickEditTab;
+window.toggleQuickEditTab = toggleQuickEditTab;
 window.findNextQuickEdit = findNextQuickEdit;
 window.replaceQuickEdit = replaceQuickEdit;
 window.replaceAllQuickEdit = replaceAllQuickEdit;
