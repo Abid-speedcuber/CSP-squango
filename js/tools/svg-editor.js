@@ -34,7 +34,7 @@ const SVGEditor = {
                     <div class="svg-editor-header">
                         <div class="svg-editor-header-left">
                             <button id="svgEditorSidebarToggle" class="svg-editor-sidebar-toggle">☰</button>
-                            <span class="svg-editor-title">Customize Tracing Guides</span>
+                            <span class="svg-editor-title"><span class="svg-editor-title-text">Customize Tracing Guides</span></span>
                         </div>
                         <div class="svg-editor-header-right">
                             <button id="svgEditorInfo" class="svg-editor-btn" title="Help"><img src="res/info.svg"></button>
