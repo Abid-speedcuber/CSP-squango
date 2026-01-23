@@ -31,7 +31,7 @@ function openQuickEditModal() {
         <div class="quick-edit-screen">
             <div class="quick-edit-header">
                 <div class="quick-edit-header-left">
-                    <h2>Quick Edit - All Cases</h2>
+                    <h2>Quick Edit</h2>
                     <div class="quick-edit-tabs">
                         <button class="quick-edit-tab active" data-tab="general" onclick="switchQuickEditTab('general')">General Info</button>
                         <button class="quick-edit-tab" data-tab="algorithms" onclick="switchQuickEditTab('algorithms')">Algorithms</button>
@@ -46,9 +46,6 @@ function openQuickEditModal() {
                     </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
-                    </button>
-                    <button class="quick-edit-icon-btn" onclick="revertQuickEditChanges()" title="Revert to last save">
-                        <img src="res/revert.svg" alt="Revert">
                     </button>
                     <button class="quick-edit-icon-btn" onclick="saveQuickEditChanges()" title="Save changes">
                         <img src="res/save.svg" alt="Save">
