@@ -877,7 +877,9 @@ startKeyboardMovement() {
         if (modal) {
             modal.style.display = 'block';
             document.body.classList.add('modal-open');
+            document.body.style.overflow = 'hidden';
             this.loadSVGList();
+            this.preventBackgroundScroll();
             pushModalState('svgEditorModal', () => this.close());
         }
     },
@@ -901,11 +903,11 @@ startKeyboardMovement() {
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">2</div>
-                            <div class="training-info-text"><strong>Move Labels:</strong> Drag selected labels with your mouse or use arrow keys for precise 1px adjustments. Hold arrow keys for continuous movement.</div>
+                            <div class="training-info-text"><strong>Move Labels:</strong> Drag selected labels with your mouse or use arrow keys for precise 1px adjustments.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">3</div>
-                            <div class="training-info-text"><strong>Navigate:</strong> Press Tab to cycle through labels forward, Shift+Tab to cycle backward.</div>
+                            <div class="training-info-text"><strong>Navigate:</strong> Press Tab to select the next label, press Shift+Tab to select the previous label.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">4</div>
@@ -913,15 +915,15 @@ startKeyboardMovement() {
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">5</div>
-                            <div class="training-info-text"><strong>Reset:</strong> Click Reset to restore the current tracing guide to your preset's default configuration.</div>
+                            <div class="training-info-text"><strong>Reset:</strong> Click Reset (on the toolbar) to restore the current image to your preset's default image. Press Reset All (on the header) to reset all the images to your preset default.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">6</div>
-                            <div class="training-info-text"><strong>Save:</strong> Click Save to save the current guide, or Save All to save all unsaved guides at once. Blue highlighting indicates unsaved changes.</div>
+                            <div class="training-info-text"><strong>Save:</strong> Click Save (on the toolbar) to save the current image, or Save All (on the header) to save all unsaved guides at once.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">7</div>
-                            <div class="training-info-text"><strong>Zoom:</strong> Use the zoom slider to adjust the canvas size for easier editing.</div>
+                            <div class="training-info-text"><strong>Zoom:</strong> Alt+Mouse wheel Up/Down to zoom in/out.</div>
                         </div>
                     </div>
                 </div>
@@ -1000,6 +1002,7 @@ forceClose() {
     if (modal) {
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
     }
 
     // Clean up keyboard movement
@@ -1016,6 +1019,28 @@ forceClose() {
     this.state.unsavedSvgs.clear();
     this.state.histories = {};
     this.state.historyIndices = {};
+},
+
+preventBackgroundScroll() {
+    const modal = document.getElementById('svgEditorModal');
+    if (!modal) return;
+    
+    // Prevent scroll on modal overlay
+    modal.addEventListener('wheel', (e) => {
+        const target = e.target;
+        // Only prevent if scrolling on the overlay itself (not on scrollable content)
+        if (target === modal || target.classList.contains('svg-editor-overlay')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    modal.addEventListener('touchmove', (e) => {
+        const target = e.target;
+        // Only prevent if touching the overlay itself (not on scrollable content)
+        if (target === modal || target.classList.contains('svg-editor-overlay')) {
+            e.preventDefault();
+        }
+    }, { passive: false });
 }
 };
 
