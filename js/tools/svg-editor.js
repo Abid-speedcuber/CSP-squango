@@ -893,17 +893,20 @@ startKeyboardMovement() {
             infoModal.innerHTML = `
                 <div class="training-info-content">
                     <div class="training-info-header">
-                        <span class="training-info-title">SVG Tracing Guide Editor</span>
+                        <span class="training-info-title">Tracing Guide Editor Instructions</span>
                         <button class="training-info-close" onclick="document.getElementById('svgEditorInfoModal').classList.remove('active')">&times;</button>
                     </div>
                     <div class="training-info-body">
                         <div class="training-info-item">
+                            <div class="training-info-text">This Tracing Guide Editor lets you change the position of the small numbers (The tracing guides) on the image of each cases. It is more useful to preset creators than normal users. There are 39 cubestate images that you need to fix to set your tracing position in the case image.</div>
+                        </div>
+                        <div class="training-info-item">
                             <div class="training-info-number">1</div>
-                            <div class="training-info-text"><strong>Select Labels:</strong> Click on any blue or green number to select it. Hold Ctrl/Cmd to select multiple labels.</div>
+                            <div class="training-info-text"><strong>Select Labels:</strong> Click on any blue or red number to select it. Hold Ctrl/Cmd to select multiple labels.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">2</div>
-                            <div class="training-info-text"><strong>Move Labels:</strong> Drag selected labels with your mouse or use arrow keys for precise 1px adjustments.</div>
+                            <div class="training-info-text"><strong>Move Labels:</strong> Drag selected labels with your mouse to move it around, or use arrow keys for precise 1px adjustments.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">3</div>
@@ -911,7 +914,7 @@ startKeyboardMovement() {
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">4</div>
-                            <div class="training-info-text"><strong>Undo/Redo:</strong> Use the Undo and Redo buttons or Ctrl+Z and Ctrl+Y to step through your edit history.</div>
+                            <div class="training-info-text"><strong>Undo/Redo:</strong> Use the Undo and Redo buttons or Ctrl+Z and Ctrl+Y to undo or redo a change.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">5</div>
@@ -919,11 +922,11 @@ startKeyboardMovement() {
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">6</div>
-                            <div class="training-info-text"><strong>Save:</strong> Click Save (on the toolbar) to save the current image, or Save All (on the header) to save all unsaved guides at once.</div>
+                            <div class="training-info-text"><strong>Save:</strong> Click Save (on the toolbar) to save the current image, or Save All (on the header) to save all unsaved images at once.</div>
                         </div>
                         <div class="training-info-item">
                             <div class="training-info-number">7</div>
-                            <div class="training-info-text"><strong>Zoom:</strong> Alt+Mouse wheel Up/Down to zoom in/out.</div>
+                            <div class="training-info-text"><strong>Zoom:</strong> Alt+Mouse wheel Up/Down to zoom in/out, or pinch with 2 fingers, or simply just use the zoom slider if you can see it.</div>
                         </div>
                     </div>
                 </div>

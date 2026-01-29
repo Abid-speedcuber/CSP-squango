@@ -17,11 +17,11 @@
 
 <body>
     <div id="loadingScreen"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif;">
-        <h1 style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
-        <p style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif; padding: 0 20px; box-sizing: border-box;">
+        <h1 id="loadingTitle" style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
+        <p id="loadingAuthor" style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
         <div id="loadingTipContainer" style="margin-bottom: 25px;"></div>
-        <div style="width: 320px; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+        <div id="loadingBarContainer" style="width: 320px; max-width: 90vw; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
             <div id="loadingProgress"
                 style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
             </div>
@@ -209,9 +209,64 @@
             ]
         };
 
+        // Responsive loading screen (set BEFORE creating elements)
+        function adjustLoadingScreen() {
+            const width = window.innerWidth;
+            const title = document.getElementById('loadingTitle');
+            const author = document.getElementById('loadingAuthor');
+            const tip = document.getElementById('loadingTip');
+            const evaCredit = document.getElementById('evaCredit');
+            const mattCredit = document.getElementById('mattCredit');
+            
+            if (width <= 355) {
+                if (title) title.style.fontSize = '2rem';
+                if (author) author.style.fontSize = '0.85rem';
+                if (tip) {
+                    tip.style.fontSize = '0.75rem';
+                    tip.style.maxWidth = '95%';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.65rem';
+                    evaCredit.style.marginTop = '20px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.65rem';
+                }
+            } else if (width <= 480) {
+                if (title) title.style.fontSize = '2.5rem';
+                if (author) author.style.fontSize = '0.95rem';
+                if (tip) {
+                    tip.style.fontSize = '0.8rem';
+                    tip.style.maxWidth = '90%';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.7rem';
+                    evaCredit.style.marginTop = '25px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.7rem';
+                }
+            } else {
+                if (title) title.style.fontSize = '3.5rem';
+                if (author) author.style.fontSize = '1.1rem';
+                if (tip) {
+                    tip.style.fontSize = '0.95rem';
+                    tip.style.maxWidth = '520px';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.85rem';
+                    evaCredit.style.marginTop = '35px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.85rem';
+                }
+            }
+        }
+        
         // Select and display a random tip
         const tipElement = document.createElement('p');
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 520px; text-align: center; line-height: 1.6; font-weight: 400;';
+        tipElement.id = 'loadingTip';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 520px; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box;';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
@@ -219,15 +274,21 @@
         
         // Add Eva Kato credit
         const evaCredit = document.createElement('p');
-        evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400;';
+        evaCredit.id = 'evaCredit';
+        evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
         evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
         document.getElementById('loadingScreen').appendChild(evaCredit);
         
         // Add Matt credit
         const mattCredit = document.createElement('p');
-        mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400;';
+        mattCredit.id = 'mattCredit';
+        mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
         mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
         document.getElementById('loadingScreen').appendChild(mattCredit);
+        
+        // Apply initial sizing
+        adjustLoadingScreen();
+        window.addEventListener('resize', adjustLoadingScreen);
 
         // Loading screen progress simulation
         let loadProgress = 0;

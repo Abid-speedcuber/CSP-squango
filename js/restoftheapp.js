@@ -678,3 +678,18 @@ window.openAnimateAlgModal = function(algorithm = '') {
     
     document.body.insertAdjacentHTML('beforeend', html);
 };
+
+// Apply VW-based sizing to topbar on mobile
+function applyTopbarVWScaling() {
+    const topbar = document.querySelector('.topbar');
+    if (!topbar) return;
+    
+    if (window.innerWidth <= 480) {
+        topbar.classList.add('topbar-vw-mode');
+    } else {
+        topbar.classList.remove('topbar-vw-mode');
+    }
+}
+
+window.addEventListener('resize', applyTopbarVWScaling);
+document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);

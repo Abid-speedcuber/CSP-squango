@@ -11,6 +11,9 @@ let quickEditState = {
     visibleAlgColumns: 6 // Number of visible algorithm columns
 };
 
+// Load auto-select setting from localStorage
+let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
+
 function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
@@ -143,16 +146,21 @@ function openQuickEditModal() {
 }
 
 function generateGeneralTableRows() {
-    const sortedData = [...data].sort((a, b) => a.name.localeCompare(b.name));
+    const sortedData = [...data].sort((a, b) => {
+        const nameA = getDisplayName(a.name);
+        const nameB = getDisplayName(b.name);
+        return nameA.localeCompare(nameB);
+    });
     return sortedData.map(item => {
         const displayName = getDisplayName(item.name);
+        const caseNameDisplay = getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
         const formattedNote = sanitizeNoteHTML(note);
         
         return `
             <tr data-case="${item.name}">
-                <td class="uneditable">${item.name}</td>
+                <td class="uneditable">${caseNameDisplay}</td>
                 <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
                 <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
                 <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
@@ -221,11 +229,13 @@ function addAlgorithmColumns() {
                 
                 // Add event listeners
                 td.addEventListener('focus', function() {
-                    const range = document.createRange();
-                    range.selectNodeContents(this);
-                    const selection = window.getSelection();
-                    selection.removeAllRanges();
-                    selection.addRange(range);
+                    if (autoSelectTextOnFocus) {
+                        const range = document.createRange();
+                        range.selectNodeContents(this);
+                        const selection = window.getSelection();
+                        selection.removeAllRanges();
+                        selection.addRange(range);
+                    }
                     quickEditState.lastFocusedCell = this;
                 });
                 
@@ -340,12 +350,14 @@ function setupQuickEditCellHandlers() {
                 this.textContent = rawHTML;
             }
             
-            // Select all text when cell is focused
-            const range = document.createRange();
-            range.selectNodeContents(this);
-            const selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
+            // Select all text when cell is focused (if setting is enabled)
+            if (autoSelectTextOnFocus) {
+                const range = document.createRange();
+                range.selectNodeContents(this);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
             
             quickEditState.lastFocusedCell = this;
             
@@ -698,7 +710,18 @@ function openQuickEditFindReplace() {
     findReplace.style.display = 'block';
     quickEditState.findReplaceOpen = true;
     
-    // Switch notes to raw text mode
+    // Initialize drag functionality if not already done
+    if (!findReplace.dataset.dragInitialized) {
+        initializeFindReplaceDrag(findReplace);
+        findReplace.dataset.dragInitialized = 'true';
+    }
+    
+    // Reset position to top right
+    if (findReplace.resetPosition) {
+        findReplace.resetPosition();
+    }
+    
+    // Switch notes to raw text mode and keep them in raw mode
     const notesCells = document.querySelectorAll('.notes-cell');
     notesCells.forEach(cell => {
         const rawHTML = cell.dataset.rawHtml || '';
@@ -758,6 +781,13 @@ function liveSearchQuickEdit() {
     quickEditState.allMatchRanges = [];
     quickEditState.currentFindIndex = -1;
     
+    // Ensure notes cells show raw text and stay in raw text mode
+    const notesCells = document.querySelectorAll('.notes-cell');
+    notesCells.forEach(cell => {
+        const rawHTML = cell.dataset.rawHtml || '';
+        cell.textContent = rawHTML;
+    });
+    
     if (!searchTerm) {
         document.getElementById('quickEditMatchCount').textContent = 'No matches';
         return;
@@ -787,7 +817,7 @@ function liveSearchQuickEdit() {
         cells = Array.from(modal.querySelectorAll('.alg-cell'));
     }
     
-    // Find all matches with their positions
+    // Find all matches with their positions (case-insensitive)
     const searchLower = searchTerm.toLowerCase();
     cells.forEach(cell => {
         const text = cell.textContent;
@@ -819,16 +849,36 @@ function liveSearchQuickEdit() {
 }
 
 function highlightAllMatches() {
+    // Store the current HTML state before highlighting
     quickEditState.allMatchRanges.forEach(range => {
-        const span = document.createElement('span');
-        span.className = 'find-match-highlight';
-        
-        const text = range.cell.textContent;
-        range.cell.innerHTML = 
-            text.substring(0, range.start) +
-            `<span class="find-match-highlight">${text.substring(range.start, range.end)}</span>` +
-            text.substring(range.end);
+        // For notes cells, work with text content (raw HTML)
+        if (range.cell.classList.contains('notes-cell')) {
+            const rawText = range.cell.textContent;
+            const before = rawText.substring(0, range.start);
+            const match = rawText.substring(range.start, range.end);
+            const after = rawText.substring(range.end);
+            range.cell.textContent = before + match + after;
+            
+            // Create a text node structure with mark element
+            range.cell.innerHTML = 
+                escapeHtml(before) +
+                `<mark class="find-match-highlight">${escapeHtml(match)}</mark>` +
+                escapeHtml(after);
+        } else {
+            const text = range.cell.textContent;
+            range.cell.innerHTML = 
+                text.substring(0, range.start) +
+                `<span class="find-match-highlight">${text.substring(range.start, range.end)}</span>` +
+                text.substring(range.end);
+        }
     });
+}
+
+// Helper function to escape HTML for display
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 function highlightCurrentMatch() {
@@ -863,8 +913,14 @@ function clearFindHighlights() {
     // Restore original text content for all cells that have highlights
     const cells = modal.querySelectorAll('.editable');
     cells.forEach(cell => {
-        if (cell.querySelector('.find-match-highlight')) {
-            cell.textContent = cell.textContent; // Removes all HTML, keeps just text
+        if (cell.querySelector('.find-match-highlight') || cell.querySelector('mark.find-match-highlight')) {
+            // For notes cells, restore raw HTML
+            if (cell.classList.contains('notes-cell')) {
+                const rawHtml = cell.dataset.rawHtml || '';
+                cell.textContent = rawHtml;
+            } else {
+                cell.textContent = cell.textContent; // Removes all HTML, keeps just text
+            }
         }
     });
 }
@@ -1187,28 +1243,35 @@ window.showQuickEditInfoModal = function() {
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
+                        <div class="training-info-text"><b>Quick Edit</b> lets you edit the cases faster with unifying all the cases in one big table, and allowing some faster changing methods like find and replace. it lets you make quick <b>general changes</b> (Like changing the algorithm for a 3 mover (but you need enhanced access to access the algorithm table), or generally changing the name of a cubeshape to be another). here is all you need to know about <b>Quick Edit</b>:</div>
+                    </div>
+                    <div class="training-info-item">
                         <div class="training-info-number">1</div>
                         <div class="training-info-text"><strong>Navigation:</strong> Use Tab to move to the next cell, Shift+Tab for previous. Enter moves down to the same field in the next row.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>General Info Tab:</strong> Edit display names, subtitles, and notes for all cases. Notes support HTML formatting.</div>
+                        <div class="training-info-text"><strong>General Info Tab:</strong> Lets you <b>Edit</b> <em>display names, subtitles, and notes for all cases.</em> Notes support HTML formatting. It will show the formatted text in the notes column to let you see what you are dealing with, but you'll still have to edit html. If you don't know what html is, writing normal text in notes is more than okay!</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text"><strong>Algorithms Tab:</strong> Edit algorithms for all cases. Algorithms are auto-normalized on blur and color-coded by parity: <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>, <span style="color: #ca9b0dff; font-weight: 600;">Yellow = Angle Mismatch</span>, <span style="color: #c05c0aff; font-weight: 600;">Orange = Mirrored</span>, <span style="color: #71000bff; font-weight: 600;">Red = Invalid</span>.</div>
+                        <div class="training-info-text"><strong>Algorithms Tab:</strong> Edit algorithms for all cases. Algorithms are auto-normalized when you defocus a cell (so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself to look like squan notation) and color-coded live by parity and validity: <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>, <span style="color: #ca9b0dff; font-weight: 600;">Yellow = Technically solves the cube but doesn't match the angle in the picture</span>, <span style="color: #c05c0aff; font-weight: 600;">Orange = Solves the mirror case</span>, <span style="color: #71000bff; font-weight: 600;">Red = Invalid (either doesn't solve the case or does not lead to valid squan position at all</span>.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F to open. Select scope to search in specific fields or globally. Use Previous/Next to navigate matches.</div>
+                        <div class="training-info-text"><strong>Switch Tabs:</strong> To switch between the <b>General Info</b> tab and the <b>Algorithms</b>, directly click on their names. for smaller screen ie. phones, the tab switch might not be obvious. You have to click on the title "<b>Quick Edit</b>" to change tabs.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>Add Columns:</strong> Click +2 in the Algorithms tab to add more algorithm columns as needed.</div>
+                        <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F (or cmd+F in mac) or directly press the search button on top to open find and replace popup. You can move the popup around by clicking and dragging. Select scope to search in specific fields (like if you wanna do find and replace change only in the Display-Name section). Use Previous/Next arrow keys to navigate matches.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
-                        <div class="training-info-text"><strong>Save/Revert:</strong> Click Save to apply all changes. Click Revert to undo all changes since the last save. Exit without saving to discard.</div>
+                        <div class="training-info-text"><strong>Reveal Columns:</strong> It is not hardcoded that you can have at most 6 algorithms for a case. Click +2 in the Algorithms tab to reveal more columns as needed.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
+                        <div class="training-info-text"><strong>Save:</strong> Click Save to apply all changes. Exit without saving to discard all the changes</div>
                     </div>
                 </div>
             </div>
@@ -1243,3 +1306,78 @@ window.liveSearchQuickEdit = liveSearchQuickEdit;
 window.handleReplaceEnter = handleReplaceEnter;
 window.changeFindScope = changeFindScope;
 window.addAlgorithmColumns = addAlgorithmColumns;
+
+// Global function to toggle auto-select text on focus
+window.setAutoSelectTextOnFocus = function(enabled) {
+    autoSelectTextOnFocus = enabled;
+    localStorage.setItem('autoSelectTextOnFocus', enabled.toString());
+};
+
+// Drag functionality for find/replace popup
+function initializeFindReplaceDrag(popup) {
+    let isDragging = false;
+    let currentX = 0;
+    let currentY = 0;
+    let initialX;
+    let initialY;
+
+    const header = popup.querySelector('.find-replace-header');
+    
+    header.style.cursor = 'move';
+    
+    header.addEventListener('mousedown', dragStart);
+    header.addEventListener('touchstart', dragStart);
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('touchmove', drag);
+    
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchend', dragEnd);
+
+    // Reset position function
+    popup.resetPosition = function() {
+        currentX = 0;
+        currentY = 0;
+        popup.style.transform = 'translate(0, 0)';
+    };
+
+    function dragStart(e) {
+        const rect = popup.getBoundingClientRect();
+        
+        if (e.type === 'touchstart') {
+            initialX = e.touches[0].clientX - currentX;
+            initialY = e.touches[0].clientY - currentY;
+        } else {
+            initialX = e.clientX - currentX;
+            initialY = e.clientY - currentY;
+        }
+
+        if (e.target === header || header.contains(e.target)) {
+            isDragging = true;
+        }
+    }
+
+    function drag(e) {
+        if (isDragging) {
+            e.preventDefault();
+            
+            if (e.type === 'touchmove') {
+                currentX = e.touches[0].clientX - initialX;
+                currentY = e.touches[0].clientY - initialY;
+            } else {
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+            }
+
+            setTranslate(currentX, currentY, popup);
+        }
+    }
+
+    function dragEnd(e) {
+        isDragging = false;
+    }
+
+    function setTranslate(xPos, yPos, el) {
+        el.style.transform = `translate(${xPos}px, ${yPos}px)`;
+    }
+}
