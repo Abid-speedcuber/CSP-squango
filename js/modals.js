@@ -31,9 +31,6 @@ function generateModalHTML() {
                     <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
                 </div>
                 <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
-                    
-                    <!-- Basic Personalization Section -->
-                    <div style="margin-bottom: 20px;">
                         
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
@@ -124,6 +121,7 @@ function generateModalHTML() {
                                 <input type="checkbox" id="enhancedAccessToggle" onchange="toggleEnhancedAccess(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                             </div>
                         </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -191,7 +189,7 @@ function generateModalHTML() {
             </div>
         </div>
 
-        <div id="profileModal" class="modal" style="background: transparent;">
+        <div id="profileModal" class="modal">
             <div class="modal-content" style="max-width: 300px; margin: 70px 20px 20px auto; margin-right: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
                 <div class="modal-body" style="padding: 0; background: white; border-radius: 16px;">
                     <!-- Profile Header -->
@@ -205,8 +203,9 @@ function generateModalHTML() {
                         <!-- Cases Learned Progress -->
                         <div style="margin-bottom: 12px;">
                             <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileLearnedProgress" style="background: linear-gradient(90deg, #28a745, #20c997); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                <div id="profileLearningProgress" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                                <div id="profileLearnedProgress" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
                                     <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
                                     <span id="profileLearnedText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
                                 </div>
@@ -455,10 +454,28 @@ function saveModalData(name) {
 */
 
 function openSettingsModal() {
+    console.log('🟢 openSettingsModal called');
+    console.log('📊 Current modalStack:', modalStack.map(m => m.id));
+    
+    const profileModal = document.getElementById('profileModal');
+    if (profileModal) {
+        console.log('👀 Profile modal state BEFORE opening settings:');
+        console.log('   Classes:', profileModal.className);
+        console.log('   Display:', window.getComputedStyle(profileModal).display);
+    }
+    
     const settingsModal = document.getElementById('settingsModal');
     if (!settingsModal) return;
     document.body.classList.add('modal-open');
     settingsModal.style.display = 'block';
+    
+    console.log('✅ Settings modal opened');
+    
+    if (profileModal) {
+        console.log('👀 Profile modal state AFTER opening settings:');
+        console.log('   Classes:', profileModal.className);
+        console.log('   Display:', window.getComputedStyle(profileModal).display);
+    }
     
     const hintToggleCheckbox = document.getElementById('hintToggle');
     if (hintToggleCheckbox) hintToggleCheckbox.checked = showHints;
@@ -489,6 +506,7 @@ if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
     populatePresetDropdown();
 
 pushModalState('settingsModal', closeSettingsModal);
+console.log('📌 Pushed settingsModal to stack. New stack:', modalStack.map(m => m.id));
 }
 
 function handlePresetChange(presetName) {
@@ -519,7 +537,7 @@ function handlePresetChange(presetName) {
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #abd7b5ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); applyPreset(\`${presetName}\`, false, false);" style="padding: 10px 20px; background: #e8b1b6ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); applyPreset(\`${presetName}\`, false, false); setTimeout(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); }, 100);" style="padding: 10px 20px; background: #e8b1b6ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
                     <button onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
@@ -1938,40 +1956,84 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
 
 // Profile Modal Functions
 function openProfileModal() {
+    console.log('🟢 openProfileModal called');
+    console.log('📊 Current modalStack:', modalStack.map(m => m.id));
+    
     const modal = document.getElementById('profileModal');
-    if (!modal) return;
+    if (!modal) {
+        console.error('❌ Profile modal not found');
+        return;
+    }
     
-    modal.style.display = 'block';
+    console.log('✅ Profile modal element found');
+    console.log('📦 Modal current classes:', modal.className);
+    console.log('🎨 Modal computed display BEFORE:', window.getComputedStyle(modal).display);
+    console.log('🎨 Modal computed visibility BEFORE:', window.getComputedStyle(modal).visibility);
+    console.log('🎨 Modal computed opacity BEFORE:', window.getComputedStyle(modal).opacity);
+    console.log('🎨 Modal computed zIndex BEFORE:', window.getComputedStyle(modal).zIndex);
     
-    // Update progress bars
-    updateProfileStats();
+    pushModalState('profileModal', closeProfileModal);
+    console.log('📌 Pushed profileModal to stack. New stack:', modalStack.map(m => m.id));
     
-    // Add click outside handler
+    modal.classList.add('active');
+    document.body.classList.add('modal-open');
+    console.log('✨ Added active class to profile modal');
+    
+    // DEBUG: Force dimensions and test
+    console.log('🧪 Testing DOM attachment...');
+    console.log('   Modal parentElement:', modal.parentElement);
+    console.log('   Modal parentElement tagName:', modal.parentElement?.tagName);
+    console.log('   Is connected to document:', modal.isConnected);
+    console.log('   Document contains modal:', document.contains(modal));
+    console.log('   Modal.style.display:', modal.style.display);
+    
+    // Check all computed styles
+    const computed = window.getComputedStyle(modal);
+    console.log('   ALL computed styles that might collapse:');
+    console.log('   - width:', computed.width);
+    console.log('   - height:', computed.height);
+    console.log('   - maxWidth:', computed.maxWidth);
+    console.log('   - maxHeight:', computed.maxHeight);
+    console.log('   - position:', computed.position);
+    console.log('   - transform:', computed.transform);
+    console.log('   - clip:', computed.clip);
+    console.log('   - clipPath:', computed.clipPath);
+    
+    console.log('🎨 Modal computed display AFTER:', window.getComputedStyle(modal).display);
+    console.log('🎨 Modal computed visibility AFTER:', window.getComputedStyle(modal).visibility);
+    console.log('🎨 Modal computed opacity AFTER:', window.getComputedStyle(modal).opacity);
+    console.log('🎨 Modal computed zIndex AFTER:', window.getComputedStyle(modal).zIndex);
+    console.log('📏 Modal offsetWidth:', modal.offsetWidth);
+    console.log('📏 Modal offsetHeight:', modal.offsetHeight);
+    
+    const modalContent = modal.querySelector('.modal-content');
+    if (modalContent) {
+        console.log('📦 Modal-content offsetWidth:', modalContent.offsetWidth);
+        console.log('📦 Modal-content offsetHeight:', modalContent.offsetHeight);
+        console.log('📦 Modal-content computed display:', window.getComputedStyle(modalContent).display);
+    }
+    
+    // Force a reflow
+    console.log('🔄 Forcing reflow...');
+    modal.offsetHeight; // Force reflow
     setTimeout(() => {
-        const clickHandler = (e) => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (!modalContent.contains(e.target)) {
-                closeProfileModal();
-                document.removeEventListener('mousedown', clickHandler);
-                window.removeEventListener('scroll', scrollHandler, true);
-            }
-        };
-        
-        const scrollHandler = () => {
-            closeProfileModal();
-            document.removeEventListener('mousedown', clickHandler);
-            window.removeEventListener('scroll', scrollHandler, true);
-        };
-        
-        document.addEventListener('mousedown', clickHandler);
-        window.addEventListener('scroll', scrollHandler, true);
+        console.log('⏰ After timeout:');
+        console.log('   Modal offsetWidth:', modal.offsetWidth);
+        console.log('   Modal offsetHeight:', modal.offsetHeight);
+        if (modalContent) {
+            console.log('   Modal-content offsetWidth:', modalContent.offsetWidth);
+            console.log('   Modal-content offsetHeight:', modalContent.offsetHeight);
+        }
     }, 100);
+    
+    updateProfileStats();
 }
 
 function closeProfileModal() {
     const modal = document.getElementById('profileModal');
     if (modal) {
-        modal.style.display = 'none';
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
     }
 }
 
@@ -1993,26 +2055,17 @@ function updateProfileStats() {
     const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
     const safety = 50 + (coverage / 2);
     
-    // Update learned progress (green for learned, yellow for learning)
+    // Update progress bars - yellow (learned + learning) behind, green (learned) on top
+    const learningBar = document.getElementById('profileLearningProgress');
     const learnedBar = document.getElementById('profileLearnedProgress');
-    learnedBar.style.width = learnedPercent + '%';
-    learnedBar.style.background = '#28a745';
     
-    // Add learning progress (yellow overlay)
-    let learningBar = document.getElementById('profileLearningProgress');
-    if (!learningBar) {
-        learningBar = document.createElement('div');
-        learningBar.id = 'profileLearningProgress';
-        learningBar.style.position = 'absolute';
-        learningBar.style.left = '0';
-        learningBar.style.top = '0';
-        learningBar.style.height = '100%';
-        learningBar.style.background = '#ffc107';
-        learningBar.style.transition = 'width 0.3s ease';
-        learnedBar.parentElement.style.position = 'relative';
-        learnedBar.parentElement.appendChild(learningBar);
+    if (learningBar) {
+        learningBar.style.width = (learnedPercent + learningPercent) + '%';
     }
-    learningBar.style.width = (learnedPercent + learningPercent) + '%';
+    
+    if (learnedBar) {
+        learnedBar.style.width = learnedPercent + '%';
+    }
     
     document.getElementById('profileLearnedText').textContent = learnedCount + '/90';
     
@@ -2206,6 +2259,9 @@ function initializePresetSelector() {
         presetOptions.appendChild(optionDiv);
     }
 }
+
+// Make it globally accessible
+window.initializePresetSelector = initializePresetSelector;
 
 window.togglePresetExpand = function() {
     const presetOptions = document.getElementById('presetOptions');

@@ -36,7 +36,7 @@
             <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
                 <img src="res/menu.svg" height="24px" width="24px">
             </button>
-            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="openProfileModal()">
+            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="event.stopPropagation(); console.log('🔵 Profile button clicked'); openProfileModal()">
                 <img src="res/avatar.svg" height="24px" width="24px">
             </button>
         </header>     
@@ -116,6 +116,7 @@
                 const confessionModal = document.getElementById('confessionModal');
                 const colorSchemeModal = document.getElementById('colorSchemeModal');
                 const trainingModal = document.getElementById('trainingModal');
+                const profileModal = document.getElementById('profileModal');
 
                 if (event.target == settingsModal) {
                     closeSettingsModal();
@@ -135,6 +136,9 @@
                 }
                 if (event.target == confessionModal) {
                     closeConfessionModal();
+                }
+                if (profileModal && event.target == profileModal) {
+                    closeProfileModal();
                 }
             }, 0);
         }
@@ -223,7 +227,7 @@
                 if (author) author.style.fontSize = '0.85rem';
                 if (tip) {
                     tip.style.fontSize = '0.75rem';
-                    tip.style.maxWidth = '95%';
+                    tip.style.maxWidth = '95vw';
                 }
                 if (evaCredit) {
                     evaCredit.style.fontSize = '0.65rem';
@@ -237,7 +241,7 @@
                 if (author) author.style.fontSize = '0.95rem';
                 if (tip) {
                     tip.style.fontSize = '0.8rem';
-                    tip.style.maxWidth = '90%';
+                    tip.style.maxWidth = '90vw';
                 }
                 if (evaCredit) {
                     evaCredit.style.fontSize = '0.7rem';
@@ -251,7 +255,7 @@
                 if (author) author.style.fontSize = '1.1rem';
                 if (tip) {
                     tip.style.fontSize = '0.95rem';
-                    tip.style.maxWidth = '520px';
+                    tip.style.maxWidth = '90vw';
                 }
                 if (evaCredit) {
                     evaCredit.style.fontSize = '0.85rem';
@@ -266,7 +270,7 @@
         // Select and display a random tip
         const tipElement = document.createElement('p');
         tipElement.id = 'loadingTip';
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 520px; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box;';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 90vw; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;

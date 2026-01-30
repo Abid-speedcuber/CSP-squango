@@ -7,7 +7,7 @@
     height: 120vh;
     z-index: 10000;
     background: rgba(0, 0, 0, 0.5);
-    overflow: auto;
+    overflow: hidden;
 }
 
 #svgEditorModal .modal-content {

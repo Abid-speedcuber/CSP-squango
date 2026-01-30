@@ -2,6 +2,8 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
 }
 
 body {
@@ -657,6 +659,10 @@ body.modal-open .floating-buttons-container {
 
 .modal.active {
     display: block;
+}
+
+#profileModal.active {
+    background: transparent;
 }
 
 .modal-content {
