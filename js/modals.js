@@ -454,28 +454,11 @@ function saveModalData(name) {
 */
 
 function openSettingsModal() {
-    console.log('🟢 openSettingsModal called');
-    console.log('📊 Current modalStack:', modalStack.map(m => m.id));
-    
     const profileModal = document.getElementById('profileModal');
-    if (profileModal) {
-        console.log('👀 Profile modal state BEFORE opening settings:');
-        console.log('   Classes:', profileModal.className);
-        console.log('   Display:', window.getComputedStyle(profileModal).display);
-    }
-    
     const settingsModal = document.getElementById('settingsModal');
     if (!settingsModal) return;
     document.body.classList.add('modal-open');
     settingsModal.style.display = 'block';
-    
-    console.log('✅ Settings modal opened');
-    
-    if (profileModal) {
-        console.log('👀 Profile modal state AFTER opening settings:');
-        console.log('   Classes:', profileModal.className);
-        console.log('   Display:', window.getComputedStyle(profileModal).display);
-    }
     
     const hintToggleCheckbox = document.getElementById('hintToggle');
     if (hintToggleCheckbox) hintToggleCheckbox.checked = showHints;
@@ -506,7 +489,6 @@ if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
     populatePresetDropdown();
 
 pushModalState('settingsModal', closeSettingsModal);
-console.log('📌 Pushed settingsModal to stack. New stack:', modalStack.map(m => m.id));
 }
 
 function handlePresetChange(presetName) {
@@ -1955,77 +1937,23 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
 };
 
 // Profile Modal Functions
-function openProfileModal() {
-    console.log('🟢 openProfileModal called');
-    console.log('📊 Current modalStack:', modalStack.map(m => m.id));
-    
+function openProfileModal() { 
     const modal = document.getElementById('profileModal');
     if (!modal) {
         console.error('❌ Profile modal not found');
         return;
     }
-    
-    console.log('✅ Profile modal element found');
-    console.log('📦 Modal current classes:', modal.className);
-    console.log('🎨 Modal computed display BEFORE:', window.getComputedStyle(modal).display);
-    console.log('🎨 Modal computed visibility BEFORE:', window.getComputedStyle(modal).visibility);
-    console.log('🎨 Modal computed opacity BEFORE:', window.getComputedStyle(modal).opacity);
-    console.log('🎨 Modal computed zIndex BEFORE:', window.getComputedStyle(modal).zIndex);
-    
     pushModalState('profileModal', closeProfileModal);
-    console.log('📌 Pushed profileModal to stack. New stack:', modalStack.map(m => m.id));
-    
+
     modal.classList.add('active');
     document.body.classList.add('modal-open');
-    console.log('✨ Added active class to profile modal');
-    
-    // DEBUG: Force dimensions and test
-    console.log('🧪 Testing DOM attachment...');
-    console.log('   Modal parentElement:', modal.parentElement);
-    console.log('   Modal parentElement tagName:', modal.parentElement?.tagName);
-    console.log('   Is connected to document:', modal.isConnected);
-    console.log('   Document contains modal:', document.contains(modal));
-    console.log('   Modal.style.display:', modal.style.display);
-    
+
     // Check all computed styles
     const computed = window.getComputedStyle(modal);
-    console.log('   ALL computed styles that might collapse:');
-    console.log('   - width:', computed.width);
-    console.log('   - height:', computed.height);
-    console.log('   - maxWidth:', computed.maxWidth);
-    console.log('   - maxHeight:', computed.maxHeight);
-    console.log('   - position:', computed.position);
-    console.log('   - transform:', computed.transform);
-    console.log('   - clip:', computed.clip);
-    console.log('   - clipPath:', computed.clipPath);
-    
-    console.log('🎨 Modal computed display AFTER:', window.getComputedStyle(modal).display);
-    console.log('🎨 Modal computed visibility AFTER:', window.getComputedStyle(modal).visibility);
-    console.log('🎨 Modal computed opacity AFTER:', window.getComputedStyle(modal).opacity);
-    console.log('🎨 Modal computed zIndex AFTER:', window.getComputedStyle(modal).zIndex);
-    console.log('📏 Modal offsetWidth:', modal.offsetWidth);
-    console.log('📏 Modal offsetHeight:', modal.offsetHeight);
-    
     const modalContent = modal.querySelector('.modal-content');
-    if (modalContent) {
-        console.log('📦 Modal-content offsetWidth:', modalContent.offsetWidth);
-        console.log('📦 Modal-content offsetHeight:', modalContent.offsetHeight);
-        console.log('📦 Modal-content computed display:', window.getComputedStyle(modalContent).display);
-    }
-    
-    // Force a reflow
-    console.log('🔄 Forcing reflow...');
     modal.offsetHeight; // Force reflow
     setTimeout(() => {
-        console.log('⏰ After timeout:');
-        console.log('   Modal offsetWidth:', modal.offsetWidth);
-        console.log('   Modal offsetHeight:', modal.offsetHeight);
-        if (modalContent) {
-            console.log('   Modal-content offsetWidth:', modalContent.offsetWidth);
-            console.log('   Modal-content offsetHeight:', modalContent.offsetHeight);
-        }
     }, 100);
-    
     updateProfileStats();
 }
 

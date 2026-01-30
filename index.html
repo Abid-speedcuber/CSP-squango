@@ -36,7 +36,7 @@
             <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
                 <img src="res/menu.svg" height="24px" width="24px">
             </button>
-            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="event.stopPropagation(); console.log('🔵 Profile button clicked'); openProfileModal()">
+            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="event.stopPropagation();">
                 <img src="res/avatar.svg" height="24px" width="24px">
             </button>
         </header>     
@@ -412,10 +412,8 @@
             
             // Calculate parity only if needed (settings changed or first load)
             if (needsParityRecalculation()) {
-                console.log('Parity settings changed, recalculating...');
                 calculateAndCacheAllParity();
             } else {
-                console.log('Using cached parity calculations');
             }
             
             // Ensure minimum loading time of 3.5 seconds

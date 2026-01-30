@@ -1245,26 +1245,6 @@ function adjustColorBrightness(hexColor, percent) {
                 const saveBtnRect = saveBtn.getBoundingClientRect();
                 const saveBtnVisible = saveBtnRect.top >= 0 && saveBtnRect.bottom <= window.innerHeight;
                 
-                console.log('=== Floating Save Button Debug ===');
-                console.log('dataChanged:', dataChanged);
-                console.log('saveBtnVisible:', saveBtnVisible);
-                console.log('contentRect:', {
-                    top: contentRect.top,
-                    right: contentRect.right,
-                    bottom: contentRect.bottom,
-                    left: contentRect.left,
-                    width: contentRect.width,
-                    height: contentRect.height
-                });
-                console.log('saveBtnRect:', {
-                    top: saveBtnRect.top,
-                    bottom: saveBtnRect.bottom
-                });
-                console.log('viewport:', {
-                    width: window.innerWidth,
-                    height: window.innerHeight
-                });
-                
                 if (dataChanged && !saveBtnVisible) {
                     floatingSaveBtn.style.display = 'flex';
                     // NUCLEAR: Calculate position from viewport, not relative values
@@ -1276,26 +1256,14 @@ function adjustColorBrightness(hexColor, percent) {
                     const calculatedRight = viewportWidth - modalRight + 16;
                     const calculatedBottom = viewportHeight - modalBottom + 16;
                     
-                    console.log('Calculated position:', {
-                        right: calculatedRight,
-                        bottom: calculatedBottom
-                    });
-                    
                     // Fixed offset from modal edge
                     floatingSaveBtn.style.right = `${calculatedRight}px`;
                     floatingSaveBtn.style.bottom = `${calculatedBottom}px`;
                     floatingSaveBtn.style.position = 'fixed';
                     
-                    console.log('Applied styles:', {
-                        right: floatingSaveBtn.style.right,
-                        bottom: floatingSaveBtn.style.bottom,
-                        display: floatingSaveBtn.style.display
-                    });
                 } else {
                     floatingSaveBtn.style.display = 'none';
-                    console.log('Button hidden - dataChanged:', dataChanged, 'saveBtnVisible:', saveBtnVisible);
                 }
-                console.log('=================================');
             } catch (e) {
                 console.error('Error updating floating save button:', e);
             }
@@ -2000,36 +1968,18 @@ function adjustColorBrightness(hexColor, percent) {
             // Position buttons based on modal position
             function updateButtonPositions() {
                 const rect = modal.getBoundingClientRect();
-                console.log('=== Button Position Update ===');
-                console.log('Modal rect:', rect);
-                console.log('Viewport:', { width: window.innerWidth, height: window.innerHeight });
-                
                 const closeTop = rect.top + 8;
                 const closeRight = window.innerWidth - rect.right + 6;
                 const instrBottom = window.innerHeight - rect.bottom + 66;
                 const instrRight = window.innerWidth - rect.right + 6;
                 const settingsBottom = window.innerHeight - rect.bottom + 16;
-                const settingsRight = window.innerWidth - rect.right + 6;
-                
-                console.log('Calculated positions:', {
-                    close: { top: closeTop, right: closeRight },
-                    instruction: { bottom: instrBottom, right: instrRight },
-                    settings: { bottom: settingsBottom, right: settingsRight }
-                });
-                
+                const settingsRight = window.innerWidth - rect.right + 6;                
                 closeBtnElement.style.top = `${closeTop}px`;
                 closeBtnElement.style.right = `${closeRight}px`;
                 instructionBtnElement.style.bottom = `${instrBottom}px`;
                 instructionBtnElement.style.right = `${instrRight}px`;
                 settingsBtnElement.style.bottom = `${settingsBottom}px`;
                 settingsBtnElement.style.right = `${settingsRight}px`;
-                
-                console.log('Applied positions:', {
-                    close: { top: closeBtnElement.style.top, right: closeBtnElement.style.right },
-                    instruction: { bottom: instructionBtnElement.style.bottom, right: instructionBtnElement.style.right },
-                    settings: { bottom: settingsBtnElement.style.bottom, right: settingsBtnElement.style.right }
-                });
-                console.log('==============================');
             }
 
             // Force multiple updates with delays to catch layout settling

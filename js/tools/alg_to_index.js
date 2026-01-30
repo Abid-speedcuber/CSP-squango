@@ -278,8 +278,6 @@
     const args = process.argv.slice(2);
     
     if (args.length === 0) {
-      console.log('Usage: node algToShapeIndex.js "/(4,2)/(-2,2)/..."');
-      console.log('Example: node algToShapeIndex.js "/(4,2)/(-2,2)/(-2,2)/(4,-1)/(0,-3)/(-1,1)"');
       process.exit(1);
     }
     
@@ -287,11 +285,6 @@
     
     try {
       const result = algToShapeIndex(scramble);
-      console.log('Original scramble:', result.original);
-      console.log('Inverted scramble:', result.inverted);
-      console.log('Top layer hex:', result.tlHex);
-      console.log('Bottom layer hex:', result.blHex);
-      console.log('Shape index:', result.shapeIndex);
     } catch (error) {
       console.error('Error:', error.message);
       process.exit(1);
