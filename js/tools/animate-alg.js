@@ -337,7 +337,7 @@
         const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
         const afterHighlight = originalAlg.substring(step.highlightEnd);
 
-        return beforeHighlight + '<span style="background: #ff9800; color: #000; padding: 2px 4px; border-radius: 2px; font-weight: bold;">' + highlighted + '</span>' + afterHighlight;
+        return beforeHighlight + '<span style="background: #f9dfb8ff; color: #000; padding: 2px 4px; border-radius: 2px;">' + highlighted + '</span>' + afterHighlight;
     }
 
     function renderVisualization(hex, colorScheme) {

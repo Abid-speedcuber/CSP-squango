@@ -315,6 +315,15 @@
                 };
             }
             
+            // Setup profile button
+            const profileBtn = document.getElementById('profileBtn');
+            if (profileBtn) {
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openProfileModal();
+                };
+            }
+            
             // Setup search toggle for mobile
             const searchToggle = document.getElementById('searchToggle');
             const searchInput = document.getElementById('search');
