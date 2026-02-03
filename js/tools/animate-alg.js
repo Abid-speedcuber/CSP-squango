@@ -400,13 +400,16 @@
             }
             #${modalId} .modal-content {
                 background: white;
-                border-radius: 12px;
+                border-radius: 18px;
                 max-width: min(800px, 90vw);
                 width: 100%;
-                max-height: 90vh;
+                min-height: 20vh;
+                max-height: 80vh;
                 overflow-y: auto;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 position: relative;
+                display: flex;
+                flex-direction: column;
             }
             #${modalId} .modal-header {
                 padding: 20px;
@@ -582,7 +585,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
-                    <button class="close-btn" onclick="document.getElementById('${modalId}').remove()">✕ Close</button>
+                    <button class="close-btn" onclick="(function() { window.modalScrollY = window.scrollY || 0; document.body.style.top = ''; document.body.classList.remove('modal-open'); window.scrollTo(0, window.modalScrollY); document.getElementById('${modalId}').remove(); })()">✕ Close</button>
                 </div>
                 <div class="modal-body" id="${modalId}-body">
                     <!-- Content will be rendered here -->
@@ -1013,6 +1016,9 @@
 
         // Insert HTML and render initial state
         setTimeout(() => {
+            window.modalScrollY = window.scrollY;
+            document.body.style.top = `-${window.modalScrollY}px`;
+            document.body.classList.add('modal-open');
             render();
         }, 0);
 

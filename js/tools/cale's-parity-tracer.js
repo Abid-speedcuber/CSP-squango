@@ -2110,6 +2110,9 @@ function adjustColorBrightness(hexColor, percent) {
                 closeBtnElement.remove();
                 instructionBtnElement.remove();
                 settingsBtnElement.remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.top = '';
+                window.scrollTo(0, window.modalScrollY || 0);
             };
 
             // Use unified back button handler
@@ -2177,6 +2180,10 @@ function adjustColorBrightness(hexColor, percent) {
         document.body.appendChild(closeBtn);
         document.body.appendChild(instructionBtn);
         document.body.appendChild(settingsBtn);
+        
+        window.modalScrollY = window.scrollY;
+        document.body.style.top = `-${window.modalScrollY}px`;
+        document.body.classList.add('modal-open');
 
         return backdrop;
     }
