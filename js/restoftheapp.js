@@ -674,7 +674,7 @@ window.openAnimateAlgModal = function(algorithm = '') {
         rightColor: colorScheme.rightColor,
         backColor: colorScheme.backColor,
         leftColor: colorScheme.leftColor
-    });
+    }, scrambleImageSize);
     
     document.body.insertAdjacentHTML('beforeend', html);
 };

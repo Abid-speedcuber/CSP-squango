@@ -340,7 +340,7 @@
         return beforeHighlight + '<span style="background: #f9dfb8ff; color: #000; padding: 2px 4px; border-radius: 2px;">' + highlighted + '</span>' + afterHighlight;
     }
 
-    function renderVisualization(hex, colorScheme) {
+    function renderVisualization(hex, colorScheme, imageSize) {
         if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
             return '<div style="color: #ff6b6b; font-style: italic;">draw-scramble.js not found</div>';
         }
@@ -349,7 +349,7 @@
             const hexCode = hex.tlHex + '|' + hex.blHex;
             const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
                 hexCode,
-                200,
+                imageSize,
                 {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
@@ -371,7 +371,7 @@
     // ========================================
     // MAIN VIEWER CREATION FUNCTION
     // ========================================
-    function createViewer(algorithm, colors = {}) {
+    function createViewer(algorithm, colors = {}, imageSize = 200) {
         const modalId = 'sq1-viewer-modal-' + Date.now();
 
         const colorScheme = {
@@ -392,11 +392,14 @@
                 width: 100%;
                 height: 100%;
                 background: rgba(0, 0, 0, 0.5);
-                z-index: 999999;
+                z-index: 10005;
                 display: flex;
                 justify-content: center;
                 align-items: center;
                 font-family: Arial, sans-serif;
+                overflow-y: auto;
+                padding: 20px;
+                box-sizing: border-box;
             }
             #${modalId} .modal-content {
                 background: white;
@@ -405,11 +408,23 @@
                 width: 100%;
                 min-height: 20vh;
                 max-height: 80vh;
-                overflow-y: auto;
+                overflow-y: hidden;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 position: relative;
                 display: flex;
                 flex-direction: column;
+            }
+            #${modalId} .modal-body {
+                padding: 20px;
+                overflow-y: auto;
+                flex: 1;
+            }
+            #${modalId} .modal-body::-webkit-scrollbar {
+                display: none;
+            }
+            #${modalId} .modal-body {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
             }
             #${modalId} .modal-header {
                 padding: 20px;
@@ -581,7 +596,7 @@
 
         const html = `
         ${css}
-        <div id="${modalId}">
+        <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { window.modalScrollY = window.scrollY || 0; document.body.style.top = ''; document.body.classList.remove('modal-open'); window.scrollTo(0, window.modalScrollY); document.getElementById('${modalId}').remove(); } })(event)">
             <div class="modal-content">
                 <div class="modal-header">
                     <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
@@ -604,14 +619,15 @@
             isAnimating: false,
             isAutoRunning: false,
             autoRunDirection: 'next',
-            colorScheme: colorScheme
+            colorScheme: colorScheme,
+            imageSize: imageSize
         };
 
         // Render function
         function render() {
             const step = state.steps[state.currentStep];
             const hex = getHexForStep(step);
-            const visualization = renderVisualization(hex, state.colorScheme);
+            const visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
             const highlightedAlg = renderAlgorithm(step, state.originalAlg);
 
             const bodyHtml = `
@@ -841,7 +857,7 @@
                 const topPieces = topSvg.querySelectorAll('polygon, circle:last-child');
                 const bottomPieces = bottomSvg.querySelectorAll('polygon, circle:last-child');
 
-                const svgSize = 200;
+                const svgSize = state.imageSize;
                 const unit10vh = svgSize * 0.4;
                 const radiusOuter = unit10vh * 0.7;
                 const ringRadius = radiusOuter + (unit10vh * 0.4);
@@ -866,8 +882,8 @@
                         afterHex = nextStep ? getHexForStep(nextStep) : getHexForStep(step);
                     }
 
-                    const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme);
-                    const afterSvgHtml = renderVisualization(afterHex, state.colorScheme);
+                    const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize);
+                    const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize);
 
                     const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
 

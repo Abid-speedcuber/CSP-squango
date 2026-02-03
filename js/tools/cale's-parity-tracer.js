@@ -1947,9 +1947,6 @@ function adjustColorBrightness(hexColor, percent) {
       </style>
       <div class="parity-tracer-input-container">
         <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
-        <button id="${uniqueId}-analyze" style="margin: 0; background: ${buttonBgColor}; color: ${textColor}; border-color: ${borderColor}; font-weight: 600;">
-          Analyze
-        </button>
       </div>
       <div id="${uniqueId}-visualization" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
       <div id="${uniqueId}-results" class="results-section"></div>
@@ -1957,7 +1954,6 @@ function adjustColorBrightness(hexColor, percent) {
 
         // Attach event handlers - COMPLETE LOGIC
         setTimeout(() => {
-            const analyzeBtn = modal.querySelector(`#${uniqueId}-analyze`);
             const scrambleInput = modal.querySelector(`#${uniqueId}-scramble`);
             const vizContainer = modal.querySelector(`#${uniqueId}-visualization`);
             const resultsContainer = modal.querySelector(`#${uniqueId}-results`);
@@ -1992,8 +1988,13 @@ function adjustColorBrightness(hexColor, percent) {
             backdrop.addEventListener('scroll', updateButtonPositions);
 
             function performAnalysisWithLongName() {
-                const scrambleText = scrambleInput.value.trim();
+                let scrambleText = scrambleInput.value.trim();
                 if (!scrambleText) return;
+
+                // Normalize the scramble using ScrambleNormalizer if available
+                if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
+                    scrambleText = window.ScrambleNormalizer.normalizeScramble(scrambleText);
+                }
 
                 try {
                     const state = applyScrambleToStateArrayWithLongName(scrambleText);
@@ -2095,12 +2096,13 @@ function adjustColorBrightness(hexColor, percent) {
                 }
             }
 
-            analyzeBtn.addEventListener('click', performAnalysisWithLongName);
+            scrambleInput.addEventListener('input', () => {
+                performAnalysisWithLongName();
+            });
 
             scrambleInput.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    performAnalysisWithLongName();
                 }
             });
 
