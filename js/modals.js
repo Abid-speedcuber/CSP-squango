@@ -457,8 +457,11 @@ function openSettingsModal() {
     const profileModal = document.getElementById('profileModal');
     const settingsModal = document.getElementById('settingsModal');
     if (!settingsModal) return;
+    
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
-    settingsModal.style.display = 'block';
+    settingsModal.classList.add('active');
     
     const hintToggleCheckbox = document.getElementById('hintToggle');
     if (hintToggleCheckbox) hintToggleCheckbox.checked = showHints;
@@ -489,6 +492,15 @@ if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
     populatePresetDropdown();
 
 pushModalState('settingsModal', closeSettingsModal);
+}
+
+function closeSettingsModal() {
+    const settingsModal = document.getElementById('settingsModal');
+    if (!settingsModal) return;
+    settingsModal.classList.remove('active');
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, window.modalScrollY || 0);
 }
 
 function handlePresetChange(presetName) {
@@ -532,13 +544,6 @@ function handlePresetChange(presetName) {
     
     document.body.appendChild(warningModal);
     document.body.classList.add('modal-open');
-}
-
-function closeSettingsModal() {
-    const settingsModal = document.getElementById('settingsModal');
-    if (!settingsModal) return;
-    settingsModal.style.display = 'none';
-    document.body.classList.remove('modal-open');
 }
 
 function toggleHints(isChecked) {
@@ -621,7 +626,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // Color Scheme Modal Functions
 function openColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
-    modal.style.display = 'block';
+    
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
+    document.body.classList.add('modal-open');
+    modal.classList.add('active');
     
     pushModalState('colorSchemeModal', closeColorSchemeModal);
     
@@ -643,7 +652,10 @@ function openColorSchemeModal() {
 
 function closeColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
-    modal.style.display = 'none';
+    modal.classList.remove('active');
+    document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, window.modalScrollY || 0);
 }
 
 function updateImageSizePreview(value) {
@@ -895,6 +907,8 @@ function openEditCaseModal(caseName) {
     `;
     
     document.body.appendChild(modal);
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     
     // Apply enhanced access restrictions
@@ -1423,6 +1437,8 @@ function openNotesModal(caseName) {
     `;
     
     document.body.appendChild(modal);
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
 }
 
@@ -1507,6 +1523,8 @@ function closeNotesModal() {
     if (modal) {
         modal.remove();
         document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, window.modalScrollY || 0);
     }
 }
 
@@ -1567,6 +1585,8 @@ function openGeneralNotesModal() {
     `;
     
     document.body.appendChild(modal);
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     
     // Render the saved content
@@ -1578,6 +1598,8 @@ function closeGeneralNotesModal() {
     if (modal) {
         modal.remove();
         document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, window.modalScrollY || 0);
     }
 }
 
@@ -1945,6 +1967,8 @@ function openProfileModal() {
     }
     pushModalState('profileModal', closeProfileModal);
 
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     modal.classList.add('active');
     document.body.classList.add('modal-open');
 
@@ -1962,6 +1986,8 @@ function closeProfileModal() {
     if (modal) {
         modal.classList.remove('active');
         document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, window.modalScrollY || 0);
     }
 }
 
@@ -2009,16 +2035,21 @@ function updateProfileStats() {
 // About Modal Functions
 function openAboutModal() {
     const modal = document.getElementById('aboutModal');
-    modal.style.display = 'block';
+    
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
+    modal.classList.add('active');
     
     pushModalState('aboutModal', closeAboutModal);
 }
 
 function closeAboutModal() {
     const modal = document.getElementById('aboutModal');
-    modal.style.display = 'none';
+    modal.classList.remove('active');
     document.body.classList.remove('modal-open');
+    document.body.style.top = '';
+    window.scrollTo(0, window.modalScrollY || 0);
 }
 
 // Function to open parity tracing personalization from settings
