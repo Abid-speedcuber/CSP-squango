@@ -493,12 +493,12 @@
                 height: 100%;
                 background: #f8f9fa;
                 box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-                transition: transform 0.3s ease;
-                transform: translateX(-100%);
                 z-index: 100;
                 border-radius: 18px 0 0 18px;
                 overflow-y: auto;
                 overflow-x: hidden;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
             #${modalId} .sidebar::-webkit-scrollbar {
                 width: 6px;
@@ -514,6 +514,20 @@
                 transform: translateX(0);
             }
             #${modalId} .sidebar-content {
+                position: relative !important;
+                transform: none !important;
+                left: auto !important;
+                top: auto !important;
+                width: auto !important;
+                height: auto !important;
+                max-width: none !important;
+                max-height: none !important;
+                background: none !important;
+                box-shadow: none !important;
+                display: block !important;
+                flex-direction: column !important;
+                overflow-y: visible !important;
+                transition: none !important;
                 padding: 20px;
             }
             #${modalId} .sidebar-title {
@@ -799,6 +813,12 @@
 
         // Render function
         function render() {
+            console.log('=== RENDER CALLED ===');
+            console.log('Modal ID:', modalId);
+            console.log('Sidebar element:', document.getElementById(`${modalId}-sidebar`));
+            console.log('Sidebar innerHTML:', document.getElementById(`${modalId}-sidebar`)?.innerHTML);
+            console.log('Sidebar-content element:', document.querySelector(`#${modalId}-sidebar .sidebar-content`));
+            
             const step = state.steps[state.currentStep];
             const hex = getHexForStep(step);
             const visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
@@ -842,7 +862,27 @@
             
             menuBtn.onclick = (e) => {
                 e.stopPropagation();
+                console.log('=== MENU BUTTON CLICKED ===');
+                console.log('Sidebar before toggle:', sidebar);
+                console.log('Sidebar classes before:', sidebar.className);
+                console.log('Sidebar computed style before:', window.getComputedStyle(sidebar));
+                console.log('Sidebar getBoundingClientRect before:', sidebar.getBoundingClientRect());
+                
                 sidebar.classList.toggle('open');
+                
+                console.log('Sidebar classes after:', sidebar.className);
+                console.log('Sidebar computed style after:', window.getComputedStyle(sidebar));
+                console.log('Sidebar getBoundingClientRect after:', sidebar.getBoundingClientRect());
+                console.log('Sidebar-content element:', sidebar.querySelector('.sidebar-content'));
+                console.log('Sidebar-content getBoundingClientRect:', sidebar.querySelector('.sidebar-content')?.getBoundingClientRect());
+                const sidebarContent = sidebar.querySelector('.sidebar-content');
+                if (sidebarContent) {
+                    const contentStyles = window.getComputedStyle(sidebarContent);
+                    console.log('Sidebar-content position:', contentStyles.position);
+                    console.log('Sidebar-content left:', contentStyles.left);
+                    console.log('Sidebar-content transform:', contentStyles.transform);
+                    console.log('Sidebar-content display:', contentStyles.display);
+                }
             };
 
             // Close sidebar when clicking outside of it
@@ -1274,6 +1314,10 @@
 
         // Insert HTML and render initial state
         setTimeout(() => {
+            console.log('=== BEFORE RENDER ===');
+            console.log('Sidebar in DOM?:', document.getElementById(`${modalId}-sidebar`));
+            console.log('Sidebar content in DOM?:', document.querySelector(`#${modalId}-sidebar .sidebar-content`));
+            
             window.modalScrollY = window.scrollY;
             document.body.style.top = `-${window.modalScrollY}px`;
             document.body.classList.add('modal-open');
