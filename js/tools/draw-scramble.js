@@ -534,7 +534,7 @@ function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAn
     svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
     svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
     svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<line x1="${pointApex.x.toFixed(2)}" y1="${pointApex.y.toFixed(2)}" x2="${pointSmallBottom.x.toFixed(2)}" y2="${pointSmallBottom.y.toFixed(2)}" stroke="#333" stroke-width="${strokeMedium}" stroke-linecap="round"/>`;
+    svgMarkup += `<line x1="${pointApex.x.toFixed(2)}" y1="${pointApex.y.toFixed(2)}" x2="${pointSmallBottom.x.toFixed(2)}" y2="${pointSmallBottom.y.toFixed(2)}" stroke="#333" stroke-width="${strokeMedium}" stroke-linecap="round" class="corner-detail"/>`;
     
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;

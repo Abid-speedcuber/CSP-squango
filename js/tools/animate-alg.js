@@ -38,51 +38,126 @@
     // ========================================
     // SCRAMBLE FUNCTIONS
     // ========================================
-    function parseScramble(scramble) {
+    function parseScramble(scramble, animateBothLayers = false) {
         const moves = [];
         let i = 0;
-        while (i < scramble.length) {
-            const char = scramble[i];
+        
+        if (animateBothLayers) {
+            // NEW MODE: Group tokens as "a,b", "/", "c,d"
+            while (i < scramble.length) {
+                const char = scramble[i];
 
-            if (char === '/' || char === '\\') {
-                moves.push({ type: 'twist' });
-                i++;
-            }
-            else if (char === '(' || char === '-' || /\d/.test(char)) {
-                let moveStr = '';
-                let parenDepth = 0;
-
-                while (i < scramble.length) {
-                    const c = scramble[i];
-                    if (c === '(') parenDepth++;
-                    if (c === ')') parenDepth--;
-
-                    if (c === '/' || c === '\\') {
-                        break;
-                    }
-
-                    if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-                        moveStr += c;
-                    }
-
+                if (char === '/' || char === '\\') {
+                    moves.push({ type: 'twist' });
                     i++;
+                }
+                else if (char === '(' || char === '-' || /\d/.test(char)) {
+                    let moveStr = '';
+                    let parenDepth = 0;
 
-                    if (parenDepth === 0 && moveStr.includes(',')) {
-                        break;
+                    while (i < scramble.length) {
+                        const c = scramble[i];
+                        if (c === '(') parenDepth++;
+                        if (c === ')') parenDepth--;
+
+                        if (c === '/' || c === '\\') {
+                            break;
+                        }
+
+                        if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
+                            moveStr += c;
+                        }
+
+                        i++;
+
+                        if (parenDepth === 0 && moveStr.includes(',')) {
+                            break;
+                        }
+                    }
+
+                    const cleaned = moveStr.replace(/[()]/g, '').trim();
+                    if (cleaned.includes(',')) {
+                        const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
+                        moves.push({ type: 'turn', top, bottom });
                     }
                 }
-
-                const cleaned = moveStr.replace(/[()]/g, '').trim();
-                if (cleaned.includes(',')) {
-                    const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
-                    moves.push({ type: 'turn', top, bottom });
+                else if (/\s/.test(char)) {
+                    i++;
+                }
+                else {
+                    i++;
                 }
             }
-            else if (/\s/.test(char)) {
-                i++;
-            }
-            else {
-                i++;
+        } else {
+            // LEGACY MODE: Separate tokens for each layer
+            while (i < scramble.length) {
+                const char = scramble[i];
+
+                if (char === '/' || char === '\\') {
+                    moves.push({ type: 'twist' });
+                    i++;
+                }
+                else if (char === '(' || char === '-' || /\d/.test(char)) {
+                    let moveStr = '';
+                    let parenDepth = 0;
+                    let foundComma = false;
+                    const startPos = i;
+
+                    while (i < scramble.length) {
+                        const c = scramble[i];
+                        if (c === '(') parenDepth++;
+                        if (c === ')') parenDepth--;
+
+                        if (c === '/' || c === '\\') {
+                            break;
+                        }
+
+                        if (c === ',') foundComma = true;
+
+                        if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
+                            moveStr += c;
+                        }
+
+                        i++;
+
+                        if (parenDepth === 0 && foundComma) {
+                            break;
+                        }
+                    }
+
+                    const cleaned = moveStr.replace(/[()]/g, '').trim();
+                    if (cleaned.includes(',')) {
+                        const parts = cleaned.split(',').map(n => parseInt(n.trim()));
+                        const top = parts[0];
+                        const bottom = parts.length > 1 ? parts[1] : 0;
+                        
+                        // Emit top layer move only
+                        if (top !== 0) {
+                            moves.push({ type: 'turn', top, bottom: 0 });
+                        }
+                        
+                        // Emit bottom layer move only
+                        if (bottom !== 0) {
+                            moves.push({ type: 'turn', top: 0, bottom });
+                        }
+                        
+                        // If both are zero, still emit one move to maintain step count
+                        if (top === 0 && bottom === 0) {
+                            moves.push({ type: 'turn', top: 0, bottom: 0 });
+                        }
+                    } else if (cleaned) {
+                        const num = parseInt(cleaned);
+                        if (!isNaN(num)) {
+                            moves.push({ type: 'turn', top: num, bottom: 0 });
+                        }
+                    }
+                }
+                else if (/\s/.test(char)) {
+                    i++;
+                }
+                else {
+                    i++;
+                }
             }
         }
         return moves;
@@ -142,11 +217,11 @@
         return inverted.join('/');
     }
 
-    function sq1AlgToHex(scramble) {
+    function sq1AlgToHex(scramble, animateBothLayers = false) {
         let tlHex = '011233455677';
         let blHex = '998bbaddcffe';
 
-        const moves = parseScramble(scramble);
+        const moves = parseScramble(scramble, animateBothLayers);
 
         for (let i = 0; i < moves.length; i++) {
             const move = moves[i];
@@ -201,80 +276,122 @@
     // ========================================
     // STEP GENERATION
     // ========================================
-    function generateSteps(alg) {
+    function generateSteps(alg, animateBothLayers = false) {
         const steps = [];
         const chars = alg.split('');
         let position = 0;
 
-        while (position < chars.length) {
-            const char = chars[position];
+        if (animateBothLayers) {
+            // NEW MODE: Group both layers together
+            while (position < chars.length) {
+                const char = chars[position];
 
-            if (char === '/') {
-                steps.push({
-                    position: position,
-                    highlightStart: position,
-                    highlightEnd: position + 1,
-                    currentAlg: alg.substring(position),
-                    description: 'Slash (twist)'
-                });
-                position++;
+                if (char === '/') {
+                    steps.push({
+                        position: position,
+                        highlightStart: position,
+                        highlightEnd: position + 1,
+                        currentAlg: alg.substring(position),
+                        description: 'Slash (twist)'
+                    });
+                    position++;
+                }
+                else if (char === '(') {
+                    let numEnd = position + 1;
+                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]) || chars[numEnd] === ',' || chars[numEnd] === ')')) {
+                        if (chars[numEnd] === ')') {
+                            numEnd++;
+                            break;
+                        }
+                        numEnd++;
+                    }
+
+                    steps.push({
+                        position: position,
+                        highlightStart: position,
+                        highlightEnd: numEnd,
+                        currentAlg: alg.substring(position),
+                        description: 'Both layers turn'
+                    });
+
+                    position = numEnd;
+                }
+                else {
+                    position++;
+                }
             }
-            else if (char === '(') {
-                let numEnd = position + 1;
-                while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-                    numEnd++;
+        } else {
+            // LEGACY MODE: Separate layers
+            while (position < chars.length) {
+                const char = chars[position];
+
+                if (char === '/') {
+                    steps.push({
+                        position: position,
+                        highlightStart: position,
+                        highlightEnd: position + 1,
+                        currentAlg: alg.substring(position),
+                        description: 'Slash (twist)'
+                    });
+                    position++;
                 }
+                else if (char === '(') {
+                    let numEnd = position + 1;
+                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
+                        numEnd++;
+                    }
 
-                steps.push({
-                    position: position,
-                    highlightStart: position,
-                    highlightEnd: numEnd,
-                    currentAlg: alg.substring(position),
-                    description: 'Top layer turn'
-                });
+                    steps.push({
+                        position: position,
+                        highlightStart: position,
+                        highlightEnd: numEnd,
+                        currentAlg: alg.substring(position),
+                        description: 'Top layer turn'
+                    });
 
-                position = numEnd;
-            }
-            else if (char === ',') {
-                let numEnd = position + 1;
-                while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-                    numEnd++;
+                    position = numEnd;
                 }
-                if (numEnd < chars.length && chars[numEnd] === ')') {
-                    numEnd++;
+                else if (char === ',') {
+                    let numEnd = position + 1;
+                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
+                        numEnd++;
+                    }
+                    if (numEnd < chars.length && chars[numEnd] === ')') {
+                        numEnd++;
+                    }
+
+                    let moveStart = position;
+                    while (moveStart > 0 && chars[moveStart - 1] !== '/') {
+                        moveStart--;
+                    }
+
+                    let firstNumStart = moveStart;
+                    while (firstNumStart < position && chars[firstNumStart] !== '(' && (chars[firstNumStart] === '-' || /\d/.test(chars[firstNumStart]))) {
+                        firstNumStart++;
+                    }
+                    if (chars[firstNumStart] === '(') firstNumStart++;
+
+                    let firstNumEnd = firstNumStart;
+                    while (firstNumEnd < position && (chars[firstNumEnd] === '-' || /\d/.test(chars[firstNumEnd]))) {
+                        firstNumEnd++;
+                    }
+
+                    const remainingAlg = alg.substring(position + 1);
+                    const modifiedAlg = '(0,' + remainingAlg;
+
+                    steps.push({
+                        position: position,
+                        highlightStart: position + 1,
+                        highlightEnd: numEnd,
+                        currentAlg: modifiedAlg,
+                        description: 'Bottom layer turn'
+                    });
+
+                    position = numEnd;
                 }
-
-                let moveStart = position;
-                while (moveStart > 0 && chars[moveStart - 1] !== '/') {
-                    moveStart--;
+                else {
+                    position++;
                 }
-
-                let firstNumStart = moveStart;
-                while (firstNumStart < position && chars[firstNumStart] !== '(' && (chars[firstNumStart] === '-' || /\d/.test(chars[firstNumStart]))) {
-                    firstNumStart++;
-                }
-                if (chars[firstNumStart] === '(') firstNumStart++;
-
-                let firstNumEnd = firstNumStart;
-                while (firstNumEnd < position && (chars[firstNumEnd] === '-' || /\d/.test(chars[firstNumEnd]))) {
-                    firstNumEnd++;
-                }
-
-                const remainingAlg = alg.substring(position + 1);
-                const modifiedAlg = '(0,' + remainingAlg;
-
-                steps.push({
-                    position: position,
-                    highlightStart: position + 1,
-                    highlightEnd: numEnd,
-                    currentAlg: modifiedAlg,
-                    description: 'Bottom layer turn'
-                });
-
-                position = numEnd;
-            }
-            else {
-                position++;
             }
         }
 
@@ -297,13 +414,13 @@
         return steps.slice(firstNonZeroIndex);
     }
 
-    function getHexForStep(step) {
+    function getHexForStep(step, animateBothLayers = false) {
         try {
             if (step.currentAlg.trim() === '' || step.currentAlg === '(0,0)') {
                 return { tlHex: '011233455677', blHex: '998bbaddcffe' };
             }
             const inverted = invertScramble(step.currentAlg);
-            return sq1AlgToHex(inverted);
+            return sq1AlgToHex(inverted, animateBothLayers);
         } catch (e) {
             return { tlHex: '011233455677', blHex: '998bbaddcffe' };
         }
@@ -386,7 +503,7 @@
         // Initialize state
         const state = {
             originalAlg: algorithm,
-            steps: generateSteps(algorithm),
+            steps: generateSteps(algorithm, true),
             currentStep: 0,
             animationSpeed: 1.0,
             autoRunDelay: 200,
@@ -813,14 +930,8 @@
 
         // Render function
         function render() {
-            console.log('=== RENDER CALLED ===');
-            console.log('Modal ID:', modalId);
-            console.log('Sidebar element:', document.getElementById(`${modalId}-sidebar`));
-            console.log('Sidebar innerHTML:', document.getElementById(`${modalId}-sidebar`)?.innerHTML);
-            console.log('Sidebar-content element:', document.querySelector(`#${modalId}-sidebar .sidebar-content`));
-            
             const step = state.steps[state.currentStep];
-            const hex = getHexForStep(step);
+            const hex = getHexForStep(step, state.animateBothLayers);
             const visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
             const highlightedAlg = renderAlgorithm(step, state.originalAlg);
 
@@ -862,26 +973,11 @@
             
             menuBtn.onclick = (e) => {
                 e.stopPropagation();
-                console.log('=== MENU BUTTON CLICKED ===');
-                console.log('Sidebar before toggle:', sidebar);
-                console.log('Sidebar classes before:', sidebar.className);
-                console.log('Sidebar computed style before:', window.getComputedStyle(sidebar));
-                console.log('Sidebar getBoundingClientRect before:', sidebar.getBoundingClientRect());
-                
                 sidebar.classList.toggle('open');
-                
-                console.log('Sidebar classes after:', sidebar.className);
-                console.log('Sidebar computed style after:', window.getComputedStyle(sidebar));
-                console.log('Sidebar getBoundingClientRect after:', sidebar.getBoundingClientRect());
-                console.log('Sidebar-content element:', sidebar.querySelector('.sidebar-content'));
-                console.log('Sidebar-content getBoundingClientRect:', sidebar.querySelector('.sidebar-content')?.getBoundingClientRect());
+   
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 if (sidebarContent) {
                     const contentStyles = window.getComputedStyle(sidebarContent);
-                    console.log('Sidebar-content position:', contentStyles.position);
-                    console.log('Sidebar-content left:', contentStyles.left);
-                    console.log('Sidebar-content transform:', contentStyles.transform);
-                    console.log('Sidebar-content display:', contentStyles.display);
                 }
             };
 
@@ -930,6 +1026,11 @@
                 bothLayersToggle.classList.toggle('active');
                 const label = bothLayersToggle.nextElementSibling;
                 label.textContent = state.animateBothLayers ? 'On' : 'Off';
+                
+                // Regenerate steps with new mode
+                state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
+                state.currentStep = 0;
+                render();
             };
 
             // Navigation buttons
@@ -1009,120 +1110,42 @@
             state.isAnimating = true;
             const step = state.steps[state.currentStep];
 
-            let topRotation = 0;
-            let bottomRotation = 0;
-            let shouldRotate = false;
-            let isSlashToken = false;
-            let analyzePosition = -1;
-
-            if (direction === 'next') {
-                analyzePosition = step.highlightStart - 1;
-                while (analyzePosition >= 0 && /\s/.test(state.originalAlg[analyzePosition])) {
-                    analyzePosition--;
-                }
-            } else {
-                analyzePosition = step.highlightStart;
-            }
-
-            if (analyzePosition >= 0 && analyzePosition < state.originalAlg.length) {
-                if (state.originalAlg[analyzePosition] === '/') {
-                    isSlashToken = true;
+            if (state.animateBothLayers) {
+                // ============================================
+                // ANIMATE BOTH LAYERS MODE - COMPLETELY SEPARATE LOGIC
+                // ============================================
+                let tokenToAnimate;
+                
+                if (direction === 'next') {
+                    // Going forward: animate the PREVIOUS token
+                    if (state.currentStep > 0) {
+                        tokenToAnimate = state.steps[state.currentStep - 1];
+                    } else {
+                        state.isAnimating = false;
+                        render();
+                        return;
+                    }
                 } else {
-                    let numberStart = analyzePosition;
-                    let numberEnd = analyzePosition;
-
-                    while (numberStart > 0 && (state.originalAlg[numberStart - 1] === '-' || /\d/.test(state.originalAlg[numberStart - 1]))) {
-                        numberStart--;
-                    }
-
-                    while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
-                        numberEnd++;
-                    }
-
-                    if (numberStart === numberEnd) {
-                        numberStart = analyzePosition;
-                        while (numberStart < state.originalAlg.length && !/\d/.test(state.originalAlg[numberStart]) && state.originalAlg[numberStart] !== '-') {
-                            numberStart++;
-                        }
-                        if (numberStart < state.originalAlg.length && state.originalAlg[numberStart] === '-') {
-                            numberEnd = numberStart + 1;
-                        } else {
-                            numberEnd = numberStart;
-                        }
-                        while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
-                            numberEnd++;
-                        }
-                    }
-
-                    const numberStr = state.originalAlg.substring(numberStart, numberEnd);
-                    const number = parseInt(numberStr);
-
-                    if (!isNaN(number)) {
-                        shouldRotate = true;
-
-                        let searchStart = numberEnd;
-                        let foundComma = false;
-
-                        while (searchStart < state.originalAlg.length && /\s/.test(state.originalAlg[searchStart])) {
-                            searchStart++;
-                        }
-
-                        if (searchStart < state.originalAlg.length && state.originalAlg[searchStart] === ',') {
-                            foundComma = true;
-                        }
-
-                        let beforeComma = false;
-                        for (let i = numberStart - 1; i >= 0; i--) {
-                            if (state.originalAlg[i] === ',') {
-                                beforeComma = true;
-                                break;
-                            }
-                            if (state.originalAlg[i] === '(' || state.originalAlg[i] === '/') {
-                                break;
-                            }
-                        }
-                        if (foundComma && !beforeComma) {
-                            topRotation = number;
-                        } else {
-                            bottomRotation = number;
-                        }
-                    }
+                    // Going backward: animate the CURRENT token
+                    tokenToAnimate = step;
                 }
-            }
 
-            const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
-            const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
-
-            const maxRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
-            const duration = maxRotation === 0 ? 0 : (maxRotation * 100) / state.animationSpeed;
-
-            if (topSvg && bottomSvg) {
-                const topPieces = topSvg.querySelectorAll('polygon, circle:last-child');
-                const bottomPieces = bottomSvg.querySelectorAll('polygon, circle:last-child');
-
-                const svgSize = state.imageSize;
-                const unit10vh = svgSize * 0.4;
-                const radiusOuter = unit10vh * 0.7;
-                const ringRadius = radiusOuter + (unit10vh * 0.4);
-
-                const topCenterX = svgSize / 2;
-                const topCenterY = svgSize / 2;
-                const bottomCenterX = svgSize / 2;
-                const bottomCenterY = svgSize / 2;
-
-                if (isSlashToken) {
+                const tokenText = state.originalAlg.substring(tokenToAnimate.highlightStart, tokenToAnimate.highlightEnd);
+                
+                if (tokenText.includes('/')) {
+                    // SLASH TOKEN - Fade animation
                     const duration = 500 / state.animationSpeed;
 
                     let beforeHex, afterHex;
 
                     if (direction === 'next') {
                         const prevStep = state.steps[state.currentStep - 1];
-                        beforeHex = prevStep ? getHexForStep(prevStep) : getHexForStep(step);
-                        afterHex = getHexForStep(step);
+                        beforeHex = prevStep ? getHexForStep(prevStep, true) : getHexForStep(step, true);
+                        afterHex = getHexForStep(step, true);
                     } else {
-                        beforeHex = getHexForStep(step);
+                        beforeHex = getHexForStep(step, true);
                         const nextStep = state.steps[state.currentStep + 1];
-                        afterHex = nextStep ? getHexForStep(nextStep) : getHexForStep(step);
+                        afterHex = nextStep ? getHexForStep(nextStep, true) : getHexForStep(step, true);
                     }
 
                     const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize);
@@ -1205,57 +1228,282 @@
                         state.isAnimating = false;
                         render();
 
-                        const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
-
-                        if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
-                            state.currentStep++;
-                            setTimeout(() => animateStep('next'), 0);
-                        } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
-                            state.currentStep--;
-                            setTimeout(() => animateStep('prev'), 0);
-                        } else if (!currentIsZero && state.isAutoRunning) {
+                        if (state.isAutoRunning) {
                             autoRunNextStep();
                         }
                     }, duration);
-                } else if (shouldRotate) {
-                    if (state.animateBothLayers) {
-                        // NEW SIMPLE MODE: Animate both layers together
-                        const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
-                        const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
+                } else {
+                    // ROTATION TOKEN - Both layers rotate simultaneously
+                    const match = tokenText.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
+                    if (match) {
+                        const topRotation = parseInt(match[1]);
+                        const bottomRotation = parseInt(match[2]);
 
-                        const rotationMultiplier = direction === 'prev' ? -1 : 1;
+                        const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
+                        const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
 
-                        topPieces.forEach(piece => {
-                            piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-                            piece.style.transition = `transform ${duration}ms ease-in-out`;
-                            piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-                        });
+                        if (topSvg && bottomSvg) {
+                            const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
+                            const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
 
-                        bottomPieces.forEach(piece => {
-                            piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-                            piece.style.transition = `transform ${duration}ms ease-in-out`;
-                            piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-                        });
+                            const svgSize = state.imageSize;
+                            const topCenterX = svgSize / 2;
+                            const topCenterY = svgSize / 2;
+                            const bottomCenterX = svgSize / 2;
+                            const bottomCenterY = svgSize / 2;
+
+                            const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
+                            const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
+
+                            const rotationMultiplier = direction === 'prev' ? -1 : 1;
+
+                            topPieces.forEach(piece => {
+                                piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
+                                piece.style.transition = `transform ${duration}ms ease-in-out`;
+                                piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
+                            });
+
+                            bottomPieces.forEach(piece => {
+                                piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
+                                piece.style.transition = `transform ${duration}ms ease-in-out`;
+                                piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
+                            });
+
+                            setTimeout(() => {
+                                topPieces.forEach(piece => {
+                                    piece.style.transform = '';
+                                    piece.style.transition = '';
+                                });
+                                bottomPieces.forEach(piece => {
+                                    piece.style.transform = '';
+                                    piece.style.transition = '';
+                                });
+
+                                state.isAnimating = false;
+                                render();
+
+                                if (state.isAutoRunning) {
+                                    autoRunNextStep();
+                                }
+                            }, duration);
+                        } else {
+                            state.isAnimating = false;
+                            render();
+                        }
+                    } else {
+                        state.isAnimating = false;
+                        render();
+                    }
+                }
+            } else {
+                // ============================================
+                // LEGACY MODE - COMPLETELY SEPARATE LOGIC
+                // ============================================
+                let topRotation = 0;
+                let bottomRotation = 0;
+                let shouldRotate = false;
+                let isSlashToken = false;
+                let analyzePosition = -1;
+
+                if (direction === 'next') {
+                    analyzePosition = step.highlightStart - 1;
+                    while (analyzePosition >= 0 && /\s/.test(state.originalAlg[analyzePosition])) {
+                        analyzePosition--;
+                    }
+                } else {
+                    analyzePosition = step.highlightStart;
+                }
+
+                if (analyzePosition >= 0 && analyzePosition < state.originalAlg.length) {
+                    if (state.originalAlg[analyzePosition] === '/') {
+                        isSlashToken = true;
+                    } else {
+                        let numberStart = analyzePosition;
+                        let numberEnd = analyzePosition;
+
+                        while (numberStart > 0 && (state.originalAlg[numberStart - 1] === '-' || /\d/.test(state.originalAlg[numberStart - 1]))) {
+                            numberStart--;
+                        }
+
+                        while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
+                            numberEnd++;
+                        }
+
+                        if (numberStart === numberEnd) {
+                            numberStart = analyzePosition;
+                            while (numberStart < state.originalAlg.length && !/\d/.test(state.originalAlg[numberStart]) && state.originalAlg[numberStart] !== '-') {
+                                numberStart++;
+                            }
+                            if (numberStart < state.originalAlg.length && state.originalAlg[numberStart] === '-') {
+                                numberEnd = numberStart + 1;
+                            } else {
+                                numberEnd = numberStart;
+                            }
+                            while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
+                                numberEnd++;
+                            }
+                        }
+
+                        const numberStr = state.originalAlg.substring(numberStart, numberEnd);
+                        const number = parseInt(numberStr);
+
+                        if (!isNaN(number)) {
+                            shouldRotate = true;
+
+                            let searchStart = numberEnd;
+                            let foundComma = false;
+
+                            while (searchStart < state.originalAlg.length && /\s/.test(state.originalAlg[searchStart])) {
+                                searchStart++;
+                            }
+
+                            if (searchStart < state.originalAlg.length && state.originalAlg[searchStart] === ',') {
+                                foundComma = true;
+                            }
+
+                            let beforeComma = false;
+                            for (let i = numberStart - 1; i >= 0; i--) {
+                                if (state.originalAlg[i] === ',') {
+                                    beforeComma = true;
+                                    break;
+                                }
+                                if (state.originalAlg[i] === '(' || state.originalAlg[i] === '/') {
+                                    break;
+                                }
+                            }
+                            if (foundComma && !beforeComma) {
+                                topRotation = number;
+                            } else {
+                                bottomRotation = number;
+                            }
+                        }
+                    }
+                }
+
+                const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
+                const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
+
+                const maxRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
+                const duration = maxRotation === 0 ? 0 : (maxRotation * 100) / state.animationSpeed;
+
+                if (topSvg && bottomSvg) {
+                    const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
+                    const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
+
+                    const svgSize = state.imageSize;
+                    const topCenterX = svgSize / 2;
+                    const topCenterY = svgSize / 2;
+                    const bottomCenterX = svgSize / 2;
+                    const bottomCenterY = svgSize / 2;
+
+                    if (isSlashToken) {
+                        const duration = 500 / state.animationSpeed;
+
+                        let beforeHex, afterHex;
+
+                        if (direction === 'next') {
+                            const prevStep = state.steps[state.currentStep - 1];
+                            beforeHex = prevStep ? getHexForStep(prevStep, false) : getHexForStep(step, false);
+                            afterHex = getHexForStep(step, false);
+                        } else {
+                            beforeHex = getHexForStep(step, false);
+                            const nextStep = state.steps[state.currentStep + 1];
+                            afterHex = nextStep ? getHexForStep(nextStep, false) : getHexForStep(step, false);
+                        }
+
+                        const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize);
+                        const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize);
+
+                        const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
+
+                        const wrapper = document.createElement('div');
+                        wrapper.style.position = 'relative';
+                        wrapper.style.display = 'flex';
+                        wrapper.style.flexDirection = 'column';
+                        wrapper.style.alignItems = 'center';
+                        wrapper.style.gap = '20px';
+
+                        const bottomLayer = document.createElement('div');
+                        const topLayer = document.createElement('div');
+
+                        if (direction === 'next') {
+                            bottomLayer.innerHTML = afterSvgHtml;
+                            bottomLayer.style.position = 'relative';
+                            bottomLayer.style.opacity = '0';
+
+                            topLayer.innerHTML = beforeSvgHtml;
+                            topLayer.style.position = 'absolute';
+                            topLayer.style.top = '0';
+                            topLayer.style.left = '50%';
+                            topLayer.style.transform = 'translateX(-50%)';
+                            topLayer.style.opacity = '1';
+                            topLayer.style.pointerEvents = 'none';
+
+                            wrapper.appendChild(bottomLayer);
+                            wrapper.appendChild(topLayer);
+
+                            visualizationDiv.innerHTML = '';
+                            visualizationDiv.appendChild(wrapper);
+
+                            requestAnimationFrame(() => {
+                                topLayer.style.transition = `opacity ${duration}ms linear`;
+                                bottomLayer.style.transition = `opacity ${duration}ms linear`;
+                                requestAnimationFrame(() => {
+                                    setTimeout(() => {
+                                        topLayer.style.opacity = '0';
+                                    }, 0);
+                                    bottomLayer.style.opacity = '1';
+                                });
+                            });
+                        } else {
+                            bottomLayer.innerHTML = beforeSvgHtml;
+                            bottomLayer.style.position = 'relative';
+                            bottomLayer.style.opacity = '1';
+
+                            topLayer.innerHTML = afterSvgHtml;
+                            topLayer.style.position = 'absolute';
+                            topLayer.style.top = '0';
+                            topLayer.style.left = '50%';
+                            topLayer.style.transform = 'translateX(-50%)';
+                            topLayer.style.opacity = '1';
+                            topLayer.style.transition = `opacity ${duration}ms linear`;
+                            topLayer.style.pointerEvents = 'none';
+
+                            wrapper.appendChild(bottomLayer);
+                            wrapper.appendChild(topLayer);
+
+                            visualizationDiv.innerHTML = '';
+                            visualizationDiv.appendChild(wrapper);
+
+                            requestAnimationFrame(() => {
+                                topLayer.style.transition = `opacity ${duration}ms linear`;
+                                bottomLayer.style.transition = `opacity ${duration}ms linear`;
+                                requestAnimationFrame(() => {
+                                    setTimeout(() => {
+                                        topLayer.style.opacity = '0';
+                                    }, 0);
+                                    bottomLayer.style.opacity = '1';
+                                });
+                            });
+                        }
 
                         setTimeout(() => {
-                            topPieces.forEach(piece => {
-                                piece.style.transform = '';
-                                piece.style.transition = '';
-                            });
-                            bottomPieces.forEach(piece => {
-                                piece.style.transform = '';
-                                piece.style.transition = '';
-                            });
-
                             state.isAnimating = false;
                             render();
 
-                            if (state.isAutoRunning) {
+                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
+
+                            if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
+                                state.currentStep++;
+                                setTimeout(() => animateStep('next'), 0);
+                            } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
+                                state.currentStep--;
+                                setTimeout(() => animateStep('prev'), 0);
+                            } else if (!currentIsZero && state.isAutoRunning) {
                                 autoRunNextStep();
                             }
                         }, duration);
-                    } else {
-                        // LEGACY MODE: Separate layer animation with zero move skipping
+                    } else if (shouldRotate) {
                         const duration = maxRotation === 0 ? 50 : (maxRotation * 100) / state.animationSpeed;
 
                         const rotationMultiplier = direction === 'prev' ? -1 : 1;
@@ -1297,27 +1545,23 @@
                                 autoRunNextStep();
                             }
                         }, duration);
+                    } else {
+                        state.isAnimating = false;
+                        render();
                     }
                 } else {
                     state.isAnimating = false;
                     render();
-                }
-            } else {
-                state.isAnimating = false;
-                render();
 
-                if (state.isAutoRunning) {
-                    autoRunNextStep();
+                    if (state.isAutoRunning) {
+                        autoRunNextStep();
+                    }
                 }
             }
         }
 
         // Insert HTML and render initial state
         setTimeout(() => {
-            console.log('=== BEFORE RENDER ===');
-            console.log('Sidebar in DOM?:', document.getElementById(`${modalId}-sidebar`));
-            console.log('Sidebar content in DOM?:', document.querySelector(`#${modalId}-sidebar .sidebar-content`));
-            
             window.modalScrollY = window.scrollY;
             document.body.style.top = `-${window.modalScrollY}px`;
             document.body.classList.add('modal-open');
