@@ -47,7 +47,7 @@ function generateModalHTML() {
                                 <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Hide instruction buttons (â"˜) across the app. The irony: pressing this will eventually hide this instruction button too!<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
+                                    <span class="info-box">Hide instruction buttons across the app. The irony: pressing this will eventually hide this instruction button too!<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.3); cursor: pointer;">

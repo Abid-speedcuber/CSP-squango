@@ -383,6 +383,21 @@
             leftColor: colors.leftColor || '#0066CC'
         };
 
+        // Initialize state
+        const state = {
+            originalAlg: algorithm,
+            steps: generateSteps(algorithm),
+            currentStep: 0,
+            animationSpeed: 1.0,
+            autoRunDelay: 200,
+            isAnimating: false,
+            isAutoRunning: false,
+            autoRunDirection: 'next',
+            colorScheme: colorScheme,
+            imageSize: imageSize,
+            animateBothLayers: true
+        };
+
         const css = `
         <style>
             #${modalId} {
@@ -408,7 +423,7 @@
                 width: 100%;
                 min-height: 20vh;
                 max-height: 80vh;
-                overflow-y: hidden;
+                overflow: hidden;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 position: relative;
                 display: flex;
@@ -418,6 +433,8 @@
                 padding: 20px;
                 overflow-y: auto;
                 flex: 1;
+                background: white;
+                border-radius: 0 0 18px 18px;
             }
             #${modalId} .modal-body::-webkit-scrollbar {
                 display: none;
@@ -436,14 +453,153 @@
             #${modalId} .close-btn {
                 background: #f0f0f0;
                 border: none;
-                border-radius: 6px;
-                padding: 8px 16px;
+                border-radius: 50%;
+                width: 32px;
+                height: 32px;
                 cursor: pointer;
-                font-size: 16px;
+                font-size: 20px;
                 transition: background 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+                line-height: 1;
             }
             #${modalId} .close-btn:hover {
                 background: #e0e0e0;
+            }
+            #${modalId} .menu-btn {
+                background: #f0f0f0;
+                border: none;
+                border-radius: 6px;
+                width: 36px;
+                height: 36px;
+                cursor: pointer;
+                font-size: 20px;
+                transition: background 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            }
+            #${modalId} .menu-btn:hover {
+                background: #e0e0e0;
+            }
+            #${modalId} .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 280px;
+                height: 100%;
+                background: #f8f9fa;
+                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+                transition: transform 0.3s ease;
+                transform: translateX(-100%);
+                z-index: 100;
+                border-radius: 18px 0 0 18px;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            #${modalId} .sidebar::-webkit-scrollbar {
+                width: 6px;
+            }
+            #${modalId} .sidebar::-webkit-scrollbar-track {
+                background: #f1f1f1;
+            }
+            #${modalId} .sidebar::-webkit-scrollbar-thumb {
+                background: #888;
+                border-radius: 3px;
+            }
+            #${modalId} .sidebar.open {
+                transform: translateX(0);
+            }
+            #${modalId} .sidebar-content {
+                padding: 20px;
+            }
+            #${modalId} .sidebar-title {
+                font-size: 18px;
+                font-weight: bold;
+                color: #000000 !important;
+                margin-bottom: 20px;
+                padding-bottom: 10px;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            #${modalId} .sidebar-section {
+                margin-bottom: 25px;
+            }
+            #${modalId} .sidebar-section label {
+                display: block;
+                font-size: 14px;
+                color: #000000 !important;
+                margin-bottom: 8px;
+                font-weight: 600;
+            }
+            #${modalId} .sidebar-section input[type="range"] {
+                width: 100%;
+                height: 6px;
+                border-radius: 3px;
+                background: #e0e0e0;
+                outline: none;
+                -webkit-appearance: none;
+            }
+            #${modalId} .sidebar-section input[type="range"]::-webkit-slider-thumb {
+                -webkit-appearance: none;
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: #2196F3;
+                cursor: pointer;
+            }
+            #${modalId} .sidebar-section input[type="range"]::-moz-range-thumb {
+                width: 18px;
+                height: 18px;
+                border-radius: 50%;
+                background: #2196F3;
+                cursor: pointer;
+                border: none;
+            }
+            #${modalId} .sidebar-value {
+                display: block;
+                text-align: right;
+                font-size: 14px;
+                color: #000000 !important;
+                margin-top: 4px;
+                font-weight: 500;
+            }
+            #${modalId} .toggle-container {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            #${modalId} .toggle-container span {
+                color: #000000 !important;
+                font-weight: 500;
+            }
+            #${modalId} .toggle-switch {
+                position: relative;
+                width: 48px;
+                height: 24px;
+                background: #ccc;
+                border-radius: 12px;
+                cursor: pointer;
+                transition: background 0.3s;
+                flex-shrink: 0;
+            }
+            #${modalId} .toggle-switch.active {
+                background: #2196F3;
+            }
+            #${modalId} .toggle-slider {
+                position: absolute;
+                top: 2px;
+                left: 2px;
+                width: 20px;
+                height: 20px;
+                background: white;
+                border-radius: 50%;
+                transition: left 0.3s;
+            }
+            #${modalId} .toggle-switch.active .toggle-slider {
+                left: 26px;
             }
             #${modalId} .modal-body {
                 padding: 20px;
@@ -599,29 +755,47 @@
         <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { window.modalScrollY = window.scrollY || 0; document.body.style.top = ''; document.body.classList.remove('modal-open'); window.scrollTo(0, window.modalScrollY); document.getElementById('${modalId}').remove(); } })(event)">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
-                    <button class="close-btn" onclick="(function() { window.modalScrollY = window.scrollY || 0; document.body.style.top = ''; document.body.classList.remove('modal-open'); window.scrollTo(0, window.modalScrollY); document.getElementById('${modalId}').remove(); })()">✕ Close</button>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
+                        <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
+                    </div>
+                    <button class="close-btn" id="${modalId}-close-btn">✕</button>
                 </div>
                 <div class="modal-body" id="${modalId}-body">
                     <!-- Content will be rendered here -->
+                </div>
+                <div class="sidebar" id="${modalId}-sidebar">
+                    <div class="sidebar-content">
+                        <div class="sidebar-title">Settings</div>
+                        
+                        <div class="sidebar-section">
+                            <label>Animation Speed</label>
+                            <input type="range" id="${modalId}-sidebar-speed" min="0.2" max="2" step="0.1" value="${state.animationSpeed}">
+                            <span class="sidebar-value" id="${modalId}-sidebar-speed-val">${state.animationSpeed.toFixed(1)}x</span>
+                        </div>
+                        
+                        <div class="sidebar-section">
+                            <label>Auto Delay</label>
+                            <input type="range" id="${modalId}-sidebar-delay" min="0" max="1000" step="50" value="${state.autoRunDelay}">
+                            <span class="sidebar-value" id="${modalId}-sidebar-delay-val">${state.autoRunDelay}ms</span>
+                        </div>
+                        
+                        <div class="sidebar-section">
+                            <label>Animate Both Layers Together</label>
+                            <div class="toggle-container">
+                                <div class="toggle-switch ${state.animateBothLayers ? 'active' : ''}" id="${modalId}-both-layers-toggle">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                                <span style="font-size: 14px; color: #666;" id="${modalId}-toggle-label">${state.animateBothLayers ? 'On' : 'Off'}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     `;
 
-        // Initialize state
-        const state = {
-            originalAlg: algorithm,
-            steps: generateSteps(algorithm),
-            currentStep: 0,
-            animationSpeed: 1.0,
-            autoRunDelay: 200,
-            isAnimating: false,
-            isAutoRunning: false,
-            autoRunDirection: 'next',
-            colorScheme: colorScheme,
-            imageSize: imageSize
-        };
+        
 
         // Render function
         function render() {
@@ -632,18 +806,6 @@
 
             const bodyHtml = `
             <div class="algorithm-display">${state.originalAlg}</div>
-            
-            <div class="slider-group">
-                <label>Animation Speed:</label>
-                <input type="range" id="${modalId}-speed" min="0.2" max="2" step="0.1" value="${state.animationSpeed}">
-                <span id="${modalId}-speed-val">${state.animationSpeed.toFixed(1)}x</span>
-            </div>
-
-            <div class="slider-group">
-                <label>Auto Delay:</label>
-                <input type="range" id="${modalId}-delay" min="0" max="1000" step="50" value="${state.autoRunDelay}">
-                <span id="${modalId}-delay-val">${state.autoRunDelay}ms</span>
-            </div>
 
             <div class="visualization-area">
                 <button class="nav-btn" id="${modalId}-prev" ${state.currentStep === 0 ? 'disabled' : ''}>◀</button>
@@ -673,20 +835,61 @@
         }
 
         function attachEventListeners() {
-            // Speed slider
-            const speedSlider = document.getElementById(`${modalId}-speed`);
-            const speedVal = document.getElementById(`${modalId}-speed-val`);
-            speedSlider.oninput = (e) => {
-                state.animationSpeed = parseFloat(e.target.value);
-                speedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
+            // Menu button
+            const menuBtn = document.getElementById(`${modalId}-menu-btn`);
+            const sidebar = document.getElementById(`${modalId}-sidebar`);
+            const modalBody = document.getElementById(`${modalId}-body`);
+            
+            menuBtn.onclick = (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
             };
 
-            // Delay slider
-            const delaySlider = document.getElementById(`${modalId}-delay`);
-            const delayVal = document.getElementById(`${modalId}-delay-val`);
-            delaySlider.oninput = (e) => {
+            // Close sidebar when clicking outside of it
+            modalBody.onclick = () => {
+                if (sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('open');
+                }
+            };
+
+            // Prevent sidebar clicks from bubbling
+            sidebar.onclick = (e) => {
+                e.stopPropagation();
+            };
+
+            // Close button
+            const closeBtn = document.getElementById(`${modalId}-close-btn`);
+            closeBtn.onclick = () => {
+                window.modalScrollY = window.scrollY || 0;
+                document.body.style.top = '';
+                document.body.classList.remove('modal-open');
+                window.scrollTo(0, window.modalScrollY);
+                document.getElementById(modalId).remove();
+            };
+
+            // Sidebar speed slider
+            const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);
+            const sidebarSpeedVal = document.getElementById(`${modalId}-sidebar-speed-val`);
+            sidebarSpeedSlider.oninput = (e) => {
+                state.animationSpeed = parseFloat(e.target.value);
+                sidebarSpeedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
+            };
+
+            // Sidebar delay slider
+            const sidebarDelaySlider = document.getElementById(`${modalId}-sidebar-delay`);
+            const sidebarDelayVal = document.getElementById(`${modalId}-sidebar-delay-val`);
+            sidebarDelaySlider.oninput = (e) => {
                 state.autoRunDelay = parseInt(e.target.value);
-                delayVal.textContent = state.autoRunDelay + 'ms';
+                sidebarDelayVal.textContent = state.autoRunDelay + 'ms';
+            };
+
+            // Both layers toggle
+            const bothLayersToggle = document.getElementById(`${modalId}-both-layers-toggle`);
+            bothLayersToggle.onclick = () => {
+                state.animateBothLayers = !state.animateBothLayers;
+                bothLayersToggle.classList.toggle('active');
+                const label = bothLayersToggle.nextElementSibling;
+                label.textContent = state.animateBothLayers ? 'On' : 'Off';
             };
 
             // Navigation buttons
@@ -975,47 +1178,86 @@
                         }
                     }, duration);
                 } else if (shouldRotate) {
-                    const duration = maxRotation === 0 ? 50 : (maxRotation * 100) / state.animationSpeed;
+                    if (state.animateBothLayers) {
+                        // NEW SIMPLE MODE: Animate both layers together
+                        const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
+                        const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
 
-                    const rotationMultiplier = direction === 'prev' ? -1 : 1;
+                        const rotationMultiplier = direction === 'prev' ? -1 : 1;
 
-                    topPieces.forEach(piece => {
-                        piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-                        piece.style.transition = `transform ${duration}ms ease-in-out`;
-                        piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-                    });
-
-                    bottomPieces.forEach(piece => {
-                        piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-                        piece.style.transition = `transform ${duration}ms ease-in-out`;
-                        piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-                    });
-
-                    setTimeout(() => {
                         topPieces.forEach(piece => {
-                            piece.style.transform = '';
-                            piece.style.transition = '';
+                            piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
+                            piece.style.transition = `transform ${duration}ms ease-in-out`;
+                            piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
                         });
+
                         bottomPieces.forEach(piece => {
-                            piece.style.transform = '';
-                            piece.style.transition = '';
+                            piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
+                            piece.style.transition = `transform ${duration}ms ease-in-out`;
+                            piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
                         });
 
-                        state.isAnimating = false;
-                        render();
+                        setTimeout(() => {
+                            topPieces.forEach(piece => {
+                                piece.style.transform = '';
+                                piece.style.transition = '';
+                            });
+                            bottomPieces.forEach(piece => {
+                                piece.style.transform = '';
+                                piece.style.transition = '';
+                            });
 
-                        const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
+                            state.isAnimating = false;
+                            render();
 
-                        if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
-                            state.currentStep++;
-                            setTimeout(() => animateStep('next'), 0);
-                        } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
-                            state.currentStep--;
-                            setTimeout(() => animateStep('prev'), 0);
-                        } else if (state.isAutoRunning) {
-                            autoRunNextStep();
-                        }
-                    }, duration);
+                            if (state.isAutoRunning) {
+                                autoRunNextStep();
+                            }
+                        }, duration);
+                    } else {
+                        // LEGACY MODE: Separate layer animation with zero move skipping
+                        const duration = maxRotation === 0 ? 50 : (maxRotation * 100) / state.animationSpeed;
+
+                        const rotationMultiplier = direction === 'prev' ? -1 : 1;
+
+                        topPieces.forEach(piece => {
+                            piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
+                            piece.style.transition = `transform ${duration}ms ease-in-out`;
+                            piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
+                        });
+
+                        bottomPieces.forEach(piece => {
+                            piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
+                            piece.style.transition = `transform ${duration}ms ease-in-out`;
+                            piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
+                        });
+
+                        setTimeout(() => {
+                            topPieces.forEach(piece => {
+                                piece.style.transform = '';
+                                piece.style.transition = '';
+                            });
+                            bottomPieces.forEach(piece => {
+                                piece.style.transform = '';
+                                piece.style.transition = '';
+                            });
+
+                            state.isAnimating = false;
+                            render();
+
+                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
+
+                            if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
+                                state.currentStep++;
+                                setTimeout(() => animateStep('next'), 0);
+                            } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
+                                state.currentStep--;
+                                setTimeout(() => animateStep('prev'), 0);
+                            } else if (state.isAutoRunning) {
+                                autoRunNextStep();
+                            }
+                        }, duration);
+                    }
                 } else {
                     state.isAnimating = false;
                     render();
