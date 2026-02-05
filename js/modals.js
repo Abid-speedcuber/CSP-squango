@@ -716,58 +716,6 @@ function openNewParityAnalysis(scramble) {
     });
 }
 
-// Settings Info Modal
-function showSettingsInfoModal() {
-    pushModalState('settingsInfoModal', closeSettingsInfoModal);
-    
-    let infoModal = document.getElementById('settingsInfoModal');
-    if (!infoModal) {
-        infoModal = document.createElement('div');
-        infoModal.id = 'settingsInfoModal';
-        infoModal.className = 'training-info-modal';
-        infoModal.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Personalization Guide</span>
-                    <button class="training-info-close" onclick="closeSettingsInfoModal()">&times;</button>
-                </div>
-                <div class="training-info-body">
-                    <div class="training-info-item">
-                        <div class="training-info-number">1</div>
-                        <div class="training-info-text"><strong>"Show Tracing Guides"</strong> displays visual tracing paths on cubeshape images to help you learn Kale's parity tracing method.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>"Hide Instruction Buttons"</strong> removes all help buttons (ⓘ) throughout the app once you're familiar with the features.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text"><strong>"Color Scheme Settings"</strong> customizes your cube's colors for parity analysis and scramble images. Changing colors will recalculate all parity determinations to match your scheme.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>"Case Name Settings"</strong> lets you rename cases with custom names or choose from preset alternatives (e.g., "Pair" instead of "Paired Edges", "L-Shape" instead of "Perpendicular Edges").</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>"Customize Tracing Guides"</strong> allows you to edit the appearance of tracing paths, including colors, line styles, and starting positions for each cubeshape.</div>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(infoModal);
-    }
-    
-    infoModal.classList.add('active');
-}
-
-function closeSettingsInfoModal() {
-    const modal = document.getElementById('settingsInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
 // Homepage Info Modal
 function showHomepageInfoModal() {
     pushModalState('homepageInfoModal', closeHomepageInfoModal);
@@ -826,6 +774,9 @@ function showHomepageInfoModal() {
         document.body.appendChild(infoModal);
     }
     
+    window.modalScrollY = window.scrollY;
+    document.body.style.top = `-${window.modalScrollY}px`;
+    document.body.classList.add('modal-open');
     infoModal.classList.add('active');
 }
 
@@ -1787,8 +1738,10 @@ window.showGeneralNotesInfoModal = function() {
         `;
         document.body.appendChild(infoModal);
     }
-infoModal.classList.add('active');
+    
+    infoModal.classList.add('active');
 };
+
 window.closeGeneralNotesInfoModal = function() {
 const modal = document.getElementById('generalNotesInfoModal');
 if (modal) {
@@ -2308,3 +2261,29 @@ window.showQuickInfo = function(message) {
     
     document.body.appendChild(popup);
 };
+
+// Handle outside clicks for all modals
+document.addEventListener('click', (e) => {
+    // Training info modals
+    const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
+    infoModals.forEach(modalId => {
+        const modal = document.getElementById(modalId);
+        if (modal && modal.classList.contains('active') && e.target === modal) {
+            const closeFunc = window[`close${modalId.charAt(0).toUpperCase() + modalId.slice(1).replace('Modal', '')}Modal`];
+            if (closeFunc) closeFunc();
+        }
+    });
+    
+    // Notes modal
+    const notesModal = document.getElementById('notesModal');
+    if (notesModal && notesModal.classList.contains('active') && e.target === notesModal) {
+        const caseName = notesModal.querySelector('.modal-title').textContent.replace('Notes: ', '');
+        attemptCloseNotesModal(caseName);
+    }
+    
+    // General notes modal
+    const generalNotesModal = document.getElementById('generalNotesModal');
+    if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal) {
+        attemptCloseGeneralNotesModal();
+    }
+});
