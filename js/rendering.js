@@ -603,7 +603,7 @@ function showContextMenu(caseName, event) {
     
     menuItems.push(
         {
-            label: 'Add Notes',
+            label: 'Add/Edit Notes',
             action: () => {
                 menu.remove();
                 openNotesModal(caseName);

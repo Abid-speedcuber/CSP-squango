@@ -404,14 +404,14 @@
         });
 
         let firstNonZeroIndex = 0;
-        for (let i = 0; i < steps.length; i++) {
-            if (!isZeroMove(steps[i], alg)) {
-                firstNonZeroIndex = i;
-                break;
-            }
-        }
+for (let i = 0; i < steps.length; i++) {
+    if (!isZeroMove(steps[i], alg, animateBothLayers)) {
+        firstNonZeroIndex = i;
+        break;
+    }
+}
 
-        return steps.slice(firstNonZeroIndex);
+return steps.slice(firstNonZeroIndex);
     }
 
     function getHexForStep(step, animateBothLayers = false) {
@@ -426,36 +426,70 @@
         }
     }
 
-    function isZeroMove(step, originalAlg) {
-        const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
+   function isZeroMove(step, originalAlg, animateBothLayers) {
+    const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
 
-        if (highlighted.includes('/')) {
-            return false;
-        }
-
-        const numberMatch = highlighted.match(/-?\d+/);
-        if (numberMatch) {
-            const number = parseInt(numberMatch[0]);
-            return number === 0;
-        }
-
+    if (highlighted.includes('/')) {
         return false;
     }
+
+    // In "both layers" mode, check if BOTH numbers are zero
+    if (animateBothLayers) {
+        const match = highlighted.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
+        if (match) {
+            const top = parseInt(match[1]);
+            const bottom = parseInt(match[2]);
+            return top === 0 && bottom === 0;
+        }
+        return false;
+    }
+    
+    // In single layer mode, check if the single number is zero
+    const numberMatch = highlighted.match(/-?\d+/);
+    if (numberMatch) {
+        const number = parseInt(numberMatch[0]);
+        return number === 0;
+    }
+
+    return false;
+}
 
     // ========================================
     // RENDERING FUNCTIONS
     // ========================================
-    function renderAlgorithm(step, originalAlg) {
-        if (step.highlightStart === -1) {
-            return originalAlg;
+    function renderAlgorithm(step, originalAlg, steps, currentStepIndex, animateBothLayers) {
+    // Build clickable tokens
+    let html = '';
+    let position = 0;
+    
+    steps.forEach((s, index) => {
+        if (s.highlightStart > position) {
+            // Add any text between tokens (whitespace)
+            html += originalAlg.substring(position, s.highlightStart);
         }
-
-        const beforeHighlight = originalAlg.substring(0, step.highlightStart);
-        const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
-        const afterHighlight = originalAlg.substring(step.highlightEnd);
-
-        return beforeHighlight + '<span style="background: #f9dfb8ff; color: #000; padding: 2px 4px; border-radius: 2px;">' + highlighted + '</span>' + afterHighlight;
+        
+        const tokenText = originalAlg.substring(s.highlightStart, s.highlightEnd);
+        const isCurrent = index === currentStepIndex;
+        const isZero = isZeroMove(s, originalAlg, animateBothLayers);
+        
+        // Make token clickable unless it's a zero move
+        if (!isZero) {
+            html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: #f9dfb8ff; color: #000;' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+        } else {
+            // Zero moves are not clickable
+            html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+        }
+        
+        position = s.highlightEnd;
+    });
+    
+    // Add any remaining text
+    if (position < originalAlg.length) {
+        html += originalAlg.substring(position);
     }
+    
+    return html;
+}
 
     function renderVisualization(hex, colorScheme, imageSize) {
         if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
@@ -502,18 +536,18 @@
 
         // Initialize state
         const state = {
-            originalAlg: algorithm,
-            steps: generateSteps(algorithm, true),
-            currentStep: 0,
-            animationSpeed: 1.0,
-            autoRunDelay: 200,
-            isAnimating: false,
-            isAutoRunning: false,
-            autoRunDirection: 'next',
-            colorScheme: colorScheme,
-            imageSize: imageSize,
-            animateBothLayers: true
-        };
+    originalAlg: algorithm,
+    steps: generateSteps(algorithm, localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true),
+    currentStep: 0,
+    animationSpeed: parseFloat(localStorage.getItem('sq1AnimSpeed')) || 0.9,
+    autoRunDelay: parseInt(localStorage.getItem('sq1AutoDelay')) || 500,
+    isAnimating: false,
+    isAutoRunning: false,
+    autoRunDirection: 'next',
+    colorScheme: colorScheme,
+    imageSize: imageSize,
+    animateBothLayers: localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true
+};
 
         const css = `
         <style>
@@ -530,7 +564,7 @@
                 align-items: center;
                 font-family: Arial, sans-serif;
                 overflow-y: auto;
-                padding: 20px;
+                padding: 0px 20px;
                 box-sizing: border-box;
             }
             #${modalId} .modal-content {
@@ -547,7 +581,7 @@
                 flex-direction: column;
             }
             #${modalId} .modal-body {
-                padding: 20px;
+                padding: 0px 20px;
                 overflow-y: auto;
                 flex: 1;
                 background: white;
@@ -733,7 +767,7 @@
                 left: 26px;
             }
             #${modalId} .modal-body {
-                padding: 20px;
+                padding: 0px 20px;
             }
             #${modalId} .algorithm-display {
                 font-family: 'Courier New', monospace;
@@ -785,29 +819,10 @@
                 color: #555;
             }
             #${modalId} .visualization-area {
-                margin: 20px 0;
+                margin: 7px 0;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                gap: 10px;
-            }
-            #${modalId} .nav-btn {
-                background: #f0f0f0;
-                border: none;
-                border-radius: 50%;
-                width: 40px;
-                height: 40px;
-                font-size: 20px;
-                cursor: pointer;
-                transition: background 0.2s;
-                flex-shrink: 0;
-            }
-            #${modalId} .nav-btn:hover:not(:disabled) {
-                background: #e0e0e0;
-            }
-            #${modalId} .nav-btn:disabled {
-                opacity: 0.3;
-                cursor: not-allowed;
             }
             #${modalId} .visualization-container {
                 flex: 1;
@@ -833,12 +848,14 @@
             #${modalId} .control-btn {
                 background: #f0f0f0;
                 border: none;
-                border-radius: 6px;
-                padding: 10px 20px;
+                border-radius: 4px;
+                padding: 4px 6px;
                 cursor: pointer;
                 font-size: 14px;
                 transition: background 0.2s;
-                min-width: 100px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
             }
             #${modalId} .control-btn:hover:not(:disabled) {
                 background: #e0e0e0;
@@ -873,11 +890,14 @@
                 border: none;
             }
             #${modalId} .step-counter {
-                text-align: center;
-                font-size: 14px;
-                color: #666;
-                margin: 10px 0;
-            }
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin: 10px 0;
+}
+#${modalId} .clickable-token:not(.current-token):hover {
+    text-decoration: underline;
+}
         </style>
     `;
 
@@ -933,31 +953,33 @@
             const step = state.steps[state.currentStep];
             const hex = getHexForStep(step, state.animateBothLayers);
             const visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
-            const highlightedAlg = renderAlgorithm(step, state.originalAlg);
+            const highlightedAlg = renderAlgorithm(step, state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
 
             const bodyHtml = `
-            <div class="algorithm-display">${state.originalAlg}</div>
-
             <div class="visualization-area">
-                <button class="nav-btn" id="${modalId}-prev" ${state.currentStep === 0 ? 'disabled' : ''}>◀</button>
                 <div class="visualization-container">${visualization}</div>
-                <button class="nav-btn" id="${modalId}-next" ${state.currentStep === state.steps.length - 1 ? 'disabled' : ''}>▶</button>
             </div>
 
             <div class="highlighted-alg">${highlightedAlg}</div>
 
             <div class="control-buttons">
-                <button class="control-btn" id="${modalId}-auto-prev" ${state.isAutoRunning ? 'disabled' : ''}>◄◄ Auto Backward</button>
-                <button class="control-btn" id="${modalId}-stop" ${!state.isAutoRunning ? 'disabled' : ''}>⏸ Pause</button>
-                <button class="control-btn" id="${modalId}-auto-next" ${state.isAutoRunning ? 'disabled' : ''}>Auto Forward ►►</button>
+                <button class="control-btn" id="${modalId}-first" ${state.currentStep === 0 ? 'disabled' : ''}>
+                    <img src="res/anim/first.svg" alt="First" style="width: 16px; height: 16px;">
+                </button>
+                <button class="control-btn" id="${modalId}-prev" ${state.currentStep === 0 ? 'disabled' : ''}>
+                    <img src="res/anim/prev.svg" alt="Previous" style="width: 16px; height: 16px;">
+                </button>
+                <button class="control-btn" id="${modalId}-play-pause">
+                    <img src="res/anim/${state.isAutoRunning ? 'pause' : 'play'}.svg" alt="${state.isAutoRunning ? 'Pause' : 'Play'}" style="width: 16px; height: 16px;">
+                </button>
+                <button class="control-btn" id="${modalId}-next" ${state.currentStep === state.steps.length - 1 ? 'disabled' : ''}>
+                    <img src="res/anim/next.svg" alt="Next" style="width: 16px; height: 16px;">
+                </button>
+                <button class="control-btn" id="${modalId}-last" ${state.currentStep === state.steps.length - 1 ? 'disabled' : ''}>
+                    <img src="res/anim/last.svg" alt="Last" style="width: 16px; height: 16px;">
+                </button>
             </div>
-
-            <div class="step-counter">Step ${state.currentStep + 1} of ${state.steps.length}</div>
-
-            <div class="step-slider-container">
-                <input type="range" id="${modalId}-step-slider" min="0" max="${state.steps.length - 1}" value="${state.currentStep}">
-            </div>
-        `;
+               `;
 
             document.getElementById(`${modalId}-body`).innerHTML = bodyHtml;
 
@@ -966,6 +988,47 @@
         }
 
         function attachEventListeners() {
+            // First button
+            const firstBtn = document.getElementById(`${modalId}-first`);
+            if (firstBtn) {
+                firstBtn.onclick = () => {
+                    if (state.currentStep > 0 && !state.isAnimating && !state.isAutoRunning) {
+                        state.currentStep = 0;
+                        render();
+                    }
+                };
+            }
+
+            // Last button
+            const lastBtn = document.getElementById(`${modalId}-last`);
+            if (lastBtn) {
+                lastBtn.onclick = () => {
+                    if (state.currentStep < state.steps.length - 1 && !state.isAnimating && !state.isAutoRunning) {
+                        state.currentStep = state.steps.length - 1;
+                        render();
+                    }
+                };
+            }
+
+            // Play/Pause button
+            const playPauseBtn = document.getElementById(`${modalId}-play-pause`);
+            if (playPauseBtn) {
+                playPauseBtn.onclick = () => {
+                    if (state.isAutoRunning) {
+                        // Pause
+                        state.isAutoRunning = false;
+                        render();
+                    } else {
+                        // Play
+                        if (state.currentStep < state.steps.length - 1 && !state.isAnimating) {
+                            state.isAutoRunning = true;
+                            state.autoRunDirection = 'next';
+                            render();
+                            autoRunNextStep();
+                        }
+                    }
+                };
+            }
             // Menu button
             const menuBtn = document.getElementById(`${modalId}-menu-btn`);
             const sidebar = document.getElementById(`${modalId}-sidebar`);
@@ -1007,79 +1070,69 @@
             const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);
             const sidebarSpeedVal = document.getElementById(`${modalId}-sidebar-speed-val`);
             sidebarSpeedSlider.oninput = (e) => {
-                state.animationSpeed = parseFloat(e.target.value);
-                sidebarSpeedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
-            };
+    state.animationSpeed = parseFloat(e.target.value);
+    sidebarSpeedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
+    localStorage.setItem('sq1AnimSpeed', state.animationSpeed);
+};
 
             // Sidebar delay slider
             const sidebarDelaySlider = document.getElementById(`${modalId}-sidebar-delay`);
             const sidebarDelayVal = document.getElementById(`${modalId}-sidebar-delay-val`);
             sidebarDelaySlider.oninput = (e) => {
-                state.autoRunDelay = parseInt(e.target.value);
-                sidebarDelayVal.textContent = state.autoRunDelay + 'ms';
-            };
+    state.autoRunDelay = parseInt(e.target.value);
+    sidebarDelayVal.textContent = state.autoRunDelay + 'ms';
+    localStorage.setItem('sq1AutoDelay', state.autoRunDelay);
+};
 
             // Both layers toggle
             const bothLayersToggle = document.getElementById(`${modalId}-both-layers-toggle`);
             bothLayersToggle.onclick = () => {
-                state.animateBothLayers = !state.animateBothLayers;
-                bothLayersToggle.classList.toggle('active');
-                const label = bothLayersToggle.nextElementSibling;
-                label.textContent = state.animateBothLayers ? 'On' : 'Off';
-                
-                // Regenerate steps with new mode
-                state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
-                state.currentStep = 0;
-                render();
-            };
+    state.animateBothLayers = !state.animateBothLayers;
+    bothLayersToggle.classList.toggle('active');
+    const label = bothLayersToggle.nextElementSibling;
+    label.textContent = state.animateBothLayers ? 'On' : 'Off';
+    localStorage.setItem('sq1AnimBothLayers', state.animateBothLayers);
+    
+    // Regenerate steps with new mode
+    state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
+    state.currentStep = 0;
+    render();
+};
 
-            // Navigation buttons
-            document.getElementById(`${modalId}-prev`).onclick = () => {
-                if (state.currentStep > 0 && !state.isAnimating && !state.isAutoRunning) {
-                    state.currentStep--;
-                    animateStep('prev');
-                }
-            };
+            // Previous button
+            const prevBtn = document.getElementById(`${modalId}-prev`);
+            if (prevBtn) {
+                prevBtn.onclick = () => {
+                    if (state.currentStep > 0 && !state.isAnimating && !state.isAutoRunning) {
+                        state.currentStep--;
+                        animateStep('prev');
+                    }
+                };
+            }
 
-            document.getElementById(`${modalId}-next`).onclick = () => {
-                if (state.currentStep < state.steps.length - 1 && !state.isAnimating && !state.isAutoRunning) {
-                    state.currentStep++;
-                    animateStep('next');
-                }
-            };
+            // Next button
+            const nextBtn = document.getElementById(`${modalId}-next`);
+            if (nextBtn) {
+                nextBtn.onclick = () => {
+                    if (state.currentStep < state.steps.length - 1 && !state.isAnimating && !state.isAutoRunning) {
+                        state.currentStep++;
+                        animateStep('next');
+                    }
+                };
+            }
 
-            // Auto run buttons
-            document.getElementById(`${modalId}-auto-prev`).onclick = () => {
-                if (!state.isAnimating && !state.isAutoRunning && state.currentStep > 0) {
-                    state.isAutoRunning = true;
-                    state.autoRunDirection = 'prev';
-                    render();
-                    autoRunNextStep();
-                }
-            };
-
-            document.getElementById(`${modalId}-auto-next`).onclick = () => {
-                if (!state.isAnimating && !state.isAutoRunning && state.currentStep < state.steps.length - 1) {
-                    state.isAutoRunning = true;
-                    state.autoRunDirection = 'next';
-                    render();
-                    autoRunNextStep();
-                }
-            };
-
-            document.getElementById(`${modalId}-stop`).onclick = () => {
-                state.isAutoRunning = false;
-                render();
-            };
-
-            // Step slider
-            const stepSlider = document.getElementById(`${modalId}-step-slider`);
-            stepSlider.oninput = (e) => {
-                if (!state.isAnimating && !state.isAutoRunning) {
-                    state.currentStep = parseInt(e.target.value);
-                    render();
-                }
-            };
+            // Clickable tokens
+document.querySelectorAll(`#${modalId} .clickable-token`).forEach(token => {
+    token.onclick = () => {
+        if (state.isAnimating || state.isAutoRunning) return;
+        
+        const targetStep = parseInt(token.getAttribute('data-step-index'));
+        if (!isNaN(targetStep) && targetStep >= 0 && targetStep < state.steps.length) {
+            state.currentStep = targetStep;
+            render();
+        }
+    };
+});
         }
 
         function sleep(ms) {
@@ -1491,7 +1544,7 @@
                             state.isAnimating = false;
                             render();
 
-                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
+                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg, state.animateBothLayers);
 
                             if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
                                 state.currentStep++;
@@ -1533,7 +1586,7 @@
                             state.isAnimating = false;
                             render();
 
-                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg);
+                            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg, state.animateBothLayers);
 
                             if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
                                 state.currentStep++;

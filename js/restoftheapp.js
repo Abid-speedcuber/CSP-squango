@@ -1,7 +1,6 @@
 // Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
     'Default_Preset': 'presets/Default_Preset.json',
-    'Abid\'s_Preset': 'presets/Abid\'s_Preset.json',
     'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
     // Add more presets here:
     // 'Preset_Name': 'presets/preset_file.json',

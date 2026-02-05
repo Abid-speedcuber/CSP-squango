@@ -1476,31 +1476,35 @@ window.showNotesInfoModal = function() {
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
-                        <div class="training-info-number">📝</div>
-                        <div class="training-info-text"><strong>What are Notes?</strong> Notes are personal reminders attached to specific cases. Use them to remember recognition tricks, finger tricks, or anything that helps you learn the case better.</div>
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text"><strong>Why to keep notes: </strong>Keeping notes is a good habit to help you remember a case quickly while revising the learned cases</div>
                     </div>
                     <div class="training-info-item">
-                        <div class="training-info-number">💡</div>
-                        <div class="training-info-text"><strong>Good Examples:</strong><br>
-                        • "Look for the bar on front-left"<br>
-                        • "Use right thumb for the (3,0) move"<br>
-                        • "Similar to case X but with flipped edges"<br>
-                        • "Practice slow first, speed comes later"</div>
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text"><strong>What to keep as notes:</strong><br>
+                        • A one liner that remembers you what the odd or even alg is instantly.<br>
+                        • Story that you use to remember if a case is good or bad.<br>
+                        • What are the difference between the good or bad alg (like: Good=connect the right side of the 6 with the pair)<br>
+                        • Or you can write whatever floats your boat... have fun<br>
+                    </div>
                     </div>
                     <div class="training-info-item">
-                        <div class="training-info-number">✏️</div>
+                        <div class="training-info-number">3</div>
                         <div class="training-info-text"><strong>Text Formatting:</strong> Notes support basic HTML formatting:<br>
-                        • <code>&lt;b&gt;bold&lt;/b&gt;</code> or <code>&lt;strong&gt;bold&lt;/strong&gt;</code><br>
-                        • <code>&lt;i&gt;italic&lt;/i&gt;</code> or <code>&lt;em&gt;italic&lt;/em&gt;</code><br>
-                        • <code>&lt;u&gt;underline&lt;/u&gt;</code><br>
-                        • <code>&lt;s&gt;strikethrough&lt;/s&gt;</code><br>
-                        • <code>&lt;font color="red"&gt;colored text&lt;/font&gt;</code><br>
+                        • <b>Bold</b>: <code>&lt;b&gt;bold&lt;/b&gt;</code> or <code>&lt;strong&gt;bold&lt;/strong&gt;</code><br>
+                        • <i>Italic</i>: <code>&lt;i&gt;italic&lt;/i&gt;</code> or <code>&lt;em&gt;italic&lt;/em&gt;</code><br>
+                        • <u>Underline</u>: <code>&lt;u&gt;underline&lt;/u&gt;</code><br>
+                        • <s>Strikethrough</s>: <code>&lt;s&gt;strikethrough&lt;/s&gt;</code><br>
+                        • <span style="color:red;">Colored Text</span>: <code>&lt;font color="red"&gt;colored text&lt;/font&gt;</code><br>
                         • <code>&lt;br&gt;</code> for line breaks<br>
-                        • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for links</div>
+                        • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for <span role="button" tabindex="0" onclick="return false" onkeydown="return false" onmousedown="this.style.color='purple'" onmouseup="this.style.color='#00f'" onmouseleave="this.style.color='#00f'" style="color:#00f;text-decoration:underline;cursor:pointer;user-select:none;">links</span><br> <br>
+                    <strong>If you are creating preset, it is recommended to create notes with <em>text formatting</em>; your users will thank you!</strong>
+                    </div>
+                        
                     </div>
                     <div class="training-info-item">
-                        <div class="training-info-number">🎯</div>
-                        <div class="training-info-text"><strong>Keep it Simple:</strong> Short, focused notes work best. If you find yourself writing paragraphs, consider using the General Notes feature instead (accessible from the menu).</div>
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">If you need to create more general notes that covers more than one cases, you should consider using general notes (inside the menu bar) instead.</div>
                     </div>
                 </div>
             </div>
