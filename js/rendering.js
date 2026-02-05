@@ -452,27 +452,52 @@ function showAlgoPopup(element, algo, isPermanent) {
         };
     }
     
-    // Position popup
-    const rect = element.getBoundingClientRect();
-    const popupRect = popup.getBoundingClientRect();
+// Position popup
+const rect = element.getBoundingClientRect();
+const popupRect = popup.getBoundingClientRect();
+
+// Calculate safe positions that won't cover the algorithm
+let top = rect.bottom + 10; // Position below with more gap
+let left = rect.left;
+
+// If popup would cover the element or go off bottom, position above
+if (top < rect.top + rect.height + 5 || top + popupRect.height > window.innerHeight - 10) {
+    top = rect.top - popupRect.height - 10; // Position above with more gap
+}
+
+// If still would cover (element is too tall), try positioning to the right
+if (top < rect.bottom && top + popupRect.height > rect.top) {
+    top = rect.top;
+    left = rect.right + 10; // Position to the right
     
-    // Try to position below first
-    let top = rect.bottom + 5;
-    let left = rect.left;
-    
-    // If popup goes off bottom of screen, position above
-    if (top + popupRect.height > window.innerHeight - 10) {
-        top = rect.top - popupRect.height - 5;
-    }
-    
-    // Adjust horizontal position if needed
+    // If goes off right side, try left side
     if (left + popupRect.width > window.innerWidth - 10) {
-        left = window.innerWidth - popupRect.width - 10;
+        left = rect.left - popupRect.width - 10; // Position to the left
     }
-    if (left < 10) left = 10;
-    
-    popup.style.top = top + 'px';
-    popup.style.left = left + 'px';
+}
+
+// Final boundary checks
+if (left + popupRect.width > window.innerWidth - 10) {
+    left = window.innerWidth - popupRect.width - 10;
+}
+if (left < 10) left = 10;
+if (top < 10) top = 10;
+
+// Ensure popup doesn't overlap with the element vertically when positioned above/below
+if (left === rect.left || left === window.innerWidth - popupRect.width - 10) {
+    // We're positioned above or below, ensure no overlap
+    if (top > rect.top && top < rect.bottom) {
+        // Overlapping, force it above
+        top = rect.top - popupRect.height - 10;
+        if (top < 10) {
+            // Can't fit above, position below
+            top = rect.bottom + 10;
+        }
+    }
+}
+
+popup.style.top = top + 'px';
+popup.style.left = left + 'px';
     
     // Add scroll handler - immediate close for all popups
     const scrollHandler = () => {

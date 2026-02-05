@@ -110,6 +110,9 @@ function generateModalHTML() {
                                     <span class="info-box">Lets you move the little numbers around for each image to set your tracing guide.<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
                                 </span>
                             </div>
+                            
+                            <hr style="border: none; border-top: 1px solid #dddddd; margin: 12px 0;">
+
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     <label for="enhancedAccessToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Enable Enhanced Access</label>
@@ -476,22 +479,29 @@ function openSettingsModal() {
     if (priorityLearningToggle) priorityLearningToggle.checked = enablePriorityLearning;
     
     const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
-if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
-const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
-if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
+    if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+    
+    const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
+    if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
 
-const algFontSizeSlider = document.getElementById('algFontSizeSlider');
-if (algFontSizeSlider) {
-    algFontSizeSlider.value = algorithmFontSize;
-    document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
-}
+    const algFontSizeSlider = document.getElementById('algFontSizeSlider');
+    if (algFontSizeSlider) {
+        algFontSizeSlider.value = algorithmFontSize;
+        document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
+    }
+    
+    const imageSizeSlider = document.getElementById('imageSizeSlider');
+    if (imageSizeSlider) {
+        imageSizeSlider.value = scrambleImageSize;
+        document.getElementById('sizeValue').textContent = scrambleImageSize;
+    }
 
-const enhancedAccessToggle = document.getElementById('enhancedAccessToggle');
-if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
+    const enhancedAccessToggle = document.getElementById('enhancedAccessToggle');
+    if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
 
     populatePresetDropdown();
 
-pushModalState('settingsModal', closeSettingsModal);
+    pushModalState('settingsModal', closeSettingsModal);
 }
 
 function closeSettingsModal() {
