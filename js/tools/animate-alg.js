@@ -41,7 +41,7 @@
     function parseScramble(scramble, animateBothLayers = false) {
         const moves = [];
         let i = 0;
-        
+
         if (animateBothLayers) {
             // NEW MODE: Group tokens as "a,b", "/", "c,d"
             while (i < scramble.length) {
@@ -130,17 +130,17 @@
                         const parts = cleaned.split(',').map(n => parseInt(n.trim()));
                         const top = parts[0];
                         const bottom = parts.length > 1 ? parts[1] : 0;
-                        
+
                         // Emit top layer move only
                         if (top !== 0) {
                             moves.push({ type: 'turn', top, bottom: 0 });
                         }
-                        
+
                         // Emit bottom layer move only
                         if (bottom !== 0) {
                             moves.push({ type: 'turn', top: 0, bottom });
                         }
-                        
+
                         // If both are zero, still emit one move to maintain step count
                         if (top === 0 && bottom === 0) {
                             moves.push({ type: 'turn', top: 0, bottom: 0 });
@@ -404,14 +404,14 @@
         });
 
         let firstNonZeroIndex = 0;
-for (let i = 0; i < steps.length; i++) {
-    if (!isZeroMove(steps[i], alg, animateBothLayers)) {
-        firstNonZeroIndex = i;
-        break;
-    }
-}
+        for (let i = 0; i < steps.length; i++) {
+            if (!isZeroMove(steps[i], alg, animateBothLayers)) {
+                firstNonZeroIndex = i;
+                break;
+            }
+        }
 
-return steps.slice(firstNonZeroIndex);
+        return steps.slice(firstNonZeroIndex);
     }
 
     function getHexForStep(step, animateBothLayers = false) {
@@ -426,70 +426,70 @@ return steps.slice(firstNonZeroIndex);
         }
     }
 
-   function isZeroMove(step, originalAlg, animateBothLayers) {
-    const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
+    function isZeroMove(step, originalAlg, animateBothLayers) {
+        const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
 
-    if (highlighted.includes('/')) {
-        return false;
-    }
-
-    // In "both layers" mode, check if BOTH numbers are zero
-    if (animateBothLayers) {
-        const match = highlighted.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
-        if (match) {
-            const top = parseInt(match[1]);
-            const bottom = parseInt(match[2]);
-            return top === 0 && bottom === 0;
+        if (highlighted.includes('/')) {
+            return false;
         }
+
+        // In "both layers" mode, check if BOTH numbers are zero
+        if (animateBothLayers) {
+            const match = highlighted.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
+            if (match) {
+                const top = parseInt(match[1]);
+                const bottom = parseInt(match[2]);
+                return top === 0 && bottom === 0;
+            }
+            return false;
+        }
+
+        // In single layer mode, check if the single number is zero
+        const numberMatch = highlighted.match(/-?\d+/);
+        if (numberMatch) {
+            const number = parseInt(numberMatch[0]);
+            return number === 0;
+        }
+
         return false;
     }
-    
-    // In single layer mode, check if the single number is zero
-    const numberMatch = highlighted.match(/-?\d+/);
-    if (numberMatch) {
-        const number = parseInt(numberMatch[0]);
-        return number === 0;
-    }
-
-    return false;
-}
 
     // ========================================
     // RENDERING FUNCTIONS
     // ========================================
     function renderAlgorithm(step, originalAlg, steps, currentStepIndex, animateBothLayers) {
-    // Build clickable tokens
-    let html = '';
-    let position = 0;
-    
-    steps.forEach((s, index) => {
-        if (s.highlightStart > position) {
-            // Add any text between tokens (whitespace)
-            html += originalAlg.substring(position, s.highlightStart);
+        // Build clickable tokens
+        let html = '';
+        let position = 0;
+
+        steps.forEach((s, index) => {
+            if (s.highlightStart > position) {
+                // Add any text between tokens (whitespace)
+                html += originalAlg.substring(position, s.highlightStart);
+            }
+
+            const tokenText = originalAlg.substring(s.highlightStart, s.highlightEnd);
+            const isCurrent = index === currentStepIndex;
+            const isZero = isZeroMove(s, originalAlg, animateBothLayers);
+
+            // Make token clickable unless it's a zero move
+            if (!isZero) {
+                html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: #f9dfb8ff; color: #000;' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+            } else {
+                // Zero moves are not clickable
+                html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+            }
+
+            position = s.highlightEnd;
+        });
+
+        // Add any remaining text
+        if (position < originalAlg.length) {
+            html += originalAlg.substring(position);
         }
-        
-        const tokenText = originalAlg.substring(s.highlightStart, s.highlightEnd);
-        const isCurrent = index === currentStepIndex;
-        const isZero = isZeroMove(s, originalAlg, animateBothLayers);
-        
-        // Make token clickable unless it's a zero move
-        if (!isZero) {
-            html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: #f9dfb8ff; color: #000;' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
-        } else {
-            // Zero moves are not clickable
-            html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
-        }
-        
-        position = s.highlightEnd;
-    });
-    
-    // Add any remaining text
-    if (position < originalAlg.length) {
-        html += originalAlg.substring(position);
+
+        return html;
     }
-    
-    return html;
-}
 
     function renderVisualization(hex, colorScheme, imageSize) {
         if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
@@ -536,18 +536,18 @@ return steps.slice(firstNonZeroIndex);
 
         // Initialize state
         const state = {
-    originalAlg: algorithm,
-    steps: generateSteps(algorithm, localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true),
-    currentStep: 0,
-    animationSpeed: parseFloat(localStorage.getItem('sq1AnimSpeed')) || 0.9,
-    autoRunDelay: parseInt(localStorage.getItem('sq1AutoDelay')) || 500,
-    isAnimating: false,
-    isAutoRunning: false,
-    autoRunDirection: 'next',
-    colorScheme: colorScheme,
-    imageSize: imageSize,
-    animateBothLayers: localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true
-};
+            originalAlg: algorithm,
+            steps: generateSteps(algorithm, localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true),
+            currentStep: 0,
+            animationSpeed: parseFloat(localStorage.getItem('sq1AnimSpeed')) || 0.9,
+            autoRunDelay: parseInt(localStorage.getItem('sq1AutoDelay')) || 500,
+            isAnimating: false,
+            isAutoRunning: false,
+            autoRunDirection: 'next',
+            colorScheme: colorScheme,
+            imageSize: imageSize,
+            animateBothLayers: localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true
+        };
 
         const css = `
         <style>
@@ -903,7 +903,7 @@ return steps.slice(firstNonZeroIndex);
 
         const html = `
         ${css}
-        <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { window.modalScrollY = window.scrollY || 0; document.body.style.top = ''; document.body.classList.remove('modal-open'); window.scrollTo(0, window.modalScrollY); document.getElementById('${modalId}').remove(); } })(event)">
+        <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { document.getElementById('${modalId}').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); } })(event)">
             <div class="modal-content">
                 <div class="modal-header">
                     <div style="display: flex; align-items: center; gap: 12px;">
@@ -946,7 +946,7 @@ return steps.slice(firstNonZeroIndex);
         </div>
     `;
 
-        
+
 
         // Render function
         function render() {
@@ -1033,11 +1033,11 @@ return steps.slice(firstNonZeroIndex);
             const menuBtn = document.getElementById(`${modalId}-menu-btn`);
             const sidebar = document.getElementById(`${modalId}-sidebar`);
             const modalBody = document.getElementById(`${modalId}-body`);
-            
+
             menuBtn.onclick = (e) => {
                 e.stopPropagation();
                 sidebar.classList.toggle('open');
-   
+
                 const sidebarContent = sidebar.querySelector('.sidebar-content');
                 if (sidebarContent) {
                     const contentStyles = window.getComputedStyle(sidebarContent);
@@ -1059,45 +1059,44 @@ return steps.slice(firstNonZeroIndex);
             // Close button
             const closeBtn = document.getElementById(`${modalId}-close-btn`);
             closeBtn.onclick = () => {
-                window.modalScrollY = window.scrollY || 0;
-                document.body.style.top = '';
-                document.body.classList.remove('modal-open');
-                window.scrollTo(0, window.modalScrollY);
                 document.getElementById(modalId).remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.top = '';
+                window.scrollTo(0, window.modalScrollY || 0);
             };
 
             // Sidebar speed slider
             const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);
             const sidebarSpeedVal = document.getElementById(`${modalId}-sidebar-speed-val`);
             sidebarSpeedSlider.oninput = (e) => {
-    state.animationSpeed = parseFloat(e.target.value);
-    sidebarSpeedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
-    localStorage.setItem('sq1AnimSpeed', state.animationSpeed);
-};
+                state.animationSpeed = parseFloat(e.target.value);
+                sidebarSpeedVal.textContent = state.animationSpeed.toFixed(1) + 'x';
+                localStorage.setItem('sq1AnimSpeed', state.animationSpeed);
+            };
 
             // Sidebar delay slider
             const sidebarDelaySlider = document.getElementById(`${modalId}-sidebar-delay`);
             const sidebarDelayVal = document.getElementById(`${modalId}-sidebar-delay-val`);
             sidebarDelaySlider.oninput = (e) => {
-    state.autoRunDelay = parseInt(e.target.value);
-    sidebarDelayVal.textContent = state.autoRunDelay + 'ms';
-    localStorage.setItem('sq1AutoDelay', state.autoRunDelay);
-};
+                state.autoRunDelay = parseInt(e.target.value);
+                sidebarDelayVal.textContent = state.autoRunDelay + 'ms';
+                localStorage.setItem('sq1AutoDelay', state.autoRunDelay);
+            };
 
             // Both layers toggle
             const bothLayersToggle = document.getElementById(`${modalId}-both-layers-toggle`);
             bothLayersToggle.onclick = () => {
-    state.animateBothLayers = !state.animateBothLayers;
-    bothLayersToggle.classList.toggle('active');
-    const label = bothLayersToggle.nextElementSibling;
-    label.textContent = state.animateBothLayers ? 'On' : 'Off';
-    localStorage.setItem('sq1AnimBothLayers', state.animateBothLayers);
-    
-    // Regenerate steps with new mode
-    state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
-    state.currentStep = 0;
-    render();
-};
+                state.animateBothLayers = !state.animateBothLayers;
+                bothLayersToggle.classList.toggle('active');
+                const label = bothLayersToggle.nextElementSibling;
+                label.textContent = state.animateBothLayers ? 'On' : 'Off';
+                localStorage.setItem('sq1AnimBothLayers', state.animateBothLayers);
+
+                // Regenerate steps with new mode
+                state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
+                state.currentStep = 0;
+                render();
+            };
 
             // Previous button
             const prevBtn = document.getElementById(`${modalId}-prev`);
@@ -1122,17 +1121,17 @@ return steps.slice(firstNonZeroIndex);
             }
 
             // Clickable tokens
-document.querySelectorAll(`#${modalId} .clickable-token`).forEach(token => {
-    token.onclick = () => {
-        if (state.isAnimating || state.isAutoRunning) return;
-        
-        const targetStep = parseInt(token.getAttribute('data-step-index'));
-        if (!isNaN(targetStep) && targetStep >= 0 && targetStep < state.steps.length) {
-            state.currentStep = targetStep;
-            render();
-        }
-    };
-});
+            document.querySelectorAll(`#${modalId} .clickable-token`).forEach(token => {
+                token.onclick = () => {
+                    if (state.isAnimating || state.isAutoRunning) return;
+
+                    const targetStep = parseInt(token.getAttribute('data-step-index'));
+                    if (!isNaN(targetStep) && targetStep >= 0 && targetStep < state.steps.length) {
+                        state.currentStep = targetStep;
+                        render();
+                    }
+                };
+            });
         }
 
         function sleep(ms) {
@@ -1168,7 +1167,7 @@ document.querySelectorAll(`#${modalId} .clickable-token`).forEach(token => {
                 // ANIMATE BOTH LAYERS MODE - COMPLETELY SEPARATE LOGIC
                 // ============================================
                 let tokenToAnimate;
-                
+
                 if (direction === 'next') {
                     // Going forward: animate the PREVIOUS token
                     if (state.currentStep > 0) {
@@ -1184,7 +1183,7 @@ document.querySelectorAll(`#${modalId} .clickable-token`).forEach(token => {
                 }
 
                 const tokenText = state.originalAlg.substring(tokenToAnimate.highlightStart, tokenToAnimate.highlightEnd);
-                
+
                 if (tokenText.includes('/')) {
                     // SLASH TOKEN - Fade animation
                     const duration = 500 / state.animationSpeed;
