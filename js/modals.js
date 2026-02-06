@@ -22,7 +22,7 @@ window.getColorName = getColorName;
 function generateModalHTML() {
     const modalContainer = document.createElement('div');
     modalContainer.id = 'dynamicModals';
-    
+
     modalContainer.innerHTML = `
         <div id="settingsModal" class="modal">
             <div class="modal-content" style="max-width: 480px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
@@ -72,14 +72,20 @@ function generateModalHTML() {
                             </div>
                         </div>
                         
-                                                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
-                            <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
-                                <span>Small (100px)</span>
-                                <span>Large (400px)</span>
-                            </div>
-                        </div>
+<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+        <label style="font-weight: 500; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
+        <span class="info-wrapper">
+            <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
+            <span class="info-box">This setting controls the image size in the Training modal, Parity Tracer, and Animate Algorithm modal. It does NOT affect the case images on the home screen.</span>
+        </span>
+    </div>
+    <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
+    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+        <span>Small (100px)</span>
+        <span>Large (400px)</span>
+    </div>
+</div>
                         
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
                             <div onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
@@ -375,17 +381,17 @@ function generateModalHTML() {
   </div>
 </div>
     `;
-    
+
     document.body.appendChild(modalContainer);
-    
+
     // Setup color button handlers after modals are created
     document.querySelectorAll('.color-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             const face = this.getAttribute('data-face');
             const color = this.getAttribute('data-color');
-            
+
             colorScheme[face + 'Color'] = color;
-            
+
             const sameFaceButtons = document.querySelectorAll(`.color-btn[data-face="${face}"]`);
             sameFaceButtons.forEach(b => {
                 if (b === this) {
@@ -396,10 +402,10 @@ function generateModalHTML() {
                     b.style.fontWeight = 'normal';
                 }
             });
-            
+
             // Auto-save
             saveState();
-            
+
             // Recalculate parity if needed
             if (needsParityRecalculation()) {
                 calculateAndCacheAllParity();
@@ -443,7 +449,7 @@ function saveModalData(name) {
             comments.delete(name);
         }
     }
-    
+
     saveState();
     render();
     closeModal();
@@ -460,27 +466,27 @@ function openSettingsModal() {
     const profileModal = document.getElementById('profileModal');
     const settingsModal = document.getElementById('settingsModal');
     if (!settingsModal) return;
-    
+
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     settingsModal.classList.add('active');
-    
+
     const hintToggleCheckbox = document.getElementById('hintToggle');
     if (hintToggleCheckbox) hintToggleCheckbox.checked = showHints;
-    
+
     const showPathsToggle = document.getElementById('showPathsToggle');
     if (showPathsToggle) showPathsToggle.checked = showPaths;
-    
+
     const dynamicParityToggle = document.getElementById('dynamicParityToggle');
     if (dynamicParityToggle) dynamicParityToggle.checked = useDynamicParity;
-    
+
     const priorityLearningToggle = document.getElementById('priorityLearningToggle');
     if (priorityLearningToggle) priorityLearningToggle.checked = enablePriorityLearning;
-    
+
     const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
     if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
-    
+
     const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
     if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
 
@@ -489,7 +495,7 @@ function openSettingsModal() {
         algFontSizeSlider.value = algorithmFontSize;
         document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
     }
-    
+
     const imageSizeSlider = document.getElementById('imageSizeSlider');
     if (imageSizeSlider) {
         imageSizeSlider.value = scrambleImageSize;
@@ -515,14 +521,14 @@ function closeSettingsModal() {
 
 function handlePresetChange(presetName) {
     if (presetName === currentPreset) return;
-    
+
     // Validate preset exists in config
     if (typeof window.PRESET_CONFIG === 'undefined' || !window.PRESET_CONFIG[presetName]) {
         showToast('Invalid preset selected', 2000, 'error');
         document.getElementById('presetSelector').value = currentPreset;
         return;
     }
-    
+
     // Create a custom warning modal with export option
     const warningModal = document.createElement('div');
     warningModal.className = 'modal active';
@@ -551,7 +557,7 @@ function handlePresetChange(presetName) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(warningModal);
     document.body.classList.add('modal-open');
 }
@@ -563,7 +569,7 @@ function toggleHints(isChecked) {
 }
 
 function applyHintVisibility() {
-     if (showHints) {
+    if (showHints) {
         document.body.classList.remove('hide-hints');
     } else {
         document.body.classList.add('hide-hints');
@@ -608,9 +614,9 @@ function toggleEnhancedAccess(isChecked) {
 function populatePresetDropdown(selectorId = 'presetSelector') {
     const presetSelector = document.getElementById(selectorId);
     if (!presetSelector || typeof window.PRESET_CONFIG === 'undefined') return;
-    
+
     presetSelector.innerHTML = '';
-    
+
     for (const presetName in window.PRESET_CONFIG) {
         const option = document.createElement('option');
         option.value = presetName;
@@ -618,7 +624,7 @@ function populatePresetDropdown(selectorId = 'presetSelector') {
         option.textContent = presetName.replace(/_/g, ' ').replace(/'/g, "'");
         presetSelector.appendChild(option);
     }
-    
+
     // Set current preset as selected
     if (typeof currentPreset !== 'undefined') {
         presetSelector.value = currentPreset;
@@ -636,20 +642,20 @@ document.addEventListener('DOMContentLoaded', () => {
 // Color Scheme Modal Functions
 function openColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
-    
+
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     modal.classList.add('active');
-    
+
     pushModalState('colorSchemeModal', closeColorSchemeModal);
-    
+
     // Highlight currently selected colors
     document.querySelectorAll('.color-btn').forEach(btn => {
         const face = btn.getAttribute('data-face');
         const color = btn.getAttribute('data-color');
         const currentColor = colorScheme[face + 'Color'];
-        
+
         if (color === currentColor) {
             btn.style.border = '3px solid #007bff';
             btn.style.fontWeight = 'bold';
@@ -703,7 +709,7 @@ function openNewParityAnalysis(scramble) {
         showToast('Parity Tracer library not loaded', 3000, 'error');
         return;
     }
-    
+
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
@@ -729,7 +735,7 @@ function openNewParityAnalysis(scramble) {
 // Homepage Info Modal
 function showHomepageInfoModal() {
     pushModalState('homepageInfoModal', closeHomepageInfoModal);
-    
+
     let infoModal = document.getElementById('homepageInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -783,7 +789,7 @@ function showHomepageInfoModal() {
         `;
         document.body.appendChild(infoModal);
     }
-    
+
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
@@ -800,7 +806,7 @@ function closeHomepageInfoModal() {
 function openEditCaseModal(caseName) {
     const item = data.find(d => d.name === caseName);
     if (!item) return;
-    
+
     const customAlgs = customAlgorithms.get(caseName);
     const allAlgs = [];
     if (customAlgs) {
@@ -808,16 +814,16 @@ function openEditCaseModal(caseName) {
     } else {
         allAlgs.push(...(item.odd || []), ...(item.even || []));
     }
-    
+
     const customName = displayNames[caseName] || '';
     const customSubtitle = perCaseSubtitles.get(caseName) || '';
-    
+
     // Close any existing context menu
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
-    
+
     pushModalState('editCaseModal', closeEditCaseModal);
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.id = 'editCaseModal';
@@ -866,12 +872,12 @@ function openEditCaseModal(caseName) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
-    
+
     // Apply enhanced access restrictions
     if (!window.enhancedAccess) {
         const algorithmsSection = document.getElementById('algorithmsSection');
@@ -879,26 +885,26 @@ function openEditCaseModal(caseName) {
             algorithmsSection.style.opacity = '0.5';
             algorithmsSection.style.pointerEvents = 'none';
         }
-        
+
         const addAlgorithmBtn = document.getElementById('addAlgorithmBtn');
         if (addAlgorithmBtn) {
             addAlgorithmBtn.disabled = true;
             addAlgorithmBtn.style.cursor = 'not-allowed';
         }
-        
+
         const algInputs = modal.querySelectorAll('.alg-input');
         algInputs.forEach(input => {
             input.contentEditable = 'false';
             input.style.cursor = 'not-allowed';
         });
-        
+
         const deleteButtons = modal.querySelectorAll('#editAlgsList button');
         deleteButtons.forEach(btn => {
             btn.disabled = true;
             btn.style.cursor = 'not-allowed';
         });
     }
-    
+
     // Setup parity detection for algorithm inputs
     setTimeout(() => {
         const inputs = modal.querySelectorAll('.alg-input');
@@ -907,12 +913,12 @@ function openEditCaseModal(caseName) {
             if (document.activeElement !== input) {
                 updateParityLabel(input);
             }
-            
+
             input.addEventListener('focus', () => {
                 const parityLabel = input.parentElement.querySelector('.parity-label');
                 if (parityLabel) parityLabel.textContent = '';
             });
-            
+
             input.addEventListener('blur', () => {
                 const rawText = input.value.trim();
                 if (rawText && rawText !== 'Done!') {
@@ -921,7 +927,7 @@ function openEditCaseModal(caseName) {
                 }
                 updateParityLabel(input);
             });
-            
+
             input.addEventListener('input', () => {
                 if (input.parityTimeout) {
                     clearTimeout(input.parityTimeout);
@@ -932,7 +938,7 @@ function openEditCaseModal(caseName) {
                     }
                 }, 300);
             });
-            
+
             input.addEventListener('paste', (e) => {
                 e.preventDefault();
                 const text = (e.clipboardData || window.clipboardData).getData('text/plain');
@@ -950,7 +956,7 @@ function openEditCaseModal(caseName) {
 function updateParityLabel(input) {
     const parityLabel = input.parentElement.querySelector('.parity-label');
     if (!parityLabel) return;
-    
+
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') {
         parityLabel.textContent = '';
@@ -958,25 +964,25 @@ function updateParityLabel(input) {
         parityLabel.style.fontWeight = '';
         return;
     }
-    
+
     // Check if required functions exist
-    if (typeof window.algToShapeIndex === 'undefined' || 
+    if (typeof window.algToShapeIndex === 'undefined' ||
         typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         parityLabel.textContent = '';
         parityLabel.style.color = '';
         parityLabel.style.fontWeight = '';
         return;
     }
-    
+
     try {
         // Get the current case being edited
         const modal = document.getElementById('editCaseModal');
         const caseName = modal ? modal.querySelector('.modal-title').textContent : '';
-        
+
         // Get shape index from algorithm
         const result = window.algToShapeIndex(alg);
         const resultShapeIndex = result.shapeIndex;
-        
+
         // Find matching case in shapeIndexMap
         let matchedCaseName = null;
         for (const [name, indexStr] of Object.entries(shapeIndexMap)) {
@@ -985,7 +991,7 @@ function updateParityLabel(input) {
                 break;
             }
         }
-        
+
         if (matchedCaseName) {
             // Direct match - test parity
             const setup = invertScramble(alg);
@@ -997,7 +1003,7 @@ function updateParityLabel(input) {
                 backColor: colorScheme.backColor,
                 leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-            
+
             parityLabel.textContent = parityText.toLowerCase();
             parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff'; // Green for odd, blue for even
             parityLabel.style.fontWeight = '600';
@@ -1005,7 +1011,7 @@ function updateParityLabel(input) {
             // No direct match - check shapeIndex array for org/mir
             let foundInOrg = false;
             let foundInMir = false;
-            
+
             for (const shapeData of shapeIndex) {
                 if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
                     foundInOrg = true;
@@ -1016,7 +1022,7 @@ function updateParityLabel(input) {
                     break;
                 }
             }
-            
+
             if (foundInOrg) {
                 parityLabel.textContent = 'angle mismatch';
                 parityLabel.style.color = '#ca9b0dff'; // Yellow
@@ -1039,10 +1045,10 @@ function updateParityLabel(input) {
 }
 
 // Function to add new algorithm field
-window.addNewAlgorithmField = function() {
+window.addNewAlgorithmField = function () {
     const algsList = document.getElementById('editAlgsList');
     if (!algsList) return;
-    
+
     const newField = document.createElement('div');
     newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
     newField.innerHTML = `
@@ -1052,15 +1058,15 @@ window.addNewAlgorithmField = function() {
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
     `;
-    
+
     algsList.appendChild(newField);
-    
+
     const input = newField.querySelector('.alg-input');
     input.addEventListener('focus', () => {
         const parityLabel = input.parentElement.querySelector('.parity-label');
         if (parityLabel) parityLabel.textContent = '';
     });
-    
+
     input.addEventListener('blur', () => {
         const rawText = input.value.trim();
         if (rawText && rawText !== 'Done!') {
@@ -1069,7 +1075,7 @@ window.addNewAlgorithmField = function() {
         }
         updateParityLabel(input);
     });
-    
+
     input.addEventListener('input', () => {
         if (input.parityTimeout) {
             clearTimeout(input.parityTimeout);
@@ -1080,7 +1086,7 @@ window.addNewAlgorithmField = function() {
             }
         }, 300);
     });
-    
+
     input.addEventListener('paste', (e) => {
         e.preventDefault();
         const text = (e.clipboardData || window.clipboardData).getData('text/plain');
@@ -1090,12 +1096,12 @@ window.addNewAlgorithmField = function() {
         input.value = currentValue.substring(0, start) + text + currentValue.substring(end);
         input.selectionStart = input.selectionEnd = start + text.length;
     });
-    
+
     input.focus();
 };
 
 // Function to open case rename modal
-window.openCaseRenameModal = function(caseName, currentName, currentSubtitle = '') {
+window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = '') {
     const renameModal = document.createElement('div');
     renameModal.className = 'modal active';
     renameModal.id = 'caseRenameModal';
@@ -1122,9 +1128,9 @@ window.openCaseRenameModal = function(caseName, currentName, currentSubtitle = '
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(renameModal);
-    
+
     setTimeout(() => {
         const input = document.getElementById('caseRenameInput');
         if (input) {
@@ -1134,34 +1140,34 @@ window.openCaseRenameModal = function(caseName, currentName, currentSubtitle = '
     }, 100);
 };
 
-window.closeCaseRenameModal = function() {
+window.closeCaseRenameModal = function () {
     const modal = document.getElementById('caseRenameModal');
     if (modal) modal.remove();
 };
 
-window.applyCaseRename = function(caseName) {
+window.applyCaseRename = function (caseName) {
     const nameInput = document.getElementById('caseRenameInput');
     const subtitleInput = document.getElementById('caseSubtitleRenameInput');
     if (!nameInput || !subtitleInput) return;
-    
+
     const newName = nameInput.value.trim();
     const newSubtitle = subtitleInput.value.trim();
-    
+
     // Store in temporary variables for parent modal to use
     window.tempCaseRename = {
         caseName: caseName,
         newName: newName,
         newSubtitle: newSubtitle
     };
-    
+
     // Update the title and subtitle in edit modal immediately
     const titleElement = document.getElementById('editCaseTitle');
     const subtitleElement = document.getElementById('editCaseSubtitle');
-    
+
     if (titleElement) {
         titleElement.textContent = newName || defaultDisplayNames[caseName] || caseName;
     }
-    
+
     if (subtitleElement) {
         if (newSubtitle) {
             subtitleElement.textContent = newSubtitle;
@@ -1171,28 +1177,28 @@ window.applyCaseRename = function(caseName) {
             subtitleElement.style.display = 'none';
         }
     }
-    
+
     closeCaseRenameModal();
 };
 
-window.saveCaseRename = function(caseName) {
+window.saveCaseRename = function (caseName) {
     // This function is now called from saveEditedCase
     if (window.tempCaseRename && window.tempCaseRename.caseName === caseName) {
         const newName = window.tempCaseRename.newName;
         const newSubtitle = window.tempCaseRename.newSubtitle;
-        
+
         if (newName) {
             displayNames[caseName] = newName;
         } else {
             displayNames[caseName] = defaultDisplayNames[caseName] || caseName;
         }
-        
+
         if (newSubtitle) {
             perCaseSubtitles.set(caseName, newSubtitle);
         } else {
             perCaseSubtitles.delete(caseName);
         }
-        
+
         window.tempCaseRename = null;
     }
 };
@@ -1205,18 +1211,18 @@ function closeEditCaseModal() {
     }
 }
 
-window.attemptCloseEditCaseModal = function() {
+window.attemptCloseEditCaseModal = function () {
     const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
     const originalAlgs = [];
     const modal = document.getElementById('editCaseModal');
     if (!modal) return;
-    
+
     const titleElement = modal.querySelector('.modal-title');
     if (!titleElement) {
         closeEditCaseModal();
         return;
     }
-    
+
     // Find the actual case by searching through data
     let item = null;
     for (const dataItem of data) {
@@ -1225,21 +1231,21 @@ window.attemptCloseEditCaseModal = function() {
             break;
         }
     }
-    
+
     if (!item) {
         closeEditCaseModal();
         return;
     }
-    
+
     const customAlgs = customAlgorithms.get(item.name);
     if (customAlgs) {
         originalAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
     } else {
         originalAlgs.push(...(item.odd || []), ...(item.even || []));
     }
-    
+
     const currentAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
-    
+
     // Check if algorithms changed
     let algsChanged = false;
     if (originalAlgs.length !== currentAlgs.length) {
@@ -1252,10 +1258,10 @@ window.attemptCloseEditCaseModal = function() {
             }
         }
     }
-    
+
     // Check if name/subtitle changed (tempCaseRename exists means changes were made)
     const nameChanged = !!(window.tempCaseRename && window.tempCaseRename.caseName === item.name);
-    
+
     if (algsChanged || nameChanged) {
         showSaveDiscardConfirmation(
             'You have unsaved changes. Do you want to save them?',
@@ -1272,7 +1278,7 @@ window.attemptCloseEditCaseModal = function() {
     }
 };
 
-window.showEditCaseInfoModal = function() {
+window.showEditCaseInfoModal = function () {
     let infoModal = document.getElementById('editCaseInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1314,11 +1320,11 @@ window.showEditCaseInfoModal = function() {
         `;
         document.body.appendChild(infoModal);
     }
-    
+
     infoModal.classList.add('active');
 };
 
-window.closeEditCaseInfoModal = function() {
+window.closeEditCaseInfoModal = function () {
     const modal = document.getElementById('editCaseInfoModal');
     if (modal) {
         modal.classList.remove('active');
@@ -1328,12 +1334,12 @@ window.closeEditCaseInfoModal = function() {
 function saveEditedCase(caseName, originalName) {
     // Save name and subtitle from temp rename
     saveCaseRename(caseName);
-    
+
     const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
-    
+
     // Collect all algorithms
     const allAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
-    
+
     // Save custom algorithms
     if (allAlgs.length > 0) {
         customAlgorithms.set(caseName, {
@@ -1343,12 +1349,12 @@ function saveEditedCase(caseName, originalName) {
     } else {
         customAlgorithms.delete(caseName);
     }
-    
+
     saveState();
-    
+
     // Recalculate parity
     calculateAndCacheAllParity();
-    
+
     render();
     closeEditCaseModal();
     showToast('Case updated successfully!', 2000, 'success');
@@ -1362,13 +1368,13 @@ function openCustomizeSVGsModal() {
 function openNotesModal(caseName) {
     const comment = comments.get(caseName) || '';
     window.originalNoteContent = comment; // Store original for comparison
-    
+
     // Close any existing context menu
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
-    
+
     pushModalState('notesModal', closeNotesModal);
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.id = 'notesModal';
@@ -1396,18 +1402,18 @@ function openNotesModal(caseName) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
 }
 
-window.attemptCloseNotesModal = function(caseName) {
+window.attemptCloseNotesModal = function (caseName) {
     const textarea = document.getElementById('notesTextarea');
     const currentContent = textarea ? textarea.value.trim() : '';
     const originalContent = window.originalNoteContent || '';
-    
+
     if (currentContent !== originalContent) {
         showSaveDiscardConfirmation(
             'You have unsaved changes. Do you want to save them?',
@@ -1423,7 +1429,7 @@ window.attemptCloseNotesModal = function(caseName) {
     }
 };
 
-window.showNotesInfoModal = function() {
+window.showNotesInfoModal = function () {
     let infoModal = document.getElementById('notesInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1472,11 +1478,11 @@ window.showNotesInfoModal = function() {
         `;
         document.body.appendChild(infoModal);
     }
-    
+
     infoModal.classList.add('active');
 };
 
-window.closeNotesInfoModal = function() {
+window.closeNotesInfoModal = function () {
     const modal = document.getElementById('notesInfoModal');
     if (modal) {
         modal.classList.remove('active');
@@ -1496,14 +1502,14 @@ function closeNotesModal() {
 function saveNotes(caseName) {
     const textarea = document.getElementById('notesTextarea');
     const noteText = textarea.value.trim();
-    
+
     if (noteText) {
         // Store raw HTML
         comments.set(caseName, noteText);
     } else {
         comments.delete(caseName);
     }
-    
+
     saveState();
     render();
     closeNotesModal();
@@ -1514,9 +1520,9 @@ function openGeneralNotesModal() {
     // Close any existing modals
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
-    
+
     pushModalState('generalNotesModal', closeGeneralNotesModal);
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.id = 'generalNotesModal';
@@ -1548,12 +1554,12 @@ function openGeneralNotesModal() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
-    
+
     // Render the saved content
     renderGeneralNotes();
 }
@@ -1573,7 +1579,7 @@ function renderGeneralNotes() {
     if (viewDiv) {
         if (generalNotes.trim()) {
             viewDiv.innerHTML = generalNotes;
-            
+
             // Execute any script tags in the content
             const scripts = viewDiv.querySelectorAll('script');
             scripts.forEach(script => {
@@ -1598,7 +1604,7 @@ function toggleEditGeneralNotes() {
     const editBtn = document.getElementById('editGeneralNotesBtn');
     const saveBtn = document.getElementById('saveGeneralNotesBtn');
     const infoBtn = document.getElementById('generalNotesInfoBtn');
-    
+
     if (viewDiv.style.display !== 'none') {
         // Switch to edit mode
         viewDiv.style.display = 'none';
@@ -1619,7 +1625,7 @@ function attemptSwitchToViewMode() {
     const textarea = document.getElementById('generalNotesTextarea');
     const currentContent = textarea ? textarea.value : '';
     const originalContent = window.originalGeneralNotes || '';
-    
+
     if (currentContent !== originalContent) {
         showSaveDiscardConfirmation(
             'You have unsaved changes. Do you want to save them?',
@@ -1644,7 +1650,7 @@ function switchToViewMode() {
     const editBtn = document.getElementById('editGeneralNotesBtn');
     const saveBtn = document.getElementById('saveGeneralNotesBtn');
     const infoBtn = document.getElementById('generalNotesInfoBtn');
-    
+
     viewDiv.style.display = 'block';
     editDiv.style.display = 'none';
     editBtn.textContent = 'Edit';
@@ -1661,14 +1667,14 @@ function saveGeneralNotes() {
     saveState();
 }
 
-window.attemptCloseGeneralNotesModal = function() {
+window.attemptCloseGeneralNotesModal = function () {
     const viewDiv = document.getElementById('generalNotesView');
     if (viewDiv && viewDiv.style.display === 'none') {
         // In edit mode
         const textarea = document.getElementById('generalNotesTextarea');
         const currentContent = textarea ? textarea.value : '';
         const originalContent = window.originalGeneralNotes || '';
-        
+
         if (currentContent !== originalContent) {
             showSaveDiscardConfirmation(
                 'You have unsaved changes. Do you want to save them?',
@@ -1690,7 +1696,7 @@ window.attemptCloseGeneralNotesModal = function() {
     }
 };
 
-window.showGeneralNotesInfoModal = function() {
+window.showGeneralNotesInfoModal = function () {
     let infoModal = document.getElementById('generalNotesInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1748,15 +1754,15 @@ window.showGeneralNotesInfoModal = function() {
         `;
         document.body.appendChild(infoModal);
     }
-    
+
     infoModal.classList.add('active');
 };
 
-window.closeGeneralNotesInfoModal = function() {
-const modal = document.getElementById('generalNotesInfoModal');
-if (modal) {
-modal.classList.remove('active');
-}
+window.closeGeneralNotesInfoModal = function () {
+    const modal = document.getElementById('generalNotesInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
 };
 
 // Info button click handlers with fixed positioning
@@ -1766,58 +1772,58 @@ document.addEventListener("click", (e) => {
     if (infoBtn) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         // Close all info boxes first
         document.querySelectorAll(".info-box").forEach(box =>
             box.classList.remove("show")
         );
-        
+
         // Open only the clicked one
         const infoBox = infoBtn.nextElementSibling;
         if (!infoBox || !infoBox.classList.contains("info-box")) return;
-        
+
         infoBox.classList.add("show");
-        
+
         // Position the info box near the button
         const buttonRect = infoBtn.getBoundingClientRect();
         let top = buttonRect.top - infoBox.offsetHeight - 5;
         let left = buttonRect.right - infoBox.offsetWidth;
-        
+
         // Adjust if goes off top of screen
         if (top < 10) {
             top = buttonRect.bottom + 5;
         }
-        
+
         // Adjust if goes off left of screen
         if (left < 10) {
             left = 10;
         }
-        
+
         // Adjust if goes off right of screen
         if (left + infoBox.offsetWidth > window.innerWidth - 10) {
             left = window.innerWidth - infoBox.offsetWidth - 10;
         }
-        
+
         infoBox.style.top = top + 'px';
         infoBox.style.left = left + 'px';
-        
+
         return;
     }
-    
+
     // If clicking on info box itself, don't close it
     if (e.target.classList.contains("info-box") || e.target.closest(".info-box")) {
         e.stopPropagation();
-            return;
-}
+        return;
+    }
 
-// Close all info boxes when clicking elsewhere
-document.querySelectorAll(".info-box").forEach(box =>
-    box.classList.remove("show")
-);
+    // Close all info boxes when clicking elsewhere
+    document.querySelectorAll(".info-box").forEach(box =>
+        box.classList.remove("show")
+    );
 });
 
 // Toast notification system
-window.showToast = function(message, duration = 3000, type = 'info') {
+window.showToast = function (message, duration = 3000, type = 'info') {
     const toast = document.createElement('div');
     toast.style.cssText = `
         position: fixed;
@@ -1837,9 +1843,9 @@ window.showToast = function(message, duration = 3000, type = 'info') {
     `;
     toast.textContent = message;
     document.body.appendChild(toast);
-    
+
     setTimeout(() => toast.style.opacity = '1', 10);
-    
+
     setTimeout(() => {
         toast.style.opacity = '0';
         setTimeout(() => toast.remove(), 300);
@@ -1847,7 +1853,7 @@ window.showToast = function(message, duration = 3000, type = 'info') {
 };
 
 // Confirmation modal
-window.showConfirmation = function(message, onConfirm, onCancel) {
+window.showConfirmation = function (message, onConfirm, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
@@ -1865,16 +1871,16 @@ window.showConfirmation = function(message, onConfirm, onCancel) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    
+
     document.getElementById('confirmOk').onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
         if (onConfirm) onConfirm();
     };
-    
+
     document.getElementById('confirmCancel').onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
@@ -1883,7 +1889,7 @@ window.showConfirmation = function(message, onConfirm, onCancel) {
 };
 
 // Three-button confirmation modal (Save/Discard/Cancel)
-window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCancel) {
+window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
@@ -1902,22 +1908,22 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    
+
     document.getElementById('confirmSave').onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
         if (onSave) onSave();
     };
-    
+
     document.getElementById('confirmDiscard').onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
         if (onDiscard) onDiscard();
     };
-    
+
     document.getElementById('confirmCancel').onclick = () => {
         modal.remove();
         document.body.classList.remove('modal-open');
@@ -1926,7 +1932,7 @@ window.showSaveDiscardConfirmation = function(message, onSave, onDiscard, onCanc
 };
 
 // Profile Modal Functions
-function openProfileModal() { 
+function openProfileModal() {
     const modal = document.getElementById('profileModal');
     if (!modal) {
         console.error('❌ Profile modal not found');
@@ -1967,33 +1973,33 @@ function updateProfileStats() {
     const learningCount = learningCases.size;
     const learnedPercent = (learnedCount / totalCases) * 100;
     const learningPercent = (learningCount / totalCases) * 100;
-    
+
     const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
     const learnedProbability = data
         .filter(item => learnedCases.has(item.name))
         .reduce((sum, item) => sum + item.probability, 0);
-    
+
     const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
     const safety = 50 + (coverage / 2);
-    
+
     // Update progress bars - yellow (learned + learning) behind, green (learned) on top
     const learningBar = document.getElementById('profileLearningProgress');
     const learnedBar = document.getElementById('profileLearnedProgress');
-    
+
     if (learningBar) {
         learningBar.style.width = (learnedPercent + learningPercent) + '%';
     }
-    
+
     if (learnedBar) {
         learnedBar.style.width = learnedPercent + '%';
     }
-    
+
     document.getElementById('profileLearnedText').textContent = learnedCount + '/90';
-    
+
     // Update coverage progress
     document.getElementById('profileCoverageProgress').style.width = coverage + '%';
     document.getElementById('profileCoverageText').textContent = coverage.toFixed(1) + '%';
-    
+
     // Update safety progress
     document.getElementById('profileSafetyProgress').style.width = safety + '%';
     document.getElementById('profileSafetyText').textContent = safety.toFixed(1) + '%';
@@ -2002,12 +2008,12 @@ function updateProfileStats() {
 // About Modal Functions
 function openAboutModal() {
     const modal = document.getElementById('aboutModal');
-    
+
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     modal.classList.add('active');
-    
+
     pushModalState('aboutModal', closeAboutModal);
 }
 
@@ -2022,13 +2028,13 @@ function closeAboutModal() {
 // Function to open parity tracing personalization from settings
 function openParityTracingPersonalization() {
     closeSettingsModal();
-    
+
     // Call the config modal directly via the exported library function
     if (typeof window.ParityTracerLibrary === 'undefined' || !window.ParityTracerLibrary.openConfigModal) {
         showToast('Configuration modal not available', 3000, 'error');
         return;
     }
-    
+
     const config = {
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
@@ -2046,7 +2052,7 @@ function openParityTracingPersonalization() {
         backFaceColorForVisualization: colorScheme.backColor,
         leftFaceColorForVisualization: colorScheme.leftColor
     };
-    
+
     window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }
 
@@ -2054,7 +2060,7 @@ function openParityTracingPersonalization() {
 function generateSidebarHTML() {
     let sidebar = document.getElementById('appSidebar');
     if (sidebar) return; // Already exists
-    
+
     sidebar = document.createElement('div');
     sidebar.id = 'appSidebar';
     sidebar.className = 'app-sidebar';
@@ -2142,15 +2148,15 @@ function generateSidebarHTML() {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(sidebar);
-    
+
     // Populate preset dropdown
     populatePresetDropdown('sidebarPresetSelector');
-    
+
     // Apply instruction visibility
     applyInstructionVisibility();
-    
+
     // Initialize preset selector
     initializePresetSelector();
 }
@@ -2158,22 +2164,22 @@ function generateSidebarHTML() {
 function initializePresetSelector() {
     const currentPresetName = document.getElementById('currentPresetName');
     const presetOptions = document.getElementById('presetOptions');
-    
+
     if (!currentPresetName || !presetOptions) return;
-    
+
     // Set current preset name
     currentPresetName.textContent = currentPreset.replace(/_/g, ' ').replace(/'/g, "'");
-    
+
     // Populate preset options
     presetOptions.innerHTML = '';
     for (const presetName in window.PRESET_CONFIG) {
         const displayName = presetName.replace(/_/g, ' ').replace(/'/g, "'");
         const isActive = presetName === currentPreset;
-        
+
         const optionDiv = document.createElement('div');
         optionDiv.style.cssText = `padding: 12px 20px; cursor: pointer; background: ${isActive ? '#e3f2fd' : 'transparent'}; color: ${isActive ? '#007bff' : '#2d3748'}; font-weight: ${isActive ? '600' : '500'}; font-size: 0.9rem; transition: background 0.2s;`;
         optionDiv.textContent = displayName;
-        
+
         optionDiv.addEventListener('click', () => handlePresetChange(presetName));
         optionDiv.addEventListener('mouseover', () => {
             if (!isActive) optionDiv.style.background = '#f8f9fa';
@@ -2181,7 +2187,7 @@ function initializePresetSelector() {
         optionDiv.addEventListener('mouseout', () => {
             if (!isActive) optionDiv.style.background = 'transparent';
         });
-        
+
         presetOptions.appendChild(optionDiv);
     }
 }
@@ -2189,12 +2195,12 @@ function initializePresetSelector() {
 // Make it globally accessible
 window.initializePresetSelector = initializePresetSelector;
 
-window.togglePresetExpand = function() {
+window.togglePresetExpand = function () {
     const presetOptions = document.getElementById('presetOptions');
     const expandIcon = document.getElementById('presetExpandIcon');
-    
+
     if (!presetOptions || !expandIcon) return;
-    
+
     if (presetOptions.style.maxHeight === '0px' || presetOptions.style.maxHeight === '') {
         // Calculate height based on number of presets
         const numPresets = Object.keys(window.PRESET_CONFIG).length;
@@ -2207,7 +2213,7 @@ window.togglePresetExpand = function() {
     }
 };
 
-window.toggleSidebar = function() {
+window.toggleSidebar = function () {
     generateSidebarHTML();
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
@@ -2215,7 +2221,7 @@ window.toggleSidebar = function() {
     }
 };
 
-window.closeSidebar = function() {
+window.closeSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
@@ -2223,11 +2229,11 @@ window.closeSidebar = function() {
 };
 
 // Quick info popup function
-window.showQuickInfo = function(message) {
+window.showQuickInfo = function (message) {
     // Remove any existing quick info
     const existing = document.getElementById('quickInfoPopup');
     if (existing) existing.remove();
-    
+
     const popup = document.createElement('div');
     popup.id = 'quickInfoPopup';
     popup.style.cssText = `
@@ -2243,7 +2249,7 @@ window.showQuickInfo = function(message) {
         justify-content: center;
         padding: 20px;
     `;
-    
+
     popup.innerHTML = `
         <div style="background: white; padding: 24px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
             <div style="font-size: 1rem; line-height: 1.6; color: #333;">${message}</div>
@@ -2252,14 +2258,14 @@ window.showQuickInfo = function(message) {
             </div>
         </div>
     `;
-    
+
     // Close on background click
     popup.onclick = (e) => {
         if (e.target === popup) {
             popup.remove();
         }
     };
-    
+
     // Close on Escape key
     const escHandler = (e) => {
         if (e.key === 'Escape') {
@@ -2268,7 +2274,7 @@ window.showQuickInfo = function(message) {
         }
     };
     document.addEventListener('keydown', escHandler);
-    
+
     document.body.appendChild(popup);
 };
 
@@ -2283,17 +2289,22 @@ document.addEventListener('click', (e) => {
             if (closeFunc) closeFunc();
         }
     });
-    
+
     // Notes modal
     const notesModal = document.getElementById('notesModal');
     if (notesModal && notesModal.classList.contains('active') && e.target === notesModal) {
         const caseName = notesModal.querySelector('.modal-title').textContent.replace('Notes: ', '');
         attemptCloseNotesModal(caseName);
     }
-    
+
     // General notes modal
     const generalNotesModal = document.getElementById('generalNotesModal');
     if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal) {
         attemptCloseGeneralNotesModal();
     }
 });
+
+// Close info boxes on scroll
+window.addEventListener('scroll', () => {
+    document.querySelectorAll(".info-box.show").forEach(box => box.classList.remove("show"));
+}, true);
