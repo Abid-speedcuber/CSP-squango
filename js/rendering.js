@@ -349,6 +349,7 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
                      id="${algoId}" 
                      data-algo="${algo.replace(/"/g, '&quot;')}" 
                      data-case="${caseName.replace(/"/g, '&quot;')}"
+                     data-parity="${parityType}"
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
                      onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)"
@@ -438,18 +439,24 @@ function showAlgoPopup(element, algo, isPermanent) {
     
     // Add click handler to shape path to open animate modal
     const shapePathElement = document.getElementById(setupId + '_shapepath');
-    if (shapePathElement) {
-        shapePathElement.onclick = (e) => {
-            e.stopPropagation();
-            hideAlgoPopup(element, isPermanent);
-            openAnimateAlgModal(algo);
-        };
-        shapePathElement.onmouseenter = () => {
-            shapePathElement.style.background = '#f0f9ff';
-        };
-        shapePathElement.onmouseleave = () => {
-            shapePathElement.style.background = 'transparent';
-        };
+if (shapePathElement) {
+    shapePathElement.onclick = (e) => {
+        e.stopPropagation();
+        hideAlgoPopup(element, isPermanent);
+        
+        // Get case name and parity from the element
+        const caseName = element.getAttribute('data-case') || '';
+        const parityType = element.getAttribute('data-parity') || '';
+        const displayName = getDisplayName(caseName);
+        
+        openAnimateAlgModal(algo, displayName, parityType);
+    };
+    shapePathElement.onmouseenter = () => {
+        shapePathElement.style.background = '#f0f9ff';
+    };
+    shapePathElement.onmouseleave = () => {
+        shapePathElement.style.background = 'transparent';
+    };
     }
     
 // Position popup

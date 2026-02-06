@@ -658,13 +658,32 @@ window.openInvertScrambleModal = function() {
     showToast('Invert scramble - to be implemented', 2000, 'info');
 };
 
-window.openAnimateAlgModal = function(algorithm = '') {
+window.openAnimateAlgModal = function(algorithm = '', caseName = '', computedParity = '') {
     if (typeof window.Square1AlgorithmViewer === 'undefined') {
         showToast('Algorithm viewer library not loaded', 2000, 'error');
         return;
     }
     
     const alg = algorithm || '(0,0)';
+    
+    // Compute parity if not provided
+    let parity = computedParity;
+    if (!parity && algorithm && algorithm !== 'Done!') {
+        try {
+            const setup = invertScramble(algorithm);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor,
+                bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor,
+                rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor,
+                leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            parity = parityText.toLowerCase();
+        } catch (error) {
+            parity = '';
+        }
+    }
     
     const html = window.Square1AlgorithmViewer.createViewer(alg, {
         topColor: colorScheme.topColor,
@@ -673,7 +692,7 @@ window.openAnimateAlgModal = function(algorithm = '') {
         rightColor: colorScheme.rightColor,
         backColor: colorScheme.backColor,
         leftColor: colorScheme.leftColor
-    }, scrambleImageSize);
+    }, scrambleImageSize, caseName, parity);
     
     document.body.insertAdjacentHTML('beforeend', html);
 };

@@ -522,7 +522,7 @@
     // ========================================
     // MAIN VIEWER CREATION FUNCTION
     // ========================================
-    function createViewer(algorithm, colors = {}, imageSize = 200) {
+    function createViewer(algorithm, colors = {}, imageSize = 200, caseName = '', parity = '') {
         const modalId = 'sq1-viewer-modal-' + Date.now();
 
         const colorScheme = {
@@ -906,12 +906,19 @@
         <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { document.getElementById('${modalId}').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); } })(event)">
             <div class="modal-content">
                 <div class="modal-header">
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
-                        <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
-                    </div>
-                    <button class="close-btn" id="${modalId}-close-btn">✕</button>
-                </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
+        <div style="display: flex; flex-direction: column; gap: 2px;">
+            ${caseName && parity ? `
+                <div style="font-size: 16px; font-weight: bold; color: #333;">${caseName} (${parity})</div>
+                <div style="font-size: 11px; color: #999; font-family: monospace;">${algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm}</div>
+            ` : `
+                <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
+            `}
+        </div>
+    </div>
+    <button class="close-btn" id="${modalId}-close-btn">✕</button>
+</div>
                 <div class="modal-body" id="${modalId}-body">
                     <!-- Content will be rendered here -->
                 </div>
