@@ -198,48 +198,88 @@ function generateModalHTML() {
             </div>
         </div>
 
-        <div id="profileModal" class="modal">
-            <div class="modal-content" style="max-width: 300px; margin: 70px 20px 20px auto; margin-right: 20px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);">
-                <div class="modal-body" style="padding: 0; background: white; border-radius: 16px;">
-                    <!-- Profile Header -->
-                    <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
-                        <img src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px;">
-                        <h3 style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
+        <!-- Desktop Profile Modal (Popup style) -->
+        <div id="profileModalDesktop" class="profile-popup-desktop">
+            <div class="profile-popup-content">
+                <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
+                    <img src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px;">
+                    <h3 style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
+                </div>
+                
+                <div style="padding: 15px;">
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileLearningProgressDesktop" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                            <div id="profileLearnedProgressDesktop" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
+                                <span id="profileLearnedTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Progress Stats -->
-                    <div style="padding: 15px;">
-                        <!-- Cases Learned Progress -->
-                        <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileLearningProgress" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
-                                <div id="profileLearnedProgress" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
-                                    <span id="profileLearnedText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
-                                </div>
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileCoverageProgressDesktop" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
+                                <span id="profileCoverageTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
                             </div>
                         </div>
-                        
-                        <!-- Coverage Progress -->
-                        <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileCoverageProgress" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
-                                    <span id="profileCoverageText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                                </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileSafetyProgressDesktop" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
+                                <span id="profileSafetyTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
                             </div>
                         </div>
-                        
-                        <!-- Safety Progress -->
-                        <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileSafetyProgress" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
-                                    <span id="profileSafetyText" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                                </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Profile Modal (Full modal style) -->
+        <div id="profileModalMobile" class="modal">
+            <div class="modal-content" style="max-width: 400px;">
+                <div class="modal-header">
+                    <span class="modal-title">Profile</span>
+                    <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
+                </div>
+                <div class="modal-body" style="padding: 20px;">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="res/avatar.svg" style="width: 64px; height: 64px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileLearningProgressMobile" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                            <div id="profileLearnedProgressMobile" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
+                                <span id="profileLearnedTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileCoverageProgressMobile" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
+                                <span id="profileCoverageTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 12px;">
+                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                            <div id="profileSafetyProgressMobile" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
+                                <span id="profileSafetyTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
                             </div>
                         </div>
                     </div>
@@ -1931,31 +1971,125 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
     };
 };
 
-// Profile Modal Functions
-function openProfileModal() {
-    const modal = document.getElementById('profileModal');
-    if (!modal) {
-        console.error('❌ Profile modal not found');
+// Desktop Profile Modal Functions (Popup style - same logic as algorithm popup)
+let activeProfilePopup = null;
+let activeProfilePopupElement = null;
+
+function showProfilePopup(isPermanent) {
+    const profileBtn = document.getElementById('profileBtn');
+    const popup = document.getElementById('profileModalDesktop');
+    if (!profileBtn || !popup) return;
+    
+    // If clicking on already active popup element, close it
+    if (isPermanent && activeProfilePopupElement === profileBtn) {
+        hideProfilePopup(true);
         return;
     }
-    pushModalState('profileModal', closeProfileModal);
+    
+    // Close any existing popup if opening a new permanent one
+    if (isPermanent && activeProfilePopup) {
+        activeProfilePopup.classList.remove('active');
+        activeProfilePopup = null;
+        activeProfilePopupElement = null;
+    }
+    
+    // Don't show hover popup if there's already a permanent popup
+    if (!isPermanent && activeProfilePopup && activeProfilePopupElement !== profileBtn) {
+        return;
+    }
+    
+    popup.classList.remove('active'); // Reset first
+    popup.className = 'profile-popup-desktop' + (isPermanent ? ' permanent' : '');
+    popup.classList.add('active');
+    
+    // Position the popup
+    const rect = profileBtn.getBoundingClientRect();
+    const popupContent = popup.querySelector('.profile-popup-content');
+    
+    setTimeout(() => {
+        const popupRect = popupContent.getBoundingClientRect();
+        
+        let top = rect.bottom + 15;
+        let left = window.innerWidth - popupRect.width - 20;
+        
+        if (top + popupRect.height > window.innerHeight - 10) {
+            top = rect.top - popupRect.height - 15;
+        }
+        if (top < 10) top = 10;
+        if (left < 10) left = 10;
+        
+        popupContent.style.top = top + 'px';
+        popupContent.style.left = left + 'px';
+    }, 0);
+    
+    updateProfileStats();
+    
+    const scrollHandler = () => {
+        hideProfilePopup(isPermanent);
+        window.removeEventListener('scroll', scrollHandler, true);
+    };
+    window.addEventListener('scroll', scrollHandler, true);
+    
+    if (isPermanent) {
+        activeProfilePopup = popup;
+        activeProfilePopupElement = profileBtn;
+        
+        setTimeout(() => {
+            const clickHandler = (e) => {
+                const popupContent = popup.querySelector('.profile-popup-content');
+                if (!popupContent.contains(e.target) && e.target !== profileBtn) {
+                    hideProfilePopup(true);
+                    document.removeEventListener('mousedown', clickHandler);
+                }
+            };
+            document.addEventListener('mousedown', clickHandler);
+        }, 100);
+    }
+}
 
+function hideProfilePopup(isPermanent) {
+    const popup = document.getElementById('profileModalDesktop');
+    if (!popup) return;
+    
+    if (isPermanent) {
+        if (activeProfilePopup) {
+            popup.classList.remove('active');
+            activeProfilePopup = null;
+            activeProfilePopupElement = null;
+        }
+    } else {
+        if (!popup.classList.contains('permanent')) {
+            popup.classList.remove('active');
+        }
+    }
+}
+
+// Wrapper functions for compatibility
+function openProfileModalDesktop(isPermanent = false) {
+    showProfilePopup(isPermanent);
+}
+
+function closeProfileModalDesktop(isPermanent = false) {
+    hideProfilePopup(isPermanent);
+}
+
+// Mobile Profile Modal Functions (Full modal style)
+function openProfileModalMobile() {
+    const modal = document.getElementById('profileModalMobile');
+    if (!modal) return;
+    
+    pushModalState('profileModalMobile', closeProfileModalMobile);
+    
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    modal.classList.add('active');
     document.body.classList.add('modal-open');
-
-    // Check all computed styles
-    const computed = window.getComputedStyle(modal);
-    const modalContent = modal.querySelector('.modal-content');
-    modal.offsetHeight; // Force reflow
-    setTimeout(() => {
-    }, 100);
+    modal.classList.add('active');
+    
     updateProfileStats();
 }
 
-function closeProfileModal() {
-    const modal = document.getElementById('profileModal');
+function closeProfileModalMobile() {
+    const modal = document.getElementById('profileModalMobile');
     if (modal) {
         modal.classList.remove('active');
         document.body.classList.remove('modal-open');
@@ -1964,8 +2098,22 @@ function closeProfileModal() {
     }
 }
 
-// Make openProfileModal globally accessible
+// Unified function that detects device type
+function openProfileModal() {
+    const isMobile = window.innerWidth <= 620;
+    if (isMobile) {
+        openProfileModalMobile();
+    } else {
+        openProfileModalDesktop(true); // Open as permanent (clicked)
+    }
+}
+
+// Make functions globally accessible
 window.openProfileModal = openProfileModal;
+window.openProfileModalDesktop = openProfileModalDesktop;
+window.closeProfileModalDesktop = closeProfileModalDesktop;
+window.openProfileModalMobile = openProfileModalMobile;
+window.closeProfileModalMobile = closeProfileModalMobile;
 
 function updateProfileStats() {
     const totalCases = data.length;
@@ -1982,27 +2130,45 @@ function updateProfileStats() {
     const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
     const safety = 50 + (coverage / 2);
 
-    // Update progress bars - yellow (learned + learning) behind, green (learned) on top
-    const learningBar = document.getElementById('profileLearningProgress');
-    const learnedBar = document.getElementById('profileLearnedProgress');
+    // Update both desktop and mobile modals
+    const modes = ['Desktop', 'Mobile'];
+    modes.forEach(mode => {
+        const learningBar = document.getElementById(`profileLearningProgress${mode}`);
+        const learnedBar = document.getElementById(`profileLearnedProgress${mode}`);
+        const learnedText = document.getElementById(`profileLearnedText${mode}`);
+        const coverageProgress = document.getElementById(`profileCoverageProgress${mode}`);
+        const coverageText = document.getElementById(`profileCoverageText${mode}`);
+        const safetyProgress = document.getElementById(`profileSafetyProgress${mode}`);
+        const safetyText = document.getElementById(`profileSafetyText${mode}`);
 
-    if (learningBar) {
-        learningBar.style.width = (learnedPercent + learningPercent) + '%';
-    }
+        if (learningBar) {
+            learningBar.style.width = (learnedPercent + learningPercent) + '%';
+        }
 
-    if (learnedBar) {
-        learnedBar.style.width = learnedPercent + '%';
-    }
+        if (learnedBar) {
+            learnedBar.style.width = learnedPercent + '%';
+        }
 
-    document.getElementById('profileLearnedText').textContent = learnedCount + '/90';
+        if (learnedText) {
+            learnedText.textContent = learnedCount + '/90';
+        }
 
-    // Update coverage progress
-    document.getElementById('profileCoverageProgress').style.width = coverage + '%';
-    document.getElementById('profileCoverageText').textContent = coverage.toFixed(1) + '%';
+        if (coverageProgress) {
+            coverageProgress.style.width = coverage + '%';
+        }
 
-    // Update safety progress
-    document.getElementById('profileSafetyProgress').style.width = safety + '%';
-    document.getElementById('profileSafetyText').textContent = safety.toFixed(1) + '%';
+        if (coverageText) {
+            coverageText.textContent = coverage.toFixed(1) + '%';
+        }
+
+        if (safetyProgress) {
+            safetyProgress.style.width = safety + '%';
+        }
+
+        if (safetyText) {
+            safetyText.textContent = safety.toFixed(1) + '%';
+        }
+    });
 }
 
 // About Modal Functions

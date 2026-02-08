@@ -137,8 +137,9 @@
                 if (event.target == confessionModal) {
                     closeConfessionModal();
                 }
-                if (profileModal && event.target == profileModal) {
-                    closeProfileModal();
+                const profileModalMobile = document.getElementById('profileModalMobile');
+                if (profileModalMobile && event.target == profileModalMobile) {
+                    closeProfileModalMobile();
                 }
             }, 0);
         }
@@ -316,13 +317,25 @@
             }
             
             // Setup profile button
-            const profileBtn = document.getElementById('profileBtn');
-            if (profileBtn) {
-                profileBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    openProfileModal();
-                };
-            }
+const profileBtn = document.getElementById('profileBtn');
+if (profileBtn) {
+    profileBtn.onmouseenter = () => {
+        if (window.innerWidth > 620) showProfilePopup(false);
+    };
+    
+    profileBtn.onmouseleave = () => {
+        if (window.innerWidth > 620) hideProfilePopup(false);
+    };
+    
+    profileBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.innerWidth > 620) {
+            showProfilePopup(true);
+        } else {
+            openProfileModalMobile();
+        }
+    };
+}
             
             // Setup search toggle for mobile
             const searchToggle = document.getElementById('searchToggle');
