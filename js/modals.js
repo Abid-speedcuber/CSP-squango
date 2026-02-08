@@ -1805,49 +1805,90 @@ window.closeGeneralNotesInfoModal = function () {
     }
 };
 
-// Info button click handlers with fixed positioning
-document.addEventListener("click", (e) => {
-    // If clicking on info button or its child img, handle info display
+// Info button click handlers with fixed positioning - use CAPTURE phase to intercept before parent buttons
+document.addEventListener("mousedown", (e) => {
+    // Check if clicking on info button or its child
     const infoBtn = e.target.closest(".settings-info-btn");
+    
     if (infoBtn) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+    }
+}, true); // TRUE = capture phase
+
+document.addEventListener("click", (e) => {
+    // If clicking on info button or its child img, handle info display
+    const infoBtn = e.target.closest(".settings-info-btn");
+    
+    if (infoBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
 
         // Close all info boxes first
-        document.querySelectorAll(".info-box").forEach(box =>
-            box.classList.remove("show")
-        );
+        document.querySelectorAll(".info-box").forEach(box => box.classList.remove("show"));
 
-        // Open only the clicked one
-        const infoBox = infoBtn.nextElementSibling;
-        if (!infoBox || !infoBox.classList.contains("info-box")) return;
+        // Find the info box - check wrapper structure
+        const wrapper = infoBtn.closest('.info-wrapper');
+        let infoBox = infoBtn.nextElementSibling;
+        
+        // If not direct sibling, look in wrapper
+        if ((!infoBox || !infoBox.classList.contains("info-box")) && wrapper) {
+            infoBox = wrapper.querySelector('.info-box');
+        }
+        
+        if (!infoBox || !infoBox.classList.contains("info-box")) {
+            return false;
+        }
 
+        // Store original parent and next sibling for later restoration
+        if (!infoBox.dataset.originalParent) {
+            infoBox.dataset.originalParentId = infoBox.parentElement.id || 'wrapper_' + Math.random().toString(36).substr(2, 9);
+            if (!infoBox.parentElement.id) {
+                infoBox.parentElement.id = infoBox.dataset.originalParentId;
+            }
+        }
+
+        // Move info box to body for proper fixed positioning
+        document.body.appendChild(infoBox);
+        
         infoBox.classList.add("show");
 
-        // Position the info box near the button
-        const buttonRect = infoBtn.getBoundingClientRect();
-        let top = buttonRect.top - infoBox.offsetHeight - 5;
-        let left = buttonRect.right - infoBox.offsetWidth;
+        // Position the info box
+        requestAnimationFrame(() => {
+            const buttonRect = infoBtn.getBoundingClientRect();
+            const infoBoxRect = infoBox.getBoundingClientRect();
+            
+            let top = buttonRect.top - infoBoxRect.height - 5;
+            let left = buttonRect.right - infoBoxRect.width;
 
-        // Adjust if goes off top of screen
-        if (top < 10) {
-            top = buttonRect.bottom + 5;
-        }
+            // Adjust if goes off top of screen
+            if (top < 10) {
+                top = buttonRect.bottom + 5;
+            }
 
-        // Adjust if goes off left of screen
-        if (left < 10) {
-            left = 10;
-        }
+            // Adjust if goes off left of screen
+            if (left < 10) {
+                left = 10;
+            }
 
-        // Adjust if goes off right of screen
-        if (left + infoBox.offsetWidth > window.innerWidth - 10) {
-            left = window.innerWidth - infoBox.offsetWidth - 10;
-        }
+            // Adjust if goes off right of screen
+            if (left + infoBoxRect.width > window.innerWidth - 10) {
+                left = window.innerWidth - infoBoxRect.width - 10;
+            }
 
-        infoBox.style.top = top + 'px';
-        infoBox.style.left = left + 'px';
+            // Adjust if goes off bottom of screen
+            if (top + infoBoxRect.height > window.innerHeight - 10) {
+                top = window.innerHeight - infoBoxRect.height - 10;
+            }
 
-        return;
+            infoBox.style.top = top + 'px';
+            infoBox.style.left = left + 'px';
+        });
+
+        return false;
     }
 
     // If clicking on info box itself, don't close it
@@ -1856,11 +1897,19 @@ document.addEventListener("click", (e) => {
         return;
     }
 
-    // Close all info boxes when clicking elsewhere
-    document.querySelectorAll(".info-box").forEach(box =>
-        box.classList.remove("show")
-    );
-});
+    // Close all info boxes and restore them to original positions
+    document.querySelectorAll(".info-box.show").forEach(box => {
+        box.classList.remove("show");
+        
+        // Restore to original parent
+        if (box.dataset.originalParentId) {
+            const originalParent = document.getElementById(box.dataset.originalParentId);
+            if (originalParent && box.parentElement !== originalParent) {
+                originalParent.appendChild(box);
+            }
+        }
+    });
+}, true); // TRUE = capture phase
 
 // Toast notification system
 window.showToast = function (message, duration = 3000, type = 'info') {
