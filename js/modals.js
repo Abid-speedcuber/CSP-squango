@@ -88,28 +88,28 @@ function generateModalHTML() {
 </div>
                         
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
-                            <div onclick="openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Your color scheme will be used in parity tracing and training.</span>
                                 </span>
                             </div>
-                            <div onclick="openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Parity Tracing Personalization</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
                                 </span>
                             </div>
-                            <div onclick="openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Quick Edit</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
                                 </span>
                             </div>
-                            <div onclick="openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Customize Tracing Guides</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
@@ -1827,23 +1827,36 @@ document.addEventListener("click", (e) => {
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        // Close all info boxes first
-        document.querySelectorAll(".info-box").forEach(box => box.classList.remove("show"));
-
         // Find the info box - check wrapper structure
         const wrapper = infoBtn.closest('.info-wrapper');
-        let infoBox = infoBtn.nextElementSibling;
-        
-        // If not direct sibling, look in wrapper
-        if ((!infoBox || !infoBox.classList.contains("info-box")) && wrapper) {
-            infoBox = wrapper.querySelector('.info-box');
-        }
+        let infoBox = wrapper ? wrapper.querySelector('.info-box') : infoBtn.nextElementSibling;
         
         if (!infoBox || !infoBox.classList.contains("info-box")) {
             return false;
         }
 
-        // Store original parent and next sibling for later restoration
+        // Check if this specific info box is already showing
+        const isAlreadyShowing = infoBox.classList.contains("show");
+
+        // Close all info boxes and restore them first
+        document.querySelectorAll(".info-box.show").forEach(box => {
+            box.classList.remove("show");
+            
+            // Restore to original parent
+            if (box.dataset.originalParentId) {
+                const originalParent = document.getElementById(box.dataset.originalParentId);
+                if (originalParent && box.parentElement !== originalParent) {
+                    originalParent.appendChild(box);
+                }
+            }
+        });
+
+        // If it was already showing, we're done (toggle off)
+        if (isAlreadyShowing) {
+            return false;
+        }
+
+        // Store original parent if not already stored
         if (!infoBox.dataset.originalParent) {
             infoBox.dataset.originalParentId = infoBox.parentElement.id || 'wrapper_' + Math.random().toString(36).substr(2, 9);
             if (!infoBox.parentElement.id) {
