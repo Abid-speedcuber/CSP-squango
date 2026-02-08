@@ -920,11 +920,13 @@ body.modal-open .homepage-info-btn {
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.2s ease;
+    display: none;
 }
 
 .profile-popup-desktop.active {
     opacity: 1;
     pointer-events: none;
+    display: block;
 }
 
 .profile-popup-content {
