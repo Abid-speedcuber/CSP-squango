@@ -924,7 +924,7 @@ body.modal-open .homepage-info-btn {
 
 .profile-popup-desktop.active {
     opacity: 1;
-    pointer-events: all;
+    pointer-events: none;
 }
 
 .profile-popup-content {
