@@ -545,8 +545,9 @@
             isAutoRunning: false,
             autoRunDirection: 'next',
             colorScheme: colorScheme,
-            imageSize: imageSize,
-            animateBothLayers: localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true
+            imageSize: parseInt(localStorage.getItem('sq1AnimImageSize')) || 200,
+            animateBothLayers: localStorage.getItem('sq1AnimBothLayers') !== null ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true,
+            verticalDisplay: localStorage.getItem('sq1AnimVerticalDisplay') !== null ? localStorage.getItem('sq1AnimVerticalDisplay') === 'true' : false
         };
 
         const css = `
@@ -939,12 +940,28 @@
                         </div>
                         
                         <div class="sidebar-section">
+                            <label>Image Size</label>
+                            <input type="range" id="${modalId}-sidebar-image-size" min="100" max="400" step="10" value="${state.imageSize}">
+                            <span class="sidebar-value" id="${modalId}-sidebar-image-size-val">${state.imageSize}px</span>
+                        </div>
+                        
+                        <div class="sidebar-section">
                             <label>Animate Both Layers Together</label>
                             <div class="toggle-container">
                                 <div class="toggle-switch ${state.animateBothLayers ? 'active' : ''}" id="${modalId}-both-layers-toggle">
                                     <div class="toggle-slider"></div>
                                 </div>
                                 <span style="font-size: 14px; color: #666;" id="${modalId}-toggle-label">${state.animateBothLayers ? 'On' : 'Off'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="sidebar-section">
+                            <label>Enable Vertical Display</label>
+                            <div class="toggle-container">
+                                <div class="toggle-switch ${state.verticalDisplay ? 'active' : ''}" id="${modalId}-vertical-display-toggle">
+                                    <div class="toggle-slider"></div>
+                                </div>
+                                <span style="font-size: 14px; color: #666;" id="${modalId}-vertical-toggle-label">${state.verticalDisplay ? 'On' : 'Off'}</span>
                             </div>
                         </div>
                     </div>
@@ -959,7 +976,27 @@
         function render() {
             const step = state.steps[state.currentStep];
             const hex = getHexForStep(step, state.animateBothLayers);
-            const visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
+            let visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
+            
+            // Apply vertical display transformation if enabled
+            if (state.verticalDisplay) {
+                const wrapper = document.createElement('div');
+                wrapper.innerHTML = visualization;
+                const flexContainer = wrapper.querySelector('div[style*="display: flex"]');
+                if (flexContainer) {
+                    const currentStyle = flexContainer.getAttribute('style');
+                    flexContainer.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                    const svgs = flexContainer.querySelectorAll('svg');
+                    svgs.forEach((svg, index) => {
+                        if (index === 1) {
+                            const svgStyle = svg.getAttribute('style') || '';
+                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                            svg.setAttribute('style', newStyle);
+                        }
+                    });
+                }
+                visualization = wrapper.innerHTML;
+            }
             const highlightedAlg = renderAlgorithm(step, state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
 
             const bodyHtml = `
@@ -1090,6 +1127,16 @@
                 localStorage.setItem('sq1AutoDelay', state.autoRunDelay);
             };
 
+            // Sidebar image size slider
+            const sidebarImageSizeSlider = document.getElementById(`${modalId}-sidebar-image-size`);
+            const sidebarImageSizeVal = document.getElementById(`${modalId}-sidebar-image-size-val`);
+            sidebarImageSizeSlider.oninput = (e) => {
+                state.imageSize = parseInt(e.target.value);
+                sidebarImageSizeVal.textContent = state.imageSize + 'px';
+                localStorage.setItem('sq1AnimImageSize', state.imageSize);
+                render();
+            };
+
             // Both layers toggle
             const bothLayersToggle = document.getElementById(`${modalId}-both-layers-toggle`);
             bothLayersToggle.onclick = () => {
@@ -1102,6 +1149,19 @@
                 // Regenerate steps with new mode
                 state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
                 state.currentStep = 0;
+                render();
+            };
+
+            // Vertical display toggle
+            const verticalDisplayToggle = document.getElementById(`${modalId}-vertical-display-toggle`);
+            verticalDisplayToggle.onclick = () => {
+                state.verticalDisplay = !state.verticalDisplay;
+                verticalDisplayToggle.classList.toggle('active');
+                const label = verticalDisplayToggle.nextElementSibling;
+                label.textContent = state.verticalDisplay ? 'On' : 'Off';
+                localStorage.setItem('sq1AnimVerticalDisplay', state.verticalDisplay);
+
+                // Re-render with new display mode
                 render();
             };
 
@@ -1235,6 +1295,27 @@
                         topLayer.style.opacity = '1';
                         topLayer.style.pointerEvents = 'none';
 
+                        // Apply vertical stacking if enabled
+                        if (state.verticalDisplay) {
+                            const applyVertical = (container) => {
+                                const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                if (flexDiv) {
+                                    const currentStyle = flexDiv.getAttribute('style');
+                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                    const svgs = flexDiv.querySelectorAll('svg');
+                                    svgs.forEach((svg, index) => {
+                                        if (index === 1) {
+                                            const svgStyle = svg.getAttribute('style') || '';
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            svg.setAttribute('style', newStyle);
+                                        }
+                                    });
+                                }
+                            };
+                            applyVertical(bottomLayer);
+                            applyVertical(topLayer);
+                        }
+
                         wrapper.appendChild(bottomLayer);
                         wrapper.appendChild(topLayer);
 
@@ -1264,6 +1345,69 @@
                         topLayer.style.opacity = '1';
                         topLayer.style.transition = `opacity ${duration}ms linear`;
                         topLayer.style.pointerEvents = 'none';
+
+                        // Apply vertical stacking if enabled
+                        if (state.verticalDisplay) {
+                            const applyVertical = (container) => {
+                                const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                if (flexDiv) {
+                                    const currentStyle = flexDiv.getAttribute('style');
+                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                    const svgs = flexDiv.querySelectorAll('svg');
+                                    svgs.forEach((svg, index) => {
+                                        if (index === 1) {
+                                            const svgStyle = svg.getAttribute('style') || '';
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            svg.setAttribute('style', newStyle);
+                                        }
+                                    });
+                                }
+                            };
+                            applyVertical(bottomLayer);
+                            applyVertical(topLayer);
+                        }
+
+                        // Apply vertical stacking if enabled
+                        if (state.verticalDisplay) {
+                            const applyVertical = (container) => {
+                                const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                if (flexDiv) {
+                                    const currentStyle = flexDiv.getAttribute('style');
+                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                    const svgs = flexDiv.querySelectorAll('svg');
+                                    svgs.forEach((svg, index) => {
+                                        if (index === 1) {
+                                            const svgStyle = svg.getAttribute('style') || '';
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            svg.setAttribute('style', newStyle);
+                                        }
+                                    });
+                                }
+                            };
+                            applyVertical(bottomLayer);
+                            applyVertical(topLayer);
+                        }
+
+                        // Apply vertical stacking if enabled
+                        if (state.verticalDisplay) {
+                            const applyVertical = (container) => {
+                                const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                if (flexDiv) {
+                                    const currentStyle = flexDiv.getAttribute('style');
+                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                    const svgs = flexDiv.querySelectorAll('svg');
+                                    svgs.forEach((svg, index) => {
+                                        if (index === 1) {
+                                            const svgStyle = svg.getAttribute('style') || '';
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            svg.setAttribute('style', newStyle);
+                                        }
+                                    });
+                                }
+                            };
+                            applyVertical(bottomLayer);
+                            applyVertical(topLayer);
+                        }
 
                         wrapper.appendChild(bottomLayer);
                         wrapper.appendChild(topLayer);
@@ -1497,6 +1641,48 @@
                             topLayer.style.transform = 'translateX(-50%)';
                             topLayer.style.opacity = '1';
                             topLayer.style.pointerEvents = 'none';
+
+                            // Apply vertical stacking if enabled
+                            if (state.verticalDisplay) {
+                                const applyVertical = (container) => {
+                                    const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                    if (flexDiv) {
+                                        const currentStyle = flexDiv.getAttribute('style');
+                                        flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                        const svgs = flexDiv.querySelectorAll('svg');
+                                        svgs.forEach((svg, index) => {
+                                            if (index === 1) {
+                                                const svgStyle = svg.getAttribute('style') || '';
+                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                                svg.setAttribute('style', newStyle);
+                                            }
+                                        });
+                                    }
+                                };
+                                applyVertical(bottomLayer);
+                                applyVertical(topLayer);
+                            }
+
+                            // Apply vertical stacking if enabled
+                            if (state.verticalDisplay) {
+                                const applyVertical = (container) => {
+                                    const flexDiv = container.querySelector('div[style*="display: flex"]');
+                                    if (flexDiv) {
+                                        const currentStyle = flexDiv.getAttribute('style');
+                                        flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+                                        const svgs = flexDiv.querySelectorAll('svg');
+                                        svgs.forEach((svg, index) => {
+                                            if (index === 1) {
+                                                const svgStyle = svg.getAttribute('style') || '';
+                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                                svg.setAttribute('style', newStyle);
+                                            }
+                                        });
+                                    }
+                                };
+                                applyVertical(bottomLayer);
+                                applyVertical(topLayer);
+                            }
 
                             wrapper.appendChild(bottomLayer);
                             wrapper.appendChild(topLayer);
