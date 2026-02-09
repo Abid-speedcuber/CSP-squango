@@ -574,7 +574,7 @@
                 max-width: min(800px, 90vw);
                 width: 100%;
                 min-height: 20vh;
-                max-height: 80vh;
+                max-height: 95vh;
                 overflow: hidden;
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
                 position: relative;
@@ -990,7 +990,7 @@
                     svgs.forEach((svg, index) => {
                         if (index === 1) {
                             const svgStyle = svg.getAttribute('style') || '';
-                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                             svg.setAttribute('style', newStyle);
                         }
                     });
@@ -1277,7 +1277,7 @@
                     wrapper.style.display = 'flex';
                     wrapper.style.flexDirection = 'column';
                     wrapper.style.alignItems = 'center';
-                    wrapper.style.gap = '20px';
+                    wrapper.style.gap = '20 px';
 
                     const bottomLayer = document.createElement('div');
                     const topLayer = document.createElement('div');
@@ -1306,7 +1306,7 @@
                                     svgs.forEach((svg, index) => {
                                         if (index === 1) {
                                             const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                             svg.setAttribute('style', newStyle);
                                         }
                                     });
@@ -1357,7 +1357,7 @@
                                     svgs.forEach((svg, index) => {
                                         if (index === 1) {
                                             const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                             svg.setAttribute('style', newStyle);
                                         }
                                     });
@@ -1378,7 +1378,7 @@
                                     svgs.forEach((svg, index) => {
                                         if (index === 1) {
                                             const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                             svg.setAttribute('style', newStyle);
                                         }
                                     });
@@ -1399,7 +1399,7 @@
                                     svgs.forEach((svg, index) => {
                                         if (index === 1) {
                                             const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                             svg.setAttribute('style', newStyle);
                                         }
                                     });
@@ -1624,7 +1624,7 @@
                         wrapper.style.display = 'flex';
                         wrapper.style.flexDirection = 'column';
                         wrapper.style.alignItems = 'center';
-                        wrapper.style.gap = '20px';
+                        wrapper.style.gap = '0px';
 
                         const bottomLayer = document.createElement('div');
                         const topLayer = document.createElement('div');
@@ -1653,7 +1653,7 @@
                                         svgs.forEach((svg, index) => {
                                             if (index === 1) {
                                                 const svgStyle = svg.getAttribute('style') || '';
-                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                                 svg.setAttribute('style', newStyle);
                                             }
                                         });
@@ -1674,7 +1674,7 @@
                                         svgs.forEach((svg, index) => {
                                             if (index === 1) {
                                                 const svgStyle = svg.getAttribute('style') || '';
-                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 10px;');
+                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
                                                 svg.setAttribute('style', newStyle);
                                             }
                                         });
