@@ -1031,6 +1031,25 @@
             attachEventListeners();
         }
 
+        function applyVerticalDisplayIfEnabled(container) {
+            if (!state.verticalDisplay) return;
+            
+            const flexDiv = container.querySelector('div[style*="display: flex"]');
+            if (!flexDiv) return;
+            
+            const currentStyle = flexDiv.getAttribute('style');
+            flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
+            
+            const svgs = flexDiv.querySelectorAll('svg');
+            svgs.forEach((svg, index) => {
+                if (index === 1) {
+                    const svgStyle = svg.getAttribute('style') || '';
+                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
+                    svg.setAttribute('style', newStyle);
+                }
+            });
+        }
+
         function attachEventListeners() {
             // First button
             const firstBtn = document.getElementById(`${modalId}-first`);
@@ -1295,26 +1314,8 @@
                         topLayer.style.opacity = '1';
                         topLayer.style.pointerEvents = 'none';
 
-                        // Apply vertical stacking if enabled
-                        if (state.verticalDisplay) {
-                            const applyVertical = (container) => {
-                                const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                if (flexDiv) {
-                                    const currentStyle = flexDiv.getAttribute('style');
-                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                    const svgs = flexDiv.querySelectorAll('svg');
-                                    svgs.forEach((svg, index) => {
-                                        if (index === 1) {
-                                            const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                            svg.setAttribute('style', newStyle);
-                                        }
-                                    });
-                                }
-                            };
-                            applyVertical(bottomLayer);
-                            applyVertical(topLayer);
-                        }
+                        applyVerticalDisplayIfEnabled(bottomLayer);
+                        applyVerticalDisplayIfEnabled(topLayer);
 
                         wrapper.appendChild(bottomLayer);
                         wrapper.appendChild(topLayer);
@@ -1346,68 +1347,8 @@
                         topLayer.style.transition = `opacity ${duration}ms linear`;
                         topLayer.style.pointerEvents = 'none';
 
-                        // Apply vertical stacking if enabled
-                        if (state.verticalDisplay) {
-                            const applyVertical = (container) => {
-                                const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                if (flexDiv) {
-                                    const currentStyle = flexDiv.getAttribute('style');
-                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                    const svgs = flexDiv.querySelectorAll('svg');
-                                    svgs.forEach((svg, index) => {
-                                        if (index === 1) {
-                                            const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                            svg.setAttribute('style', newStyle);
-                                        }
-                                    });
-                                }
-                            };
-                            applyVertical(bottomLayer);
-                            applyVertical(topLayer);
-                        }
-
-                        // Apply vertical stacking if enabled
-                        if (state.verticalDisplay) {
-                            const applyVertical = (container) => {
-                                const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                if (flexDiv) {
-                                    const currentStyle = flexDiv.getAttribute('style');
-                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                    const svgs = flexDiv.querySelectorAll('svg');
-                                    svgs.forEach((svg, index) => {
-                                        if (index === 1) {
-                                            const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                            svg.setAttribute('style', newStyle);
-                                        }
-                                    });
-                                }
-                            };
-                            applyVertical(bottomLayer);
-                            applyVertical(topLayer);
-                        }
-
-                        // Apply vertical stacking if enabled
-                        if (state.verticalDisplay) {
-                            const applyVertical = (container) => {
-                                const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                if (flexDiv) {
-                                    const currentStyle = flexDiv.getAttribute('style');
-                                    flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                    const svgs = flexDiv.querySelectorAll('svg');
-                                    svgs.forEach((svg, index) => {
-                                        if (index === 1) {
-                                            const svgStyle = svg.getAttribute('style') || '';
-                                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                            svg.setAttribute('style', newStyle);
-                                        }
-                                    });
-                                }
-                            };
-                            applyVertical(bottomLayer);
-                            applyVertical(topLayer);
-                        }
+                        applyVerticalDisplayIfEnabled(bottomLayer);
+                        applyVerticalDisplayIfEnabled(topLayer);
 
                         wrapper.appendChild(bottomLayer);
                         wrapper.appendChild(topLayer);
@@ -1642,47 +1583,8 @@
                             topLayer.style.opacity = '1';
                             topLayer.style.pointerEvents = 'none';
 
-                            // Apply vertical stacking if enabled
-                            if (state.verticalDisplay) {
-                                const applyVertical = (container) => {
-                                    const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                    if (flexDiv) {
-                                        const currentStyle = flexDiv.getAttribute('style');
-                                        flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                        const svgs = flexDiv.querySelectorAll('svg');
-                                        svgs.forEach((svg, index) => {
-                                            if (index === 1) {
-                                                const svgStyle = svg.getAttribute('style') || '';
-                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                                svg.setAttribute('style', newStyle);
-                                            }
-                                        });
-                                    }
-                                };
-                                applyVertical(bottomLayer);
-                                applyVertical(topLayer);
-                            }
-
-                            // Apply vertical stacking if enabled
-                            if (state.verticalDisplay) {
-                                const applyVertical = (container) => {
-                                    const flexDiv = container.querySelector('div[style*="display: flex"]');
-                                    if (flexDiv) {
-                                        const currentStyle = flexDiv.getAttribute('style');
-                                        flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                                        const svgs = flexDiv.querySelectorAll('svg');
-                                        svgs.forEach((svg, index) => {
-                                            if (index === 1) {
-                                                const svgStyle = svg.getAttribute('style') || '';
-                                                const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
-                                                svg.setAttribute('style', newStyle);
-                                            }
-                                        });
-                                    }
-                                };
-                                applyVertical(bottomLayer);
-                                applyVertical(topLayer);
-                            }
+                            applyVerticalDisplayIfEnabled(bottomLayer);
+                            applyVerticalDisplayIfEnabled(topLayer);
 
                             wrapper.appendChild(bottomLayer);
                             wrapper.appendChild(topLayer);
@@ -1713,6 +1615,9 @@
                             topLayer.style.opacity = '1';
                             topLayer.style.transition = `opacity ${duration}ms linear`;
                             topLayer.style.pointerEvents = 'none';
+
+                            applyVerticalDisplayIfEnabled(bottomLayer);
+                            applyVerticalDisplayIfEnabled(topLayer);
 
                             wrapper.appendChild(bottomLayer);
                             wrapper.appendChild(topLayer);
