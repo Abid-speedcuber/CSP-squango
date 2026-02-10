@@ -119,6 +119,11 @@ function adjustColorBrightness(hexColor, percent) {
 
     let currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
 
+    // Utility button states (always start as false when modal opens)
+    let utilityZ2Enabled = false;
+    let utilityY2Enabled = false;
+    let utilityFlipColorEnabled = false;
+
     // Load z2 tracing mode from localStorage
     let z2TracingModeEnabled = true; // default to true
     const storedZ2Mode = localStorage.getItem('z2TracingModeForParityTracerLibrary');
@@ -198,6 +203,113 @@ function adjustColorBrightness(hexColor, percent) {
             }
             i++;
         }
+    }
+
+    function applyUtilityTransformationsToScramble(scramble) {
+        // First normalize the base scramble
+        let normalized = scramble;
+        if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
+            normalized = window.ScrambleNormalizer.normalizeScramble(scramble);
+        }
+        
+        // Parse into tokens (split by space/slash but keep structure)
+        let tokens = normalized
+            .split(/(\/)/)
+            .map(t => t.trim())
+            .filter(t => t);
+        
+        // Apply flip color (prepend (6,6) at the beginning)
+        if (utilityFlipColorEnabled) {
+            tokens.unshift('(6,6)');
+        }
+        
+        // Apply y2 (append (6,6) at the end)
+        if (utilityY2Enabled) {
+            tokens.push('(6,6)');
+        }
+        
+        // Apply z2 (append /(6,6)/)
+        if (utilityZ2Enabled) {
+            tokens.push('/');
+            tokens.push('(6,6)');
+            tokens.push('/');
+        }
+        
+        // Simplify using the normalizer's simplification logic
+        if (typeof window.ScrambleNormalizer !== 'undefined') {
+            // Access internal functions if available
+            const simplifyFunc = window.ScrambleNormalizer.simplifyScramble || simplifyScrambleLocal;
+            const steps = [];
+            tokens = simplifyFunc(tokens, steps);
+        }
+        
+        // Convert back to string with proper spacing
+        const result = tokens.map((tok, i) => {
+            if (tok === "/") return "/";
+            if (i === 0) return tok;
+            return " " + tok;
+        }).join("").replace(/\/\s*\(/g, "/(");
+        
+        return result;
+    }
+    
+    // Local fallback simplification if normalizer not available
+    function simplifyScrambleLocal(tokens, steps) {
+        function addSets(a, b) {
+            let m = /\((-?\d+),(-?\d+)\)/.exec(a);
+            let n = /\((-?\d+),(-?\d+)\)/.exec(b);
+            let x1 = parseInt(m[1]), y1 = parseInt(m[2]);
+            let x2 = parseInt(n[1]), y2 = parseInt(n[2]);
+            let x = x1 + x2, y = y1 + y2;
+            
+            function norm(v) {
+                if (v > 6) v -= 12;
+                if (v < -6) v += 12;
+                return v;
+            }
+            
+            x = norm(x); 
+            y = norm(y);
+            return `(${x},${y})`;
+        }
+        
+        let changed = true;
+        
+        while (changed) {
+            changed = false;
+            
+            // Remove double slashes
+            for (let i = 0; i < tokens.length - 1; i++) {
+                if (tokens[i] === "/" && tokens[i + 1] === "/") {
+                    tokens.splice(i, 2); 
+                    changed = true; 
+                    break;
+                }
+            }
+            if (changed) continue;
+            
+            // Combine adjacent moves
+            for (let i = 0; i < tokens.length - 1; i++) {
+                if (tokens[i].startsWith("(") && tokens[i + 1].startsWith("(")) {
+                    let merged = addSets(tokens[i], tokens[i + 1]);
+                    tokens.splice(i, 2, merged); 
+                    changed = true; 
+                    break;
+                }
+            }
+            if (changed) continue;
+            
+            // Remove (0,0) moves
+            for (let i = 0; i < tokens.length; i++) {
+                if (tokens[i] === "(0,0)") {
+                    tokens.splice(i, 1);
+                    changed = true;
+                    break;
+                }
+            }
+        }
+        
+        return tokens;
     }
 
     function applyScrambleToStateArrayWithLongName(scr) {
@@ -1824,6 +1936,36 @@ function adjustColorBrightness(hexColor, percent) {
           box-sizing: border-box;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
         }
+        .utility-buttons-container {
+          display: flex;
+          gap: 0.5rem;
+          justify-content: center;
+          margin-top: 0.75rem;
+          flex-wrap: wrap;
+        }
+        .utility-toggle-btn {
+          padding: 0.5rem 1rem;
+          border: 2px solid ${borderColor};
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 0.85rem;
+          transition: all 0.2s;
+          background: ${inputBgColor};
+          color: ${textColor};
+          min-width: 70px;
+        }
+        .utility-toggle-btn:hover {
+          background: ${buttonBgColor};
+        }
+        .utility-toggle-btn.active {
+          background: ${hoverBgColor};
+          border-color: ${textColor};
+        }
+        .parity-tracer-modal-container * {
+          box-sizing: border-box;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+        }
         .parity-tracer-modal-container::-webkit-scrollbar {
           width: 0px;
           display: none;
@@ -1985,7 +2127,12 @@ function adjustColorBrightness(hexColor, percent) {
         <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
       </div>
       <div id="${uniqueId}-visualization" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
-      <div id="${uniqueId}-results" class="results-section"></div>
+      <div class="utility-buttons-container">
+        <button class="utility-toggle-btn" id="${uniqueId}-z2-btn">z2</button>
+        <button class="utility-toggle-btn" id="${uniqueId}-y2-btn">y2</button>
+        <button class="utility-toggle-btn" id="${uniqueId}-flip-btn">Flip Color</button>
+      </div>
+      <div id="${uniqueId}-results" class="results-section"></div>    
     `;
 
         // Attach event handlers - COMPLETE LOGIC
@@ -2027,13 +2174,11 @@ function adjustColorBrightness(hexColor, percent) {
                 let scrambleText = scrambleInput.value.trim();
                 if (!scrambleText) return;
 
-                // Normalize the scramble using ScrambleNormalizer if available
-                if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
-                    scrambleText = window.ScrambleNormalizer.normalizeScramble(scrambleText);
-                }
+                // Apply utility transformations (z2, y2, flip color)
+                const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
 
                 try {
-                    const state = applyScrambleToStateArrayWithLongName(scrambleText);
+                    const state = applyScrambleToStateArrayWithLongName(transformedScramble);
 
                     // Validation - RESTORED
                     const val = validateCornersTogetherSameLayerWithLongName(state);
@@ -2144,7 +2289,35 @@ function adjustColorBrightness(hexColor, percent) {
                 }
             });
 
+            // Utility button handlers
+            const z2Btn = modal.querySelector(`#${uniqueId}-z2-btn`);
+            const y2Btn = modal.querySelector(`#${uniqueId}-y2-btn`);
+            const flipBtn = modal.querySelector(`#${uniqueId}-flip-btn`);
+            
+            z2Btn.addEventListener('click', () => {
+                utilityZ2Enabled = !utilityZ2Enabled;
+                z2Btn.classList.toggle('active', utilityZ2Enabled);
+                performAnalysisWithLongName();
+            });
+            
+            y2Btn.addEventListener('click', () => {
+                utilityY2Enabled = !utilityY2Enabled;
+                y2Btn.classList.toggle('active', utilityY2Enabled);
+                performAnalysisWithLongName();
+            });
+            
+            flipBtn.addEventListener('click', () => {
+                utilityFlipColorEnabled = !utilityFlipColorEnabled;
+                flipBtn.classList.toggle('active', utilityFlipColorEnabled);
+                performAnalysisWithLongName();
+            });
+
             const closeMainModal = () => {
+                // Reset utility states when closing
+                utilityZ2Enabled = false;
+                utilityY2Enabled = false;
+                utilityFlipColorEnabled = false;
+                
                 window.removeEventListener('resize', updateButtonPositions);
                 backdrop.remove();
                 closeBtnElement.remove();
