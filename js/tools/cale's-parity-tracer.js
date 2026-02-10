@@ -119,6 +119,17 @@ function adjustColorBrightness(hexColor, percent) {
 
     let currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
 
+    // Load z2 tracing mode from localStorage
+    let z2TracingModeEnabled = true; // default to true
+    const storedZ2Mode = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+    if (storedZ2Mode !== null) {
+        z2TracingModeEnabled = storedZ2Mode === 'true';
+    }
+
+    function saveZ2TracingMode(enabled) {
+        localStorage.setItem('z2TracingModeForParityTracerLibrary', enabled.toString());
+    }
+
     // Scramble engine functions with long names
     function createSolvedStateArrayForSquareOnePuzzleWithLongName() {
         return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
@@ -967,16 +978,23 @@ function adjustColorBrightness(hexColor, percent) {
         
         const cornerStickerDiv = document.createElement('div');
         cornerStickerDiv.style.cssText = `margin-bottom: 1.5rem; padding: 1rem; background: ${cardBg}; border-radius: 8px;`;
+        const timestamp = Date.now();
         cornerStickerDiv.innerHTML = `
             <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem;">Corner Sticker for Tracing:</div>
             <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerCounterClockwise-${Date.now()}" name="cornerSticker-${Date.now()}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                    <label for="cornerCounterClockwise-${Date.now()}" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
+                    <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
+                    <label for="cornerCounterClockwise-${timestamp}" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerClockwise-${Date.now()}" name="cornerSticker-${Date.now()}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
-                    <label for="cornerClockwise-${Date.now()}" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
+                    <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
+                    <label for="cornerClockwise-${timestamp}" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
+                </div>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid ${borderColor};">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <input type="checkbox" id="z2TracingCheckbox-${timestamp}" ${z2TracingModeEnabled ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
+                    <label for="z2TracingCheckbox-${timestamp}" style="cursor: pointer; color: ${textColor}; font-weight: 600;">Do z2 tracing for 6 and 8 edge cases</label>
                 </div>
             </div>
         `;
@@ -992,6 +1010,16 @@ function adjustColorBrightness(hexColor, percent) {
                     }
                 });
             });
+            
+            const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
+            if (z2Checkbox) {
+                z2Checkbox.addEventListener('change', (e) => {
+                    z2TracingModeEnabled = e.target.checked;
+                    saveZ2TracingMode(z2TracingModeEnabled);
+                    dataChanged = true;
+                    setTimeout(updateFloatingSaveBtn, 50);
+                });
+            }
         }, 100);
 
         const searchDiv = document.createElement('div');
@@ -1288,7 +1316,7 @@ function adjustColorBrightness(hexColor, percent) {
         updateFloatingSaveBtn();
         setTimeout(updateFloatingSaveBtn, 0);
         
-        // Mark data as changed when radio buttons change
+        // Mark data as changed when radio buttons or checkbox change
         setTimeout(() => {
             const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
             radioButtons.forEach(radio => {
@@ -1297,6 +1325,14 @@ function adjustColorBrightness(hexColor, percent) {
                     setTimeout(updateFloatingSaveBtn, 50);
                 });
             });
+            
+            const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
+            if (z2Checkbox) {
+                z2Checkbox.addEventListener('change', () => {
+                    dataChanged = true;
+                    setTimeout(updateFloatingSaveBtn, 50);
+                });
+            }
         }, 100);
 
         // Setup config info button handler
@@ -2033,7 +2069,9 @@ function adjustColorBrightness(hexColor, percent) {
                     }
 
                     // Determine if we need to swap order for parity calculation - RESTORED
-                    const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
+                    const shouldSwapForParity = z2TracingModeEnabled && 
+                        (topCounts.label === '2E5C' && botCounts.label === '6E3C' || 
+                         topCounts.label === '0E6C' && botCounts.label === '8E2C');
 
                     // Build orders for parity (swap if needed) - COMPLETE LOGIC
                     let parityEdgesOrder = [];
