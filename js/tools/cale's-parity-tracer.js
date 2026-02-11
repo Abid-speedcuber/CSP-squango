@@ -781,6 +781,79 @@ function adjustColorBrightness(hexColor, percent) {
     }
 
     // Display results in modal
+    function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray) {
+        let totalDegrees = 0;
+        for (let i = 0; i < rotationAmount; i++) {
+            if (unitsArray[i].type === 'E') {
+                totalDegrees += 30;
+            } else {
+                totalDegrees += 60;
+            }
+        }
+        // Start from 75° and subtract the rotation
+        const startAngle = 90 + totalDegrees;
+        return startAngle;
+    }
+
+    function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, size) {
+        const strokeWidth = size * 0.024;
+        const lineColor = 'rgba(225, 225, 225, 0.7)';
+        const diskColor = 'rgba(225, 225, 225, 1)';
+        const arrowheadColor = 'rgba(225, 225, 225, 1)';
+        const adjustedRadius = radius * 0.95;
+        
+        // Convert to radians
+        const startRad = (startAngleDeg - 15) * Math.PI / 180;
+        const endRad = (startAngleDeg - 15 + 330) * Math.PI / 180;
+        
+        // Calculate arc path (330 degrees clockwise)
+        const startX = centerX + adjustedRadius * Math.cos(startRad);
+        const startY = centerY - adjustedRadius * Math.sin(startRad);
+        const endX = centerX + adjustedRadius * Math.cos(endRad);
+        const endY = centerY - adjustedRadius * Math.sin(endRad);
+        
+        // Large arc flag = 1 for 330 degrees, sweep = 0 for clockwise
+        const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 1 0 ${endX} ${endY}`;
+        
+        // Start disk (circle at beginning) - smaller, seamless
+        const startDiskRadius = strokeWidth * 0.8;
+        
+        // Arrowhead at end position
+        const arrowSize = size * 0.06;
+        
+        // Direction of arrow movement at end (tangent to circle, clockwise)
+        // For clockwise motion, tangent is perpendicular to radius, rotated -90°
+        const tangentAngle = endRad + Math.PI / 2;
+        
+        // Calculate arrowhead tip (extends in direction of motion)
+        const arrowTipX = endX + arrowSize * Math.cos(tangentAngle);
+        const arrowTipY = endY - arrowSize * Math.sin(tangentAngle);
+        
+        // Arrowhead base points (perpendicular to direction of motion)
+        const perpAngle1 = tangentAngle + (2 * Math.PI / 3);
+        const perpAngle2 = tangentAngle - (2 * Math.PI / 3);
+        
+        const arrow1X = endX + arrowSize * 0.5 * Math.cos(perpAngle1);
+        const arrow1Y = endY - arrowSize * 0.5 * Math.sin(perpAngle1);
+        const arrow2X = endX + arrowSize * 0.5 * Math.cos(perpAngle2);
+        const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
+        
+        return `
+            <g>
+                <path d="${pathD}" 
+                      fill="none" 
+                      stroke="${lineColor}" 
+                      stroke-width="${strokeWidth}" 
+                      stroke-dasharray="${size * 0.008},${size * 0.004}"
+                      stroke-linecap="round"/>
+                <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
+                        fill="${diskColor}" stroke="none"/>
+                <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
+                         fill="${arrowheadColor}" stroke="none"/>
+            </g>
+        `;
+    }
+
     function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
@@ -2247,21 +2320,51 @@ function adjustColorBrightness(hexColor, percent) {
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
                         const encodedScramble = encodeStateToHexStringWithLongName(state);
-                        if (!encodedScramble.startsWith('Error:')) {
-                            try {
-                                const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
-                                    encodedScramble,
-                                    config.imageSizeInPixels || 200,
-                                    {
-                                        topColor: config.topLayerMainColor,
-                                        bottomColor: config.bottomLayerMainColor,
-                                        frontColor: config.frontFaceColorForVisualization,
-                                        rightColor: config.rightFaceColorForVisualization,
-                                        backColor: config.backFaceColorForVisualization,
-                                        leftColor: config.leftFaceColorForVisualization
-                                    }
-                                );
-                                vizContainer.innerHTML = svgContent;
+                    if (!encodedScramble.startsWith('Error:')) {
+                        try {
+                            const imageSize = config.imageSizeInPixels || 200;
+                            const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                encodedScramble,
+                                imageSize,
+                                {
+                                    topColor: config.topLayerMainColor,
+                                    bottomColor: config.bottomLayerMainColor,
+                                    frontColor: config.frontFaceColorForVisualization,
+                                    rightColor: config.rightFaceColorForVisualization,
+                                    backColor: config.backFaceColorForVisualization,
+                                    leftColor: config.leftFaceColorForVisualization
+                                }
+                            );
+                            
+                            // Calculate arrow positions
+                            const topArrowStart = calculateArrowStartAngleWithLongName(topMatch.rot, topUnits);
+                            const botArrowStart = calculateArrowStartAngleWithLongName(botMatch.rot, botUnits);
+                            
+                            // Calculate circle dimensions (matching draw-scramble logic)
+                            const unit10vh = imageSize * 0.4;
+                            const radiusOuter = unit10vh * 0.7;
+                            const ringRadius = radiusOuter + (unit10vh * 0.4);
+                            const centerX = imageSize / 2;
+                            const centerY = imageSize / 2;
+                            
+                            // Parse SVG and inject arrows
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = svgContent;
+                            
+                            const svgs = tempDiv.querySelectorAll('svg');
+                            if (svgs.length >= 2) {
+                                // Add arrow to first SVG (top layer)
+                                const firstSvg = svgs[0];
+                                const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowStart, imageSize);
+                                firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
+                                
+                                // Add arrow to second SVG (bottom layer)
+                                const secondSvg = svgs[1];
+                                const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowStart, imageSize);
+                                secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
+                            }
+                            
+                            vizContainer.innerHTML = tempDiv.innerHTML;
                             } catch (err) {
                                 vizContainer.innerHTML = `<div style="color: #e53e3e;">Visualization error: ${err.message}</div>`;
                             }

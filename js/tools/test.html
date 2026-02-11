@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parity Tracer Arrow Debug</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-case {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .test-case h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .scramble-text {
+            font-family: monospace;
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
+            word-wrap: break-word;
+        }
+        .modal-container {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">Parity Tracer Arrow Position Debug</h1>
+    
+    <div class="container">
+        <div class="test-case">
+            <h3>Test Case 1: Square</h3>
+            <div class="scramble-text" id="scramble1"></div>
+            <div class="modal-container" id="modal1"></div>
+        </div>
+        
+        <div class="test-case">
+            <h3>Test Case 2: Kite</h3>
+            <div class="scramble-text" id="scramble2"></div>
+            <div class="modal-container" id="modal2"></div>
+        </div>
+        
+        <div class="test-case">
+            <h3>Test Case 3: Shield</h3>
+            <div class="scramble-text" id="scramble3"></div>
+            <div class="modal-container" id="modal3"></div>
+        </div>
+        
+        <div class="test-case">
+            <h3>Test Case 4: 6-0</h3>
+            <div class="scramble-text" id="scramble4"></div>
+            <div class="modal-container" id="modal4"></div>
+        </div>
+    </div>
+
+    <script src="draw-scramble.js"></script>
+    <script src="cale's-parity-tracer.js"></script>
+    
+    <script>
+        // Test scrambles - different shapes
+        const testScrambles = [
+            "(3,-1)/ (4,4)/ (3,0)/ (-3,0)/ (2,-1)/ (3,0)/ (-2,0)/ (6,-3)/ (1,-3)/ (-1,0)/ (-2,-4)/",  // 6-2/star
+            "(4,0)/ (2,-1)/ (4,1)/ (0,-3)/ (0,-3)/ (-3,-1)/ (3,0)/ (-3,0)/ (-3,-5)/ (0,-2)/ (5,0)/ (-1,0)", // 4-1-1/L
+            "(1,0)/ (0,3)/ (-4,5)/ (-3,0)/ (6,-3)/ (-5,-2)/ (2,0)/ (3,0)/ (1,-4)/ (4,0)/ (-1,0)/ (-4,0)/ (-2,-5)", //left pawn/barrel
+            "(0,-1)/ (1,-5)/ (2,2)/ (0,-3)/ (4,-2)/ (6,0)/ (-1,0)/ (3,0)/ (-5,-4)/ (0,-2)/ (2,-5)/ (6,-4)" // 1-2-3/ L
+        ];
+
+        // Create modals for each test case
+        testScrambles.forEach((scramble, index) => {
+            const scrambleDiv = document.getElementById(`scramble${index + 1}`);
+            const modalDiv = document.getElementById(`modal${index + 1}`);
+            
+            scrambleDiv.textContent = scramble;
+            
+            // Create a container div to hold the modal content
+            const container = document.createElement('div');
+            container.style.position = 'relative';
+            
+            // Call the parity tracer library
+            try {
+                const modalBackdrop = window.ParityTracerLibrary.createModal({
+                    backgroundColor: '#ffffff',
+                    hideInstructionButton: true,
+                    scrambleText: scramble,
+                    imageSizeInPixels: 300,
+                    topColor: '#FFD700',
+                    topColorName: 'Yellow',
+                    topColorShort: 'Y',
+                    bottomColor: '#FFFFFF',
+                    bottomColorName: 'White',
+                    bottomColorShort: 'W',
+                    frontColor: '#CC0000',
+                    rightColor: '#00AA00',
+                    backColor: '#FF8C00',
+                    leftColor: '#0066CC'
+                });
+                
+                // Extract the modal content (without backdrop)
+                if (modalBackdrop) {
+                    const modalContent = modalBackdrop.querySelector('.parity-tracer-modal-container');
+                    if (modalContent) {
+                        // Clone and insert into our container
+                        const clonedContent = modalContent.cloneNode(true);
+                        clonedContent.style.position = 'static';
+                        clonedContent.style.maxWidth = '100%';
+                        clonedContent.style.width = '100%';
+                        clonedContent.style.boxShadow = 'none';
+                        container.appendChild(clonedContent);
+                        
+                        // Trigger analysis
+                        setTimeout(() => {
+                            const input = clonedContent.querySelector('input');
+                            if (input) {
+                                const event = new Event('input', { bubbles: true });
+                                input.dispatchEvent(event);
+                            }
+                        }, 100);
+                    }
+                    
+                    // Remove the backdrop (we don't need it)
+                    modalBackdrop.remove();
+                }
+            } catch (error) {
+                container.innerHTML = `<div style="color: red;">Error: ${error.message}</div>`;
+            }
+            
+            modalDiv.appendChild(container);
+        });
+        
+        // Remove all floating buttons that might have been created
+        setTimeout(() => {
+            document.querySelectorAll('.parity-tracer-close-btn, .parity-tracer-instruction-btn, .parity-tracer-settings-btn').forEach(btn => {
+                btn.remove();
+            });
+        }, 500);
+    </script>
+</body>
+</html>
