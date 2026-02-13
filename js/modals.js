@@ -37,7 +37,7 @@ function generateModalHTML() {
                                 <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Show/hide the blue and green numbers from the case images to help you trace parity using Kale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
+                                    <span class="info-box">Show/hide the blue and red numbers from the case images to help you trace parity using Kale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.3); cursor: pointer;">

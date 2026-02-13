@@ -501,7 +501,10 @@ function exportData() {
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
         svgData: window.svgData,
-        generalNotes: generalNotes
+        generalNotes: generalNotes,
+        parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
+        parityTracerShowArrow: localStorage.getItem('parityTracerShowArrow'),
+        parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings')
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -569,6 +572,15 @@ function importData(jsonStr) {
         }
         if (state.customShapesForParityTracerLibrary) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+        }
+        if (state.parityTracerImageSize) {
+            localStorage.setItem('parityTracerImageSize', state.parityTracerImageSize);
+        }
+        if (state.parityTracerShowArrow !== undefined) {
+            localStorage.setItem('parityTracerShowArrow', state.parityTracerShowArrow);
+        }
+        if (state.parityTracerArrowSettings) {
+            localStorage.setItem('parityTracerArrowSettings', state.parityTracerArrowSettings);
         }
         saveState();
         updateProgress();

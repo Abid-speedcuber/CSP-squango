@@ -135,6 +135,44 @@
         localStorage.setItem('z2TracingModeForParityTracerLibrary', enabled.toString());
     }
 
+    // Parity tracer specific image size
+    let parityTracerImageSize = 200;
+    const storedImageSize = localStorage.getItem('parityTracerImageSize');
+    if (storedImageSize !== null) {
+        parityTracerImageSize = parseInt(storedImageSize);
+    }
+
+    function saveParityTracerImageSize(size) {
+        localStorage.setItem('parityTracerImageSize', size.toString());
+    }
+
+    // Arrow settings
+    let showCircularArrow = true;
+    const storedShowArrow = localStorage.getItem('parityTracerShowArrow');
+    if (storedShowArrow !== null) {
+        showCircularArrow = storedShowArrow === 'true';
+    }
+
+    let arrowSettings = {
+        color: 'rgba(253, 34, 34, 0.7)',
+        opacity: 0.7,
+        strokeWidth: 1.6,
+        radius: 0.3
+    };
+    const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
+    if (storedArrowSettings !== null) {
+        try {
+            arrowSettings = JSON.parse(storedArrowSettings);
+        } catch (e) {
+            // Use defaults
+        }
+    }
+
+    function saveArrowSettings() {
+        localStorage.setItem('parityTracerShowArrow', showCircularArrow.toString());
+        localStorage.setItem('parityTracerArrowSettings', JSON.stringify(arrowSettings));
+    }
+
     // Scramble engine functions with long names
     function createSolvedStateArrayForSquareOnePuzzleWithLongName() {
         return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
@@ -833,25 +871,24 @@
     }
 
     function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
-        let arrowColor = 'rgba(253, 34, 34, 0.7)';
-        const strokeWidth = size * 0.016;
-        const lineColor = arrowColor;//'rgba(0, 122, 255, 1)'; //'rgba(253, 34, 34, 0.7)'
-        const diskColor = arrowColor;
-        const arrowheadColor = arrowColor;
-        const adjustedRadius = radius * 0.3;
+        if (!showCircularArrow) {
+            return '';
+        }
+
+        const strokeWidth = size * 0.01 * arrowSettings.strokeWidth;
+        const arrowColor = arrowSettings.color;
+        const opacity = arrowSettings.opacity;
+        const adjustedRadius = radius * arrowSettings.radius;
 
         // Arrowhead size
-        const arrowSize = strokeWidth * 3; //5
+        const arrowSize = strokeWidth * 3;
         // Start disk (circle at beginning) - smaller, seamless
-        const startDiskRadius = strokeWidth * 1.2; //1.7
+        const startDiskRadius = strokeWidth * 1.2;
 
         // Calculate how many degrees the arrowhead tip extends
-        // The arrowhead extends radially outward by arrowSize
-        // Convert this to angular degrees at the given radius
         const arrowTipExtensionDegrees = (arrowSize / adjustedRadius) * (180 / Math.PI);
 
         // Adjust the end angle to pull back by the arrowhead extension
-        // So the TIP lands at exactly the target angle
         const adjustedArcDegrees = arcDegrees - arrowTipExtensionDegrees;
 
         // Convert to radians
@@ -867,8 +904,6 @@
         // Large arc flag = 1 for arcs >= 180 degrees, sweep = 1 for clockwise
         const largeArcFlag = arcDegrees >= 180 ? 1 : 0;
         const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-
-
 
         // Direction of arrow movement at end (tangent to circle, clockwise)
         const tangentAngle = endRad - Math.PI / 2;
@@ -887,17 +922,17 @@
         const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
 
         return `
-        <g>
+        <g opacity="${opacity}">
             <path d="${pathD}" 
                   fill="none" 
-                  stroke="${lineColor}" 
+                  stroke="${arrowColor}" 
                   stroke-width="${strokeWidth}" 
                   stroke-dasharray="${size * 0.008},${size * 0.004}"
                   stroke-linecap="round"/>
             <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
-                    fill="${diskColor}" stroke="none"/>
+                    fill="${arrowColor}" stroke="none"/>
             <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
-                     fill="${arrowheadColor}" stroke="none"/>
+                     fill="${arrowColor}" stroke="none"/>
         </g>
     `;
     }
@@ -1064,6 +1099,71 @@
     }
 
 
+    // Parity Tracer Settings Instruction Modal
+    function showParityTracerSettingsInstructionModal(config) {
+        const textColor = getContrastColor(config.backgroundColor);
+        const isDark = textColor === '#FFFFFF';
+
+        function adjustColorBrightness(hexColor, percent) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+
+        const instructionModal = document.createElement('div');
+        instructionModal.className = 'training-info-modal';
+        instructionModal.style.zIndex = '10011';
+        instructionModal.innerHTML = `
+            <div class="training-info-content" style="background: ${config.backgroundColor};">
+                <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
+                    <span class="training-info-title">Parity Tracer Settings Guide</span>
+                    <button class="training-info-close" style="color: ${textColor};">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text" style="color: ${textColor};">Image size controls how large the puzzle visualization appears. Adjust this based on your screen size and preference.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text" style="color: ${textColor};">All settings update in real-time as you adjust them, so you can see the effect immediately on your scramble.</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(instructionModal);
+        instructionModal.classList.add('active');
+
+        const closeBtn = instructionModal.querySelector('.training-info-close');
+        closeBtn.onclick = () => {
+            instructionModal.remove();
+        };
+
+        instructionModal.onclick = (e) => {
+            if (e.target === instructionModal) {
+                instructionModal.remove();
+            }
+        };
+    }
+
     // Configuration Orientation Instruction Modal
     function showConfigOrientationInstructionModal(config) {
         const textColor = getContrastColor(config.backgroundColor);
@@ -1139,6 +1239,347 @@
 
     // Configure modal popup - RESTORED AND COMPLETE
     function showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+        // This now opens the Tracing Scheme Settings modal (shape orientations only)
+        showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+    }
+
+    function showParityTracerSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+        // Calculate contrasting colors based on background
+        function getContrastColor(hexColor) {
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#FFFFFF';
+        }
+
+        function adjustColorBrightness(hexColor, percent) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        const textColor = getContrastColor(config.backgroundColor);
+        const isDark = textColor === '#FFFFFF';
+        const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
+        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
+        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+
+        const settingsModalDiv = document.createElement('div');
+        settingsModalDiv.className = 'parity-tracer-settings-modal';
+        settingsModalDiv.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10008;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        `;
+
+        const settingsContent = document.createElement('div');
+        settingsContent.className = 'parity-tracer-settings-content';
+        settingsContent.style.cssText = `
+            background: ${config.backgroundColor};
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: relative;
+        `;
+
+        const timestamp = Date.now();
+        
+        settingsContent.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Parity Tracer Settings</h2>
+                <button class="settings-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </button>
+            </div>
+            
+            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
+                <!-- Corner Sticker Setting -->
+                <div style="margin-bottom: 1rem;">
+                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.5rem; font-size: 0.9rem;">Corner Sticker for Tracing:</div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
+                            <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
+                            Counter-Clockwise
+                        </label>
+                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
+                            <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
+                            Clockwise
+                        </label>
+                    </div>
+                </div>
+
+                <!-- z2 Tracing Setting -->
+                <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid ${borderColor};">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
+                        <input type="checkbox" id="z2TracingCheckbox-${timestamp}" ${z2TracingModeEnabled ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                        <span style="font-weight: 600;">z2 tracing for 6 and 8 edge cases</span>
+                    </label>
+                </div>
+
+                <!-- Image Size Setting -->
+                <div style="padding-top: 1rem; border-top: 1px solid ${borderColor};">
+                    <label style="font-weight: 600; color: ${textColor}; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
+                        Image Size: <span id="imageSizeValue-${timestamp}">${parityTracerImageSize}px</span>
+                    </label>
+                    <input type="range" id="imageSizeSlider-${timestamp}" min="100" max="400" value="${parityTracerImageSize}" style="width: 100%; cursor: pointer;">
+                </div>
+            </div>
+
+            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
+                <!-- Circular Arrow Toggle -->
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
+                        <input type="checkbox" id="showArrowCheckbox-${timestamp}" ${showCircularArrow ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                        <span style="font-weight: 600;">Show Circular Arrow</span>
+                    </label>
+                </div>
+
+                <!-- Arrow Settings -->
+                <div id="arrowSettingsContainer-${timestamp}" style="padding-top: 1rem; border-top: 1px solid ${borderColor}; opacity: ${showCircularArrow ? '1' : '0.4'}; pointer-events: ${showCircularArrow ? 'auto' : 'none'};">
+                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem; font-size: 0.9rem;">Arrow Appearance:</div>
+                    
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
+                        <label style="color: ${textColor}; font-size: 0.85rem; min-width: 45px;">Color:</label>
+                        <input type="color" id="arrowColor-${timestamp}" value="${arrowSettings.color.startsWith('rgba') ? '#fd2222' : arrowSettings.color}" style="width: 50px; height: 28px; cursor: pointer; border: 1px solid ${borderColor}; border-radius: 4px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Opacity: <span id="opacityValue-${timestamp}">${(arrowSettings.opacity * 100).toFixed(0)}%</span></label>
+                        <input type="range" id="arrowOpacity-${timestamp}" min="0" max="100" value="${arrowSettings.opacity * 100}" style="width: 100%; cursor: pointer;">
+                    </div>
+                    
+                    <div style="margin-bottom: 0.75rem;">
+                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Stroke Width: <span id="strokeWidthValue-${timestamp}">${arrowSettings.strokeWidth.toFixed(1)}</span></label>
+                        <input type="range" id="arrowStrokeWidth-${timestamp}" min="0.5" max="5" step="0.1" value="${arrowSettings.strokeWidth}" style="width: 100%; cursor: pointer;">
+                    </div>
+                    
+                    <div>
+                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Radius: <span id="radiusValue-${timestamp}">${arrowSettings.radius.toFixed(2)}</span></label>
+                        <input type="range" id="arrowRadius-${timestamp}" min="0.1" max="0.6" step="0.01" value="${arrowSettings.radius}" style="width: 100%; cursor: pointer;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tracing Scheme Settings Button -->
+            <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+                Tracing Scheme Settings
+            </button>
+        `;
+
+        settingsModalDiv.appendChild(settingsContent);
+
+        // Create floating close button
+        const settingsFloatingCloseBtn = document.createElement('button');
+        settingsFloatingCloseBtn.className = 'settings-floating-close-btn';
+        settingsFloatingCloseBtn.innerHTML = '×';
+        settingsFloatingCloseBtn.style.cssText = `
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10009;
+            border: none;
+            background: ${isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5)};
+            color: ${textColor};
+            transition: transform 0.2s;
+        `;
+
+        document.body.appendChild(settingsFloatingCloseBtn);
+        document.body.appendChild(settingsModalDiv);
+
+        // Position the close button
+        function updateSettingsClosePosition() {
+            const rect = settingsContent.getBoundingClientRect();
+            settingsFloatingCloseBtn.style.top = `${rect.top + 8}px`;
+            settingsFloatingCloseBtn.style.right = `${window.innerWidth - rect.right + 4}px`;
+        }
+
+        setTimeout(updateSettingsClosePosition, 10);
+        window.addEventListener('resize', updateSettingsClosePosition);
+        settingsModalDiv.addEventListener('scroll', updateSettingsClosePosition);
+
+        // Function to trigger live update
+        function triggerLiveUpdate() {
+            if (modalElement) {
+                const scrambleInput = modalElement.querySelector('input[type="text"]');
+                if (scrambleInput) {
+                    const event = new Event('input', { bubbles: true });
+                    scrambleInput.dispatchEvent(event);
+                }
+            }
+        }
+
+        // Event listeners
+        setTimeout(() => {
+            // Settings info button
+            const settingsInfoBtn = settingsContent.querySelector('.settings-info-btn');
+            if (settingsInfoBtn) {
+                settingsInfoBtn.onclick = () => {
+                    showParityTracerSettingsInstructionModal(config);
+                };
+            }
+
+            // Corner sticker mode - save and update immediately
+            const radioButtons = settingsContent.querySelectorAll('input[type="radio"]');
+            radioButtons.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    cornerStickerMode = e.target.value;
+                    if (typeof window.setCornerStickerMode === 'function') {
+                        window.setCornerStickerMode(cornerStickerMode);
+                    }
+                    triggerLiveUpdate();
+                });
+            });
+
+            // z2 tracing - save and update immediately
+            const z2Checkbox = settingsContent.querySelector(`#z2TracingCheckbox-${timestamp}`);
+            if (z2Checkbox) {
+                z2Checkbox.addEventListener('change', (e) => {
+                    z2TracingModeEnabled = e.target.checked;
+                    saveZ2TracingMode(z2TracingModeEnabled);
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Image size slider
+            const imageSizeSlider = settingsContent.querySelector(`#imageSizeSlider-${timestamp}`);
+            const imageSizeValue = settingsContent.querySelector(`#imageSizeValue-${timestamp}`);
+            if (imageSizeSlider) {
+                imageSizeSlider.addEventListener('input', (e) => {
+                    const size = parseInt(e.target.value);
+                    imageSizeValue.textContent = size + 'px';
+                    parityTracerImageSize = size;
+                    saveParityTracerImageSize(size);
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Show arrow checkbox
+            const showArrowCheckbox = settingsContent.querySelector(`#showArrowCheckbox-${timestamp}`);
+            const arrowSettingsContainer = settingsContent.querySelector(`#arrowSettingsContainer-${timestamp}`);
+            if (showArrowCheckbox) {
+                showArrowCheckbox.addEventListener('change', (e) => {
+                    showCircularArrow = e.target.checked;
+                    arrowSettingsContainer.style.opacity = showCircularArrow ? '1' : '0.4';
+                    arrowSettingsContainer.style.pointerEvents = showCircularArrow ? 'auto' : 'none';
+                    saveArrowSettings();
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Arrow color
+            const arrowColorInput = settingsContent.querySelector(`#arrowColor-${timestamp}`);
+            if (arrowColorInput) {
+                arrowColorInput.addEventListener('input', (e) => {
+                    arrowSettings.color = e.target.value;
+                    saveArrowSettings();
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Arrow opacity
+            const arrowOpacityInput = settingsContent.querySelector(`#arrowOpacity-${timestamp}`);
+            const opacityValue = settingsContent.querySelector(`#opacityValue-${timestamp}`);
+            if (arrowOpacityInput) {
+                arrowOpacityInput.addEventListener('input', (e) => {
+                    const opacity = parseInt(e.target.value) / 100;
+                    arrowSettings.opacity = opacity;
+                    opacityValue.textContent = e.target.value + '%';
+                    saveArrowSettings();
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Arrow stroke width
+            const arrowStrokeWidthInput = settingsContent.querySelector(`#arrowStrokeWidth-${timestamp}`);
+            const strokeWidthValue = settingsContent.querySelector(`#strokeWidthValue-${timestamp}`);
+            if (arrowStrokeWidthInput) {
+                arrowStrokeWidthInput.addEventListener('input', (e) => {
+                    arrowSettings.strokeWidth = parseFloat(e.target.value);
+                    strokeWidthValue.textContent = parseFloat(e.target.value).toFixed(1);
+                    saveArrowSettings();
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Arrow radius
+            const arrowRadiusInput = settingsContent.querySelector(`#arrowRadius-${timestamp}`);
+            const radiusValue = settingsContent.querySelector(`#radiusValue-${timestamp}`);
+            if (arrowRadiusInput) {
+                arrowRadiusInput.addEventListener('input', (e) => {
+                    arrowSettings.radius = parseFloat(e.target.value);
+                    radiusValue.textContent = parseFloat(e.target.value).toFixed(2);
+                    saveArrowSettings();
+                    triggerLiveUpdate();
+                });
+            }
+
+            // Tracing scheme button
+            const tracingSchemeBtn = settingsContent.querySelector(`#openTracingScheme-${timestamp}`);
+            if (tracingSchemeBtn) {
+                tracingSchemeBtn.addEventListener('click', () => {
+                    // Close this modal and open tracing scheme modal
+                    closeSettingsModal();
+                    showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+                });
+            }
+        }, 100);
+
+        const closeSettingsModal = () => {
+            window.removeEventListener('resize', updateSettingsClosePosition);
+            settingsModalDiv.removeEventListener('scroll', updateSettingsClosePosition);
+            settingsModalDiv.remove();
+            settingsFloatingCloseBtn.remove();
+            
+            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
+            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+        };
+
+        // Back button handler
+        if (typeof pushModalState !== 'undefined') {
+            pushModalState('paritySettingsModal', closeSettingsModal);
+        }
+
+        settingsFloatingCloseBtn.onclick = closeSettingsModal;
+        settingsModalDiv.onclick = (e) => {
+            if (e.target === settingsModalDiv) {
+                closeSettingsModal();
+            }
+        };
+    }
+
+    function showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
         // Calculate contrasting colors based on background
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
@@ -1216,52 +1657,6 @@
         headerDiv.appendChild(headerTitle);
 
         const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        const cornerStickerDiv = document.createElement('div');
-        cornerStickerDiv.style.cssText = `margin-bottom: 1.5rem; padding: 1rem; background: ${cardBg}; border-radius: 8px;`;
-        const timestamp = Date.now();
-        cornerStickerDiv.innerHTML = `
-            <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem;">Corner Sticker for Tracing:</div>
-            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                    <label for="cornerCounterClockwise-${timestamp}" style="cursor: pointer; color: ${textColor};">Most Counter-Clockwise Sticker</label>
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px;">
-                    <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
-                    <label for="cornerClockwise-${timestamp}" style="cursor: pointer; color: ${textColor};">Most Clockwise Sticker</label>
-                </div>
-            </div>
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid ${borderColor};">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <input type="checkbox" id="z2TracingCheckbox-${timestamp}" ${z2TracingModeEnabled ? 'checked' : ''} style="cursor: pointer; width: 18px; height: 18px;">
-                    <label for="z2TracingCheckbox-${timestamp}" style="cursor: pointer; color: ${textColor}; font-weight: 600;">Do z2 tracing for 6 and 8 edge cases</label>
-                </div>
-            </div>
-        `;
-
-        // Add event listeners for corner sticker mode after DOM insertion
-        setTimeout(() => {
-            const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    const mode = e.target.value;
-                    if (typeof window.setCornerStickerMode === 'function') {
-                        window.setCornerStickerMode(mode);
-                    }
-                });
-            });
-
-            const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
-            if (z2Checkbox) {
-                z2Checkbox.addEventListener('change', (e) => {
-                    z2TracingModeEnabled = e.target.checked;
-                    saveZ2TracingMode(z2TracingModeEnabled);
-                    dataChanged = true;
-                    setTimeout(updateFloatingSaveBtn, 50);
-                });
-            }
-        }, 100);
 
         const searchDiv = document.createElement('div');
         searchDiv.className = 'shape-search-container';
@@ -1557,25 +1952,6 @@
         updateFloatingSaveBtn();
         setTimeout(updateFloatingSaveBtn, 0);
 
-        // Mark data as changed when radio buttons or checkbox change
-        setTimeout(() => {
-            const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', () => {
-                    dataChanged = true;
-                    setTimeout(updateFloatingSaveBtn, 50);
-                });
-            });
-
-            const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
-            if (z2Checkbox) {
-                z2Checkbox.addEventListener('change', () => {
-                    dataChanged = true;
-                    setTimeout(updateFloatingSaveBtn, 50);
-                });
-            }
-        }, 100);
-
         // Setup config info button handler
         setTimeout(() => {
             const configInfoBtn = configContent.querySelector('.config-info-btn');
@@ -1589,7 +1965,6 @@
         casesListDiv.appendChild(buttonsDiv);
 
         configContent.appendChild(headerDiv);
-        configContent.appendChild(cornerStickerDiv);
         configContent.appendChild(searchDiv);
         configContent.appendChild(casesListDiv);
         configModalDiv.appendChild(configContent);
@@ -2496,7 +2871,7 @@
                                 console.group('🔍 Complete Scramble Analysis');
                                 console.groupEnd();
 
-                                const imageSize = config.imageSizeInPixels || 200;
+                                const imageSize = parityTracerImageSize;
                                 const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
                                     encodedScramble,
                                     imageSize,
@@ -2695,8 +3070,8 @@
                 closeBtnElement.style.display = 'none';
                 instructionBtnElement.style.display = 'none';
                 settingsBtnElement.style.display = 'none';
-                // Push another state for config on top of main modal
-                showConfigurationModalWithLongName(modal, config, closeBtnElement, instructionBtnElement, settingsBtnElement);
+                // Open the new settings modal
+                showParityTracerSettingsModal(modal, config, closeBtnElement, instructionBtnElement, settingsBtnElement);
             });
 
             // Close on backdrop click
