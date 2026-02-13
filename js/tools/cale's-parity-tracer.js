@@ -1069,15 +1069,19 @@
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText1}</div>
+                        <div class="training-info-text" style="color: ${textColor};">Enter your scramble in the input bar. The parity analysis will update automatically using Cale's method.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText2}</div>
+                        <div class="training-info-text" style="color: ${textColor};">Customize the tracing start point and appearance from the settings button at the bottom right.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">${config.instructionText3}</div>
+                        <div class="training-info-text" style="color: ${textColor};">For symmetric shapes, click the center of the puzzle image to cycle through different symmetry orientations.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Tracing Scheme Settings.</div>
                     </div>
                 </div>
             </div>
@@ -1210,14 +1214,14 @@
                         <div class="training-info-number">5</div>
                         <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counterclockwise, you are gay and nobody loves you.</div>
                     </div>
-                    <div class="training-info-item">
+<!--                    <div class="training-info-item">
                         <div class="training-info-number">6</div>
                         <div class="training-info-text" style="color: ${textColor};">If you trace using the right most sticker or the more counterclockwise color of a corner, you should set the "Corner Sticker for Tracing" to be "Most Counter-Clockwise sticker" and if you use most clockwise sticker like Matt, then you should select it to be "Most clockwise sticker". This is completely personal choice and it DOES NOT change the parity at all.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
                         <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means prioritizing the more edge dense face to start your tracing. So no matter if the 6/8 face is on bottom or top, you trace from that face. z2 tracing is the safest mode of tracing. And if you do not do z2 tracing, then for 6 edges cases will flip their parity depending which face they appear.</div>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         `;
@@ -1305,7 +1309,7 @@
         const timestamp = Date.now();
         
         settingsContent.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
                 <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Parity Tracer Settings</h2>
                 <button class="settings-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
@@ -1323,11 +1327,11 @@
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
                             <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            Counter-Clockwise
+                            More counterclockwise sticker
                         </label>
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
                             <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            Clockwise
+                            More clockwise sticker
                         </label>
                     </div>
                 </div>
@@ -1562,7 +1566,6 @@
             settingsFloatingCloseBtn.remove();
             
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
 
@@ -1772,14 +1775,14 @@
                 backdrop.removeEventListener('scroll', scrollHandler);
             }
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
 
-            // Re-trigger analysis in the parity modal if it exists
+            // Trigger live update in the parity modal
             if (modalElement) {
-                const analyzeBtn = modalElement.querySelector(`button[id$="-analyze"]`);
-                if (analyzeBtn) {
-                    analyzeBtn.click();
+                const scrambleInput = modalElement.querySelector('input[type="text"]');
+                if (scrambleInput) {
+                    const event = new Event('input', { bubbles: true });
+                    scrambleInput.dispatchEvent(event);
                 }
             }
 
@@ -2192,7 +2195,6 @@
 
             // Restore main modal buttons if they exist
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
         function setCornerStickerMode(mode) {
@@ -2496,6 +2498,34 @@
           box-sizing: border-box;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
         }
+        .parity-tracer-header {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 1rem;
+        }
+        .parity-tracer-header h2 {
+          font-size: 1.5rem;
+          color: ${textColor};
+          margin: 0;
+        }
+        .parity-tracer-header-info-btn {
+          background: rgba(255, 255, 255, 0.1);
+          border: none;
+          color: ${textColor};
+          cursor: pointer;
+          padding: 6px;
+          border-radius: 6px;
+          display: ${config.hideInstructionButton ? 'none' : 'flex'};
+          align-items: center;
+          justify-content: center;
+          transition: background 0.2s;
+          width: 32px;
+          height: 32px;
+        }
+        .parity-tracer-header-info-btn:hover {
+          background: rgba(255, 255, 255, 0.2);
+        }
         .utility-buttons-container {
           display: flex;
           gap: 0.5rem;
@@ -2683,6 +2713,16 @@
           stroke-width: 3;
         }
       </style>
+      <div class="parity-tracer-header">
+        <h2>Cale's Parity Tracer</h2>
+        <button class="parity-tracer-header-info-btn" id="${uniqueId}-header-info" title="Parity Tracer Guide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </button>
+      </div>
       <div class="parity-tracer-input-container">
         <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
       </div>
@@ -2709,14 +2749,10 @@
                 const rect = modal.getBoundingClientRect();
                 const closeTop = rect.top + 8;
                 const closeRight = window.innerWidth - rect.right + 6;
-                const instrBottom = window.innerHeight - rect.bottom + 66;
-                const instrRight = window.innerWidth - rect.right + 6;
                 const settingsBottom = window.innerHeight - rect.bottom + 16;
                 const settingsRight = window.innerWidth - rect.right + 6;
                 closeBtnElement.style.top = `${closeTop}px`;
                 closeBtnElement.style.right = `${closeRight}px`;
-                instructionBtnElement.style.bottom = `${instrBottom}px`;
-                instructionBtnElement.style.right = `${instrRight}px`;
                 settingsBtnElement.style.bottom = `${settingsBottom}px`;
                 settingsBtnElement.style.right = `${settingsRight}px`;
             }
@@ -3048,7 +3084,6 @@
                 window.removeEventListener('resize', updateButtonPositions);
                 backdrop.remove();
                 closeBtnElement.remove();
-                instructionBtnElement.remove();
                 settingsBtnElement.remove();
                 document.body.classList.remove('modal-open');
                 document.body.style.top = '';
@@ -3062,16 +3097,19 @@
 
             closeBtnElement.addEventListener('click', closeMainModal);
 
-            instructionBtnElement.addEventListener('click', () => {
-                showParityTracerInstructionModal(config);
-            });
+            // Header info button
+            const headerInfoBtn = modal.querySelector(`#${uniqueId}-header-info`);
+            if (headerInfoBtn) {
+                headerInfoBtn.addEventListener('click', () => {
+                    showParityTracerInstructionModal(config);
+                });
+            }
 
             settingsBtnElement.addEventListener('click', () => {
                 closeBtnElement.style.display = 'none';
-                instructionBtnElement.style.display = 'none';
                 settingsBtnElement.style.display = 'none';
                 // Open the new settings modal
-                showParityTracerSettingsModal(modal, config, closeBtnElement, instructionBtnElement, settingsBtnElement);
+                showParityTracerSettingsModal(modal, config, closeBtnElement, null, settingsBtnElement);
             });
 
             // Close on backdrop click
@@ -3097,17 +3135,6 @@
         closeBtn.style.cssText += `background: ${buttonBgColor}; color: ${textColor};`;
 
         // Create settings button
-        // Create instruction button if not hidden
-        const instructionBtn = document.createElement('button');
-        instructionBtn.className = 'parity-tracer-instruction-btn';
-        instructionBtn.id = `${uniqueId}-instruction`;
-        instructionBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-        </svg>`;
-        instructionBtn.style.cssText = `background: ${buttonBgColor}; color: ${textColor}; position: fixed; width: 36px; height: 36px; border-radius: 50%; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; cursor: pointer; font-size: 1.25rem; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 10007; border: none;`;
-
         const settingsIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 16 16" style="display: block; transform: scale(0.7); transform-origin: center;"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492M5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115z"/></svg>`;
         const settingsBtn = document.createElement('button');
         settingsBtn.className = 'parity-tracer-settings-btn';
@@ -3118,7 +3145,6 @@
         backdrop.appendChild(modal);
         document.body.appendChild(backdrop);
         document.body.appendChild(closeBtn);
-        document.body.appendChild(instructionBtn);
         document.body.appendChild(settingsBtn);
 
         window.modalScrollY = window.scrollY;
