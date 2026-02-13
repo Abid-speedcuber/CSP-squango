@@ -1969,7 +1969,7 @@
 
                     // For Star, we jump 2 pieces per symmetry (corners only)
                     // For others, divide total pieces by symmetry degree
-                    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+                    const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
                     const piecesToSkip = piecesPerSymmetry * offset;
 
                     console.log('   Symmetry calculation:', {
@@ -2398,7 +2398,7 @@
 
                         // For Star, we jump 2 pieces per symmetry (corners only)
                         // For others, divide total pieces by symmetry degree
-                        const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+                        const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
                         const piecesToSkip = piecesPerSymmetry * offset;
 
                         console.log('   Symmetry calculation:', {
@@ -2579,7 +2579,7 @@
                                                 const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
                                                 console.log('Current Offset:', currentOffset);
 
-                                                const maxSymmetries = match.name === 'Star' ? 3 : match.symmetryDegree;
+                                                const maxSymmetries = match.name === 'Star' ? 2 : match.symmetryDegree;
                                                 console.log('Max Symmetries:', maxSymmetries);
 
                                                 const newOffset = (currentOffset + 1) % maxSymmetries;
