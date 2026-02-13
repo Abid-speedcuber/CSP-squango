@@ -1307,12 +1307,12 @@
         `;
 
         const timestamp = Date.now();
-        
+
         settingsContent.innerHTML = `
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
                 <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Parity Tracer Settings</h2>
                 <button class="settings-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; pointer-events: none;">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
                         <line x1="12" y1="8" x2="12.01" y2="8"></line>
@@ -1443,16 +1443,51 @@
             }
         }
 
+        // Settings info button - attach AFTER modal is in DOM
+        // Use a small timeout to ensure the DOM is fully rendered
+        setTimeout(() => {
+            const settingsInfoBtn = document.querySelector('.parity-tracer-settings-modal .settings-info-btn');
+            if (settingsInfoBtn) {
+
+                settingsInfoBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (typeof showParityTracerSettingsInstructionModal === 'function') {
+                        showParityTracerSettingsInstructionModal(config);
+                    } else {
+                        console.error('❌ showParityTracerSettingsInstructionModal is not a function!');
+                    }
+                }, true); // Use capture phase
+
+                // Also try mouseup as fallback
+                settingsInfoBtn.addEventListener('mouseup', (e) => {
+                    if (e.button === 0) { // Left click only
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (typeof showParityTracerSettingsInstructionModal === 'function') {
+                            showParityTracerSettingsInstructionModal(config);
+                        }
+                    }
+                });
+
+                settingsInfoBtn.addEventListener('mousedown', (e) => {
+                });
+
+                settingsInfoBtn.addEventListener('mouseup', (e) => {
+                });
+
+                // Check what element is actually at the button's position
+                const rect = settingsInfoBtn.getBoundingClientRect();
+                const centerX = rect.left + rect.width / 2;
+                const centerY = rect.top + rect.height / 2;
+                const elementAtPoint = document.elementFromPoint(centerX, centerY);
+            } else {
+                console.error('❌ Settings info button NOT found in DOM');
+            }
+        }, 50);
+
         // Event listeners
         setTimeout(() => {
-            // Settings info button
-            const settingsInfoBtn = settingsContent.querySelector('.settings-info-btn');
-            if (settingsInfoBtn) {
-                settingsInfoBtn.onclick = () => {
-                    showParityTracerSettingsInstructionModal(config);
-                };
-            }
-
             // Corner sticker mode - save and update immediately
             const radioButtons = settingsContent.querySelectorAll('input[type="radio"]');
             radioButtons.forEach(radio => {
@@ -1564,7 +1599,7 @@
             settingsModalDiv.removeEventListener('scroll', updateSettingsClosePosition);
             settingsModalDiv.remove();
             settingsFloatingCloseBtn.remove();
-            
+
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
@@ -2340,15 +2375,6 @@
                 const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
                 const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
 
-                console.log('🔧 Applying Symmetry Offsets:', {
-                    topOffset: topSymmetryOffset,
-                    bottomOffset: botSymmetryOffset,
-                    topMatchName: topMatch.name,
-                    botMatchName: botMatch.name,
-                    topBaseRotation: topMatch.rot,
-                    botBaseRotation: botMatch.rot
-                });
-
                 // Calculate how many pieces to rotate based on symmetry offset and pattern
                 function calculateSymmetryRotation(match, offset, rawUnits) {
                     if (offset === 0) return 0;
@@ -2358,28 +2384,16 @@
                     const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
                     const piecesToSkip = piecesPerSymmetry * offset;
 
-                    console.log('   Symmetry calculation:', {
-                        shapeName: match.name,
-                        symmetryDegree: match.symmetryDegree,
-                        totalPieces: rawUnits.length,
-                        piecesPerSymmetry: piecesPerSymmetry,
-                        offset: offset,
-                        piecesToSkip: piecesToSkip
-                    });
-
                     return piecesToSkip;
                 }
 
                 const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
                 const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
 
-                console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
-
                 // Apply the extra rotation
                 topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                 botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                 const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                 const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                 const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2802,16 +2816,6 @@
                     const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
                     const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
 
-                    console.log('🔧 Applying Symmetry Offsets:', {
-                        scrambleKey: scrambleKey,
-                        topOffset: topSymmetryOffset,
-                        bottomOffset: botSymmetryOffset,
-                        topMatchName: topMatch.name,
-                        botMatchName: botMatch.name,
-                        topBaseRotation: topMatch.rot,
-                        botBaseRotation: botMatch.rot
-                    });
-
                     // Calculate how many pieces to rotate based on symmetry offset and pattern
                     function calculateSymmetryRotation(match, offset, rawUnits) {
                         if (offset === 0) return 0;
@@ -2821,28 +2825,16 @@
                         const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
                         const piecesToSkip = piecesPerSymmetry * offset;
 
-                        console.log('   Symmetry calculation:', {
-                            shapeName: match.name,
-                            symmetryDegree: match.symmetryDegree,
-                            totalPieces: rawUnits.length,
-                            piecesPerSymmetry: piecesPerSymmetry,
-                            offset: offset,
-                            piecesToSkip: piecesToSkip
-                        });
-
                         return piecesToSkip;
                     }
 
                     const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
                     const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
 
-                    console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
-
                     // Apply the extra rotation
                     topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                     botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                    console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                     const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                     const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                     const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2972,43 +2964,22 @@
                                         if (canCycleSymmetry) {
                                             buttonCircle.addEventListener('click', () => {
                                                 console.group('🔄 Symmetry Button Clicked');
-                                                console.log('Layer Type:', layerType);
-                                                console.log('Match Name:', match.name);
-                                                console.log('Symmetry Degree:', match.symmetryDegree);
-
                                                 const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
-                                                console.log('Current Scramble:', currentScramble);
-
                                                 const scrambleKey = currentScramble.replace(/\s+/g, '');
-                                                console.log('Scramble Key:', scrambleKey);
-
-                                                console.log('Current symmetryOffsets object:', window.parityTracerSymmetryOffsets);
-
                                                 if (!window.parityTracerSymmetryOffsets) {
                                                     console.warn('⚠️ symmetryOffsets was undefined, initializing...');
                                                     window.parityTracerSymmetryOffsets = {};
                                                 }
 
                                                 if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-                                                    console.log('📝 Creating new entry for scramble key');
                                                     window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                                                 }
 
-                                                console.log('symmetryOffsets for this scramble:', window.parityTracerSymmetryOffsets[scrambleKey]);
-
                                                 const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
-                                                console.log('Current Offset:', currentOffset);
-
                                                 const maxSymmetries = match.name === 'Star' ? 2 : match.symmetryDegree;
-                                                console.log('Max Symmetries:', maxSymmetries);
-
                                                 const newOffset = (currentOffset + 1) % maxSymmetries;
-                                                console.log('New Offset:', newOffset);
 
                                                 window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
-                                                console.log('Updated symmetryOffsets:', window.parityTracerSymmetryOffsets);
-
-                                                console.log('🔄 Re-running analysis...');
                                                 console.groupEnd();
 
                                                 // Re-run analysis
@@ -3163,60 +3134,60 @@
 
     // Export parity analysis function for use by other parts of the app
     globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
-    getParityTextFromScramblePlease: function(scrambleText, colorConfig, cornerMode, customRotation) {
-        try {
-            const state = applyScrambleToStateArrayWithLongName(scrambleText);
-            const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-            const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-            const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-            const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
-            const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-            const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-            const topCounts = countEdgesAndCornersWithLongName(topUnits);
-            const botCounts = countEdgesAndCornersWithLongName(botUnits);
+        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
+            try {
+                const state = applyScrambleToStateArrayWithLongName(scrambleText);
+                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
+                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
+                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
+                const topCounts = countEdgesAndCornersWithLongName(topUnits);
+                const botCounts = countEdgesAndCornersWithLongName(botUnits);
 
-            const shouldSwapForParity = z2TracingModeEnabled && 
-                (topCounts.label === '2E5C' && botCounts.label === '6E3C' || 
-                 topCounts.label === '0E6C' && botCounts.label === '8E2C');
+                const shouldSwapForParity = z2TracingModeEnabled &&
+                    (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
+                        topCounts.label === '0E6C' && botCounts.label === '8E2C');
 
-            let parityEdgesOrder = [];
-            let parityCornersOrder = [];
+                let parityEdgesOrder = [];
+                let parityCornersOrder = [];
 
-            if (shouldSwapForParity) {
-                const parityBlocks = [
-                    { side: 'B', units: botUnits },
-                    { side: 'T', units: topUnits }
-                ];
-                for (const b of parityBlocks) {
-                    for (const u of b.units) {
-                        if (u.type === 'E') {
-                            parityEdgesOrder.push(u.edge);
-                        } else {
-                            parityCornersOrder.push(u.pair);
+                if (shouldSwapForParity) {
+                    const parityBlocks = [
+                        { side: 'B', units: botUnits },
+                        { side: 'T', units: topUnits }
+                    ];
+                    for (const b of parityBlocks) {
+                        for (const u of b.units) {
+                            if (u.type === 'E') {
+                                parityEdgesOrder.push(u.edge);
+                            } else {
+                                parityCornersOrder.push(u.pair);
+                            }
+                        }
+                    }
+                } else {
+                    const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
+                    for (const b of blocks) {
+                        for (const u of b.units) {
+                            if (u.type === 'E') {
+                                parityEdgesOrder.push(u.edge);
+                            } else {
+                                parityCornersOrder.push(u.pair);
+                            }
                         }
                     }
                 }
-            } else {
-                const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
-                for (const b of blocks) {
-                    for (const u of b.units) {
-                        if (u.type === 'E') {
-                            parityEdgesOrder.push(u.edge);
-                        } else {
-                            parityCornersOrder.push(u.pair);
-                        }
-                    }
-                }
+
+                const useClockwise = (cornerMode === 'clockwise');
+                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
+                return sixStepParity.isOdd ? 'Odd' : 'Even';
+            } catch (err) {
+                console.error('Parity analysis error:', err);
+                return 'Error';
             }
-
-            const useClockwise = (cornerMode === 'clockwise');
-            const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
-            return sixStepParity.isOdd ? 'Odd' : 'Even';
-        } catch (err) {
-            console.error('Parity analysis error:', err);
-            return 'Error';
         }
-    }
-};
+    };
 
 })(typeof window !== 'undefined' ? window : this);
