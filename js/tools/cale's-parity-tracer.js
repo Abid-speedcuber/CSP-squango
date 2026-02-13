@@ -1104,11 +1104,19 @@
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">In your tracing method: if your corner comes before the edge, select the corner. If your edge comes before the corner, select the edge.</div>
+                        <div class="training-info-text" style="color: ${textColor};">In your tracing method, if your corner comes before the edge, select the corner. If your edge comes before the corner, select the edge.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
                         <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counterclockwise, you are gay and nobody loves you.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text" style="color: ${textColor};">If you trace using the right most sticker or the more counterclockwise color of a corner, you should set the "Corner Sticker for Tracing" to be "Most Counter-Clockwise sticker" and if you use most clockwise sticker like Matt, then you should select it to be "Most clockwise sticker". This is completely personal choice and it DOES NOT change the parity at all.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means prioritizing the more edge dense face to start your tracing. So no matter if the 6/8 face is on bottom or top, you trace from that face. z2 tracing is the safest mode of tracing. And if you do not do z2 tracing, then for 6 edges cases will flip their parity depending which face they appear.</div>
                     </div>
                 </div>
             </div>
@@ -1900,7 +1908,8 @@
             hideInstructionButton: options.hideInstructionButton || false,
             instructionText1: options.instructionText1 || 'Enter your scramble in the top input bar and press Analyze to trace parity.',
             instructionText2: options.instructionText2 || 'You can change the color scheme from Settings.',
-            instructionText3: options.instructionText3 || 'Customize the tracing start point from the settings button.',
+            instructionText2: options.instructionText3 || 'For symmetric case, click on the very middle of the image to trace from the other symmetry.',
+            instructionText3: options.instructionText4 || 'Personalize your tracing methods and tracing positions from the settings button.',
             topLayerMainColor: options.topColor || '#000000',
             topLayerColorFullName: options.topColorName || 'Black',
             topLayerColorAbbreviation: options.topColorShort || 'B',
@@ -2753,58 +2762,60 @@
 
     // Export parity analysis function for use by other parts of the app
     globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
-        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
-            try {
-                const state = applyScrambleToStateArrayWithLongName(scrambleText);
-                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
-                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+    getParityTextFromScramblePlease: function(scrambleText, colorConfig, cornerMode, customRotation) {
+        try {
+            const state = applyScrambleToStateArrayWithLongName(scrambleText);
+            const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
+            const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+            const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+            const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+            const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
+            const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
+            const topCounts = countEdgesAndCornersWithLongName(topUnits);
+            const botCounts = countEdgesAndCornersWithLongName(botUnits);
 
-                const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
+            const shouldSwapForParity = z2TracingModeEnabled && 
+                (topCounts.label === '2E5C' && botCounts.label === '6E3C' || 
+                 topCounts.label === '0E6C' && botCounts.label === '8E2C');
 
-                let parityEdgesOrder = [];
-                let parityCornersOrder = [];
+            let parityEdgesOrder = [];
+            let parityCornersOrder = [];
 
-                if (shouldSwapForParity) {
-                    const parityBlocks = [
-                        { side: 'B', units: botUnits },
-                        { side: 'T', units: topUnits }
-                    ];
-                    for (const b of parityBlocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
-                        }
-                    }
-                } else {
-                    const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
-                    for (const b of blocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
+            if (shouldSwapForParity) {
+                const parityBlocks = [
+                    { side: 'B', units: botUnits },
+                    { side: 'T', units: topUnits }
+                ];
+                for (const b of parityBlocks) {
+                    for (const u of b.units) {
+                        if (u.type === 'E') {
+                            parityEdgesOrder.push(u.edge);
+                        } else {
+                            parityCornersOrder.push(u.pair);
                         }
                     }
                 }
-
-                const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
-                return sixStepParity.isOdd ? 'Odd' : 'Even';
-            } catch (err) {
-                console.error('Parity analysis error:', err);
-                return 'Error';
+            } else {
+                const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
+                for (const b of blocks) {
+                    for (const u of b.units) {
+                        if (u.type === 'E') {
+                            parityEdgesOrder.push(u.edge);
+                        } else {
+                            parityCornersOrder.push(u.pair);
+                        }
+                    }
+                }
             }
+
+            const useClockwise = (cornerMode === 'clockwise');
+            const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
+            return sixStepParity.isOdd ? 'Odd' : 'Even';
+        } catch (err) {
+            console.error('Parity analysis error:', err);
+            return 'Error';
         }
-    };
+    }
+};
 
 })(typeof window !== 'undefined' ? window : this);
