@@ -49,23 +49,23 @@
     const solvedEdgesArrayWithLongName = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
     const solvedCornersArrayWithLongName = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
 
-// Helper functions used across multiple modals
-function getContrastColor(hexColor) {
-    const r = parseInt(hexColor.substr(1, 2), 16);
-    const g = parseInt(hexColor.substr(3, 2), 16);
-    const b = parseInt(hexColor.substr(5, 2), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.5 ? '#000000' : '#FFFFFF';
-}
+    // Helper functions used across multiple modals
+    function getContrastColor(hexColor) {
+        const r = parseInt(hexColor.substr(1, 2), 16);
+        const g = parseInt(hexColor.substr(3, 2), 16);
+        const b = parseInt(hexColor.substr(5, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    }
 
-function adjustColorBrightness(hexColor, percent) {
-    const num = parseInt(hexColor.replace('#', ''), 16);
-    const amt = Math.round(2.55 * percent);
-    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-    const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-    return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-}
+    function adjustColorBrightness(hexColor, percent) {
+        const num = parseInt(hexColor.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+        const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+        const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    }
 
     // Default shape patterns with long name
     const defaultShapePatternsForSquareOnePuzzleWithLongName = {
@@ -211,30 +211,30 @@ function adjustColorBrightness(hexColor, percent) {
         if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
             normalized = window.ScrambleNormalizer.normalizeScramble(scramble);
         }
-        
+
         // Parse into tokens (split by space/slash but keep structure)
         let tokens = normalized
             .split(/(\/)/)
             .map(t => t.trim())
             .filter(t => t);
-        
+
         // Apply flip color (prepend (6,6) at the beginning)
         if (utilityFlipColorEnabled) {
             tokens.unshift('(6,6)');
         }
-        
+
         // Apply y2 (append (6,6) at the end)
         if (utilityY2Enabled) {
             tokens.push('(6,6)');
         }
-        
+
         // Apply z2 (append /(6,6)/)
         if (utilityZ2Enabled) {
             tokens.push('/');
             tokens.push('(6,6)');
             tokens.push('/');
         }
-        
+
         // Simplify using the normalizer's simplification logic
         if (typeof window.ScrambleNormalizer !== 'undefined') {
             // Access internal functions if available
@@ -242,17 +242,17 @@ function adjustColorBrightness(hexColor, percent) {
             const steps = [];
             tokens = simplifyFunc(tokens, steps);
         }
-        
+
         // Convert back to string with proper spacing
         const result = tokens.map((tok, i) => {
             if (tok === "/") return "/";
             if (i === 0) return tok;
             return " " + tok;
         }).join("").replace(/\/\s*\(/g, "/(");
-        
+
         return result;
     }
-    
+
     // Local fallback simplification if normalizer not available
     function simplifyScrambleLocal(tokens, steps) {
         function addSets(a, b) {
@@ -261,44 +261,44 @@ function adjustColorBrightness(hexColor, percent) {
             let x1 = parseInt(m[1]), y1 = parseInt(m[2]);
             let x2 = parseInt(n[1]), y2 = parseInt(n[2]);
             let x = x1 + x2, y = y1 + y2;
-            
+
             function norm(v) {
                 if (v > 6) v -= 12;
                 if (v < -6) v += 12;
                 return v;
             }
-            
-            x = norm(x); 
+
+            x = norm(x);
             y = norm(y);
             return `(${x},${y})`;
         }
-        
+
         let changed = true;
-        
+
         while (changed) {
             changed = false;
-            
+
             // Remove double slashes
             for (let i = 0; i < tokens.length - 1; i++) {
                 if (tokens[i] === "/" && tokens[i + 1] === "/") {
-                    tokens.splice(i, 2); 
-                    changed = true; 
+                    tokens.splice(i, 2);
+                    changed = true;
                     break;
                 }
             }
             if (changed) continue;
-            
+
             // Combine adjacent moves
             for (let i = 0; i < tokens.length - 1; i++) {
                 if (tokens[i].startsWith("(") && tokens[i + 1].startsWith("(")) {
                     let merged = addSets(tokens[i], tokens[i + 1]);
-                    tokens.splice(i, 2, merged); 
-                    changed = true; 
+                    tokens.splice(i, 2, merged);
+                    changed = true;
                     break;
                 }
             }
             if (changed) continue;
-            
+
             // Remove (0,0) moves
             for (let i = 0; i < tokens.length; i++) {
                 if (tokens[i] === "(0,0)") {
@@ -308,7 +308,7 @@ function adjustColorBrightness(hexColor, percent) {
                 }
             }
         }
-        
+
         return tokens;
     }
 
@@ -375,15 +375,42 @@ function adjustColorBrightness(hexColor, percent) {
     }
 
     function matchPatternWithRotationCheckingWithLongName(typeStr) {
+        // Define symmetric shapes and their symmetry degrees
+        const symmetricShapes = {
+            'Square': 4,
+            'Barrel': 2,
+            '2-2-2': 3,
+            '4-4': 2,
+            'Star': 6
+        };
+
         for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
             if (pat.length !== typeStr.length) continue;
-            for (let k = 0; k < typeStr.length; k++) {
-                if (rotateStringCircularlyWithLongName(typeStr, k) === pat) {
-                    return { name, pat, rot: k, originalPat: pat };
+
+            // Try natural rotation order: CCW first, then CW with increasing distance
+            // Order: 0 (no rotation), -1 (1 CCW), +1 (1 CW), -2 (2 CCW), +2 (2 CW), etc.
+            const maxRotations = typeStr.length;
+            const rotationOrder = [0];
+            for (let distance = 1; distance < maxRotations; distance++) {
+                rotationOrder.push(-distance); // Counter-clockwise
+                rotationOrder.push(distance);  // Clockwise
+            }
+
+            for (const rotationAmount of rotationOrder) {
+                // Normalize rotation to positive value for rotateStringCircularlyWithLongName
+                const normalizedRotation = ((rotationAmount % typeStr.length) + typeStr.length) % typeStr.length;
+                if (rotateStringCircularlyWithLongName(typeStr, normalizedRotation) === pat) {
+                    return {
+                        name,
+                        pat,
+                        rot: normalizedRotation,
+                        originalPat: pat,
+                        symmetryDegree: symmetricShapes[name] || 1
+                    };
                 }
             }
         }
-        return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr };
+        return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr, symmetryDegree: 1 };
     }
 
     function countEdgesAndCornersWithLongName(units) {
@@ -410,13 +437,13 @@ function adjustColorBrightness(hexColor, percent) {
                 'AB': 'O', 'DE': 'G', 'GH': 'R', 'JK': 'B',
                 'NO': 'R', 'QR': 'G', 'TU': 'O', 'WX': 'B'
             };
-            
+
             // Clockwise map (most clockwise sticker)
             const clockwiseMap = {
                 'AB': 'G', 'DE': 'R', 'GH': 'B', 'JK': 'O',
                 'NO': 'G', 'QR': 'O', 'TU': 'B', 'WX': 'R'
             };
-            
+
             const colorMap = useClockwiseCorner ? clockwiseMap : counterClockwiseMap;
             return colorMap[id] || '?';
         }
@@ -782,108 +809,84 @@ function adjustColorBrightness(hexColor, percent) {
 
     // Display results in modal
     function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray, layerType, patternTypes) {
-    console.group(`🎯 Arrow Position Calculation - ${layerType} Layer`);
-    console.log('📊 Input Data:', {
-        rotationAmount: rotationAmount,
-        unitsCount: unitsArray.length,
-        layerType: layerType,
-        patternTypes: patternTypes,
-        units: unitsArray.map((u, i) => `[${i}] ${u.type === 'E' ? 'Edge' : 'Corner'} ${u.edge || u.pair}`)
-    });
-    
-    // Initial starting position depends on layer
-    const initialAngle = layerType === 'TOP' ? 90 : 120;
-    console.log('🎬 Initial arrow angle (before rotation):', initialAngle + '°');
-    
-    // Check if tracing scheme ends with corner or edge
-    const endsWithCorner = patternTypes.endsWith('C');
-    const arcDegrees = endsWithCorner ? 300 : 330;
-    console.log('📏 Arc length:', arcDegrees + '° (ends with ' + (endsWithCorner ? 'Corner' : 'Edge') + ')');
-    
-    // Calculate total degrees to rotate based on pieces we're skipping
-    let totalRotationDegrees = 0;
-    console.log('\n🔄 Calculating rotation based on pieces to skip:');
-    console.log(`   Need to skip ${rotationAmount} pieces from the pattern`);
-    
-    for (let i = 0; i < rotationAmount; i++) {
-        const pieceType = unitsArray[i].type;
-        const pieceDegrees = pieceType === 'E' ? 30 : 60;
-        totalRotationDegrees += pieceDegrees;
-        
-        console.log(`   [${i}] ${pieceType === 'E' ? 'Edge  ' : 'Corner'} (${unitsArray[i].edge || unitsArray[i].pair}): +${pieceDegrees}° → Total: ${totalRotationDegrees}°`);
+        console.group(`🎯 Arrow Position Calculation - ${layerType} Layer`);
+
+        const initialAngle = layerType === 'TOP' ? 90 : 120;
+
+        // Check if tracing scheme ends with corner or edge
+        const endsWithCorner = patternTypes.endsWith('C');
+        const arcDegrees = endsWithCorner ? 300 : 330;
+
+        // Calculate total degrees to rotate based on pieces we're skipping
+        let totalRotationDegrees = 0;
+
+        for (let i = 0; i < rotationAmount; i++) {
+            const pieceType = unitsArray[i].type;
+            const pieceDegrees = pieceType === 'E' ? 30 : 60;
+            totalRotationDegrees += pieceDegrees;
+        }
+        // We rotate clockwise (subtract) from the initial position
+        const finalAngle = initialAngle - totalRotationDegrees;
+        console.groupEnd();
+
+        return { startAngle: finalAngle, arcDegrees: arcDegrees };
     }
-    
-    console.log('\n📐 Rotation Summary:');
-    console.log(`   Total degrees to rotate: ${totalRotationDegrees}°`);
-    console.log(`   Direction: Clockwise (subtracting from initial angle)`);
-    
-    // We rotate clockwise (subtract) from the initial position
-    const finalAngle = initialAngle - totalRotationDegrees;
-    
-    console.log('\n🎯 Final Calculation:');
-    console.log(`   ${initialAngle}° (initial) - ${totalRotationDegrees}° (rotation) = ${finalAngle}°`);
-    console.log(`   Final arrow starting angle: ${finalAngle}°`);
-    console.log(`   Arc will span: ${arcDegrees}°`);
-    console.groupEnd();
-    
-    return { startAngle: finalAngle, arcDegrees: arcDegrees };
-}
 
     function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
-    let arrowColor= 'rgba(253, 34, 34, 0.7)';
-    const strokeWidth = size * 0.016;
-    const lineColor = arrowColor;//'rgba(0, 122, 255, 1)'; //'rgba(253, 34, 34, 0.7)'
-    const diskColor = arrowColor;
-    const arrowheadColor = arrowColor;
-    const adjustedRadius = radius * 0.3;
-    
-    // Arrowhead size
-    const arrowSize = strokeWidth * 3; //5
-    // Start disk (circle at beginning) - smaller, seamless
-    const startDiskRadius = strokeWidth * 1.2; //1.7
+        let arrowColor = 'rgba(253, 34, 34, 0.7)';
+        const strokeWidth = size * 0.016;
+        const lineColor = arrowColor;//'rgba(0, 122, 255, 1)'; //'rgba(253, 34, 34, 0.7)'
+        const diskColor = arrowColor;
+        const arrowheadColor = arrowColor;
+        const adjustedRadius = radius * 0.3;
 
-    // Calculate how many degrees the arrowhead tip extends
-    // The arrowhead extends radially outward by arrowSize
-    // Convert this to angular degrees at the given radius
-    const arrowTipExtensionDegrees = (arrowSize / adjustedRadius) * (180 / Math.PI);
-    
-    // Adjust the end angle to pull back by the arrowhead extension
-    // So the TIP lands at exactly the target angle
-    const adjustedArcDegrees = arcDegrees - arrowTipExtensionDegrees;
-    
-    // Convert to radians
-    const startRad = (startAngleDeg - 15) * Math.PI / 180;
-    const endRad = (startAngleDeg - 15 - adjustedArcDegrees) * Math.PI / 180;
-    
-    // Calculate arc path
-    const startX = centerX + adjustedRadius * Math.cos(startRad);
-    const startY = centerY - adjustedRadius * Math.sin(startRad);
-    const endX = centerX + adjustedRadius * Math.cos(endRad);
-    const endY = centerY - adjustedRadius * Math.sin(endRad);
-    
-    // Large arc flag = 1 for arcs >= 180 degrees, sweep = 1 for clockwise
-    const largeArcFlag = arcDegrees >= 180 ? 1 : 0;
-    const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
-    
+        // Arrowhead size
+        const arrowSize = strokeWidth * 3; //5
+        // Start disk (circle at beginning) - smaller, seamless
+        const startDiskRadius = strokeWidth * 1.2; //1.7
 
-    
-    // Direction of arrow movement at end (tangent to circle, clockwise)
-    const tangentAngle = endRad - Math.PI / 2;
-    
-    // Calculate arrowhead tip (extends in direction of motion)
-    const arrowTipX = endX + arrowSize * Math.cos(tangentAngle);
-    const arrowTipY = endY - arrowSize * Math.sin(tangentAngle);
-    
-    // Arrowhead base points (perpendicular to direction of motion)
-    const perpAngle1 = tangentAngle + (2 * Math.PI / 3);
-    const perpAngle2 = tangentAngle - (2 * Math.PI / 3);
-    
-    const arrow1X = endX + arrowSize * 0.5 * Math.cos(perpAngle1);
-    const arrow1Y = endY - arrowSize * 0.5 * Math.sin(perpAngle1);
-    const arrow2X = endX + arrowSize * 0.5 * Math.cos(perpAngle2);
-    const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
-    
-    return `
+        // Calculate how many degrees the arrowhead tip extends
+        // The arrowhead extends radially outward by arrowSize
+        // Convert this to angular degrees at the given radius
+        const arrowTipExtensionDegrees = (arrowSize / adjustedRadius) * (180 / Math.PI);
+
+        // Adjust the end angle to pull back by the arrowhead extension
+        // So the TIP lands at exactly the target angle
+        const adjustedArcDegrees = arcDegrees - arrowTipExtensionDegrees;
+
+        // Convert to radians
+        const startRad = (startAngleDeg - 15) * Math.PI / 180;
+        const endRad = (startAngleDeg - 15 - adjustedArcDegrees) * Math.PI / 180;
+
+        // Calculate arc path
+        const startX = centerX + adjustedRadius * Math.cos(startRad);
+        const startY = centerY - adjustedRadius * Math.sin(startRad);
+        const endX = centerX + adjustedRadius * Math.cos(endRad);
+        const endY = centerY - adjustedRadius * Math.sin(endRad);
+
+        // Large arc flag = 1 for arcs >= 180 degrees, sweep = 1 for clockwise
+        const largeArcFlag = arcDegrees >= 180 ? 1 : 0;
+        const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
+
+
+
+        // Direction of arrow movement at end (tangent to circle, clockwise)
+        const tangentAngle = endRad - Math.PI / 2;
+
+        // Calculate arrowhead tip (extends in direction of motion)
+        const arrowTipX = endX + arrowSize * Math.cos(tangentAngle);
+        const arrowTipY = endY - arrowSize * Math.sin(tangentAngle);
+
+        // Arrowhead base points (perpendicular to direction of motion)
+        const perpAngle1 = tangentAngle + (2 * Math.PI / 3);
+        const perpAngle2 = tangentAngle - (2 * Math.PI / 3);
+
+        const arrow1X = endX + arrowSize * 0.5 * Math.cos(perpAngle1);
+        const arrow1Y = endY - arrowSize * 0.5 * Math.sin(perpAngle1);
+        const arrow2X = endX + arrowSize * 0.5 * Math.cos(perpAngle2);
+        const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
+
+        return `
         <g>
             <path d="${pathD}" 
                   fill="none" 
@@ -897,7 +900,7 @@ function adjustColorBrightness(hexColor, percent) {
                      fill="${arrowheadColor}" stroke="none"/>
         </g>
     `;
-}
+    }
 
     function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
@@ -1007,7 +1010,7 @@ function adjustColorBrightness(hexColor, percent) {
     function showParityTracerInstructionModal(config) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        
+
         function adjustColorBrightness(hexColor, percent) {
             const num = parseInt(hexColor.replace('#', ''), 16);
             const amt = Math.round(2.55 * percent);
@@ -1016,9 +1019,9 @@ function adjustColorBrightness(hexColor, percent) {
             const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
-        
+
         const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-        
+
         const instructionModal = document.createElement('div');
         instructionModal.className = 'training-info-modal';
         instructionModal.style.zIndex = '10010';
@@ -1044,15 +1047,15 @@ function adjustColorBrightness(hexColor, percent) {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(instructionModal);
         instructionModal.classList.add('active');
-        
+
         const closeBtn = instructionModal.querySelector('.training-info-close');
         closeBtn.onclick = () => {
             instructionModal.remove();
         };
-        
+
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
                 instructionModal.remove();
@@ -1065,7 +1068,7 @@ function adjustColorBrightness(hexColor, percent) {
     function showConfigOrientationInstructionModal(config) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        
+
         function adjustColorBrightness(hexColor, percent) {
             const num = parseInt(hexColor.replace('#', ''), 16);
             const amt = Math.round(2.55 * percent);
@@ -1074,9 +1077,9 @@ function adjustColorBrightness(hexColor, percent) {
             const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
-        
+
         const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-        
+
         const instructionModal = document.createElement('div');
         instructionModal.className = 'training-info-modal';
         instructionModal.style.zIndex = '10011';
@@ -1110,15 +1113,15 @@ function adjustColorBrightness(hexColor, percent) {
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(instructionModal);
         instructionModal.classList.add('active');
-        
+
         const closeBtn = instructionModal.querySelector('.training-info-close');
         closeBtn.onclick = () => {
             instructionModal.remove();
         };
-        
+
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
                 instructionModal.remove();
@@ -1188,7 +1191,7 @@ function adjustColorBrightness(hexColor, percent) {
 
         const headerDiv = document.createElement('div');
         headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
-        
+
         const headerTitle = document.createElement('div');
         headerTitle.style.cssText = 'display: flex; align-items: center; gap: 10px;';
         headerTitle.innerHTML = `
@@ -1201,11 +1204,11 @@ function adjustColorBrightness(hexColor, percent) {
                 </svg>
             </button>
         `;
-        
+
         headerDiv.appendChild(headerTitle);
-        
+
         const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-        
+
         const cornerStickerDiv = document.createElement('div');
         cornerStickerDiv.style.cssText = `margin-bottom: 1.5rem; padding: 1rem; background: ${cardBg}; border-radius: 8px;`;
         const timestamp = Date.now();
@@ -1228,7 +1231,7 @@ function adjustColorBrightness(hexColor, percent) {
                 </div>
             </div>
         `;
-        
+
         // Add event listeners for corner sticker mode after DOM insertion
         setTimeout(() => {
             const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
@@ -1240,7 +1243,7 @@ function adjustColorBrightness(hexColor, percent) {
                     }
                 });
             });
-            
+
             const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
             if (z2Checkbox) {
                 z2Checkbox.addEventListener('change', (e) => {
@@ -1288,7 +1291,7 @@ function adjustColorBrightness(hexColor, percent) {
                     caseDiv.classList.add('last-card');
                 }
             }
-            
+
             // Mark the very last card if odd total for 2-column layout
             if (idx === totalItems - 1 && totalItems % 2 === 1) {
                 caseDiv.classList.add('last-odd-card');
@@ -1353,7 +1356,7 @@ function adjustColorBrightness(hexColor, percent) {
             if (typeof saveState === 'function') {
                 saveState();
             }
-            
+
             // Close config modal
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
@@ -1368,7 +1371,7 @@ function adjustColorBrightness(hexColor, percent) {
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
             if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
-            
+
             // Re-trigger analysis in the parity modal if it exists
             if (modalElement) {
                 const analyzeBtn = modalElement.querySelector(`button[id$="-analyze"]`);
@@ -1376,14 +1379,14 @@ function adjustColorBrightness(hexColor, percent) {
                     analyzeBtn.click();
                 }
             }
-            
+
             // Recalculate parity with new settings
             if (typeof needsParityRecalculation === 'function' && needsParityRecalculation()) {
                 if (typeof calculateAndCacheAllParity === 'function') {
                     calculateAndCacheAllParity();
                 }
             }
-            
+
             // Re-render cards and modals
             if (typeof render === 'function') {
                 render();
@@ -1391,7 +1394,7 @@ function adjustColorBrightness(hexColor, percent) {
             if (typeof filterAndSort === 'function') {
                 filterAndSort();
             }
-            
+
             // If there's an open case modal, close and reopen it to refresh
             const caseModal = document.getElementById('caseModal');
             if (caseModal && typeof openModal === 'function') {
@@ -1413,12 +1416,12 @@ function adjustColorBrightness(hexColor, percent) {
                     }
                 }
             }
-            
+
             if (typeof showToast === 'function') {
                 showToast('Settings saved! All parity calculations have been updated.', 3000, 'success');
             }
         };
-        
+
         saveBtn.onclick = performSave;
 
         const resetBtnBg = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -8);
@@ -1453,10 +1456,10 @@ function adjustColorBrightness(hexColor, percent) {
             configStyle.remove();
             showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
-        
+
         buttonsDiv.appendChild(saveBtn);
         buttonsDiv.appendChild(resetBtn);
-        
+
         // Create floating save button
         const floatingSaveBtn = document.createElement('button');
         floatingSaveBtn.className = 'config-floating-save-btn';
@@ -1478,31 +1481,31 @@ function adjustColorBrightness(hexColor, percent) {
             padding: 0;
         `;
         floatingSaveBtn.innerHTML = '<img src="res/save.svg" style="width: 24px; height: 24px;">';
-        
+
         floatingSaveBtn.onmouseover = () => {
             floatingSaveBtn.style.background = saveBtnHover;
             floatingSaveBtn.style.transform = 'scale(1.1)';
         };
-        
+
         floatingSaveBtn.onmouseout = () => {
             floatingSaveBtn.style.background = saveBtnBg;
             floatingSaveBtn.style.transform = 'scale(1)';
         };
-        
+
         floatingSaveBtn.onclick = performSave;
-        
+
         document.body.appendChild(floatingSaveBtn);
-        
+
         // Track if data has changed
         let dataChanged = false;
-        
+
         // Function to update floating save button visibility
         function updateFloatingSaveBtn() {
             try {
                 const contentRect = configContent.getBoundingClientRect();
                 const saveBtnRect = saveBtn.getBoundingClientRect();
                 const saveBtnVisible = saveBtnRect.top >= 0 && saveBtnRect.bottom <= window.innerHeight;
-                
+
                 if (dataChanged && !saveBtnVisible) {
                     floatingSaveBtn.style.display = 'flex';
                     // NUCLEAR: Calculate position from viewport, not relative values
@@ -1510,15 +1513,15 @@ function adjustColorBrightness(hexColor, percent) {
                     const viewportHeight = window.innerHeight;
                     const modalRight = contentRect.right;
                     const modalBottom = contentRect.bottom;
-                    
+
                     const calculatedRight = viewportWidth - modalRight + 16;
                     const calculatedBottom = viewportHeight - modalBottom + 16;
-                    
+
                     // Fixed offset from modal edge
                     floatingSaveBtn.style.right = `${calculatedRight}px`;
                     floatingSaveBtn.style.bottom = `${calculatedBottom}px`;
                     floatingSaveBtn.style.position = 'fixed';
-                    
+
                 } else {
                     floatingSaveBtn.style.display = 'none';
                 }
@@ -1526,11 +1529,11 @@ function adjustColorBrightness(hexColor, percent) {
                 console.error('Error updating floating save button:', e);
             }
         }
-        
+
         // Listen for scroll on config content
         configContent.addEventListener('scroll', updateFloatingSaveBtn);
         window.addEventListener('resize', updateFloatingSaveBtn);
-        
+
         // NUCLEAR: Continuous updates until position stabilizes
         let updateCount = 0;
         const maxUpdates = 20;
@@ -1541,11 +1544,11 @@ function adjustColorBrightness(hexColor, percent) {
                 clearInterval(updateInterval);
             }
         }, 100);
-        
+
         // Also do immediate updates
         updateFloatingSaveBtn();
         setTimeout(updateFloatingSaveBtn, 0);
-        
+
         // Mark data as changed when radio buttons or checkbox change
         setTimeout(() => {
             const radioButtons = cornerStickerDiv.querySelectorAll('input[type="radio"]');
@@ -1555,7 +1558,7 @@ function adjustColorBrightness(hexColor, percent) {
                     setTimeout(updateFloatingSaveBtn, 50);
                 });
             });
-            
+
             const z2Checkbox = cornerStickerDiv.querySelector(`input[type="checkbox"]`);
             if (z2Checkbox) {
                 z2Checkbox.addEventListener('change', () => {
@@ -1576,7 +1579,7 @@ function adjustColorBrightness(hexColor, percent) {
         }, 100);
 
         casesListDiv.appendChild(buttonsDiv);
-        
+
         configContent.appendChild(headerDiv);
         configContent.appendChild(cornerStickerDiv);
         configContent.appendChild(searchDiv);
@@ -1732,7 +1735,7 @@ function adjustColorBrightness(hexColor, percent) {
                 // Prevent closing
                 event?.preventDefault();
                 event?.stopPropagation();
-                
+
                 // Show custom choice buttons using a creative approach
                 const choiceContainer = document.createElement('div');
                 choiceContainer.style.cssText = `
@@ -1747,7 +1750,7 @@ function adjustColorBrightness(hexColor, percent) {
                     z-index: 2147483647;
                     min-width: 300px;
                 `;
-                
+
                 choiceContainer.innerHTML = `
                     <h3 style="margin: 0 0 12px 0; color: #333; font-size: 1.1rem;">Unsaved Changes</h3>
                     <p style="margin: 0 0 20px 0; color: #666; font-size: 0.95rem;">You have unsaved changes. What would you like to do?</p>
@@ -1757,31 +1760,31 @@ function adjustColorBrightness(hexColor, percent) {
                         <button class="save-btn" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save</button>
                     </div>
                 `;
-                
+
                 // Add it OUTSIDE all modal structures
                 const tempContainer = document.createElement('div');
                 tempContainer.id = 'temp-confirm-container-ultimate';
                 tempContainer.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2147483646; display: flex; align-items: center; justify-content: center;';
                 tempContainer.appendChild(choiceContainer);
                 document.body.appendChild(tempContainer);
-                
+
                 choiceContainer.querySelector('.discard-btn').onclick = () => {
                     tempContainer.remove();
                     closeConfigModal(true);
                 };
-                
+
                 choiceContainer.querySelector('.cancel-btn').onclick = () => {
                     tempContainer.remove();
                 };
-                
+
                 choiceContainer.querySelector('.save-btn').onclick = () => {
                     tempContainer.remove();
                     performSave();
                 };
-                
+
                 return;
             }
-            
+
             // Clean up scroll listeners first
             configContent.removeEventListener('scroll', updateFloatingSaveBtn);
             window.removeEventListener('resize', resizeHandler);
@@ -1790,12 +1793,12 @@ function adjustColorBrightness(hexColor, percent) {
             if (backdrop) {
                 backdrop.removeEventListener('scroll', scrollHandler);
             }
-            
+
             // Clear any update intervals
             if (typeof updateInterval !== 'undefined') {
                 clearInterval(updateInterval);
             }
-            
+
             // Remove elements
             if (floatingSaveBtn && floatingSaveBtn.parentNode) {
                 floatingSaveBtn.remove();
@@ -1803,16 +1806,16 @@ function adjustColorBrightness(hexColor, percent) {
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
-            
+
             // Restore main modal buttons if they exist
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
             if (mainInstructionBtn) mainInstructionBtn.style.display = config.hideInstructionButton ? 'none' : 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
         };
         function setCornerStickerMode(mode) {
-    cornerStickerMode = mode;
-    saveState();
-}
+            cornerStickerMode = mode;
+            saveState();
+        }
 
         // Back button handler for config modal using unified system
         if (typeof pushModalState !== 'undefined') {
@@ -1840,12 +1843,12 @@ function adjustColorBrightness(hexColor, percent) {
                         const clickedIndex = parseInt(e.target.getAttribute('data-piece-index'));
 
                         if (!isNaN(clickedIndex)) {
-                                // Save scroll position before update
-                                const scrollPos = configModalDiv.scrollTop;
+                            // Save scroll position before update
+                            const scrollPos = configModalDiv.scrollTop;
 
-                                setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
-                                dataChanged = true;
-                                updateFloatingSaveBtn();
+                            setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
+                            dataChanged = true;
+                            updateFloatingSaveBtn();
 
                             // Find the card element
                             const cardElement = e.target.closest('.shape-config-item');
@@ -1885,7 +1888,7 @@ function adjustColorBrightness(hexColor, percent) {
         }, 100);
 
         document.body.appendChild(configModalDiv);
-        
+
         // Force a reflow to ensure the modal is in the DOM before we calculate positions
         configModalDiv.offsetHeight;
     }
@@ -1934,8 +1937,63 @@ function adjustColorBrightness(hexColor, percent) {
                 const state = applyScrambleToStateArrayWithLongName(config.scrambleTextInput);
                 const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
                 const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                // Check if we have stored symmetry offsets for this scramble
+// Use original scramble for key, not transformed
+const scrambleKey = scrambleText.replace(/\s+/g, '');
+if (!window.parityTracerSymmetryOffsets) {
+    window.parityTracerSymmetryOffsets = {};
+}
+if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+}
+
+const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+
+// Apply symmetry offsets if they exist
+const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
+const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
+
+console.log('🔧 Applying Symmetry Offsets:', {
+    topOffset: topSymmetryOffset,
+    bottomOffset: botSymmetryOffset,
+    topMatchName: topMatch.name,
+    botMatchName: botMatch.name,
+    topBaseRotation: topMatch.rot,
+    botBaseRotation: botMatch.rot
+});
+
+// Calculate how many pieces to rotate based on symmetry offset and pattern
+function calculateSymmetryRotation(match, offset, rawUnits) {
+    if (offset === 0) return 0;
+    
+    // For Star, we jump 2 pieces per symmetry (corners only)
+    // For others, divide total pieces by symmetry degree
+    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+    const piecesToSkip = piecesPerSymmetry * offset;
+    
+    console.log('   Symmetry calculation:', {
+        shapeName: match.name,
+        symmetryDegree: match.symmetryDegree,
+        totalPieces: rawUnits.length,
+        piecesPerSymmetry: piecesPerSymmetry,
+        offset: offset,
+        piecesToSkip: piecesToSkip
+    });
+    
+    return piecesToSkip;
+}
+
+const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
+const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+
+console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+
+// Apply the extra rotation
+topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
+botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+
+console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                 const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                 const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                 const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2270,7 +2328,7 @@ function adjustColorBrightness(hexColor, percent) {
                 const instrBottom = window.innerHeight - rect.bottom + 66;
                 const instrRight = window.innerWidth - rect.right + 6;
                 const settingsBottom = window.innerHeight - rect.bottom + 16;
-                const settingsRight = window.innerWidth - rect.right + 6;                
+                const settingsRight = window.innerWidth - rect.right + 6;
                 closeBtnElement.style.top = `${closeTop}px`;
                 closeBtnElement.style.right = `${closeRight}px`;
                 instructionBtnElement.style.bottom = `${instrBottom}px`;
@@ -2284,12 +2342,14 @@ function adjustColorBrightness(hexColor, percent) {
             buttonUpdateTimings.forEach(delay => {
                 setTimeout(updateButtonPositions, delay);
             });
-            
+
             window.addEventListener('resize', updateButtonPositions);
             backdrop.addEventListener('scroll', updateButtonPositions);
 
             function performAnalysisWithLongName() {
                 let scrambleText = scrambleInput.value.trim();
+// Store in a scope accessible to button handlers
+window.currentParityTracerScramble = scrambleText;
                 if (!scrambleText) return;
 
                 // Apply utility transformations (z2, y2, flip color)
@@ -2303,9 +2363,66 @@ function adjustColorBrightness(hexColor, percent) {
 
                     // Build units - COMPLETE
                     const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                    const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-                    const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                    const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+
+// Check if we have stored symmetry offsets for this scramble
+// Use original scramble for key, not transformed
+const scrambleKey = scrambleText.replace(/\s+/g, '');
+if (!window.parityTracerSymmetryOffsets) {
+    window.parityTracerSymmetryOffsets = {};
+}
+if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+}
+
+const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+
+// Apply symmetry offsets if they exist
+const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
+const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
+
+console.log('🔧 Applying Symmetry Offsets:', {
+    scrambleKey: scrambleKey,
+    topOffset: topSymmetryOffset,
+    bottomOffset: botSymmetryOffset,
+    topMatchName: topMatch.name,
+    botMatchName: botMatch.name,
+    topBaseRotation: topMatch.rot,
+    botBaseRotation: botMatch.rot
+});
+
+// Calculate how many pieces to rotate based on symmetry offset and pattern
+function calculateSymmetryRotation(match, offset, rawUnits) {
+    if (offset === 0) return 0;
+    
+    // For Star, we jump 2 pieces per symmetry (corners only)
+    // For others, divide total pieces by symmetry degree
+    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+    const piecesToSkip = piecesPerSymmetry * offset;
+    
+    console.log('   Symmetry calculation:', {
+        shapeName: match.name,
+        symmetryDegree: match.symmetryDegree,
+        totalPieces: rawUnits.length,
+        piecesPerSymmetry: piecesPerSymmetry,
+        offset: offset,
+        piecesToSkip: piecesToSkip
+    });
+    
+    return piecesToSkip;
+}
+
+const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
+const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+
+console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+
+// Apply the extra rotation
+topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
+botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+
+console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                     const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                     const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                     const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2332,9 +2449,9 @@ function adjustColorBrightness(hexColor, percent) {
                     }
 
                     // Determine if we need to swap order for parity calculation - RESTORED
-                    const shouldSwapForParity = z2TracingModeEnabled && 
-                        (topCounts.label === '2E5C' && botCounts.label === '6E3C' || 
-                         topCounts.label === '0E6C' && botCounts.label === '8E2C');
+                    const shouldSwapForParity = z2TracingModeEnabled &&
+                        (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
+                            topCounts.label === '0E6C' && botCounts.label === '8E2C');
 
                     // Build orders for parity (swap if needed) - COMPLETE LOGIC
                     let parityEdgesOrder = [];
@@ -2368,34 +2485,8 @@ function adjustColorBrightness(hexColor, percent) {
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
                                 console.group('🔍 Complete Scramble Analysis');
-                                
-                                // Log 1: Scrambled state
-                                console.log('1️⃣ Scrambled State (letter notation):');
-                                console.log('   ' + state.join(''));
-                                
-                                // Log 2: EECECCEE notation of scrambled cube
-                                console.log('\n2️⃣ EECECCEE notation of scrambled cube:');
-                                console.log('   Top Layer:    ' + topRaw.types);
-                                console.log('   Bottom Layer: ' + botRaw.types);
-                                
-                                // Log 3: Tracing scheme notation
-                                console.log('\n3️⃣ Matched tracing scheme notation:');
-                                console.log('   Top Layer:    ' + topMatch.originalPat + ' (' + topMatch.name + ')');
-                                console.log('   Bottom Layer: ' + botMatch.originalPat + ' (' + botMatch.name + ')');
-                                
-                                // Log 4: Difference calculation
-                                console.log('\n4️⃣ Rotation calculation (scrambled → tracing scheme):');
-                                console.log('   Top Layer:');
-                                console.log('      Scrambled:       ' + topRaw.types);
-                                console.log('      Tracing scheme:  ' + topMatch.originalPat);
-                                console.log('      Rotation needed: ' + topMatch.rot + ' pieces');
-                                console.log('   Bottom Layer:');
-                                console.log('      Scrambled:       ' + botRaw.types);
-                                console.log('      Tracing scheme:  ' + botMatch.originalPat);
-                                console.log('      Rotation needed: ' + botMatch.rot + ' pieces');
-                                
                                 console.groupEnd();
-                                
+
                                 const imageSize = config.imageSizeInPixels || 200;
                                 const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
                                     encodedScramble,
@@ -2409,11 +2500,11 @@ function adjustColorBrightness(hexColor, percent) {
                                         leftColor: config.leftFaceColorForVisualization
                                     }
                                 );
-                                
+
                                 // Calculate arrow positions
-// Note: We need to calculate based on the UNROTATED units to find the physical position
-const topArrowData = calculateArrowStartAngleWithLongName(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
-const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+                                // Note: We need to calculate based on the UNROTATED units to find the physical position
+                                const topArrowData = calculateArrowStartAngleWithLongName(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
+                                const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
 
                                 // Calculate circle dimensions (matching draw-scramble logic)
                                 const unit10vh = imageSize * 0.4;
@@ -2421,25 +2512,99 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
                                 const ringRadius = radiusOuter + (unit10vh * 0.4);
                                 const centerX = imageSize / 2;
                                 const centerY = imageSize / 2;
-                                
+
                                 // Parse SVG and inject arrows
                                 const tempDiv = document.createElement('div');
                                 tempDiv.innerHTML = svgContent;
-                                
+
                                 const svgs = tempDiv.querySelectorAll('svg');
                                 if (svgs.length >= 2) {
                                     // Add arrow to first SVG (top layer)
                                     const firstSvg = svgs[0];
                                     const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
                                     firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
-                                    
+
                                     // Add arrow to second SVG (bottom layer)
                                     const secondSvg = svgs[1];
                                     const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
                                     secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
                                 }
-                                
+
                                 vizContainer.innerHTML = tempDiv.innerHTML;
+
+                                // Add invisible symmetry switch buttons
+                                const svgsInContainer = vizContainer.querySelectorAll('svg');
+                                if (svgsInContainer.length >= 2) {
+                                    // Helper function to add symmetry button
+                                    const addSymmetryButton = (svg, layerType, match) => {
+                                        const canCycleSymmetry = match.symmetryDegree > 1;
+
+                                        // Create invisible circle button in the center
+                                        const svgNS = "http://www.w3.org/2000/svg";
+                                        const buttonCircle = document.createElementNS(svgNS, 'circle');
+
+                                        buttonCircle.setAttribute('cx', centerX);
+                                        buttonCircle.setAttribute('cy', centerY);
+                                        buttonCircle.setAttribute('r', ringRadius * 0.3);
+                                        buttonCircle.setAttribute('fill', 'transparent');
+                                        buttonCircle.setAttribute('style', `cursor: ${canCycleSymmetry ? 'pointer' : 'default'};`);
+
+                                        if (canCycleSymmetry) {
+    buttonCircle.addEventListener('click', () => {
+        console.group('🔄 Symmetry Button Clicked');
+        console.log('Layer Type:', layerType);
+        console.log('Match Name:', match.name);
+        console.log('Symmetry Degree:', match.symmetryDegree);
+        
+        const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
+        console.log('Current Scramble:', currentScramble);
+        
+        const scrambleKey = currentScramble.replace(/\s+/g, '');
+        console.log('Scramble Key:', scrambleKey);
+        
+        console.log('Current symmetryOffsets object:', window.parityTracerSymmetryOffsets);
+        
+        if (!window.parityTracerSymmetryOffsets) {
+            console.warn('⚠️ symmetryOffsets was undefined, initializing...');
+            window.parityTracerSymmetryOffsets = {};
+        }
+        
+        if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+            console.log('📝 Creating new entry for scramble key');
+            window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+        }
+        
+        console.log('symmetryOffsets for this scramble:', window.parityTracerSymmetryOffsets[scrambleKey]);
+        
+        const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
+        console.log('Current Offset:', currentOffset);
+        
+        const maxSymmetries = match.name === 'Star' ? 3 : match.symmetryDegree;
+        console.log('Max Symmetries:', maxSymmetries);
+        
+        const newOffset = (currentOffset + 1) % maxSymmetries;
+        console.log('New Offset:', newOffset);
+        
+        window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
+        console.log('Updated symmetryOffsets:', window.parityTracerSymmetryOffsets);
+        
+        console.log('🔄 Re-running analysis...');
+        console.groupEnd();
+        
+        // Re-run analysis
+        performAnalysisWithLongName();
+    });
+}
+
+                                        svg.appendChild(buttonCircle);
+                                    };
+
+                                    // Add button to top layer (first SVG)
+                                    addSymmetryButton(svgsInContainer[0], 'top', topMatch);
+
+                                    // Add button to bottom layer (second SVG)
+                                    addSymmetryButton(svgsInContainer[1], 'bottom', botMatch);
+                                }
                             } catch (err) {
                                 vizContainer.innerHTML = `<div style="color: #e53e3e;">Visualization error: ${err.message}</div>`;
                             }
@@ -2471,19 +2636,19 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
             const z2Btn = modal.querySelector(`#${uniqueId}-z2-btn`);
             const y2Btn = modal.querySelector(`#${uniqueId}-y2-btn`);
             const flipBtn = modal.querySelector(`#${uniqueId}-flip-btn`);
-            
+
             z2Btn.addEventListener('click', () => {
                 utilityZ2Enabled = !utilityZ2Enabled;
                 z2Btn.classList.toggle('active', utilityZ2Enabled);
                 performAnalysisWithLongName();
             });
-            
+
             y2Btn.addEventListener('click', () => {
                 utilityY2Enabled = !utilityY2Enabled;
                 y2Btn.classList.toggle('active', utilityY2Enabled);
                 performAnalysisWithLongName();
             });
-            
+
             flipBtn.addEventListener('click', () => {
                 utilityFlipColorEnabled = !utilityFlipColorEnabled;
                 flipBtn.classList.toggle('active', utilityFlipColorEnabled);
@@ -2495,7 +2660,7 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
                 utilityZ2Enabled = false;
                 utilityY2Enabled = false;
                 utilityFlipColorEnabled = false;
-                
+
                 window.removeEventListener('resize', updateButtonPositions);
                 backdrop.remove();
                 closeBtnElement.remove();
@@ -2516,7 +2681,7 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
             instructionBtnElement.addEventListener('click', () => {
                 showParityTracerInstructionModal(config);
             });
-            
+
             settingsBtnElement.addEventListener('click', () => {
                 closeBtnElement.style.display = 'none';
                 instructionBtnElement.style.display = 'none';
@@ -2571,7 +2736,7 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
         document.body.appendChild(closeBtn);
         document.body.appendChild(instructionBtn);
         document.body.appendChild(settingsBtn);
-        
+
         window.modalScrollY = window.scrollY;
         document.body.style.top = `-${window.modalScrollY}px`;
         document.body.classList.add('modal-open');
@@ -2588,7 +2753,7 @@ const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.u
 
     // Export parity analysis function for use by other parts of the app
     globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
-        getParityTextFromScramblePlease: function(scrambleText, colorConfig, cornerMode, customRotation) {
+        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
             try {
                 const state = applyScrambleToStateArrayWithLongName(scrambleText);
                 const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
