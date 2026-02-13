@@ -1938,62 +1938,62 @@
                 const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
                 const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
                 // Check if we have stored symmetry offsets for this scramble
-// Use original scramble for key, not transformed
-const scrambleKey = scrambleText.replace(/\s+/g, '');
-if (!window.parityTracerSymmetryOffsets) {
-    window.parityTracerSymmetryOffsets = {};
-}
-if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-}
+                // Use original scramble for key, not transformed
+                const scrambleKey = scrambleText.replace(/\s+/g, '');
+                if (!window.parityTracerSymmetryOffsets) {
+                    window.parityTracerSymmetryOffsets = {};
+                }
+                if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+                    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+                }
 
-const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
 
-// Apply symmetry offsets if they exist
-const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
-const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
+                // Apply symmetry offsets if they exist
+                const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
+                const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
 
-console.log('🔧 Applying Symmetry Offsets:', {
-    topOffset: topSymmetryOffset,
-    bottomOffset: botSymmetryOffset,
-    topMatchName: topMatch.name,
-    botMatchName: botMatch.name,
-    topBaseRotation: topMatch.rot,
-    botBaseRotation: botMatch.rot
-});
+                console.log('🔧 Applying Symmetry Offsets:', {
+                    topOffset: topSymmetryOffset,
+                    bottomOffset: botSymmetryOffset,
+                    topMatchName: topMatch.name,
+                    botMatchName: botMatch.name,
+                    topBaseRotation: topMatch.rot,
+                    botBaseRotation: botMatch.rot
+                });
 
-// Calculate how many pieces to rotate based on symmetry offset and pattern
-function calculateSymmetryRotation(match, offset, rawUnits) {
-    if (offset === 0) return 0;
-    
-    // For Star, we jump 2 pieces per symmetry (corners only)
-    // For others, divide total pieces by symmetry degree
-    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
-    const piecesToSkip = piecesPerSymmetry * offset;
-    
-    console.log('   Symmetry calculation:', {
-        shapeName: match.name,
-        symmetryDegree: match.symmetryDegree,
-        totalPieces: rawUnits.length,
-        piecesPerSymmetry: piecesPerSymmetry,
-        offset: offset,
-        piecesToSkip: piecesToSkip
-    });
-    
-    return piecesToSkip;
-}
+                // Calculate how many pieces to rotate based on symmetry offset and pattern
+                function calculateSymmetryRotation(match, offset, rawUnits) {
+                    if (offset === 0) return 0;
 
-const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+                    // For Star, we jump 2 pieces per symmetry (corners only)
+                    // For others, divide total pieces by symmetry degree
+                    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+                    const piecesToSkip = piecesPerSymmetry * offset;
 
-console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+                    console.log('   Symmetry calculation:', {
+                        shapeName: match.name,
+                        symmetryDegree: match.symmetryDegree,
+                        totalPieces: rawUnits.length,
+                        piecesPerSymmetry: piecesPerSymmetry,
+                        offset: offset,
+                        piecesToSkip: piecesToSkip
+                    });
 
-// Apply the extra rotation
-topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+                    return piecesToSkip;
+                }
 
-console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
+                const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
+                const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+
+                console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+
+                // Apply the extra rotation
+                topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
+                botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+
+                console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                 const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                 const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                 const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2348,8 +2348,8 @@ console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
 
             function performAnalysisWithLongName() {
                 let scrambleText = scrambleInput.value.trim();
-// Store in a scope accessible to button handlers
-window.currentParityTracerScramble = scrambleText;
+                // Store in a scope accessible to button handlers
+                window.currentParityTracerScramble = scrambleText;
                 if (!scrambleText) return;
 
                 // Apply utility transformations (z2, y2, flip color)
@@ -2363,66 +2363,66 @@ window.currentParityTracerScramble = scrambleText;
 
                     // Build units - COMPLETE
                     const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                    const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
 
-// Check if we have stored symmetry offsets for this scramble
-// Use original scramble for key, not transformed
-const scrambleKey = scrambleText.replace(/\s+/g, '');
-if (!window.parityTracerSymmetryOffsets) {
-    window.parityTracerSymmetryOffsets = {};
-}
-if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-}
+                    // Check if we have stored symmetry offsets for this scramble
+                    // Use original scramble for key, not transformed
+                    const scrambleKey = scrambleText.replace(/\s+/g, '');
+                    if (!window.parityTracerSymmetryOffsets) {
+                        window.parityTracerSymmetryOffsets = {};
+                    }
+                    if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+                        window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+                    }
 
-const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                    const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
+                    const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
 
-// Apply symmetry offsets if they exist
-const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
-const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
+                    // Apply symmetry offsets if they exist
+                    const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
+                    const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
 
-console.log('🔧 Applying Symmetry Offsets:', {
-    scrambleKey: scrambleKey,
-    topOffset: topSymmetryOffset,
-    bottomOffset: botSymmetryOffset,
-    topMatchName: topMatch.name,
-    botMatchName: botMatch.name,
-    topBaseRotation: topMatch.rot,
-    botBaseRotation: botMatch.rot
-});
+                    console.log('🔧 Applying Symmetry Offsets:', {
+                        scrambleKey: scrambleKey,
+                        topOffset: topSymmetryOffset,
+                        bottomOffset: botSymmetryOffset,
+                        topMatchName: topMatch.name,
+                        botMatchName: botMatch.name,
+                        topBaseRotation: topMatch.rot,
+                        botBaseRotation: botMatch.rot
+                    });
 
-// Calculate how many pieces to rotate based on symmetry offset and pattern
-function calculateSymmetryRotation(match, offset, rawUnits) {
-    if (offset === 0) return 0;
-    
-    // For Star, we jump 2 pieces per symmetry (corners only)
-    // For others, divide total pieces by symmetry degree
-    const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
-    const piecesToSkip = piecesPerSymmetry * offset;
-    
-    console.log('   Symmetry calculation:', {
-        shapeName: match.name,
-        symmetryDegree: match.symmetryDegree,
-        totalPieces: rawUnits.length,
-        piecesPerSymmetry: piecesPerSymmetry,
-        offset: offset,
-        piecesToSkip: piecesToSkip
-    });
-    
-    return piecesToSkip;
-}
+                    // Calculate how many pieces to rotate based on symmetry offset and pattern
+                    function calculateSymmetryRotation(match, offset, rawUnits) {
+                        if (offset === 0) return 0;
 
-const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+                        // For Star, we jump 2 pieces per symmetry (corners only)
+                        // For others, divide total pieces by symmetry degree
+                        const piecesPerSymmetry = match.name === 'Star' ? 2 : Math.floor(rawUnits.length / match.symmetryDegree);
+                        const piecesToSkip = piecesPerSymmetry * offset;
 
-console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+                        console.log('   Symmetry calculation:', {
+                            shapeName: match.name,
+                            symmetryDegree: match.symmetryDegree,
+                            totalPieces: rawUnits.length,
+                            piecesPerSymmetry: piecesPerSymmetry,
+                            offset: offset,
+                            piecesToSkip: piecesToSkip
+                        });
 
-// Apply the extra rotation
-topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+                        return piecesToSkip;
+                    }
 
-console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
+                    const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
+                    const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
+
+                    console.log('   Extra rotations:', { top: topExtraRotation, bottom: botExtraRotation });
+
+                    // Apply the extra rotation
+                    topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
+                    botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
+
+                    console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                     const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
                     const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
                     const topCounts = countEdgesAndCornersWithLongName(topUnits);
@@ -2550,51 +2550,51 @@ console.log('   Final rotations:', { top: topMatch.rot, bottom: botMatch.rot });
                                         buttonCircle.setAttribute('style', `cursor: ${canCycleSymmetry ? 'pointer' : 'default'};`);
 
                                         if (canCycleSymmetry) {
-    buttonCircle.addEventListener('click', () => {
-        console.group('🔄 Symmetry Button Clicked');
-        console.log('Layer Type:', layerType);
-        console.log('Match Name:', match.name);
-        console.log('Symmetry Degree:', match.symmetryDegree);
-        
-        const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
-        console.log('Current Scramble:', currentScramble);
-        
-        const scrambleKey = currentScramble.replace(/\s+/g, '');
-        console.log('Scramble Key:', scrambleKey);
-        
-        console.log('Current symmetryOffsets object:', window.parityTracerSymmetryOffsets);
-        
-        if (!window.parityTracerSymmetryOffsets) {
-            console.warn('⚠️ symmetryOffsets was undefined, initializing...');
-            window.parityTracerSymmetryOffsets = {};
-        }
-        
-        if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-            console.log('📝 Creating new entry for scramble key');
-            window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-        }
-        
-        console.log('symmetryOffsets for this scramble:', window.parityTracerSymmetryOffsets[scrambleKey]);
-        
-        const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
-        console.log('Current Offset:', currentOffset);
-        
-        const maxSymmetries = match.name === 'Star' ? 3 : match.symmetryDegree;
-        console.log('Max Symmetries:', maxSymmetries);
-        
-        const newOffset = (currentOffset + 1) % maxSymmetries;
-        console.log('New Offset:', newOffset);
-        
-        window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
-        console.log('Updated symmetryOffsets:', window.parityTracerSymmetryOffsets);
-        
-        console.log('🔄 Re-running analysis...');
-        console.groupEnd();
-        
-        // Re-run analysis
-        performAnalysisWithLongName();
-    });
-}
+                                            buttonCircle.addEventListener('click', () => {
+                                                console.group('🔄 Symmetry Button Clicked');
+                                                console.log('Layer Type:', layerType);
+                                                console.log('Match Name:', match.name);
+                                                console.log('Symmetry Degree:', match.symmetryDegree);
+
+                                                const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
+                                                console.log('Current Scramble:', currentScramble);
+
+                                                const scrambleKey = currentScramble.replace(/\s+/g, '');
+                                                console.log('Scramble Key:', scrambleKey);
+
+                                                console.log('Current symmetryOffsets object:', window.parityTracerSymmetryOffsets);
+
+                                                if (!window.parityTracerSymmetryOffsets) {
+                                                    console.warn('⚠️ symmetryOffsets was undefined, initializing...');
+                                                    window.parityTracerSymmetryOffsets = {};
+                                                }
+
+                                                if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
+                                                    console.log('📝 Creating new entry for scramble key');
+                                                    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+                                                }
+
+                                                console.log('symmetryOffsets for this scramble:', window.parityTracerSymmetryOffsets[scrambleKey]);
+
+                                                const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
+                                                console.log('Current Offset:', currentOffset);
+
+                                                const maxSymmetries = match.name === 'Star' ? 3 : match.symmetryDegree;
+                                                console.log('Max Symmetries:', maxSymmetries);
+
+                                                const newOffset = (currentOffset + 1) % maxSymmetries;
+                                                console.log('New Offset:', newOffset);
+
+                                                window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
+                                                console.log('Updated symmetryOffsets:', window.parityTracerSymmetryOffsets);
+
+                                                console.log('🔄 Re-running analysis...');
+                                                console.groupEnd();
+
+                                                // Re-run analysis
+                                                performAnalysisWithLongName();
+                                            });
+                                        }
 
                                         svg.appendChild(buttonCircle);
                                     };
