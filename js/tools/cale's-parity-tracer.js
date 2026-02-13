@@ -781,78 +781,123 @@ function adjustColorBrightness(hexColor, percent) {
     }
 
     // Display results in modal
-    function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray) {
-        let totalDegrees = 0;
-        for (let i = 0; i < rotationAmount; i++) {
-            if (unitsArray[i].type === 'E') {
-                totalDegrees += 30;
-            } else {
-                totalDegrees += 60;
-            }
-        }
-        // Start from 75° and subtract the rotation
-        const startAngle = 90 + totalDegrees;
-        return startAngle;
+    function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray, layerType, patternTypes) {
+    console.group(`🎯 Arrow Position Calculation - ${layerType} Layer`);
+    console.log('📊 Input Data:', {
+        rotationAmount: rotationAmount,
+        unitsCount: unitsArray.length,
+        layerType: layerType,
+        patternTypes: patternTypes,
+        units: unitsArray.map((u, i) => `[${i}] ${u.type === 'E' ? 'Edge' : 'Corner'} ${u.edge || u.pair}`)
+    });
+    
+    // Initial starting position depends on layer
+    const initialAngle = layerType === 'TOP' ? 90 : 120;
+    console.log('🎬 Initial arrow angle (before rotation):', initialAngle + '°');
+    
+    // Check if tracing scheme ends with corner or edge
+    const endsWithCorner = patternTypes.endsWith('C');
+    const arcDegrees = endsWithCorner ? 300 : 330;
+    console.log('📏 Arc length:', arcDegrees + '° (ends with ' + (endsWithCorner ? 'Corner' : 'Edge') + ')');
+    
+    // Calculate total degrees to rotate based on pieces we're skipping
+    let totalRotationDegrees = 0;
+    console.log('\n🔄 Calculating rotation based on pieces to skip:');
+    console.log(`   Need to skip ${rotationAmount} pieces from the pattern`);
+    
+    for (let i = 0; i < rotationAmount; i++) {
+        const pieceType = unitsArray[i].type;
+        const pieceDegrees = pieceType === 'E' ? 30 : 60;
+        totalRotationDegrees += pieceDegrees;
+        
+        console.log(`   [${i}] ${pieceType === 'E' ? 'Edge  ' : 'Corner'} (${unitsArray[i].edge || unitsArray[i].pair}): +${pieceDegrees}° → Total: ${totalRotationDegrees}°`);
     }
+    
+    console.log('\n📐 Rotation Summary:');
+    console.log(`   Total degrees to rotate: ${totalRotationDegrees}°`);
+    console.log(`   Direction: Clockwise (subtracting from initial angle)`);
+    
+    // We rotate clockwise (subtract) from the initial position
+    const finalAngle = initialAngle - totalRotationDegrees;
+    
+    console.log('\n🎯 Final Calculation:');
+    console.log(`   ${initialAngle}° (initial) - ${totalRotationDegrees}° (rotation) = ${finalAngle}°`);
+    console.log(`   Final arrow starting angle: ${finalAngle}°`);
+    console.log(`   Arc will span: ${arcDegrees}°`);
+    console.groupEnd();
+    
+    return { startAngle: finalAngle, arcDegrees: arcDegrees };
+}
 
-    function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, size) {
-        const strokeWidth = size * 0.024;
-        const lineColor = 'rgba(225, 225, 225, 0.7)';
-        const diskColor = 'rgba(225, 225, 225, 1)';
-        const arrowheadColor = 'rgba(225, 225, 225, 1)';
-        const adjustedRadius = radius * 0.95;
-        
-        // Convert to radians
-        const startRad = (startAngleDeg - 15) * Math.PI / 180;
-        const endRad = (startAngleDeg - 15 + 330) * Math.PI / 180;
-        
-        // Calculate arc path (330 degrees clockwise)
-        const startX = centerX + adjustedRadius * Math.cos(startRad);
-        const startY = centerY - adjustedRadius * Math.sin(startRad);
-        const endX = centerX + adjustedRadius * Math.cos(endRad);
-        const endY = centerY - adjustedRadius * Math.sin(endRad);
-        
-        // Large arc flag = 1 for 330 degrees, sweep = 0 for clockwise
-        const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 1 0 ${endX} ${endY}`;
-        
-        // Start disk (circle at beginning) - smaller, seamless
-        const startDiskRadius = strokeWidth * 0.8;
-        
-        // Arrowhead at end position
-        const arrowSize = size * 0.06;
-        
-        // Direction of arrow movement at end (tangent to circle, clockwise)
-        // For clockwise motion, tangent is perpendicular to radius, rotated -90°
-        const tangentAngle = endRad + Math.PI / 2;
-        
-        // Calculate arrowhead tip (extends in direction of motion)
-        const arrowTipX = endX + arrowSize * Math.cos(tangentAngle);
-        const arrowTipY = endY - arrowSize * Math.sin(tangentAngle);
-        
-        // Arrowhead base points (perpendicular to direction of motion)
-        const perpAngle1 = tangentAngle + (2 * Math.PI / 3);
-        const perpAngle2 = tangentAngle - (2 * Math.PI / 3);
-        
-        const arrow1X = endX + arrowSize * 0.5 * Math.cos(perpAngle1);
-        const arrow1Y = endY - arrowSize * 0.5 * Math.sin(perpAngle1);
-        const arrow2X = endX + arrowSize * 0.5 * Math.cos(perpAngle2);
-        const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
-        
-        return `
-            <g>
-                <path d="${pathD}" 
-                      fill="none" 
-                      stroke="${lineColor}" 
-                      stroke-width="${strokeWidth}" 
-                      stroke-dasharray="${size * 0.008},${size * 0.004}"
-                      stroke-linecap="round"/>
-                <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
-                        fill="${diskColor}" stroke="none"/>
-                <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
-                         fill="${arrowheadColor}" stroke="none"/>
-            </g>
-        `;
-    }
+    function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
+    let arrowColor= 'rgba(253, 34, 34, 0.7)';
+    const strokeWidth = size * 0.016;
+    const lineColor = arrowColor;//'rgba(0, 122, 255, 1)'; //'rgba(253, 34, 34, 0.7)'
+    const diskColor = arrowColor;
+    const arrowheadColor = arrowColor;
+    const adjustedRadius = radius * 0.3;
+    
+    // Arrowhead size
+    const arrowSize = strokeWidth * 3; //5
+    // Start disk (circle at beginning) - smaller, seamless
+    const startDiskRadius = strokeWidth * 1.2; //1.7
+
+    // Calculate how many degrees the arrowhead tip extends
+    // The arrowhead extends radially outward by arrowSize
+    // Convert this to angular degrees at the given radius
+    const arrowTipExtensionDegrees = (arrowSize / adjustedRadius) * (180 / Math.PI);
+    
+    // Adjust the end angle to pull back by the arrowhead extension
+    // So the TIP lands at exactly the target angle
+    const adjustedArcDegrees = arcDegrees - arrowTipExtensionDegrees;
+    
+    // Convert to radians
+    const startRad = (startAngleDeg - 15) * Math.PI / 180;
+    const endRad = (startAngleDeg - 15 - adjustedArcDegrees) * Math.PI / 180;
+    
+    // Calculate arc path
+    const startX = centerX + adjustedRadius * Math.cos(startRad);
+    const startY = centerY - adjustedRadius * Math.sin(startRad);
+    const endX = centerX + adjustedRadius * Math.cos(endRad);
+    const endY = centerY - adjustedRadius * Math.sin(endRad);
+    
+    // Large arc flag = 1 for arcs >= 180 degrees, sweep = 1 for clockwise
+    const largeArcFlag = arcDegrees >= 180 ? 1 : 0;
+    const pathD = `M ${startX} ${startY} A ${adjustedRadius} ${adjustedRadius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
+    
+
+    
+    // Direction of arrow movement at end (tangent to circle, clockwise)
+    const tangentAngle = endRad - Math.PI / 2;
+    
+    // Calculate arrowhead tip (extends in direction of motion)
+    const arrowTipX = endX + arrowSize * Math.cos(tangentAngle);
+    const arrowTipY = endY - arrowSize * Math.sin(tangentAngle);
+    
+    // Arrowhead base points (perpendicular to direction of motion)
+    const perpAngle1 = tangentAngle + (2 * Math.PI / 3);
+    const perpAngle2 = tangentAngle - (2 * Math.PI / 3);
+    
+    const arrow1X = endX + arrowSize * 0.5 * Math.cos(perpAngle1);
+    const arrow1Y = endY - arrowSize * 0.5 * Math.sin(perpAngle1);
+    const arrow2X = endX + arrowSize * 0.5 * Math.cos(perpAngle2);
+    const arrow2Y = endY - arrowSize * 0.5 * Math.sin(perpAngle2);
+    
+    return `
+        <g>
+            <path d="${pathD}" 
+                  fill="none" 
+                  stroke="${lineColor}" 
+                  stroke-width="${strokeWidth}" 
+                  stroke-dasharray="${size * 0.008},${size * 0.004}"
+                  stroke-linecap="round"/>
+            <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
+                    fill="${diskColor}" stroke="none"/>
+            <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
+                     fill="${arrowheadColor}" stroke="none"/>
+        </g>
+    `;
+}
 
     function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
@@ -2320,51 +2365,81 @@ function adjustColorBrightness(hexColor, percent) {
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
                         const encodedScramble = encodeStateToHexStringWithLongName(state);
-                    if (!encodedScramble.startsWith('Error:')) {
-                        try {
-                            const imageSize = config.imageSizeInPixels || 200;
-                            const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
-                                encodedScramble,
-                                imageSize,
-                                {
-                                    topColor: config.topLayerMainColor,
-                                    bottomColor: config.bottomLayerMainColor,
-                                    frontColor: config.frontFaceColorForVisualization,
-                                    rightColor: config.rightFaceColorForVisualization,
-                                    backColor: config.backFaceColorForVisualization,
-                                    leftColor: config.leftFaceColorForVisualization
-                                }
-                            );
-                            
-                            // Calculate arrow positions
-                            const topArrowStart = calculateArrowStartAngleWithLongName(topMatch.rot, topUnits);
-                            const botArrowStart = calculateArrowStartAngleWithLongName(botMatch.rot, botUnits);
-                            
-                            // Calculate circle dimensions (matching draw-scramble logic)
-                            const unit10vh = imageSize * 0.4;
-                            const radiusOuter = unit10vh * 0.7;
-                            const ringRadius = radiusOuter + (unit10vh * 0.4);
-                            const centerX = imageSize / 2;
-                            const centerY = imageSize / 2;
-                            
-                            // Parse SVG and inject arrows
-                            const tempDiv = document.createElement('div');
-                            tempDiv.innerHTML = svgContent;
-                            
-                            const svgs = tempDiv.querySelectorAll('svg');
-                            if (svgs.length >= 2) {
-                                // Add arrow to first SVG (top layer)
-                                const firstSvg = svgs[0];
-                                const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowStart, imageSize);
-                                firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
+                        if (!encodedScramble.startsWith('Error:')) {
+                            try {
+                                console.group('🔍 Complete Scramble Analysis');
                                 
-                                // Add arrow to second SVG (bottom layer)
-                                const secondSvg = svgs[1];
-                                const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowStart, imageSize);
-                                secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
-                            }
-                            
-                            vizContainer.innerHTML = tempDiv.innerHTML;
+                                // Log 1: Scrambled state
+                                console.log('1️⃣ Scrambled State (letter notation):');
+                                console.log('   ' + state.join(''));
+                                
+                                // Log 2: EECECCEE notation of scrambled cube
+                                console.log('\n2️⃣ EECECCEE notation of scrambled cube:');
+                                console.log('   Top Layer:    ' + topRaw.types);
+                                console.log('   Bottom Layer: ' + botRaw.types);
+                                
+                                // Log 3: Tracing scheme notation
+                                console.log('\n3️⃣ Matched tracing scheme notation:');
+                                console.log('   Top Layer:    ' + topMatch.originalPat + ' (' + topMatch.name + ')');
+                                console.log('   Bottom Layer: ' + botMatch.originalPat + ' (' + botMatch.name + ')');
+                                
+                                // Log 4: Difference calculation
+                                console.log('\n4️⃣ Rotation calculation (scrambled → tracing scheme):');
+                                console.log('   Top Layer:');
+                                console.log('      Scrambled:       ' + topRaw.types);
+                                console.log('      Tracing scheme:  ' + topMatch.originalPat);
+                                console.log('      Rotation needed: ' + topMatch.rot + ' pieces');
+                                console.log('   Bottom Layer:');
+                                console.log('      Scrambled:       ' + botRaw.types);
+                                console.log('      Tracing scheme:  ' + botMatch.originalPat);
+                                console.log('      Rotation needed: ' + botMatch.rot + ' pieces');
+                                
+                                console.groupEnd();
+                                
+                                const imageSize = config.imageSizeInPixels || 200;
+                                const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                    encodedScramble,
+                                    imageSize,
+                                    {
+                                        topColor: config.topLayerMainColor,
+                                        bottomColor: config.bottomLayerMainColor,
+                                        frontColor: config.frontFaceColorForVisualization,
+                                        rightColor: config.rightFaceColorForVisualization,
+                                        backColor: config.backFaceColorForVisualization,
+                                        leftColor: config.leftFaceColorForVisualization
+                                    }
+                                );
+                                
+                                // Calculate arrow positions
+// Note: We need to calculate based on the UNROTATED units to find the physical position
+const topArrowData = calculateArrowStartAngleWithLongName(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
+const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+
+                                // Calculate circle dimensions (matching draw-scramble logic)
+                                const unit10vh = imageSize * 0.4;
+                                const radiusOuter = unit10vh * 0.7;
+                                const ringRadius = radiusOuter + (unit10vh * 0.4);
+                                const centerX = imageSize / 2;
+                                const centerY = imageSize / 2;
+                                
+                                // Parse SVG and inject arrows
+                                const tempDiv = document.createElement('div');
+                                tempDiv.innerHTML = svgContent;
+                                
+                                const svgs = tempDiv.querySelectorAll('svg');
+                                if (svgs.length >= 2) {
+                                    // Add arrow to first SVG (top layer)
+                                    const firstSvg = svgs[0];
+                                    const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
+                                    firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
+                                    
+                                    // Add arrow to second SVG (bottom layer)
+                                    const secondSvg = svgs[1];
+                                    const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
+                                    secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
+                                }
+                                
+                                vizContainer.innerHTML = tempDiv.innerHTML;
                             } catch (err) {
                                 vizContainer.innerHTML = `<div style="color: #e53e3e;">Visualization error: ${err.message}</div>`;
                             }
