@@ -649,9 +649,12 @@ window.addEventListener('resize', handleResize);
 const originalRender = window.render;
 if (typeof originalRender === 'function') {
     window.render = function () {
-        originalRender();
-        // Small delay to ensure SVGs are in DOM
-        setTimeout(updateSVGScaling, 10);
+        if (typeof showRenderLoader === 'function') showRenderLoader();
+        setTimeout(() => {
+            originalRender();
+            setTimeout(updateSVGScaling, 10);
+            if (typeof hideRenderLoader === 'function') hideRenderLoader();
+        }, 0);
     };
 }
 

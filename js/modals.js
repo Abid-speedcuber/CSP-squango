@@ -455,20 +455,42 @@ function generateModalHTML() {
     });
 }
 
-/*
-╔════════════════════════════════════════════════════════════════════════════╗
-║                             CASE DETAILS MODAL                             ║
-╚════════════════════════════════════════════════════════════════════════════╝
-*/
-
-function openModal(name) {
-    // Case modal removed - functionality moved to context menu and algorithm popups
-    return;
+// Render loading screen
+function showRenderLoader() {
+    let loader = document.getElementById('renderLoader');
+    if (loader) return;
+    loader = document.createElement('div');
+    loader.id = 'renderLoader';
+    loader.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#f5f7fa 0%,#e8ebf0 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99998;font-family:Segoe UI,sans-serif;padding:0 20px;box-sizing:border-box;';
+    loader.innerHTML = `
+        <h1 style="font-size:2.5rem;font-weight:800;color:#2d3748;margin-bottom:6px;letter-spacing:-1px;">SquanGo CSP</h1>
+        <p style="font-size:1rem;color:#4a5568;margin-bottom:25px;font-weight:500;">by Abid Ibn Ashraf</p>
+        <div style="width:280px;max-width:85vw;height:6px;background:#cbd5e0;border-radius:3px;overflow:hidden;">
+            <div id="renderLoaderBar" style="width:0%;height:100%;background:linear-gradient(90deg,#4a5568,#2d3748);transition:width 0.2s ease;"></div>
+        </div>
+    `;
+    document.body.appendChild(loader);
+    // Animate bar
+    let p = 0;
+    loader._interval = setInterval(() => {
+        p += Math.random() * 25;
+        if (p > 85) p = 85;
+        const bar = document.getElementById('renderLoaderBar');
+        if (bar) bar.style.width = p + '%';
+    }, 120);
 }
 
-function closeModal() {
-    // Case modal removed
-    return;
+function hideRenderLoader() {
+    const loader = document.getElementById('renderLoader');
+    if (!loader) return;
+    clearInterval(loader._interval);
+    const bar = document.getElementById('renderLoaderBar');
+    if (bar) bar.style.width = '100%';
+    setTimeout(() => {
+        loader.style.opacity = '0';
+        loader.style.transition = 'opacity 0.25s ease';
+        setTimeout(() => loader.remove(), 260);
+    }, 150);
 }
 
 function toggleCaseSwapLR(name) {
