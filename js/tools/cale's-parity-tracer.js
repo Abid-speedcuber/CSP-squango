@@ -1131,11 +1131,11 @@
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode.</div>
+                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
@@ -1144,10 +1144,6 @@
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
                         <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">All settings update in real-time as you adjust them, so you can see the effect immediately on your scramble.</div>
                     </div>
                 </div>
             </div>
@@ -1212,7 +1208,7 @@
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counterclockwise, you are gay and nobody loves you.</div>
+                        <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counter-clockwise, you are gay and nobody loves you.</div>
                     </div>
 <!--                    <div class="training-info-item">
                         <div class="training-info-number">6</div>
@@ -1327,7 +1323,7 @@
                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
                             <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            More counterclockwise sticker
+                            More counter-clockwise sticker
                         </label>
                         <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
                             <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
@@ -1358,7 +1354,7 @@
                 <div style="margin-bottom: 1rem;">
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
                         <input type="checkbox" id="showArrowCheckbox-${timestamp}" ${showCircularArrow ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Show Circular Arrow</span>
+                        <span style="font-weight: 600;">Show Tracing Indication Arrow</span>
                     </label>
                 </div>
 
@@ -1383,7 +1379,7 @@
                     
                     <div>
                         <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Radius: <span id="radiusValue-${timestamp}">${arrowSettings.radius.toFixed(2)}</span></label>
-                        <input type="range" id="arrowRadius-${timestamp}" min="0.1" max="0.6" step="0.01" value="${arrowSettings.radius}" style="width: 100%; cursor: pointer;">
+                        <input type="range" id="arrowRadius-${timestamp}" min="0.1" max="1.1" step="0.01" value="${arrowSettings.radius}" style="width: 100%; cursor: pointer;">
                     </div>
                 </div>
             </div>
