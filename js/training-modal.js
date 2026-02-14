@@ -655,6 +655,21 @@ document.addEventListener('keydown', (e) => {
     const modal = document.getElementById('trainingModal');
     if (!modal || !modal.classList.contains('active')) return;
     
+    if (e.code === 'Escape') {
+        e.preventDefault();
+        closeTrainingModal();
+        return;
+    }
+    
+    // Any key stops the timer if running
+    if (timerRunning) {
+        e.preventDefault();
+        displayNextScramble();
+        stopTimerOnly();
+        spacePressed = false;
+        return;
+    }
+    
     if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
         if (!spacePressed) {
@@ -663,11 +678,24 @@ document.addEventListener('keydown', (e) => {
             timerEl.style.color = '#ffc107'; // Yellow when holding
             if (!timerRunning) {
                 isHolding = true;
+                isHoldReady = false;
+                holdStartTime = Date.now();
+                
+                // Check hold duration
+                const holdCheckInterval = setInterval(() => {
+                    if (!isHolding) {
+                        clearInterval(holdCheckInterval);
+                        return;
+                    }
+                    const holdDuration = (Date.now() - holdStartTime) / 1000;
+                    if (holdDuration >= trainingHoldToStart && !isHoldReady) {
+                        isHoldReady = true;
+                        document.getElementById('trainingTimer').style.color = '#28a745';
+                        clearInterval(holdCheckInterval);
+                    }
+                }, 10);
             }
         }
-    } else if (e.code === 'Escape') {
-        e.preventDefault();
-        closeTrainingModal();
     }
 });
 
@@ -681,11 +709,7 @@ document.addEventListener('keyup', (e) => {
             spacePressed = false;
             const timerEl = document.getElementById('trainingTimer');
             
-            if (timerRunning) {
-                // Show next scramble FIRST, then stop timer
-                displayNextScramble();
-                stopTimerOnly();
-            } else if (isHolding && isHoldReady) {
+            if (isHolding && isHoldReady) {
                 isHolding = false;
                 isHoldReady = false;
                 timerEl.style.color = '#2d3748';

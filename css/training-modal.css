@@ -95,12 +95,12 @@ body.modal-open .training-modal {
     padding: 20px;
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     min-height: 200px;
     pointer-events: none;
     position: relative;
     z-index: 1;
-    padding-top: calc(15vh);
+    flex-shrink: 0;
 }
 
 .training-modal-image-container * {
@@ -118,13 +118,14 @@ body.modal-open .training-modal {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     cursor: pointer;
     user-select: none;
     background: #ffffff;
     transition: background 0.15s ease;
     min-height: 0;
     position: relative;
+    padding-top: 5vh;
 }
 
 .training-modal-timer-zone:active {
@@ -140,6 +141,7 @@ body.modal-open .training-modal {
     transition: color 0.15s ease;
     position: relative;
     z-index: 10;
+    margin-top: 20px;
 }
 
 /* Responsive adjustments */

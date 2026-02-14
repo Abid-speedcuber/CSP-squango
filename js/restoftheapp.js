@@ -504,14 +504,17 @@ function exportData() {
         generalNotes: generalNotes,
         parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
         parityTracerShowArrow: localStorage.getItem('parityTracerShowArrow'),
-        parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings')
+        parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
+        trainingScrambleImageSize: localStorage.getItem('trainingScrambleImageSize'),
+        trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
+        trainingHoldToStart: localStorage.getItem('trainingHoldToStart')
     };
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'sq1-parity-progress.json';
+    link.download = 'squango-CSP.json';
     link.click();
     URL.revokeObjectURL(url);
 }
@@ -581,6 +584,15 @@ function importData(jsonStr) {
         }
         if (state.parityTracerArrowSettings) {
             localStorage.setItem('parityTracerArrowSettings', state.parityTracerArrowSettings);
+        }
+        if (state.trainingScrambleImageSize) {
+            localStorage.setItem('trainingScrambleImageSize', state.trainingScrambleImageSize);
+        }
+        if (state.trainingScrambleTextSize) {
+            localStorage.setItem('trainingScrambleTextSize', state.trainingScrambleTextSize);
+        }
+        if (state.trainingHoldToStart) {
+            localStorage.setItem('trainingHoldToStart', state.trainingHoldToStart);
         }
         saveState();
         updateProgress();
