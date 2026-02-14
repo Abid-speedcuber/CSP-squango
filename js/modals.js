@@ -575,8 +575,8 @@ function handlePresetChange(presetName) {
     warningModal.style.zIndex = '10002';
     warningModal.innerHTML = `
         <div class="modal-content" style="max-width: 500px; margin-top: 80px;">
-            <div class="modal-header" style="background: #fff3cd; border-bottom: 2px solid #fff3cd;">
-                <span class="modal-title" style="color: #856404;">Warning: Data Loss</span>
+            <div class="modal-header" style="background: #ffffffff; border-bottom: 2px solid #dadadaff;">
+                <span class="modal-title" style="color: #330000ff;">Warning: Data Loss</span>
                 <button class="close-btn" onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;">&times;</button>
             </div>
             <div class="modal-body">
@@ -584,13 +584,13 @@ function handlePresetChange(presetName) {
                     Switching to "<strong>${presetName}</strong>" preset will <strong>replace ALL your current data.</strong> We strongly recommend exporting your current data first.
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #abd7b5ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); applyPreset(\`${presetName}\`, false, false); setTimeout(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); }, 100);" style="padding: 10px 20px; background: #e8b1b6ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); applyPreset(\`${presetName}\`, false, false).then(() => { openGeneralNotesModal(); }); setTimeout(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); }, 100);" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Cancel
                     </button>
                 </div>
