@@ -12,6 +12,11 @@ let currentScrambleText = '';
 let trainingModalElement = null;
 let scrambleHistory = [];
 let currentHistoryIndex = -1;
+let trainingScrambleImageSize = 200;
+let trainingScrambleTextSize = 16;
+let trainingHoldToStart = 0.22;
+let holdStartTime = 0;
+let isHoldReady = false;
 
 // Create the training modal dynamically
 function createTrainingModal() {
@@ -42,6 +47,9 @@ function createTrainingModal() {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
                     </svg>
+                </button>
+                <button class="training-modal-refresh" id="trainingSettingsBtn" title="Training settings">
+                    <img src="res/training-settings.svg" height="20 px" width="20 px">
                 </button>
                 <button class="training-modal-close" id="trainingCloseBtn" title="Close training">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -92,6 +100,11 @@ function createTrainingModal() {
     document.getElementById('trainingInfoBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         openTrainingInfoModal();
+    });
+    
+    document.getElementById('trainingSettingsBtn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openTrainingSettingsModal();
     });
     
     const timerZone = document.getElementById('trainingTimerZone');
@@ -155,6 +168,16 @@ function openTrainingModal(caseName) {
     timerElapsed = 0;
     scrambleHistory = [];
     currentHistoryIndex = -1;
+    isHoldReady = false;
+    
+    // Load training-specific settings
+    const savedTrainingImageSize = localStorage.getItem('trainingScrambleImageSize');
+    const savedTrainingTextSize = localStorage.getItem('trainingScrambleTextSize');
+    const savedTrainingHoldToStart = localStorage.getItem('trainingHoldToStart');
+    
+    trainingScrambleImageSize = savedTrainingImageSize ? parseInt(savedTrainingImageSize) : 200;
+    trainingScrambleTextSize = savedTrainingTextSize ? parseInt(savedTrainingTextSize) : 16;
+    trainingHoldToStart = savedTrainingHoldToStart ? parseFloat(savedTrainingHoldToStart) : 0.22;
     
     // Pre-generate 3 scrambles
     for (let i = 0; i < 3; i++) {
@@ -178,8 +201,14 @@ function closeTrainingModal() {
     if (timerRunning) {
         stopTimerOnly();
     }
+    
+    // Reset all training state
     preGeneratedScrambles = [];
     timerElapsed = 0;
+    scrambleHistory = [];
+    currentHistoryIndex = -1;
+    currentTrainingCase = null;
+    isHoldReady = false;
     
     // Soft render when coming back from training
     filterAndSort(true);
@@ -208,13 +237,13 @@ function generateNextScrambleData() {
     
     let scrambleImage = '<div style="color: #999;">Image unavailable</div>';
     try {
-        // Use new library with custom color scheme
+        // Use training-specific image size
         if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
-            const scrambleNotation = hexCode; // You might need to convert this
+            const scrambleNotation = hexCode;
             try {
                 const state = parseHexFormat(hexCode);
                 const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-                scrambleImage = visualizeFromScrambleNotationPlease(notation, scrambleImageSize, colorScheme);
+                scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
             } catch (e) {
                 console.error('Error with new visualizer:', e);
                 scrambleImage = generateScrambleSVGFromHex(hexCode);
@@ -237,7 +266,9 @@ function displayNextScramble() {
     
     if (scrambleData) {
         currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, ''); // Strip HTML for clipboard
-        document.getElementById('trainingScramble').innerHTML = scrambleData.text;
+        const scrambleEl = document.getElementById('trainingScramble');
+        scrambleEl.innerHTML = scrambleData.text;
+        scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
         document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
         
         // Add to history
@@ -265,7 +296,9 @@ function previousScramble() {
     
     const scrambleData = scrambleHistory[currentHistoryIndex];
     currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
-    document.getElementById('trainingScramble').innerHTML = scrambleData.text;
+    const scrambleEl = document.getElementById('trainingScramble');
+    scrambleEl.innerHTML = scrambleData.text;
+    scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
     document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
 }
 
@@ -307,7 +340,7 @@ function openParityAnalysisFromTraining() {
         leftColor: colorScheme.leftColor,
         scrambleText: cleanScramble,
         generateImage: true,
-        imageSize: scrambleImageSize || 200
+        imageSize: trainingScrambleImageSize || 200
     });
 }
 
@@ -315,7 +348,23 @@ function openParityAnalysisFromTraining() {
 function handleTimerMouseDown() {
     if (timerRunning) return;
     isHolding = true;
+    isHoldReady = false;
+    holdStartTime = Date.now();
     document.getElementById('trainingTimer').style.color = '#ffc107';
+    
+    // Check hold duration
+    const holdCheckInterval = setInterval(() => {
+        if (!isHolding) {
+            clearInterval(holdCheckInterval);
+            return;
+        }
+        const holdDuration = (Date.now() - holdStartTime) / 1000;
+        if (holdDuration >= trainingHoldToStart && !isHoldReady) {
+            isHoldReady = true;
+            document.getElementById('trainingTimer').style.color = '#28a745';
+            clearInterval(holdCheckInterval);
+        }
+    }, 10);
 }
 
 function handleTimerMouseUp() {
@@ -323,16 +372,22 @@ function handleTimerMouseUp() {
         // Stop timer and show next scramble immediately
         displayNextScramble();
         stopTimerOnly();
-    } else if (isHolding) {
+    } else if (isHolding && isHoldReady) {
         isHolding = false;
+        isHoldReady = false;
         document.getElementById('trainingTimer').style.color = '#2d3748';
         startTimer();
+    } else if (isHolding) {
+        isHolding = false;
+        isHoldReady = false;
+        document.getElementById('trainingTimer').style.color = '#2d3748';
     }
 }
 
 function handleTimerMouseLeave() {
     if (isHolding && !timerRunning) {
         isHolding = false;
+        isHoldReady = false;
         document.getElementById('trainingTimer').style.color = '#2d3748';
     }
 }
@@ -342,7 +397,23 @@ function handleTimerTouchStart(e) {
     e.preventDefault();
     if (timerRunning) return;
     isHolding = true;
+    isHoldReady = false;
+    holdStartTime = Date.now();
     document.getElementById('trainingTimer').style.color = '#ffc107';
+    
+    // Check hold duration
+    const holdCheckInterval = setInterval(() => {
+        if (!isHolding) {
+            clearInterval(holdCheckInterval);
+            return;
+        }
+        const holdDuration = (Date.now() - holdStartTime) / 1000;
+        if (holdDuration >= trainingHoldToStart && !isHoldReady) {
+            isHoldReady = true;
+            document.getElementById('trainingTimer').style.color = '#28a745';
+            clearInterval(holdCheckInterval);
+        }
+    }, 10);
 }
 
 function handleTimerTouchEnd(e) {
@@ -350,10 +421,15 @@ function handleTimerTouchEnd(e) {
     if (timerRunning) {
         displayNextScramble();
         stopTimerOnly();
-    } else if (isHolding) {
+    } else if (isHolding && isHoldReady) {
         isHolding = false;
+        isHoldReady = false;
         document.getElementById('trainingTimer').style.color = '#2d3748';
         startTimer();
+    } else if (isHolding) {
+        isHolding = false;
+        isHoldReady = false;
+        document.getElementById('trainingTimer').style.color = '#2d3748';
     }
 }
 
@@ -395,6 +471,9 @@ function openShapeIndexSelector() {
     if (!shapeIndexItem) return;
     
     pushModalState('shapeIndexSelectorModal', closeShapeIndexSelector);
+    
+    // Lock background
+    document.body.classList.add('modal-open');
     
     // Create or get existing modal
     let selectorModal = document.getElementById('shapeIndexSelectorModal');
@@ -478,13 +557,6 @@ function openShapeIndexSelector() {
     selectorModal.classList.add('active');
 }
 
-function closeShapeIndexSelector() {
-    const modal = document.getElementById('shapeIndexSelectorModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-}
-
 function toggleShapeIndex(index) {
     const selectedKey = `training_selected_${currentTrainingCase}`;
     if (!window.trainingSelections) window.trainingSelections = {};
@@ -509,8 +581,9 @@ function toggleShapeIndex(index) {
         button.style.background = button.classList.contains('active') ? '#ebebeb' : '#ffffff';
     }
     
-    // Update training scrambles
+    // Update training scrambles and regenerate lookahead
     trainingScrambles = currentSelection;
+    regenerateScrambleLookahead();
     
     // If no indices selected, show warning but don't prevent
     if (currentSelection.length === 0) {
@@ -542,6 +615,7 @@ function selectAllIndices(type) {
     });
     
     trainingScrambles = window.trainingSelections[selectedKey];
+    regenerateScrambleLookahead();
 }
 
 function deselectAllIndices(type) {
@@ -564,6 +638,15 @@ function deselectAllIndices(type) {
     });
     
     trainingScrambles = window.trainingSelections[selectedKey];
+    regenerateScrambleLookahead();
+}
+
+function closeShapeIndexSelector() {
+    const modal = document.getElementById('shapeIndexSelectorModal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
+    }
 }
 
 // Keyboard events for timer
@@ -602,14 +685,98 @@ document.addEventListener('keyup', (e) => {
                 // Show next scramble FIRST, then stop timer
                 displayNextScramble();
                 stopTimerOnly();
-            } else if (isHolding) {
+            } else if (isHolding && isHoldReady) {
                 isHolding = false;
+                isHoldReady = false;
                 timerEl.style.color = '#2d3748';
                 startTimer();
+            } else if (isHolding) {
+                isHolding = false;
+                isHoldReady = false;
+                timerEl.style.color = '#2d3748';
             }
         }
     }
 });
+
+function regenerateScrambleLookahead() {
+    // Clear existing lookahead
+    preGeneratedScrambles = [];
+    
+    // Generate new scrambles
+    for (let i = 0; i < 3; i++) {
+        preGeneratedScrambles.push(generateNextScrambleData());
+    }
+    
+    // Display the first one if we're not showing history
+    if (currentHistoryIndex === scrambleHistory.length - 1 || scrambleHistory.length === 0) {
+        displayNextScramble();
+    }
+}
+
+function openTrainingSettingsModal() {
+    pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
+    
+    let settingsModal = document.getElementById('trainingSettingsModal');
+    if (!settingsModal) {
+        settingsModal = document.createElement('div');
+        settingsModal.id = 'trainingSettingsModal';
+        settingsModal.className = 'training-info-modal';
+        settingsModal.innerHTML = `
+            <div class="training-info-content">
+                <div class="training-info-header">
+                    <span class="training-info-title">Training Settings</span>
+                    <button class="training-info-close" onclick="closeTrainingSettingsModal()">&times;</button>
+                </div>
+                <div class="training-info-body">
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
+                        <input type="range" id="trainingImageSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
+                        <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
+                        <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(settingsModal);
+        
+        // Add event listeners
+        document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
+            trainingScrambleImageSize = parseInt(e.target.value);
+            document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px';
+            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
+            regenerateScrambleLookahead();
+        });
+        
+        document.getElementById('trainingTextSizeSlider').addEventListener('input', (e) => {
+            trainingScrambleTextSize = parseInt(e.target.value);
+            document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
+            localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
+            document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
+        });
+        
+        document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
+            trainingHoldToStart = parseFloat(e.target.value);
+            document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
+            localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
+        });
+    }
+    
+    settingsModal.classList.add('active');
+}
+
+function closeTrainingSettingsModal() {
+    const modal = document.getElementById('trainingSettingsModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
 
 function openTrainingInfoModal() {
     pushModalState('trainingInfoModal', closeTrainingInfoModal);
