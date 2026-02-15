@@ -650,11 +650,15 @@ const originalRender = window.render;
 if (typeof originalRender === 'function') {
     window.render = function () {
         if (typeof showRenderLoader === 'function') showRenderLoader();
-        setTimeout(() => {
-            originalRender();
-            setTimeout(updateSVGScaling, 10);
-            if (typeof hideRenderLoader === 'function') hideRenderLoader();
-        }, 0);
+        // rAF #1: browser schedules a paint (loader appears)
+        requestAnimationFrame(() => {
+            // rAF #2: browser actually committed the paint, NOW do heavy work
+            requestAnimationFrame(() => {
+                originalRender();
+                setTimeout(updateSVGScaling, 10);
+                if (typeof hideRenderLoader === 'function') hideRenderLoader();
+            });
+        });
     };
 }
 

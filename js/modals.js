@@ -609,7 +609,7 @@ function handlePresetChange(presetName) {
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); applyPreset(\`${presetName}\`, false, false).then(() => { openGeneralNotesModal(); }); setTimeout(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); }, 100);" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); openGeneralNotesModal(); }, 100);" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
                     <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
@@ -1667,20 +1667,14 @@ function toggleEditGeneralNotes() {
     const saveBtn = document.getElementById('saveGeneralNotesBtn');
     const infoBtn = document.getElementById('generalNotesInfoBtn');
 
-    if (viewDiv.style.display !== 'none') {
-        // Switch to edit mode
-        viewDiv.style.display = 'none';
-        editDiv.style.display = 'flex';
-        textarea.value = generalNotes;
-        window.originalGeneralNotes = generalNotes; // Store original for comparison
-        editBtn.textContent = 'View';
-        editBtn.style.background = '#6c757d';
-        saveBtn.style.display = 'block';
-        if (infoBtn) infoBtn.style.display = 'flex';
-    } else {
-        // Attempt to switch to view mode (with unsaved changes check)
-        attemptSwitchToViewMode();
-    }
+    // Switch to edit mode
+    viewDiv.style.display = 'none';
+    editDiv.style.display = 'flex';
+    textarea.value = generalNotes;
+    window.originalGeneralNotes = generalNotes;
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'block';
+    if (infoBtn) infoBtn.style.display = 'flex';
 }
 
 function attemptSwitchToViewMode() {
@@ -1715,8 +1709,7 @@ function switchToViewMode() {
 
     viewDiv.style.display = 'block';
     editDiv.style.display = 'none';
-    editBtn.textContent = 'Edit';
-    editBtn.style.background = '#007bff';
+    if (editBtn) { editBtn.style.display = 'block'; }
     saveBtn.style.display = 'none';
     if (infoBtn) infoBtn.style.display = 'none';
     renderGeneralNotes();
@@ -1727,6 +1720,8 @@ function saveGeneralNotes() {
     generalNotes = textarea.value;
     window.originalGeneralNotes = generalNotes;
     saveState();
+    switchToViewMode();
+    showToast('Notes saved!', 2000, 'success');
 }
 
 window.attemptCloseGeneralNotesModal = function () {
@@ -2475,6 +2470,11 @@ window.closeSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
+        // Collapse preset dropdown silently while sidebar slides out
+        const presetOptions = document.getElementById('presetOptions');
+        const expandIcon = document.getElementById('presetExpandIcon');
+        if (presetOptions) presetOptions.style.maxHeight = '0px';
+        if (expandIcon) expandIcon.style.transform = 'rotate(0deg)';
     }
 };
 
