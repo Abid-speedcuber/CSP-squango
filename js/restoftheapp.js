@@ -465,6 +465,20 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     
     render();
     
+    // Force reload shape patterns in parity tracer library
+    if (data.customShapesForParityTracerLibrary) {
+        if (typeof window.ParityTracerLibrary !== 'undefined') {
+            try {
+                const customShapes = JSON.parse(data.customShapesForParityTracerLibrary);
+                if (window.ParityTracerLibrary.updateShapes) {
+                    window.ParityTracerLibrary.updateShapes(customShapes);
+                }
+            } catch (e) {
+                console.error('Error reloading shapes in parity tracer:', e);
+            }
+        }
+    }
+    
     if (!skipWarning && !silent) {
         showToast(`Preset "${presetName}" applied successfully!`, 3000, 'success');
     }
@@ -522,6 +536,19 @@ function exportData() {
 function importData(jsonStr) {
     try {
         const state = JSON.parse(jsonStr);
+        
+        // Force reload shape patterns from imported data FIRST
+        if (state.customShapesForParityTracerLibrary) {
+            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+            // Force the parity tracer library to reload shapes immediately
+            if (typeof window.ParityTracerLibrary !== 'undefined') {
+                const customShapes = JSON.parse(state.customShapesForParityTracerLibrary);
+                // Access the internal shape storage if available
+                if (window.ParityTracerLibrary.updateShapes) {
+                    window.ParityTracerLibrary.updateShapes(customShapes);
+                }
+            }
+        }
         learnedCases = new Set(state.learned || []);
         learningCases = new Set(state.learning || []);
         plannedCases = new Set(state.planned || []);
@@ -568,6 +595,9 @@ function importData(jsonStr) {
         
         generalNotes = state.generalNotes || '';
         
+        // Force invalidate parity calculation cache to trigger recalculation
+        lastParityCalculationSettings = null;
+        
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);
@@ -596,6 +626,12 @@ function importData(jsonStr) {
         }
         saveState();
         updateProgress();
+        
+        // Force recalculate all parity with new settings
+        if (needsParityRecalculation()) {
+            calculateAndCacheAllParity();
+        }
+        
         render();
         showToast('Data imported successfully!', 3000, 'success');
     } catch (e) {
@@ -605,7 +641,14 @@ function importData(jsonStr) {
 
 function handleFileImport(file) {
     const reader = new FileReader();
-    reader.onload = (e) => importData(e.target.result);
+    reader.onload = (e) => {
+        importData(e.target.result);
+        // Reset the file input so the same file can be imported again
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.value = '';
+        }
+    };
     reader.readAsText(file);
 }
 
