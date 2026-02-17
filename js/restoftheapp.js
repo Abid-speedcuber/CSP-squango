@@ -9,7 +9,7 @@ window.PRESET_CONFIG = {
 // Default display names for all 90 cases (used for fresh installs)
 const defaultDisplayNames = {
     "8/Star": "8/Star",
-    "7-1/Star": "7-1/Star",   
+    "7-1/Star": "7-1/Star",
     "6-2/Star": "6-2/Star",
     "5-3/Star": "5-3/Star",
     "4-4/Star": "4-4/Star",
@@ -25,8 +25,8 @@ const defaultDisplayNames = {
     "3-3/Paired Edges": "3-3/Pair",
     "3-3/Parallel Edges": "3-3/Line",
     "3-3/Perpendicular Edges": "3-3/L",
-    "4-1-1/Paired Edges": "4-1-1/Pair",   
-    "4-1-1/Parallel Edges": "4-1-1/Line",    
+    "4-1-1/Paired Edges": "4-1-1/Pair",
+    "4-1-1/Parallel Edges": "4-1-1/Line",
     "4-1-1/Perpendicular Edges": "4-1-1/L",
     "Left 4-2/Paired Edges": "Left 4-2/Pair",
     "Left 4-2/Parallel Edges": "Left 4-2/Line",
@@ -49,7 +49,7 @@ const defaultDisplayNames = {
     "Barrel/Right Fist": "Barrel/Right Fist",
     "Kite/Barrel": "Kite/Barrel",
     "Kite/Kite": "Kite/Kite",
-    "Kite/Square": "kite/Square", 
+    "Kite/Square": "kite/Square",
     "Kite/Left Fist": "Kite/Left Fist",
     "Kite/Right Fist": "Kite/Right Fist",
     "Muffin/Barrel": "Muffin/Barrel",
@@ -58,7 +58,7 @@ const defaultDisplayNames = {
     "Muffin/Square": "Muffin/Square",
     "Muffin/Left Fist": "Muffin/Left Fist",
     "Muffin/Right Fist": "Muffin/Right Fist",
-    "Shield/Barrel": "Shield/Barrel",    
+    "Shield/Barrel": "Shield/Barrel",
     "Shield/Kite": "Shield/Kite",
     "Shield/Muffin": "Shield/Muffin",
     "Shield/Shield": "Shield/Shield",
@@ -76,7 +76,7 @@ const defaultDisplayNames = {
     "Scallop/Left Pawn": "Scallop/Left Pawn",
     "Scallop/Right Pawn": "Scallop/Right Pawn",
     "Square/Square": "Square/Square",
-    "Left Fist/Square": "Left Fist/Square",    
+    "Left Fist/Square": "Left Fist/Square",
     "Left Fist/Left Fist": "Left Fist/Left Fist",
     "Left Fist/Right Fist": "Left Fist/Right Fist",
     "Right Fist/Square": "Right Fist/Square",
@@ -87,16 +87,16 @@ const defaultDisplayNames = {
     "Left Pawn/Shield": "Left Pawn/Shield",
     "Left Pawn/Square": "Left Pawn/Square",
     "Left Pawn/Left Fist": "Left Pawn/Left Fist",
-    "Left Pawn/Right Fist": "Left Pawn/Right Fist",    
+    "Left Pawn/Right Fist": "Left Pawn/Right Fist",
     "Left Pawn/Left Pawn": "Left Pawn/Left Pawn",
-    "Left Pawn/Right Pawn": "Left Pawn/Right Pawn",    
+    "Left Pawn/Right Pawn": "Left Pawn/Right Pawn",
     "Right Pawn/Barrel": "Right Pawn/Barrel",
     "Right Pawn/Kite": "Right Pawn/Kite",
     "Right Pawn/Muffin": "Right Pawn/Muffin",
     "Right Pawn/Shield": "Right Pawn/Shield",
     "Right Pawn/Square": "Right Pawn/Square",
-    "Right Pawn/Left Fist": "Right Pawn/Left Fist",    
-    "Right Pawn/Right Fist": "Right Pawn/Right Fist",   
+    "Right Pawn/Left Fist": "Right Pawn/Left Fist",
+    "Right Pawn/Right Fist": "Right Pawn/Right Fist",
     "Right Pawn/Right Pawn": "Right Pawn/Right Pawn",
 };
 
@@ -113,7 +113,7 @@ let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
 
 // Global function to set corner sticker mode
-window.setCornerStickerMode = function(mode) {
+window.setCornerStickerMode = function (mode) {
     cornerStickerMode = mode;
     saveState();
 };
@@ -155,12 +155,12 @@ const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 
 // Function to calculate and cache parity for all cases
 function calculateAndCacheAllParity() {
-    
+
     if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         console.warn('Parity analyzer not available, skipping parity calculation');
         return;
     }
-    
+
     // Store current settings for comparison
     lastParityCalculationSettings = {
         colorScheme: JSON.stringify(colorScheme),
@@ -168,24 +168,24 @@ function calculateAndCacheAllParity() {
         customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
         customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
     };
-    
+
     for (const item of data) {
         const customAlgs = customAlgorithms.get(item.name);
         const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
         const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
         const allAlgorithms = [...oddAlgos, ...evenAlgos];
-        
+
         let dynamicOddAlgos = [];
         let dynamicEvenAlgos = [];
-        
+
         for (const alg of allAlgorithms) {
             if (!alg || alg.trim() === '') continue;
-            
+
             if (alg === 'Done!') {
                 dynamicEvenAlgos.push(alg);
                 continue;
             }
-            
+
             try {
                 const setup = invertScramble(alg);
                 const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
@@ -196,7 +196,7 @@ function calculateAndCacheAllParity() {
                     backColor: colorScheme.backColor,
                     leftColor: colorScheme.leftColor
                 }, cornerStickerMode);
-                
+
                 if (parityText === 'Odd') {
                     dynamicOddAlgos.push(alg);
                 } else if (parityText === 'Even') {
@@ -206,7 +206,7 @@ function calculateAndCacheAllParity() {
                 console.error('Error testing algorithm:', alg, error);
             }
         }
-        
+
         cachedParityAlgorithms.set(item.name, {
             odd: dynamicOddAlgos,
             even: dynamicEvenAlgos
@@ -217,14 +217,14 @@ function calculateAndCacheAllParity() {
 // Function to check if parity needs recalculation
 function needsParityRecalculation() {
     if (!lastParityCalculationSettings) return true;
-    
+
     const currentSettings = {
         colorScheme: JSON.stringify(colorScheme),
         cornerStickerMode: cornerStickerMode,
         customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
         customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
     };
-    
+
     return (
         currentSettings.colorScheme !== lastParityCalculationSettings.colorScheme ||
         currentSettings.cornerStickerMode !== lastParityCalculationSettings.cornerStickerMode ||
@@ -257,7 +257,7 @@ try {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
-        
+
         // Load display names
         if (state.displayNames) {
             displayNames = state.displayNames;
@@ -271,12 +271,12 @@ try {
             // Legacy migration: if no displayNames, initialize from defaults
             displayNames = { ...defaultDisplayNames };
         }
-        
+
         // Load custom SVG data
         if (state.svgData) {
             window.svgData = state.svgData;
         }
-        
+
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {
             cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
@@ -285,7 +285,7 @@ try {
             lastParityCalculationSettings = state.lastParityCalculationSettings;
         }
     }
-    
+
     // Load enhancedAccess separately (not part of export/import)
     const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
     if (enhancedAccessSaved !== null) {
@@ -312,7 +312,7 @@ function initializeSVGData() {
     if (!window.svgData) {
         window.svgData = { ...DEFAULT_SVGS };
     }
-    
+
     // Ensure all 39 SVG keys exist
     const svgKeys = Object.keys(DEFAULT_SVGS);
     svgKeys.forEach(key => {
@@ -328,10 +328,10 @@ if (isFirstLoad) {
     localStorage.setItem('showHints', 'true');
     showPaths = true;
     enablePriorityLearning = true;
-    
+
     // Initialize display names from defaults
     displayNames = { ...defaultDisplayNames };
-    
+
     saveState();
 }
 
@@ -395,19 +395,19 @@ function getPresetDefaults() {
 async function loadPresetAsDefaults(presetName) {
     const data = await loadPresetData(presetName);
     if (!data) return false;
-    
+
     currentPreset = presetName;
     presetData = data;
     localStorage.setItem('currentPreset', currentPreset);
-    
+
     return true;
 }
 
 // Apply preset (overwrites all user data - only used on first load or explicit switch)
-window.applyPreset = async function(presetName, skipWarning = false, silent = false) {
+window.applyPreset = async function (presetName, skipWarning = false, silent = false) {
     const data = await loadPresetData(presetName);
     if (!data) return;
-    
+
     // PRESERVE user's learning progress AND personal UI preferences:
     // Learning Progress (DON'T overwrite):
     // - learnedCases, learningCases, plannedCases, plannedLevels
@@ -421,43 +421,49 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     // - Training settings (all in localStorage)
     // - Animation settings (all in localStorage)
     // - Parity tracer settings (all in localStorage)
-    
+
     // Apply preset configuration (algorithms, display names, shapes, etc.)
     if (data.displayNames) {
         displayNames = data.displayNames;
     }
-    
+
     // Apply comments from preset (they have tutorial links)
     comments = new Map(Object.entries(data.comments || {}));
-    
+
     // Apply preset color scheme
     colorScheme = data.colorScheme || colorScheme;
-    
+
     // Apply shape patterns from preset
     if (data.customShapesForParityTracerLibrary) {
+        console.log('📦 Applying preset shape patterns...');
+        console.log('🔍 Preset shapes data:', data.customShapesForParityTracerLibrary.substring(0, 200) + '...');
         localStorage.setItem('customShapesForParityTracerLibrary', data.customShapesForParityTracerLibrary);
+        console.log('✅ Saved to localStorage, verifying...');
+        const verified = localStorage.getItem('customShapesForParityTracerLibrary');
+        console.log('🔍 Verified localStorage content:', verified.substring(0, 200) + '...');
+        console.log('✅ Match:', verified === data.customShapesForParityTracerLibrary);
     }
-    
+
     // Apply preset subtitle configurations
     perCaseSubtitles = new Map(Object.entries(data.perCaseSubtitles || {}));
-    
+
     // Apply preset corner sticker mode
     cornerStickerMode = data.cornerStickerMode || 'counterclockwise';
-    
+
     // Apply preset algorithms
     customAlgorithms = new Map(Object.entries(data.customAlgorithms || {}));
-    
+
     // Apply preset SVG data
     if (data.svgData) {
         window.svgData = data.svgData;
     }
-    
+
     // Apply preset parity orientations
     parityOrientations = new Map(Object.entries(data.parityOrientations || {}));
-    
+
     // Apply preset general notes
     generalNotes = data.generalNotes || '';
-    
+
     // Note: We explicitly DON'T apply these from preset - they're personal preferences:
     // - hideInstructions (keep user's preference)
     // - hideParenthesis (keep user's preference)
@@ -465,44 +471,54 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     // - scrambleImageSize (keep user's preference)
     // - showHints (keep user's preference from localStorage)
     // - enhancedAccess (keep user's preference from localStorage)
-    
+
     currentPreset = presetName;
     presetData = data;
-    
+
     // Force invalidate parity cache to trigger recalculation with new settings
     lastParityCalculationSettings = null;
-    
+
     saveState();
     updateProgress();
-    
+
     // Recalculate parity with new settings
     if (needsParityRecalculation()) {
         calculateAndCacheAllParity();
     }
-    
+
     render();
-    
+
     // Force reload shape patterns in parity tracer library
-    if (data.customShapesForParityTracerLibrary) {
-        if (typeof window.ParityTracerLibrary !== 'undefined') {
-            try {
-                const customShapes = JSON.parse(data.customShapesForParityTracerLibrary);
-                if (window.ParityTracerLibrary.updateShapes) {
-                    window.ParityTracerLibrary.updateShapes(customShapes);
+    if (data.customShapesForParityTracerLibrary && typeof window.ParityTracerLibrary !== 'undefined') {
+        console.log('🔄 Forcing parity tracer shapes reload after preset apply...');
+        try {
+            // Force reload from localStorage after we've saved it
+            setTimeout(() => {
+                if (window.ParityTracerLibrary.reloadShapesFromStorage) {
+                    window.ParityTracerLibrary.reloadShapesFromStorage();
+                    console.log('✅ Parity tracer shapes reloaded successfully');
                 }
-            } catch (e) {
-                console.error('Error reloading shapes in parity tracer:', e);
-            }
+            }, 100);
+
+            // Also invalidate any cached parity calculations
+            setTimeout(() => {
+                if (window.ParityTracerLibrary.reloadShapesFromStorage) {
+                    window.ParityTracerLibrary.reloadShapesFromStorage();
+                    console.log('✅ Second reload to ensure shapes are updated');
+                }
+            }, 300);
+        } catch (e) {
+            console.error('❌ Error reloading shapes in parity tracer:', e);
         }
     }
-    
+
     if (!skipWarning && !silent) {
         showToast(`Preset "${presetName}" applied successfully! Your learning progress and personal preferences have been preserved.`, 3000, 'success');
     }
 }
 
 // Initialize preset on load (just loads as defaults, doesn't overwrite user data)
-window.initializePreset = async function() {
+window.initializePreset = async function () {
     const savedPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
     const success = await loadPresetAsDefaults(savedPreset);
     if (!success) {
@@ -553,17 +569,18 @@ function exportData() {
 function importData(jsonStr) {
     try {
         const state = JSON.parse(jsonStr);
-        
+
         // Force reload shape patterns from imported data FIRST
         if (state.customShapesForParityTracerLibrary) {
             localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
             // Force the parity tracer library to reload shapes immediately
             if (typeof window.ParityTracerLibrary !== 'undefined') {
-                const customShapes = JSON.parse(state.customShapesForParityTracerLibrary);
-                // Access the internal shape storage if available
-                if (window.ParityTracerLibrary.updateShapes) {
-                    window.ParityTracerLibrary.updateShapes(customShapes);
-                }
+                setTimeout(() => {
+                    if (window.ParityTracerLibrary.reloadShapesFromStorage) {
+                        console.log('🔄 Forcing parity tracer shapes reload after import');
+                        window.ParityTracerLibrary.reloadShapesFromStorage();
+                    }
+                }, 100);
             }
         }
         learnedCases = new Set(state.learned || []);
@@ -573,7 +590,7 @@ function importData(jsonStr) {
         plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
         parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
         showPaths = true;
-        
+
         // Load display names
         if (state.displayNames) {
             displayNames = state.displayNames;
@@ -596,12 +613,12 @@ function importData(jsonStr) {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
-        
+
         // Load custom SVG data
         if (state.svgData) {
             window.svgData = state.svgData;
         }
-        
+
         // Load cached parity calculations
         if (state.cachedParityAlgorithms) {
             cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
@@ -609,12 +626,12 @@ function importData(jsonStr) {
         if (state.lastParityCalculationSettings) {
             lastParityCalculationSettings = state.lastParityCalculationSettings;
         }
-        
+
         generalNotes = state.generalNotes || '';
-        
+
         // Force invalidate parity calculation cache to trigger recalculation
         lastParityCalculationSettings = null;
-        
+
         if (state.showHints !== undefined) {
             showHints = state.showHints;
             localStorage.setItem('showHints', showHints);
@@ -643,12 +660,12 @@ function importData(jsonStr) {
         }
         saveState();
         updateProgress();
-        
+
         // Force recalculate all parity with new settings
         if (needsParityRecalculation()) {
             calculateAndCacheAllParity();
         }
-        
+
         render();
         showToast('Data imported successfully!', 3000, 'success');
     } catch (e) {
@@ -726,12 +743,12 @@ if (typeof originalRender === 'function') {
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize preset on app load
     await initializePreset();
-    
+
     // Apply default preset silently on first load
     if (isFirstLoad) {
         await applyPreset('Default_Preset', true, true);
     }
-    
+
     // Apply algorithm font size
     if (typeof applyAlgorithmFontSize === 'function') {
         applyAlgorithmFontSize();
@@ -739,24 +756,24 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // Placeholder tool functions - to be implemented
-window.openTrainingSelector = function() {
+window.openTrainingSelector = function () {
     // TODO: Implement training selector
     showToast('Training selector - to be implemented', 2000, 'info');
 };
 
-window.openInvertScrambleModal = function() {
+window.openInvertScrambleModal = function () {
     // TODO: Implement invert scramble modal
     showToast('Invert scramble - to be implemented', 2000, 'info');
 };
 
-window.openAnimateAlgModal = function(algorithm = '', caseName = '', computedParity = '') {
+window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedParity = '') {
     if (typeof window.Square1AlgorithmViewer === 'undefined') {
         showToast('Algorithm viewer library not loaded', 2000, 'error');
         return;
     }
-    
+
     const alg = algorithm || '(0,0)';
-    
+
     // Compute parity if not provided
     let parity = computedParity;
     if (!parity && algorithm && algorithm !== 'Done!') {
@@ -775,7 +792,7 @@ window.openAnimateAlgModal = function(algorithm = '', caseName = '', computedPar
             parity = '';
         }
     }
-    
+
     const html = window.Square1AlgorithmViewer.createViewer(alg, {
         topColor: colorScheme.topColor,
         bottomColor: colorScheme.bottomColor,
@@ -784,7 +801,7 @@ window.openAnimateAlgModal = function(algorithm = '', caseName = '', computedPar
         backColor: colorScheme.backColor,
         leftColor: colorScheme.leftColor
     }, scrambleImageSize, caseName, parity);
-    
+
     document.body.insertAdjacentHTML('beforeend', html);
 };
 
@@ -792,7 +809,7 @@ window.openAnimateAlgModal = function(algorithm = '', caseName = '', computedPar
 function applyTopbarVWScaling() {
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
-    
+
     if (window.innerWidth <= 480) {
         topbar.classList.add('topbar-vw-mode');
     } else {

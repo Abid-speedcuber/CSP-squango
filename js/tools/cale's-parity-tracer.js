@@ -413,6 +413,12 @@
     }
 
     function matchPatternWithRotationCheckingWithLongName(typeStr) {
+        // Ensure we're using current shapes, not stale cache
+        if (!currentShapePatternsStorageWithLongName || Object.keys(currentShapePatternsStorageWithLongName).length === 0) {
+            console.warn('⚠️ Shape patterns cache empty, reloading...');
+            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        }
+
         // Define symmetric shapes and their symmetry degrees
         const symmetricShapes = {
             'Square': 4,
@@ -2311,6 +2317,9 @@
 
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
     function createSquareOneParityTracerModalWithAllParametersIncluded(options = {}) {
+        // CRITICAL: Always reload shapes from storage when modal opens
+        currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+
         const config = {
             backgroundColor: options.backgroundColor || '#ffffff',
             hideInstructionButton: options.hideInstructionButton || false,
@@ -2777,6 +2786,9 @@
             backdrop.addEventListener('scroll', updateButtonPositions);
 
             function performAnalysisWithLongName() {
+                // Ensure we have the latest shapes before analysis
+                currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+
                 let scrambleText = scrambleInput.value.trim();
                 // Store in a scope accessible to button handlers
                 window.currentParityTracerScramble = scrambleText;
@@ -3125,12 +3137,19 @@
     globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
         openConfigModal: showConfigurationModalWithLongName,
+        reloadShapesFromStorage: function () {
+            // Force reload shape patterns from localStorage
+            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        },
         version: '2.0.0'
     };
 
     // Export parity analysis function for use by other parts of the app
     globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
         getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
+            // Always use fresh shapes from storage
+            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+
             try {
                 const state = applyScrambleToStateArrayWithLongName(scrambleText);
                 const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
