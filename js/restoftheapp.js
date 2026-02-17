@@ -408,57 +408,74 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     const data = await loadPresetData(presetName);
     if (!data) return;
     
-    // Apply all preset data
-    learnedCases = new Set(data.learned || []);
-    learningCases = new Set(data.learning || []);
-    plannedCases = new Set(data.planned || []);
-    comments = new Map(Object.entries(data.comments || {}));
-    plannedLevels = new Map(Object.entries(data.plannedLevels || {}));
-    parityOrientations = new Map(Object.entries(data.parityOrientations || {}));
+    // PRESERVE user's learning progress AND personal UI preferences:
+    // Learning Progress (DON'T overwrite):
+    // - learnedCases, learningCases, plannedCases, plannedLevels
+    //
+    // Personal UI/UX Preferences (DON'T overwrite):
+    // - hideInstructions, hideParenthesis
+    // - algorithmFontSize (stored in localStorage)
+    // - scrambleImageSize
+    // - showHints (stored in localStorage)
+    // - enhancedAccess (stored in localStorage)
+    // - Training settings (all in localStorage)
+    // - Animation settings (all in localStorage)
+    // - Parity tracer settings (all in localStorage)
     
+    // Apply preset configuration (algorithms, display names, shapes, etc.)
     if (data.displayNames) {
         displayNames = data.displayNames;
     }
     
-    hideInstructions = data.hideInstructions || false;
-    hideParenthesis = false;
-    colorScheme = data.colorScheme || colorScheme;
-    scrambleImageSize = data.scrambleImageSize || 200;
+    // Apply comments from preset (they have tutorial links)
+    comments = new Map(Object.entries(data.comments || {}));
     
+    // Apply preset color scheme
+    colorScheme = data.colorScheme || colorScheme;
+    
+    // Apply shape patterns from preset
     if (data.customShapesForParityTracerLibrary) {
         localStorage.setItem('customShapesForParityTracerLibrary', data.customShapesForParityTracerLibrary);
     }
     
+    // Apply preset subtitle configurations
     perCaseSubtitles = new Map(Object.entries(data.perCaseSubtitles || {}));
-    cornerStickerMode = data.cornerStickerMode || 'counterclockwise';
-    customAlgorithms = new Map(Object.entries(data.customAlgorithms || {}));
-    generalNotes = data.generalNotes || '';
     
+    // Apply preset corner sticker mode
+    cornerStickerMode = data.cornerStickerMode || 'counterclockwise';
+    
+    // Apply preset algorithms
+    customAlgorithms = new Map(Object.entries(data.customAlgorithms || {}));
+    
+    // Apply preset SVG data
     if (data.svgData) {
         window.svgData = data.svgData;
     }
     
-    if (data.cachedParityAlgorithms) {
-        cachedParityAlgorithms = new Map(Object.entries(data.cachedParityAlgorithms));
-    }
+    // Apply preset parity orientations
+    parityOrientations = new Map(Object.entries(data.parityOrientations || {}));
     
-    if (data.lastParityCalculationSettings) {
-        lastParityCalculationSettings = data.lastParityCalculationSettings;
-    }
+    // Apply preset general notes
+    generalNotes = data.generalNotes || '';
     
-    if (data.showHints !== undefined) {
-        showHints = data.showHints;
-        localStorage.setItem('showHints', showHints);
-        applyHintVisibility();
-    }
+    // Note: We explicitly DON'T apply these from preset - they're personal preferences:
+    // - hideInstructions (keep user's preference)
+    // - hideParenthesis (keep user's preference)
+    // - algorithmFontSize (keep user's preference from localStorage)
+    // - scrambleImageSize (keep user's preference)
+    // - showHints (keep user's preference from localStorage)
+    // - enhancedAccess (keep user's preference from localStorage)
     
     currentPreset = presetName;
     presetData = data;
     
+    // Force invalidate parity cache to trigger recalculation with new settings
+    lastParityCalculationSettings = null;
+    
     saveState();
     updateProgress();
     
-    // Recalculate parity
+    // Recalculate parity with new settings
     if (needsParityRecalculation()) {
         calculateAndCacheAllParity();
     }
@@ -480,7 +497,7 @@ window.applyPreset = async function(presetName, skipWarning = false, silent = fa
     }
     
     if (!skipWarning && !silent) {
-        showToast(`Preset "${presetName}" applied successfully!`, 3000, 'success');
+        showToast(`Preset "${presetName}" applied successfully! Your learning progress and personal preferences have been preserved.`, 3000, 'success');
     }
 }
 
