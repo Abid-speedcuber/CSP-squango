@@ -423,14 +423,15 @@ select {
     width: 100%;
     height: 100vh;
     background-color: rgba(0, 0, 0, 0.6);
-    align-items: center;
-    justify-content: center;
-    padding: 16px;
+    padding: 0;
+    overflow-y: auto;
 }
 
 .modal.active,
 .parity-analysis-modal.active {
     display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .parity-analysis-modal {
@@ -457,6 +458,13 @@ body.modal-open .floating-buttons-container {
 .app-sidebar.active {
     opacity: 1;
     pointer-events: all;
+}
+
+body.sidebar-open {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    overflow: hidden;
 }
 
 .sidebar-overlay {

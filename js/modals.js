@@ -25,7 +25,7 @@ function generateModalHTML() {
 
     modalContainer.innerHTML = `
         <div id="settingsModal" class="modal">
-            <div class="modal-content" style="max-width: 480px; margin-top: 50px; max-height: 85vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
+            <div class="modal-content" style="max-width: 480px; max-height: 80vh; min-height: 20vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
                 <div class="modal-header" style="flex-shrink: 0; background: white; color: #2d3748; padding: 24px 28px; border-bottom: 2px solid #e9ecef;">
                     <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">Personalization</span>
                     <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
@@ -136,7 +136,7 @@ function generateModalHTML() {
         </div>
 
         <div id="colorSchemeModal" class="modal">
-            <div class="modal-content" style="max-width: 500px; margin-top: 50px;">
+            <div class="modal-content" style="max-width: 500px; max-height: 80vh; min-height: 20vh;">
                 <div class="modal-header">
                     <span class="modal-title">Color Scheme Settings</span>
                     <button class="close-btn" onclick="closeColorSchemeModal()">&times;</button>
@@ -290,7 +290,6 @@ function generateModalHTML() {
         <div id="aboutModal" class="modal">
   <div class="modal-content" style="
       max-width: 700px;
-      margin-top: 60px;
       border-radius: 14px;
       overflow: hidden;
       background: #ffffff;
@@ -596,7 +595,7 @@ function handlePresetChange(presetName) {
     warningModal.className = 'modal active';
     warningModal.style.zIndex = '10002';
     warningModal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px; margin-top: 80px;">
+        <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header" style="background: #ffffffff; border-bottom: 2px solid #dadadaff;">
                 <span class="modal-title" style="color: #330000ff;">Warning: Data Loss</span>
                 <button class="close-btn" onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;">&times;</button>
@@ -890,7 +889,7 @@ function openEditCaseModal(caseName) {
     modal.className = 'modal active';
     modal.id = 'editCaseModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; min-height: 20vh;">
             <div class="modal-header">
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px;">
@@ -1169,7 +1168,8 @@ window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = 
     renameModal.id = 'caseRenameModal';
     renameModal.style.zIndex = '10002';
     renameModal.innerHTML = `
-        <div class="modal-content" style="max-width: 500px; margin-top: 100px;">
+        <div class="modal-content" style="max-width: 500px;
+        ">
             <div class="modal-header">
                 <span class="modal-title">Edit Case Name & Subtitle</span>
                 <button class="close-btn" onclick="closeCaseRenameModal()">&times;</button>
@@ -1441,7 +1441,7 @@ function openNotesModal(caseName) {
     modal.className = 'modal active';
     modal.id = 'notesModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 600px; margin-top: 50px;">
+        <div class="modal-content" style="max-width: 600px; max-height: 80vh; min-height: 20vh;">
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
@@ -1654,7 +1654,7 @@ function renderGeneralNotes() {
                 script.parentNode.replaceChild(newScript, script);
             });
         } else {
-            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center; margin-top: 50px;">No notes yet. Click Edit to add your first note!</p>';
+            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center; max-height: 80vh; min-height: 20vh;">No notes yet. Click Edit to add your first note!</p>';
         }
     }
 }
@@ -2462,6 +2462,15 @@ window.toggleSidebar = function () {
     generateSidebarHTML();
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
+        const isOpening = !sidebar.classList.contains('active');
+        
+        if (isOpening) {
+            // Opening sidebar - lock scroll
+            window.sidebarScrollY = window.scrollY;
+            document.body.style.top = `-${window.sidebarScrollY}px`;
+            document.body.classList.add('sidebar-open');
+        }
+        
         sidebar.classList.toggle('active');
     }
 };
@@ -2470,6 +2479,12 @@ window.closeSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
+        
+        // Unlock scroll
+        document.body.classList.remove('sidebar-open');
+        document.body.style.top = '';
+        window.scrollTo(0, window.sidebarScrollY || 0);
+        
         // Collapse preset dropdown silently while sidebar slides out
         const presetOptions = document.getElementById('presetOptions');
         const expandIcon = document.getElementById('presetExpandIcon');
