@@ -212,8 +212,8 @@
                 "Parity monster is hiding under your bed!!",
                 "#BanMattsMuffinTracing!!!",
                 "#BanMatts5-1Tracing!!!",
-                "The name Square-1 is the short of /\"Back to square 1\", one of the original names of the puzzle!",
-                "The earliest names of Square-1 was /\"Back to square 1\", and /\"Cube 21\"",
+                "The name Square-1 is the short of \"Back to square 1\", one of the original names of the puzzle!",
+                "The earliest names of Square-1 was \"Back to square 1\", and \"Cube 21\"",
                 "Square-1 was one of the OG events of wca, added in 2005- one year after the creation of wca",
                 "The first square-1 average world record was by Lars Vandenbergh of 33.21s in Dutch Open 2004",
                 "The first square-1 world record was by Lars Vandenbergh of 41.80s in World Championship 2003",
@@ -290,7 +290,7 @@
         // Select and display a random tip
         const tipElement = document.createElement('p');
         tipElement.id = 'loadingTip';
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 90vw; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 90vw; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box; white-space: normal; overflow-wrap: break-word;';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
@@ -361,16 +361,32 @@ if (profileBtn) {
             const searchInput = document.getElementById('search');
             const controls = document.querySelector('.controls');
             
+            console.log('[Search] Init check:', { searchToggle: !!searchToggle, searchInput: !!searchInput, controls: !!controls });
+            console.log('[Search] Window width:', window.innerWidth);
+            console.log('[Search] searchToggle computed display:', searchToggle ? getComputedStyle(searchToggle).display : 'N/A');
+
             if (searchToggle && controls && searchInput) {
-                searchToggle.onclick = (e) => {
+                console.log('[Search] Elements found:', { searchToggle, controls, searchInput });
+                searchToggle.onmousedown = (e) => {
+                    e.preventDefault();
                     e.stopPropagation();
+                    console.log('[Search] Toggle clicked. Current classes:', controls.className);
                     const isExpanded = controls.classList.toggle('search-expanded');
+                    console.log('[Search] After toggle. isExpanded:', isExpanded, 'Classes:', controls.className);
                     
                     if (isExpanded) {
-                        // Focus search input when expanded
-                        setTimeout(() => searchInput.focus(), 100);
+                        console.log('[Search] Expanding - attempting focus...');
+                        setTimeout(() => {
+                            console.log('[Search] Input styles:', {
+                                width: getComputedStyle(searchInput).width,
+                                opacity: getComputedStyle(searchInput).opacity,
+                                pointerEvents: getComputedStyle(searchInput).pointerEvents,
+                                position: getComputedStyle(searchInput).position,
+                            });
+                            searchInput.focus();
+                        }, 100);
                     } else {
-                        // Clear and blur when collapsed
+                        console.log('[Search] Collapsing');
                         searchInput.blur();
                     }
                 };
@@ -379,7 +395,7 @@ if (profileBtn) {
                 document.addEventListener('click', (e) => {
                     if (controls.classList.contains('search-expanded') && 
                         !controls.contains(e.target) && 
-                        e.target !== searchToggle) {
+                        !searchToggle.contains(e.target)) {
                         controls.classList.remove('search-expanded');
                         searchInput.blur();
                     }
