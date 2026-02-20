@@ -370,6 +370,7 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     }
 
     displayNextScramble();
+    if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 
     modal.classList.add('active');
     document.body.classList.add('modal-open');
@@ -459,6 +460,9 @@ window.closeTrainingModal = function () {
 
     modal.classList.remove('active');
     document.body.classList.remove('modal-open');
+
+    const bar = document.getElementById('prevScrambleBar');
+    if (bar) bar.style.display = 'none';
 
     if (timerRunning) stopTimerOnly();
 

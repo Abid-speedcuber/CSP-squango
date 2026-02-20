@@ -28,7 +28,7 @@ function createTrainingModal() {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: #007bff; text-decoration: underline;" title="Click to select shape indices">Training: Case Name</button>
+                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: #007bff; text-decoration: underline;" title="Click to select angles to train">Training: Case Name</button>
                 <button class="training-modal-info training-info-btn" id="trainingInfoBtn" title="Training mode help">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -60,15 +60,15 @@ function createTrainingModal() {
             </div>
         </div>
         <div class="training-modal-scramble" id="trainingScramble" title="Click to analyze parity">Loading...</div>
-        <div id="multiCaseSub" style="flex-shrink:0; text-align:center; font-size:0.8rem; color:#888; padding:3px 16px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:none;"></div>
         <div class="training-modal-timer-zone" id="trainingTimerZone">
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="trainingScrambleImage"></div>
             </div>
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
         </div>
+    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; background:#f0f0f0; border-top:1px solid #e0e0e0; font-family:Consolas,Monaco,'Courier New',monospace; color:#666; text-align:center; z-index:10001; box-sizing:border-box;"></div>
     `;
-
+    
     document.body.appendChild(modal);
     trainingModalElement = modal;
 
@@ -186,7 +186,8 @@ function openTrainingModal(caseName) {
     }
 
     displayNextScramble();
-
+    applyPrevScrambleBar();
+    
     modal.classList.add('active');
     document.body.classList.add('modal-open');
 }
@@ -294,25 +295,45 @@ function displayNextScramble() {
     setTimeout(() => {
         preGeneratedScrambles.push(generateNextScrambleData());
     }, 0);
+
+    applyPrevScrambleBar();
 }
 
 function previousScramble() {
     if (currentHistoryIndex <= 0) return; // No previous scramble
-
+    
     stopTimerOnly();
     currentHistoryIndex--;
-
+    
     const scrambleData = scrambleHistory[currentHistoryIndex];
     currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
     const scrambleEl = document.getElementById('trainingScramble');
     scrambleEl.innerHTML = scrambleData.text;
     scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
     document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
+    applyPrevScrambleBar();
 }
 
 function nextScrambleManual() {
     stopTimerOnly();
     displayNextScramble();
+}
+
+function applyPrevScrambleBar() {
+    const bar = document.getElementById('prevScrambleBar');
+    if (!bar) return;
+    const trainingActive = document.getElementById('trainingModal')?.classList.contains('active');
+    const enabled = localStorage.getItem('trainingShowPrevScramble') === 'true';
+    if (!enabled || !trainingActive) { bar.style.display = 'none'; return; }
+    bar.style.display = 'block';
+    const prevIdx = currentHistoryIndex - 1;
+    const smaller = (trainingScrambleTextSize - 2) + 'px';
+    bar.style.fontSize = smaller;
+    if (prevIdx < 0 || !scrambleHistory[prevIdx]) {
+        bar.innerHTML = '<span style="color:#999; font-style:italic; font-family:inherit;">Previous scramble: —</span>';
+    } else {
+        bar.innerHTML = `<span style="color:#999; font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
+    }
 }
 
 function regenerateScrambleLookaheadLegacy() {
@@ -503,7 +524,7 @@ function openShapeIndexSelector() {
         selectorModal.innerHTML = `
             <div class="shape-index-selector-content">
                 <div class="shape-index-selector-header">
-                    <span class="shape-index-selector-title">Select Shape Indices</span>
+                    <span class="shape-index-selector-title">Select Angles to Train</span>
                     <button class="shape-index-selector-close" onclick="closeShapeIndexSelector()">&times;</button>
                 </div>
                 <div class="shape-index-selector-body" id="shapeIndexSelectorBody"></div>
@@ -520,7 +541,7 @@ function openShapeIndexSelector() {
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
         const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#000000', '#FFFFFF', 2, -4);
+        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
                     data-index="${idx}" 
@@ -534,7 +555,7 @@ function openShapeIndexSelector() {
 
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
         const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#000000', '#FFFFFF', 2, -4);
+        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
                     data-index="${idx}" 
@@ -676,6 +697,13 @@ document.addEventListener('keydown', (e) => {
 
     if (e.code === 'Escape') {
         e.preventDefault();
+        // If any sub-modal is open, close that first
+        const infoModal = document.getElementById('trainingInfoModal');
+        const settingsModal = document.getElementById('trainingSettingsModal');
+        const shapeModal = document.getElementById('shapeIndexSelectorModal');
+        if (infoModal && infoModal.classList.contains('active')) { closeTrainingInfoModal(); return; }
+        if (settingsModal && settingsModal.classList.contains('active')) { closeTrainingSettingsModal(); return; }
+        if (shapeModal && shapeModal.classList.contains('active')) { closeShapeIndexSelector(); return; }
         closeTrainingModal();
         return;
     }
@@ -797,10 +825,28 @@ function openTrainingSettingsModal() {
                         <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
                     </div>
                 </div>
+                    <div style="margin-bottom: 20px; padding: 0 25px;">
+                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:#2d3748; cursor:pointer;">
+                            <input type="checkbox" id="trainingShowPrevScramble" style="transform:scale(1.3); cursor:pointer;">
+                            Show previous scramble at bottom
+                        </label>
+                    </div>
+                </div>
             </div>
         `;
         document.body.appendChild(settingsModal);
 
+        // Restore checkbox state
+        const showPrevSaved = localStorage.getItem('trainingShowPrevScramble');
+        const showPrevCheckbox = document.getElementById('trainingShowPrevScramble');
+        if (showPrevCheckbox) {
+            showPrevCheckbox.checked = showPrevSaved === 'true';
+            showPrevCheckbox.addEventListener('change', (e) => {
+                localStorage.setItem('trainingShowPrevScramble', e.target.checked);
+                applyPrevScrambleBar();
+            });
+        }
+        
         // Add event listeners
         document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
             trainingScrambleImageSize = parseInt(e.target.value);
