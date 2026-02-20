@@ -37,7 +37,7 @@ function generateModalHTML() {
                                 <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Show/hide the blue and red numbers from the case images to help you trace parity using Kale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
+                                    <span class="info-box">Show/hide the blue and red numbers from the case images to help you trace parity using Cale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.3); cursor: pointer;">
@@ -92,7 +92,7 @@ function generateModalHTML() {
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
-                                    <span class="info-box">Your color scheme will be used in parity tracing and training.</span>
+                                    <span class="info-box">Changes the color scheme of your squan. Impacts parity tracing and training.</span>
                                 </span>
                             </div>
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
@@ -774,7 +774,7 @@ function openNewParityAnalysis(scramble) {
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
-        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
+        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
         instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
         topColor: colorScheme.topColor,
@@ -2283,7 +2283,7 @@ function openParityTracingPersonalization() {
     const config = {
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
-        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
+        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
         instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
         topLayerMainColor: colorScheme.topColor,
