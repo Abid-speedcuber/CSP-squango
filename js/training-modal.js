@@ -485,6 +485,7 @@ function updateTimerDisplay() {
 
 // Shape Index Selector Functions
 function openShapeIndexSelector() {
+    if (window._multiCaseMode) return;
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
 
@@ -682,6 +683,7 @@ document.addEventListener('keydown', (e) => {
     // Any key stops the timer if running
     if (timerRunning) {
         e.preventDefault();
+        if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return; // handled in keyup
         displayNextScramble();
         stopTimerOnly();
         spacePressed = false;
@@ -720,13 +722,35 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     const modal = document.getElementById('trainingModal');
     if (!modal || !modal.classList.contains('active')) return;
+    
+    if (e.code === 'ArrowRight') {
+        e.preventDefault();
+        if (timerRunning) {
+            displayNextScramble();
+            stopTimerOnly();
+        } else {
+            nextScrambleManual();
+        }
+        return;
+    }
+
+    if (e.code === 'ArrowLeft') {
+        e.preventDefault();
+        if (timerRunning) {
+            displayNextScramble();
+            stopTimerOnly();
+        } else {
+            previousScramble();
+        }
+        return;
+    }
 
     if (e.code === 'Space') {
         e.preventDefault();
         if (spacePressed) {
             spacePressed = false;
             const timerEl = document.getElementById('trainingTimer');
-
+            
             if (isHolding && isHoldReady) {
                 isHolding = false;
                 isHoldReady = false;

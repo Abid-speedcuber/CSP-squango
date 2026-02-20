@@ -581,7 +581,37 @@ function closeSettingsModal() {
 }
 
 function handlePresetChange(presetName) {
-    if (presetName === currentPreset) return;
+    const isSamePreset = presetName === currentPreset;
+
+    if (isSamePreset) {
+        const reloadModal = document.createElement('div');
+        reloadModal.className = 'modal active';
+        reloadModal.style.zIndex = '10002';
+        reloadModal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header" style="background: #fff; border-bottom: 2px solid #ddd;">
+                    <span class="modal-title">Reload ${presetName.replace(/_/g, ' ')}?</span>
+                    <button class="close-btn" onclick="this.closest('.modal').remove();">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: #333;">
+                        Reloading will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
+                        It will <strong>replace</strong> your algorithms, display names, notes, color scheme, SVG data, and subtitles with the preset's version.
+                    </p>
+                    <p style="font-weight: 500;">
+                        We recommend exporting your data before reloading.
+                    </p> <br>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                        <button onclick="exportData(); showToast('Data exported! You can now safely reload.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6ca; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Export First</button>
+                        <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: #f2dadc; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reload Anyway</button>
+                        <button onclick="this.closest('.modal').remove();" style="padding: 10px 20px; background: #bfc8d0; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(reloadModal);
+        return;
+    }
 
     // Validate preset exists in config
     if (typeof window.PRESET_CONFIG === 'undefined' || !window.PRESET_CONFIG[presetName]) {
@@ -602,7 +632,8 @@ function handlePresetChange(presetName) {
             </div>
             <div class="modal-body">
                 <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: #333;">
-                    Switching to "<strong>${presetName}</strong>" preset will <strong>replace ALL your current data.</strong> We strongly recommend exporting your current data first.
+                    Switching to "<strong>${presetName}</strong>" will <strong>keep</strong> your learning progress and personal preferences.<br><br>
+                    It will <strong>replace</strong> your algorithms, display names, notes, color scheme, SVG data, and subtitles with the new preset's version. We recommend exporting your data first.
                 </p>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
@@ -1589,7 +1620,7 @@ function openGeneralNotesModal() {
     modal.className = 'modal active';
     modal.id = 'generalNotesModal';
     modal.innerHTML = `
-        <div class="modal-content" style="max-width: 900px; height: 90vh; margin-top: 30px; display: flex; flex-direction: column;">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh; height: 85vh; display: flex; flex-direction: column;">
             <div class="modal-header" style="flex-shrink: 0;">
                 <span class="modal-title">General Notes</span>
                 <div style="display: flex; gap: 10px; align-items: center;">
