@@ -279,11 +279,14 @@ window.toggleSelectorCase = function (caseName) {
     }
     saveSelectorSelection();
     renderSelectorCases();
-    // Live-update running training
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
         updateMultiTrainingTitle();
-        regenerateMultiScrambleLookahead();
+        // Only regenerate if the currently showing scramble's case was deselected
+        const current = scrambleHistory[currentHistoryIndex];
+        if (current && current.caseName === caseName && !selectorSelectedCases.has(caseName)) {
+            regenerateMultiScrambleLookahead();
+        }
     }
 };
 
@@ -328,7 +331,11 @@ window.applySelectorBulkAction = function (action) {
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
         updateMultiTrainingTitle();
-        regenerateMultiScrambleLookahead();
+        // Only regenerate if the currently showing scramble's case is no longer selected
+        const current = scrambleHistory[currentHistoryIndex];
+        if (current && current.caseName && !selectorSelectedCases.has(current.caseName)) {
+            regenerateMultiScrambleLookahead();
+        }
     }
 };
 
@@ -370,10 +377,10 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     }
 
     displayNextScramble();
-    if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 
     modal.classList.add('active');
     document.body.classList.add('modal-open');
+    if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
 
 function updateMultiTrainingTitle() {

@@ -66,7 +66,7 @@ function createTrainingModal() {
             </div>
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
         </div>
-    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; background:#f0f0f0; border-top:1px solid #e0e0e0; font-family:Consolas,Monaco,'Courier New',monospace; color:#666; text-align:center; z-index:10001; box-sizing:border-box;"></div>
+    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; background:#f0f0f0; border-top:1px solid #e0e0e0; font-family:Consolas,Monaco,'Courier New',monospace; color:#666; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color:#bbb; font-style:italic;">No previous scramble to show</span></div>
     `;
     
     document.body.appendChild(modal);
@@ -186,10 +186,10 @@ function openTrainingModal(caseName) {
     }
 
     displayNextScramble();
-    applyPrevScrambleBar();
     
     modal.classList.add('active');
     document.body.classList.add('modal-open');
+    applyPrevScrambleBar();
 }
 
 function closeTrainingModal() {
@@ -324,13 +324,12 @@ function applyPrevScrambleBar() {
     if (!bar) return;
     const trainingActive = document.getElementById('trainingModal')?.classList.contains('active');
     const enabled = localStorage.getItem('trainingShowPrevScramble') === 'true';
+    bar.style.fontSize = Math.max(10, trainingScrambleTextSize - 2) + 'px';
     if (!enabled || !trainingActive) { bar.style.display = 'none'; return; }
     bar.style.display = 'block';
     const prevIdx = currentHistoryIndex - 1;
-    const smaller = (trainingScrambleTextSize - 2) + 'px';
-    bar.style.fontSize = smaller;
     if (prevIdx < 0 || !scrambleHistory[prevIdx]) {
-        bar.innerHTML = '<span style="color:#999; font-style:italic; font-family:inherit;">Previous scramble: —</span>';
+        bar.innerHTML = '<span style="color:#bbb; font-style:italic; font-family:inherit;">No previous scramble to show</span>';
     } else {
         bar.innerHTML = `<span style="color:#999; font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
     }
@@ -701,9 +700,11 @@ document.addEventListener('keydown', (e) => {
         const infoModal = document.getElementById('trainingInfoModal');
         const settingsModal = document.getElementById('trainingSettingsModal');
         const shapeModal = document.getElementById('shapeIndexSelectorModal');
+        const selectorModal = document.getElementById('trainingSelectorModal');
         if (infoModal && infoModal.classList.contains('active')) { closeTrainingInfoModal(); return; }
         if (settingsModal && settingsModal.classList.contains('active')) { closeTrainingSettingsModal(); return; }
         if (shapeModal && shapeModal.classList.contains('active')) { closeShapeIndexSelector(); return; }
+        if (selectorModal && selectorModal.style.display !== 'none') { closeSelectorModal(); return; }
         closeTrainingModal();
         return;
     }
@@ -861,6 +862,7 @@ function openTrainingSettingsModal() {
             document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
             localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
             document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
+            applyPrevScrambleBar();
         });
 
         document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
