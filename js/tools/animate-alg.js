@@ -977,7 +977,7 @@
             const step = state.steps[state.currentStep];
             const hex = getHexForStep(step, state.animateBothLayers);
             let visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
-            
+
             // Apply vertical display transformation if enabled
             if (state.verticalDisplay) {
                 const wrapper = document.createElement('div');
@@ -1033,13 +1033,13 @@
 
         function applyVerticalDisplayIfEnabled(container) {
             if (!state.verticalDisplay) return;
-            
+
             const flexDiv = container.querySelector('div[style*="display: flex"]');
             if (!flexDiv) return;
-            
+
             const currentStyle = flexDiv.getAttribute('style');
             flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-            
+
             const svgs = flexDiv.querySelectorAll('svg');
             svgs.forEach((svg, index) => {
                 if (index === 1) {

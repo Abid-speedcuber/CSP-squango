@@ -556,6 +556,8 @@ function exportData() {
         trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
         trainingHoldToStart: localStorage.getItem('trainingHoldToStart')
     };
+    // Let training-selector.js add its data
+    if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -628,6 +630,9 @@ function importData(jsonStr) {
         }
 
         generalNotes = state.generalNotes || '';
+
+        // Import selector selections
+        if (typeof window.selectorImportHook === 'function') window.selectorImportHook(state);
 
         // Force invalidate parity calculation cache to trigger recalculation
         lastParityCalculationSettings = null;
@@ -754,12 +759,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyAlgorithmFontSize();
     }
 });
-
-// Placeholder tool functions - to be implemented
-window.openTrainingSelector = function () {
-    // TODO: Implement training selector
-    showToast('Training selector - to be implemented', 2000, 'info');
-};
 
 window.openInvertScrambleModal = function () {
     // TODO: Implement invert scramble modal

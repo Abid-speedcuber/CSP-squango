@@ -6,20 +6,20 @@
 
 const SVGEditor = {
     state: {
-    currentSvg: null,
-    selectedElements: new Set(),
-    dragging: false,
-    dragStart: { x: 0, y: 0 },
-    elementStarts: new Map(),
-    histories: {},
-    historyIndices: {},
-    isSidebarCollapsed: false,
-    touchStartPos: null,
-    currentZoom: 100,
-    keysPressed: new Set(),
-    keyMoveInterval: null,
-    unsavedSvgs: new Set()
-},
+        currentSvg: null,
+        selectedElements: new Set(),
+        dragging: false,
+        dragStart: { x: 0, y: 0 },
+        elementStarts: new Map(),
+        histories: {},
+        historyIndices: {},
+        isSidebarCollapsed: false,
+        touchStartPos: null,
+        currentZoom: 100,
+        keysPressed: new Set(),
+        keyMoveInterval: null,
+        unsavedSvgs: new Set()
+    },
 
     init() {
         this.createEditorHTML();
@@ -104,64 +104,64 @@ const SVGEditor = {
         if (zoomSlider) {
             zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
         }
-        
+
         // Setup zoom controls on canvas
         this.setupZoomControls();
 
         // Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
-    if (!document.getElementById('svgEditorModal') || 
-        document.getElementById('svgEditorModal').style.display === 'none') return;
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('svgEditorModal') ||
+                document.getElementById('svgEditorModal').style.display === 'none') return;
 
-    if (e.key === 'Escape') {
-        this.close();
-    } else if (e.ctrlKey && e.key === 'z') {
-        e.preventDefault();
-        this.undo();
-    } else if (e.ctrlKey && e.key === 'y') {
-        e.preventDefault();
-        this.redo();
-    } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        if (this.state.selectedElements.size > 0) {
-            e.preventDefault();
-            this.state.keysPressed.add(e.key);
-            
-            // Start continuous movement if not already running
-            if (!this.state.keyMoveInterval) {
-                this.startKeyboardMovement();
-            }
-        }
-    } else if (e.key === 'Tab') {
-        if (this.state.currentSvg !== null) {
-            e.preventDefault();
-            this.selectNextElement(e.shiftKey);
-        }
-    }
-});
+            if (e.key === 'Escape') {
+                this.close();
+            } else if (e.ctrlKey && e.key === 'z') {
+                e.preventDefault();
+                this.undo();
+            } else if (e.ctrlKey && e.key === 'y') {
+                e.preventDefault();
+                this.redo();
+            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                if (this.state.selectedElements.size > 0) {
+                    e.preventDefault();
+                    this.state.keysPressed.add(e.key);
 
-document.addEventListener('keyup', (e) => {
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-        this.state.keysPressed.delete(e.key);
-        
-        // Stop movement if no arrow keys are pressed
-        if (this.state.keysPressed.size === 0 && this.state.keyMoveInterval) {
-            clearInterval(this.state.keyMoveInterval);
-            this.state.keyMoveInterval = null;
-            
-            // Save history after movement stops
-            const svg = document.querySelector('#svgEditorCanvas svg');
-            if (svg) {
-                this.saveHistory(this.cloneSVG(svg));
+                    // Start continuous movement if not already running
+                    if (!this.state.keyMoveInterval) {
+                        this.startKeyboardMovement();
+                    }
+                }
+            } else if (e.key === 'Tab') {
+                if (this.state.currentSvg !== null) {
+                    e.preventDefault();
+                    this.selectNextElement(e.shiftKey);
+                }
             }
-        }
-    }
-});
+        });
+
+        document.addEventListener('keyup', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                this.state.keysPressed.delete(e.key);
+
+                // Stop movement if no arrow keys are pressed
+                if (this.state.keysPressed.size === 0 && this.state.keyMoveInterval) {
+                    clearInterval(this.state.keyMoveInterval);
+                    this.state.keyMoveInterval = null;
+
+                    // Save history after movement stops
+                    const svg = document.querySelector('#svgEditorCanvas svg');
+                    if (svg) {
+                        this.saveHistory(this.cloneSVG(svg));
+                    }
+                }
+            }
+        });
     },
 
     setupZoomControls() {
         const canvas = document.getElementById('svgEditorCanvas');
         if (!canvas) return;
-        
+
         // Alt + Mouse wheel zoom
         canvas.addEventListener('wheel', (e) => {
             if (e.altKey) {
@@ -171,11 +171,11 @@ document.addEventListener('keyup', (e) => {
                 this.updateZoom(newZoom);
             }
         }, { passive: false });
-        
+
         // Pinch to zoom for touch devices
         let lastDistance = 0;
         let isPinching = false;
-        
+
         canvas.addEventListener('touchstart', (e) => {
             if (e.touches.length === 2) {
                 isPinching = true;
@@ -185,7 +185,7 @@ document.addEventListener('keyup', (e) => {
                 );
             }
         });
-        
+
         canvas.addEventListener('touchmove', (e) => {
             if (e.touches.length === 2 && isPinching) {
                 e.preventDefault();
@@ -200,7 +200,7 @@ document.addEventListener('keyup', (e) => {
                 lastDistance = distance;
             }
         }, { passive: false });
-        
+
         canvas.addEventListener('touchend', (e) => {
             if (e.touches.length < 2) {
                 isPinching = false;
@@ -211,59 +211,59 @@ document.addEventListener('keyup', (e) => {
     toggleSidebar() {
         const sidebar = document.getElementById('svgEditorSidebar');
         if (window.innerWidth > 570) return; // Only works on mobile
-        
+
         sidebar.classList.toggle('open');
     },
-    
+
     toggleSidebarMobile() {
         this.toggleSidebar();
     },
-    
+
     closeSidebar() {
         const sidebar = document.getElementById('svgEditorSidebar');
         sidebar.classList.remove('open');
     },
 
-updateZoom(value) {
-    this.state.currentZoom = parseInt(value);
-    const container = document.getElementById('svgEditorContainer');
-    const zoomValue = document.getElementById('svgEditorZoomValue');
-    
-    if (container) {
-        container.style.transform = `scale(${this.state.currentZoom / 100})`;
-    }
-    if (zoomValue) {
-        zoomValue.textContent = this.state.currentZoom + '%';
-    }
-    const zoomSlider = document.getElementById('svgEditorZoom');
-    if (zoomSlider) {
-        zoomSlider.value = this.state.currentZoom;
-    }
-},
+    updateZoom(value) {
+        this.state.currentZoom = parseInt(value);
+        const container = document.getElementById('svgEditorContainer');
+        const zoomValue = document.getElementById('svgEditorZoomValue');
+
+        if (container) {
+            container.style.transform = `scale(${this.state.currentZoom / 100})`;
+        }
+        if (zoomValue) {
+            zoomValue.textContent = this.state.currentZoom + '%';
+        }
+        const zoomSlider = document.getElementById('svgEditorZoom');
+        if (zoomSlider) {
+            zoomSlider.value = this.state.currentZoom;
+        }
+    },
 
     loadSVGList() {
-    const listContainer = document.getElementById('svgEditorList');
-    if (!listContainer || !window.svgData) return;
+        const listContainer = document.getElementById('svgEditorList');
+        if (!listContainer || !window.svgData) return;
 
-    listContainer.innerHTML = '';
-    const svgNames = Object.keys(window.svgData).sort();
+        listContainer.innerHTML = '';
+        const svgNames = Object.keys(window.svgData).sort();
 
-    svgNames.forEach(name => {
-        const item = document.createElement('div');
-        item.className = 'svg-editor-item';
-        const isUnsaved = this.state.unsavedSvgs.has(name);
-        if (isUnsaved) item.classList.add('unsaved');
+        svgNames.forEach(name => {
+            const item = document.createElement('div');
+            item.className = 'svg-editor-item';
+            const isUnsaved = this.state.unsavedSvgs.has(name);
+            if (isUnsaved) item.classList.add('unsaved');
 
-        const itemName = document.createElement('div');
-        itemName.className = 'svg-editor-item-name';
-        itemName.textContent = name;
+            const itemName = document.createElement('div');
+            itemName.className = 'svg-editor-item-name';
+            itemName.textContent = name;
 
-        item.appendChild(itemName);
-        item.addEventListener('click', () => this.loadSVG(name));
+            item.appendChild(itemName);
+            item.addEventListener('click', () => this.loadSVG(name));
 
-        listContainer.appendChild(item);
-    });
-},
+            listContainer.appendChild(item);
+        });
+    },
 
     loadSVG(svgName) {
         // Save current if needed
@@ -284,7 +284,7 @@ updateZoom(value) {
         if (items[index]) {
             items[index].classList.add('active');
         }
-        
+
         // Update current case name in toolbar (for mobile)
         const currentCaseEl = document.getElementById('svgEditorCurrentCase');
         if (currentCaseEl) {
@@ -292,20 +292,20 @@ updateZoom(value) {
         }
 
         // Load SVG to canvas
-const canvas = document.getElementById('svgEditorCanvas');
-canvas.innerHTML = `
+        const canvas = document.getElementById('svgEditorCanvas');
+        canvas.innerHTML = `
     <div id="svgEditorContainer" class="svg-editor-canvas-content svg-editor-force-show-hints" style="transform: scale(${this.state.currentZoom / 100});">
         <div id="svgEditorContent">${window.svgData[svgName]}</div>
     </div>
 `;
 
-// Update zoom display
-this.updateZoom(this.state.currentZoom);
+        // Update zoom display
+        this.updateZoom(this.state.currentZoom);
 
         const svg = canvas.querySelector('svg');
         if (svg) {
             this.makeLabelsSelectable(svg);
-            
+
             // Initialize history
             if (!this.state.histories[svgName]) {
                 this.state.histories[svgName] = [this.cloneSVG(svg)];
@@ -319,67 +319,67 @@ this.updateZoom(this.state.currentZoom);
         }
     },
 
-makeLabelsSelectable(svg) {
-    const labels = svg.querySelectorAll('.label-toggle');
-    
-    labels.forEach(label => {
-        label.style.cursor = 'move';
-        label.style.outline = '2px solid transparent';
-        label.style.outlineOffset = '8px';
-        label.style.transition = 'outline 0.2s';
-        label.style.pointerEvents = 'bounding-box';
-        
-        // Add padding attribute to increase clickable area
-        const bbox = label.getBBox();
-        const padding = 15;
-        
-        // Create a transparent background rect for better hit detection
-        const hitRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-        hitRect.setAttribute('x', bbox.x - padding);
-        hitRect.setAttribute('y', bbox.y - padding);
-        hitRect.setAttribute('width', bbox.width + padding * 2);
-        hitRect.setAttribute('height', bbox.height + padding * 2);
-        hitRect.setAttribute('fill', 'transparent');
-        hitRect.setAttribute('stroke', 'none');
-        hitRect.style.pointerEvents = 'all';
-        hitRect.classList.add('label-hitbox');
-        hitRect._targetLabel = label; // Store reference to the actual label
-        
-        // Insert hitRect as first child of parent to keep it behind
-        if (label.parentNode) {
-            label.parentNode.insertBefore(hitRect, label.parentNode.firstChild);
-        }
+    makeLabelsSelectable(svg) {
+        const labels = svg.querySelectorAll('.label-toggle');
 
-        const handleMouseEnter = () => {
-            if (!this.state.selectedElements.has(label)) {
-                label.style.outline = '2px solid #4a9eff';
+        labels.forEach(label => {
+            label.style.cursor = 'move';
+            label.style.outline = '2px solid transparent';
+            label.style.outlineOffset = '8px';
+            label.style.transition = 'outline 0.2s';
+            label.style.pointerEvents = 'bounding-box';
+
+            // Add padding attribute to increase clickable area
+            const bbox = label.getBBox();
+            const padding = 15;
+
+            // Create a transparent background rect for better hit detection
+            const hitRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+            hitRect.setAttribute('x', bbox.x - padding);
+            hitRect.setAttribute('y', bbox.y - padding);
+            hitRect.setAttribute('width', bbox.width + padding * 2);
+            hitRect.setAttribute('height', bbox.height + padding * 2);
+            hitRect.setAttribute('fill', 'transparent');
+            hitRect.setAttribute('stroke', 'none');
+            hitRect.style.pointerEvents = 'all';
+            hitRect.classList.add('label-hitbox');
+            hitRect._targetLabel = label; // Store reference to the actual label
+
+            // Insert hitRect as first child of parent to keep it behind
+            if (label.parentNode) {
+                label.parentNode.insertBefore(hitRect, label.parentNode.firstChild);
             }
-        };
 
-        const handleMouseLeave = () => {
-            if (!this.state.selectedElements.has(label)) {
-                label.style.outline = '2px solid transparent';
-            }
-        };
+            const handleMouseEnter = () => {
+                if (!this.state.selectedElements.has(label)) {
+                    label.style.outline = '2px solid #4a9eff';
+                }
+            };
 
-        // Attach events to both hitRect and label
-        hitRect.addEventListener('mouseenter', handleMouseEnter);
-        hitRect.addEventListener('mouseleave', handleMouseLeave);
-        hitRect.addEventListener('mousedown', (e) => {
-            e.stopPropagation();
-            this.handleLabelMouseDown(e, label);
+            const handleMouseLeave = () => {
+                if (!this.state.selectedElements.has(label)) {
+                    label.style.outline = '2px solid transparent';
+                }
+            };
+
+            // Attach events to both hitRect and label
+            hitRect.addEventListener('mouseenter', handleMouseEnter);
+            hitRect.addEventListener('mouseleave', handleMouseLeave);
+            hitRect.addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+                this.handleLabelMouseDown(e, label);
+            });
+            hitRect.addEventListener('touchstart', (e) => {
+                e.stopPropagation();
+                this.handleLabelTouchStart(e, label);
+            }, { passive: false });
+
+            label.addEventListener('mouseenter', handleMouseEnter);
+            label.addEventListener('mouseleave', handleMouseLeave);
+            label.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
+            label.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
         });
-        hitRect.addEventListener('touchstart', (e) => {
-            e.stopPropagation();
-            this.handleLabelTouchStart(e, label);
-        }, { passive: false });
-
-        label.addEventListener('mouseenter', handleMouseEnter);
-        label.addEventListener('mouseleave', handleMouseLeave);
-        label.addEventListener('mousedown', (e) => this.handleLabelMouseDown(e, label));
-        label.addEventListener('touchstart', (e) => this.handleLabelTouchStart(e, label), { passive: false });
-    });
-},
+    },
 
     handleLabelMouseDown(e, label) {
         e.stopPropagation();
@@ -567,13 +567,13 @@ makeLabelsSelectable(svg) {
     translatePathData(pathData, dx, dy) {
         const commands = [];
         const tokens = pathData.match(/[a-df-zA-DF-Z]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g);
-        
+
         let i = 0;
         let currentCmd = '';
-        
+
         while (i < tokens.length) {
             const token = tokens[i];
-            
+
             if (/[a-zA-Z]/.test(token)) {
                 currentCmd = token;
                 commands.push({ cmd: token, params: [] });
@@ -589,11 +589,11 @@ makeLabelsSelectable(svg) {
         }
 
         let result = '';
-        
+
         for (let cmd of commands) {
             const c = cmd.cmd;
             const p = cmd.params;
-            
+
             if (c === 'M' || c === 'L' || c === 'T') {
                 result += c;
                 for (let j = 0; j < p.length; j += 2) {
@@ -618,55 +618,55 @@ makeLabelsSelectable(svg) {
                 result += c + p.join(',');
             }
         }
-        
+
         return result;
     },
 
     moveSelectedWithKeyboard(key) {
-    const svg = document.querySelector('#svgEditorCanvas svg');
-    if (!svg || this.state.selectedElements.size === 0) return;
-
-    let dx = 0, dy = 0;
-    const step = 1;
-
-    switch(key) {
-        case 'ArrowUp': dy = -step; break;
-        case 'ArrowDown': dy = step; break;
-        case 'ArrowLeft': dx = -step; break;
-        case 'ArrowRight': dx = step; break;
-    }
-
-    this.state.selectedElements.forEach(el => {
-        const startState = this.captureElementState(el);
-        this.updateElementPosition(el, startState, dx, dy);
-    });
-
-    this.saveHistory(this.cloneSVG(svg));
-},
-
-startKeyboardMovement() {
-    this.state.keyMoveInterval = setInterval(() => {
-        if (this.state.keysPressed.size === 0) return;
-        
         const svg = document.querySelector('#svgEditorCanvas svg');
         if (!svg || this.state.selectedElements.size === 0) return;
 
-        // Calculate vector sum of all pressed arrow keys
         let dx = 0, dy = 0;
         const step = 1;
 
-        if (this.state.keysPressed.has('ArrowUp')) dy -= step;
-        if (this.state.keysPressed.has('ArrowDown')) dy += step;
-        if (this.state.keysPressed.has('ArrowLeft')) dx -= step;
-        if (this.state.keysPressed.has('ArrowRight')) dx += step;
+        switch (key) {
+            case 'ArrowUp': dy = -step; break;
+            case 'ArrowDown': dy = step; break;
+            case 'ArrowLeft': dx = -step; break;
+            case 'ArrowRight': dx = step; break;
+        }
 
-        // Move all selected elements
         this.state.selectedElements.forEach(el => {
             const startState = this.captureElementState(el);
             this.updateElementPosition(el, startState, dx, dy);
         });
-    }, 50); // Update every 50ms for smooth movement
-},
+
+        this.saveHistory(this.cloneSVG(svg));
+    },
+
+    startKeyboardMovement() {
+        this.state.keyMoveInterval = setInterval(() => {
+            if (this.state.keysPressed.size === 0) return;
+
+            const svg = document.querySelector('#svgEditorCanvas svg');
+            if (!svg || this.state.selectedElements.size === 0) return;
+
+            // Calculate vector sum of all pressed arrow keys
+            let dx = 0, dy = 0;
+            const step = 1;
+
+            if (this.state.keysPressed.has('ArrowUp')) dy -= step;
+            if (this.state.keysPressed.has('ArrowDown')) dy += step;
+            if (this.state.keysPressed.has('ArrowLeft')) dx -= step;
+            if (this.state.keysPressed.has('ArrowRight')) dx += step;
+
+            // Move all selected elements
+            this.state.selectedElements.forEach(el => {
+                const startState = this.captureElementState(el);
+                this.updateElementPosition(el, startState, dx, dy);
+            });
+        }, 50); // Update every 50ms for smooth movement
+    },
 
     selectNextElement(reverse = false) {
         const svg = document.querySelector('#svgEditorCanvas svg');
@@ -694,14 +694,14 @@ startKeyboardMovement() {
     },
 
     cloneSVG(svg) {
-    const clone = svg.cloneNode(true);
-    clone.querySelectorAll('.label-toggle').forEach(el => {
-        el.style.outline = '2px solid transparent';
-    });
-    // Remove hitboxes from clone to avoid duplication
-    clone.querySelectorAll('.label-hitbox').forEach(el => el.remove());
-    return clone;
-},
+        const clone = svg.cloneNode(true);
+        clone.querySelectorAll('.label-toggle').forEach(el => {
+            el.style.outline = '2px solid transparent';
+        });
+        // Remove hitboxes from clone to avoid duplication
+        clone.querySelectorAll('.label-hitbox').forEach(el => el.remove());
+        return clone;
+    },
 
     saveHistory(svgElement) {
         const name = this.state.currentSvg;
@@ -716,13 +716,13 @@ startKeyboardMovement() {
         this.state.histories[name] = this.state.histories[name].slice(0, this.state.historyIndices[name] + 1);
         this.state.histories[name].push(svgElement);
         this.state.historyIndices[name]++;
-        
+
         // Limit history to 50 entries per SVG
         if (this.state.histories[name].length > 50) {
             this.state.histories[name].shift();
             this.state.historyIndices[name]--;
         }
-        
+
         // Mark as unsaved
         this.state.unsavedSvgs.add(name);
         this.loadSVGList();
@@ -747,24 +747,24 @@ startKeyboardMovement() {
     },
 
     restoreHistory() {
-    const name = this.state.currentSvg;
-    if (name === null || !this.state.histories[name]) return;
+        const name = this.state.currentSvg;
+        if (name === null || !this.state.histories[name]) return;
 
-    const svgElement = this.state.histories[name][this.state.historyIndices[name]];
-    const content = document.getElementById('svgEditorContent');
-    if (!content) return;
+        const svgElement = this.state.histories[name][this.state.historyIndices[name]];
+        const content = document.getElementById('svgEditorContent');
+        if (!content) return;
 
-    content.innerHTML = '';
-    const newSvg = svgElement.cloneNode(true);
-    
-    // Remove any old hitboxes from cloned SVG
-    newSvg.querySelectorAll('.label-hitbox').forEach(el => el.remove());
-    
-    content.appendChild(newSvg);
+        content.innerHTML = '';
+        const newSvg = svgElement.cloneNode(true);
 
-    this.makeLabelsSelectable(newSvg);
-    this.state.selectedElements.clear();
-},
+        // Remove any old hitboxes from cloned SVG
+        newSvg.querySelectorAll('.label-hitbox').forEach(el => el.remove());
+
+        content.appendChild(newSvg);
+
+        this.makeLabelsSelectable(newSvg);
+        this.state.selectedElements.clear();
+    },
 
     saveToMemory() {
         const name = this.state.currentSvg;
@@ -795,22 +795,22 @@ startKeyboardMovement() {
 
         // Re-render main app
         render(true);
-        
+
         // Mark as saved
         this.state.unsavedSvgs.delete(name);
         this.loadSVGList();
 
         showToast(`"${name}" saved successfully!`, 2000, 'success');
     },
-    
+
     saveAll() {
         if (this.state.unsavedSvgs.size === 0) {
             showToast('No unsaved changes', 2000, 'info');
             return;
         }
-        
+
         const count = this.state.unsavedSvgs.size;
-        
+
         // Save all unsaved SVGs
         this.state.unsavedSvgs.forEach(name => {
             const svg = document.querySelector(`#svgEditorCanvas svg[data-svg-name="${name}"]`);
@@ -824,19 +824,19 @@ startKeyboardMovement() {
                 window.svgData[name] = clone.outerHTML;
             }
         });
-        
+
         // Clear unsaved set
         this.state.unsavedSvgs.clear();
-        
+
         // Save to localStorage
         saveState();
-        
+
         // Re-render main app
         render(true);
-        
+
         // Refresh sidebar
         this.loadSVGList();
-        
+
         showToast(`Saved ${count} tracing guide(s) successfully!`, 2000, 'success');
     },
 
@@ -845,32 +845,32 @@ startKeyboardMovement() {
         if (name === null) return;
 
         showConfirmation(
-        `Reset "${name}" to ${currentPreset} preset? This cannot be undone.`,
-        () => {
+            `Reset "${name}" to ${currentPreset} preset? This cannot be undone.`,
+            () => {
 
-        // Reset to preset default or absolute default
-        const defaults = getPresetDefaults();
-        if (defaults && defaults.svgData && defaults.svgData[name]) {
-            window.svgData[name] = defaults.svgData[name];
-        } else {
-            window.svgData[name] = DEFAULT_SVGS[name];
-        }
+                // Reset to preset default or absolute default
+                const defaults = getPresetDefaults();
+                if (defaults && defaults.svgData && defaults.svgData[name]) {
+                    window.svgData[name] = defaults.svgData[name];
+                } else {
+                    window.svgData[name] = DEFAULT_SVGS[name];
+                }
 
-        // Save and re-render
-        saveState();
-        render(true);
+                // Save and re-render
+                saveState();
+                render(true);
 
-        // Reload in editor
-        this.loadSVG(name);
-        
-        // Mark as saved (no longer unsaved)
-        this.state.unsavedSvgs.delete(name);
-        this.loadSVGList();
+                // Reload in editor
+                this.loadSVG(name);
 
-        showToast(`"${name}" reset to ${currentPreset} preset!`, 2000, 'success');
-      }
-    );
-},
+                // Mark as saved (no longer unsaved)
+                this.state.unsavedSvgs.delete(name);
+                this.loadSVGList();
+
+                showToast(`"${name}" reset to ${currentPreset} preset!`, 2000, 'success');
+            }
+        );
+    },
 
     open() {
         const modal = document.getElementById('svgEditorModal');
@@ -933,18 +933,18 @@ startKeyboardMovement() {
             `;
             document.body.appendChild(infoModal);
         }
-        
+
         infoModal.classList.add('active');
     },
 
-        resetAll() {
+    resetAll() {
         showConfirmation(
             `Reset ALL tracing guides to ${currentPreset} preset? This cannot be undone.`,
             () => {
                 // Reset all SVGs to preset default or absolute default
                 const defaults = getPresetDefaults();
                 const svgNames = Object.keys(window.svgData);
-                
+
                 svgNames.forEach(name => {
                     if (defaults && defaults.svgData && defaults.svgData[name]) {
                         window.svgData[name] = defaults.svgData[name];
@@ -952,99 +952,99 @@ startKeyboardMovement() {
                         window.svgData[name] = DEFAULT_SVGS[name];
                     }
                 });
-                
+
                 // Clear all unsaved changes
                 this.state.unsavedSvgs.clear();
-                
+
                 // Save and re-render
                 saveState();
                 render(true);
-                
+
                 // Reload list and current SVG if any
                 this.loadSVGList();
                 if (this.state.currentSvg) {
                     this.loadSVG(this.state.currentSvg);
                 }
-                
+
                 showToast(`All tracing guides reset to ${currentPreset} preset!`, 2000, 'success');
             }
         );
     },
 
     close() {
-    // Check for unsaved changes
-    if (this.state.unsavedSvgs.size > 0) {
-        showSaveDiscardConfirmation(
-            `You have ${this.state.unsavedSvgs.size} unsaved image(s). What would you like to do?`,
-            () => {
-                // Save
-                this.saveAll();
-                this.forceClose();
-            },
-            () => {
-                // Discard
-                this.forceClose();
-            },
-            () => {
-                // Cancel - do nothing
+        // Check for unsaved changes
+        if (this.state.unsavedSvgs.size > 0) {
+            showSaveDiscardConfirmation(
+                `You have ${this.state.unsavedSvgs.size} unsaved image(s). What would you like to do?`,
+                () => {
+                    // Save
+                    this.saveAll();
+                    this.forceClose();
+                },
+                () => {
+                    // Discard
+                    this.forceClose();
+                },
+                () => {
+                    // Cancel - do nothing
+                }
+            );
+            return;
+        }
+
+        this.forceClose();
+    },
+
+    forceClose() {
+        // Save current before closing
+        if (this.state.currentSvg !== null) {
+            this.saveToMemory();
+        }
+
+        const modal = document.getElementById('svgEditorModal');
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.classList.remove('modal-open');
+            document.body.style.overflow = '';
+        }
+
+        // Clean up keyboard movement
+        if (this.state.keyMoveInterval) {
+            clearInterval(this.state.keyMoveInterval);
+            this.state.keyMoveInterval = null;
+        }
+
+        // Reset state AND clear all history
+        this.state.currentSvg = null;
+        this.state.selectedElements.clear();
+        this.state.isSidebarCollapsed = false;
+        this.state.keysPressed.clear();
+        this.state.unsavedSvgs.clear();
+        this.state.histories = {};
+        this.state.historyIndices = {};
+    },
+
+    preventBackgroundScroll() {
+        const modal = document.getElementById('svgEditorModal');
+        if (!modal) return;
+
+        // Prevent scroll on modal overlay
+        modal.addEventListener('wheel', (e) => {
+            const target = e.target;
+            // Only prevent if scrolling on the overlay itself (not on scrollable content)
+            if (target === modal || target.classList.contains('svg-editor-overlay')) {
+                e.preventDefault();
             }
-        );
-        return;
+        }, { passive: false });
+
+        modal.addEventListener('touchmove', (e) => {
+            const target = e.target;
+            // Only prevent if touching the overlay itself (not on scrollable content)
+            if (target === modal || target.classList.contains('svg-editor-overlay')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
     }
-    
-    this.forceClose();
-},
-
-forceClose() {
-    // Save current before closing
-    if (this.state.currentSvg !== null) {
-        this.saveToMemory();
-    }
-
-    const modal = document.getElementById('svgEditorModal');
-    if (modal) {
-        modal.style.display = 'none';
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-    }
-
-    // Clean up keyboard movement
-    if (this.state.keyMoveInterval) {
-        clearInterval(this.state.keyMoveInterval);
-        this.state.keyMoveInterval = null;
-    }
-
-    // Reset state AND clear all history
-    this.state.currentSvg = null;
-    this.state.selectedElements.clear();
-    this.state.isSidebarCollapsed = false;
-    this.state.keysPressed.clear();
-    this.state.unsavedSvgs.clear();
-    this.state.histories = {};
-    this.state.historyIndices = {};
-},
-
-preventBackgroundScroll() {
-    const modal = document.getElementById('svgEditorModal');
-    if (!modal) return;
-    
-    // Prevent scroll on modal overlay
-    modal.addEventListener('wheel', (e) => {
-        const target = e.target;
-        // Only prevent if scrolling on the overlay itself (not on scrollable content)
-        if (target === modal || target.classList.contains('svg-editor-overlay')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-    
-    modal.addEventListener('touchmove', (e) => {
-        const target = e.target;
-        // Only prevent if touching the overlay itself (not on scrollable content)
-        if (target === modal || target.classList.contains('svg-editor-overlay')) {
-            e.preventDefault();
-        }
-    }, { passive: false });
-}
 };
 
 // Initialize when DOM is ready

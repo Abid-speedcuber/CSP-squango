@@ -11,7 +11,7 @@ function SqCubie() {
     this.ml = 0;
 }
 
-SqCubie.prototype.toString = function() {
+SqCubie.prototype.toString = function () {
     return this.ul.toString(16).padStart(6, '0') +
         this.ur.toString(16).padStart(6, '0') +
         "|/".charAt(this.ml) +
@@ -19,7 +19,7 @@ SqCubie.prototype.toString = function() {
         this.dr.toString(16).padStart(6, '0');
 }
 
-SqCubie.prototype.setPiece = function(idx, value) {
+SqCubie.prototype.setPiece = function (idx, value) {
     if (idx < 6) {
         this.ul &= ~(0xf << ((5 - idx) << 2));
         this.ul |= value << ((5 - idx) << 2);
@@ -46,14 +46,14 @@ function initShapes() {
         const ur = Shape_halflayer[Math.floor(Math.floor(i / 13) / 13) % 13];
         const ul = Shape_halflayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
         const value = ul << 18 | ur << 12 | dl << 6 | dr;
-        
+
         let bitCount = 0;
         let temp = value;
         while (temp) {
             bitCount += temp & 1;
             temp >>= 1;
         }
-        
+
         if (bitCount === 16) {
             Shape_ShapeIdx[count++] = value;
         }
@@ -66,7 +66,7 @@ function generateCubeFromShapeIndex(shapeIndex) {
     let corner = 0x01234567 << 1 | 0x11111111;
     let edge = 0x01234567 << 1;
     let n_corner = 8, n_edge = 8;
-    
+
     for (let i = 0; i < 24; i++) {
         if (((shape >> i) & 1) === 0) {
             const rnd = rn(n_edge) << 2;

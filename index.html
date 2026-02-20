@@ -85,6 +85,7 @@
     <script src="js/modals.js"></script>
     <script src="js/quick-edit.js"></script>
     <script src="js/training-modal.js"></script>
+    <script src="js/multi-trainer.js"></script>
 
     <script>
         document.addEventListener('keydown', function (e) {
@@ -360,33 +361,18 @@ if (profileBtn) {
             const searchToggle = document.getElementById('searchToggle');
             const searchInput = document.getElementById('search');
             const controls = document.querySelector('.controls');
-            
-            console.log('[Search] Init check:', { searchToggle: !!searchToggle, searchInput: !!searchInput, controls: !!controls });
-            console.log('[Search] Window width:', window.innerWidth);
-            console.log('[Search] searchToggle computed display:', searchToggle ? getComputedStyle(searchToggle).display : 'N/A');
 
             if (searchToggle && controls && searchInput) {
-                console.log('[Search] Elements found:', { searchToggle, controls, searchInput });
                 searchToggle.onmousedown = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('[Search] Toggle clicked. Current classes:', controls.className);
                     const isExpanded = controls.classList.toggle('search-expanded');
-                    console.log('[Search] After toggle. isExpanded:', isExpanded, 'Classes:', controls.className);
                     
                     if (isExpanded) {
-                        console.log('[Search] Expanding - attempting focus...');
                         setTimeout(() => {
-                            console.log('[Search] Input styles:', {
-                                width: getComputedStyle(searchInput).width,
-                                opacity: getComputedStyle(searchInput).opacity,
-                                pointerEvents: getComputedStyle(searchInput).pointerEvents,
-                                position: getComputedStyle(searchInput).position,
-                            });
                             searchInput.focus();
                         }, 100);
                     } else {
-                        console.log('[Search] Collapsing');
                         searchInput.blur();
                     }
                 };

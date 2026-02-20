@@ -5,49 +5,49 @@
 // ========================================
 
 // === CONSTANTS WITH SILLY NAMES ===
-const theseAreTotallyEdgePiecesForShapeTracing = new Set(['C','F','I','L','M','P','S','V']);
+const theseAreTotallyEdgePiecesForShapeTracing = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
 
 const whoIsMyPartnerForShapeTracing = {
-  A:'B',B:'A',D:'E',E:'D',G:'H',H:'G',J:'K',K:'J',
-  N:'O',O:'N',Q:'R',R:'Q',T:'U',U:'T',W:'X',X:'W'
+  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
+  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
 };
 
 const whatIsMyCornerIDForShapeTracing = {
-  A:'AB',B:'AB',D:'DE',E:'DE',G:'GH',H:'GH',J:'JK',K:'JK',
-  N:'NO',O:'NO',Q:'QR',R:'QR',T:'TU',U:'TU',W:'WX',X:'WX'
+  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
+  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
 };
 
 // Default shape patterns
 const defaultShapePatternsForTracing = {
-  'ECECECEC':'Sq', 
-  'EECECCEC':'Kite', 
-  'EECCEECC':'Barr', 
-  'EECCECEC':'L Fist',
-  'EECECECC':'R Fist', 
-  'EECEECCC':'Shld', 
-  'EEECCECC':'Muff',
-  'EEECECCC':'L Pawn',
-  'ECEEECCC':'R Pawn',
-  'EEEECCCC':'Scal',
-  'EECCCCC':'Pair', 
-  'ECECCCC':'L', 
-  'ECCCECC':'Line',
-  'EEEEEECCC':'6', 
-  'ECEEEEECC':'R 51',
-  'EEEEECECC':'L 51',
-  'EECEEEECC':'R 42',
-  'EEEECEECC':'L 42', 
-  'EEEECECEC':'411', 
-  'EEECEEECC':'33', 
-  'ECEECEEEC':'312',
-  'ECEEECEEC':'321', 
-  'EECEECEEC':'222',
-  'EEEEEEEECC':'8', 
-  'EEEEEECEEC':'62', 
-  'EEEECEEEEC':'44', 
-  'EEEEEEECEC':'71', 
-  'EEEEECEEEC':'53',
-  'CCCCCC':'Star'
+  'ECECECEC': 'Sq',
+  'EECECCEC': 'Kite',
+  'EECCEECC': 'Barr',
+  'EECCECEC': 'L Fist',
+  'EECECECC': 'R Fist',
+  'EECEECCC': 'Shld',
+  'EEECCECC': 'Muff',
+  'EEECECCC': 'L Pawn',
+  'ECEEECCC': 'R Pawn',
+  'EEEECCCC': 'Scal',
+  'EECCCCC': 'Pair',
+  'ECECCCC': 'L',
+  'ECCCECC': 'Line',
+  'EEEEEECCC': '6',
+  'ECEEEEECC': 'R 51',
+  'EEEEECECC': 'L 51',
+  'EECEEEECC': 'R 42',
+  'EEEECEECC': 'L 42',
+  'EEEECECEC': '411',
+  'EEECEEECC': '33',
+  'ECEECEEEC': '312',
+  'ECEEECEEC': '321',
+  'EECEECEEC': '222',
+  'EEEEEEEECC': '8',
+  'EEEEEECEEC': '62',
+  'EEEECEEEEC': '44',
+  'EEEEEEECEC': '71',
+  'EEEEECEEEC': '53',
+  'CCCCCC': 'Star'
 };
 
 // === BASIC HELPER FUNCTIONS ===
@@ -58,7 +58,7 @@ function gimmeASolvedSquareOneCubePlease() {
 function pleaseRotateSectionForShapeTracing(arr, startIdx, length, rotAmount) {
   const normalizedRot = ((rotAmount % length) + length) % length;
   if (normalizedRot === 0) return;
-  
+
   const segment = arr.slice(startIdx, startIdx + length);
   const rotated = [];
   for (let i = 0; i < length; i++) {
@@ -84,19 +84,19 @@ function rotateStringForPatternSearch(str, rotAmount) {
 // === SCRAMBLE STANDARDIZATION ===
 function pleaseStandardizeThisScrambleForMe(scrambleString) {
   if (!scrambleString) return '';
-  
+
   let str = scrambleString.trim();
-  
+
   // Check if starts with /
   if (str.startsWith('/')) {
     str = '(0,0)' + str;
   }
-  
+
   // Check if ends with /
   if (str.endsWith('/')) {
     str = str + '(0,0)';
   }
-  
+
   return str;
 }
 
@@ -104,13 +104,13 @@ function pleaseStandardizeThisScrambleForMe(scrambleString) {
 function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
   if (!scrambleString) return scrambleString;
   let str = String(scrambleString).trim();
-  
+
   const parts = str.split('/');
   const reversed = parts.slice().reverse();
-  
+
   const inverted = reversed.map(part => {
     part = part.trim();
-    
+
     const turnMatch = part.match(/\(([^)]+)\)/);
     if (turnMatch) {
       const values = turnMatch[1].split(',').map(v => v.trim());
@@ -121,7 +121,7 @@ function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
       });
       return '(' + invertedValues.join(',') + ')';
     }
-    
+
     if (part.includes(',')) {
       const values = part.split(',').map(v => v.trim());
       const invertedValues = values.map(v => {
@@ -131,10 +131,10 @@ function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
       });
       return invertedValues.join(',');
     }
-    
+
     return part;
   });
-  
+
   return inverted.join('/');
 }
 
@@ -144,52 +144,52 @@ function* pleaseTokenizeThisScrambleForShapeTracing(scrambleString) {
   const totalLen = scrambleString.length;
   const whitespaceRegex = /\s/;
   const integerRegex = /^([+-]?\d+)/;
-  
+
   const skipWhitespace = () => {
     while (idx < totalLen && whitespaceRegex.test(scrambleString[idx])) idx++;
   };
-  
+
   while (true) {
     skipWhitespace();
     if (idx >= totalLen) return;
-    
+
     const currentChar = scrambleString[idx];
-    
+
     if (currentChar === '(') {
       idx++;
       skipWhitespace();
-      
+
       let match = scrambleString.slice(idx).match(integerRegex);
       if (!match) { idx++; continue; }
       const topValue = +match[1];
       idx += match[1].length;
-      
+
       skipWhitespace();
       if (scrambleString[idx] === ',') idx++;
       skipWhitespace();
-      
+
       match = scrambleString.slice(idx).match(integerRegex);
       if (!match) { idx++; continue; }
       const bottomValue = +match[1];
       idx += match[1].length;
-      
+
       skipWhitespace();
       if (scrambleString[idx] === ')') idx++;
       skipWhitespace();
-      
+
       const hasSlashAfter = (scrambleString[idx] === '/');
       if (hasSlashAfter) idx++;
-      
+
       yield { moveType: 'turn', top: topValue, bottom: bottomValue, hasSlash: hasSlashAfter };
       continue;
     }
-    
+
     if (currentChar === '/') {
       idx++;
       yield { moveType: 'slash' };
       continue;
     }
-    
+
     idx++;
   }
 }
@@ -198,7 +198,7 @@ function* pleaseTokenizeThisScrambleForShapeTracing(scrambleString) {
 function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
   const units = [];
   let i = 0;
-  
+
   while (i < 12) {
     const piece = cubeState[startIdx + i];
     if (theseAreTotallyEdgePiecesForShapeTracing.has(piece)) {
@@ -206,7 +206,7 @@ function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
       i += 1;
       continue;
     }
-    
+
     const nextPiece = cubeState[startIdx + ((i + 1) % 12)];
     if (whoIsMyPartnerForShapeTracing[piece] === nextPiece) {
       units.push({ type: 'C', pair: whatIsMyCornerIDForShapeTracing[piece], rep: piece });
@@ -216,7 +216,7 @@ function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
       i += 1;
     }
   }
-  
+
   const types = units.map(u => u.type).join('');
   return { types, units };
 }
@@ -238,32 +238,32 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
 function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
   const shapePath = [];
   const cubeState = gimmeASolvedSquareOneCubePlease();
-  
+
   let currentStep = null;
-  
+
   // Apply moves and capture shapes after each slash
   for (const token of pleaseTokenizeThisScrambleForShapeTracing(scrambleString)) {
     if (token.moveType === 'turn') {
       // Apply rotations
       pleaseRotateSectionForShapeTracing(cubeState, 0, 12, token.top);
       pleaseRotateSectionForShapeTracing(cubeState, 12, 12, token.bottom);
-      
+
       // If this turn has a slash, capture the state BEFORE the slash
       if (token.hasSlash) {
         const topUnits = buildUnitsFromCubeStateForShapeTracing(cubeState, 0);
         const bottomUnits = buildUnitsFromCubeStateForShapeTracing(cubeState, 12);
         const topShape = matchThisPatternToFindTheShapeName(topUnits.types, shapePatterns);
         const bottomShape = matchThisPatternToFindTheShapeName(bottomUnits.types, shapePatterns);
-        
+
         currentStep = {
           topShape: topShape,
           bottomShape: bottomShape,
           topPattern: topUnits.types,
           bottomPattern: bottomUnits.types
         };
-        
+
         shapePath.push(currentStep);
-        
+
         // Now do the slash
         doTheSliceSwapForShapeTracing(cubeState);
       }
@@ -272,20 +272,20 @@ function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
       doTheSliceSwapForShapeTracing(cubeState);
     }
   }
-  
+
   // Add the final state after all moves
   const finalTopUnits = buildUnitsFromCubeStateForShapeTracing(cubeState, 0);
   const finalBottomUnits = buildUnitsFromCubeStateForShapeTracing(cubeState, 12);
   const finalTopShape = matchThisPatternToFindTheShapeName(finalTopUnits.types, shapePatterns);
   const finalBottomShape = matchThisPatternToFindTheShapeName(finalBottomUnits.types, shapePatterns);
-  
+
   shapePath.push({
     topShape: finalTopShape,
     bottomShape: finalBottomShape,
     topPattern: finalTopUnits.types,
     bottomPattern: finalBottomUnits.types
   });
-  
+
   return shapePath;
 }
 
@@ -302,14 +302,14 @@ function formatShapePathAsString(shapePath) {
  * Option 1: Scramble input → Scramble shape path output
  */
 function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
-  const shapePatterns = options.shapePatterns || {...defaultShapePatternsForTracing};
-  
+  const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
+
   // Standardize
   const standardized = pleaseStandardizeThisScrambleForMe(scramble);
-  
+
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
-  
+
   // Format as string
   return formatShapePathAsString(shapePath);
 }
@@ -318,17 +318,17 @@ function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
  * Option 2: Scramble input → Solution shape path output (reversed)
  */
 function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
-  const shapePatterns = options.shapePatterns || {...defaultShapePatternsForTracing};
-  
+  const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
+
   // Standardize
   const standardized = pleaseStandardizeThisScrambleForMe(scramble);
-  
+
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
-  
+
   // Reverse the path for solution
   const reversedPath = shapePath.slice().reverse();
-  
+
   // Format as string
   return formatShapePathAsString(reversedPath);
 }
@@ -337,17 +337,17 @@ function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
  * Option 3: Solution input → Scramble shape path output (invert then trace)
  */
 function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
-  const shapePatterns = options.shapePatterns || {...defaultShapePatternsForTracing};
-  
+  const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
+
   // Invert solution to scramble
   const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
-  
+
   // Standardize
   const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
-  
+
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
-  
+
   // Format as string
   return formatShapePathAsString(shapePath);
 }
@@ -356,20 +356,20 @@ function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
  * Option 4: Solution input → Solution shape path output (invert, trace, reverse)
  */
 function traceSolutionToSolutionShapePathPlease(solution, options = {}) {
-  const shapePatterns = options.shapePatterns || {...defaultShapePatternsForTracing};
-  
+  const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
+
   // Invert solution to scramble
   const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
-  
+
   // Standardize
   const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
-  
+
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
-  
+
   // Reverse the path for solution
   const reversedPath = shapePath.slice().reverse();
-  
+
   // Format as string
   return formatShapePathAsString(reversedPath);
 }

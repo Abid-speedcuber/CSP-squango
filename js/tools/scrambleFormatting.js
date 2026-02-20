@@ -4,8 +4,8 @@
 
   const theEdgePiecesLettersInSolvedState = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
   const whichCornerPieceIsPartnerOfWhichCornerPiece = {
-    A:'B', B:'A', D:'E', E:'D', G:'H', H:'G', J:'K', K:'J',
-    N:'O', O:'N', Q:'R', R:'Q', T:'U', U:'T', W:'X', X:'W'
+    A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
+    N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
   };
 
   function giveBackArrayOfLettersInSolvedStatePlease() {

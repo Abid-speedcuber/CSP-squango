@@ -21,7 +21,7 @@ let isHoldReady = false;
 // Create the training modal dynamically
 function createTrainingModal() {
     if (trainingModalElement) return;
-    
+
     const modal = document.createElement('div');
     modal.id = 'trainingModal';
     modal.className = 'training-modal';
@@ -60,6 +60,7 @@ function createTrainingModal() {
             </div>
         </div>
         <div class="training-modal-scramble" id="trainingScramble" title="Click to analyze parity">Loading...</div>
+        <div id="multiCaseSub" style="flex-shrink:0; text-align:center; font-size:0.8rem; color:#888; padding:3px 16px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:none;"></div>
         <div class="training-modal-timer-zone" id="trainingTimerZone">
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="trainingScrambleImage"></div>
@@ -67,53 +68,53 @@ function createTrainingModal() {
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
     trainingModalElement = modal;
-    
+
     // Add event listeners
     document.getElementById('trainingRefreshBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         nextScrambleManual();
     });
-    
+
     document.getElementById('trainingPrevBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         previousScramble();
     });
-    
+
     document.getElementById('trainingCloseBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         closeTrainingModal();
     });
-    
+
     document.getElementById('trainingScramble').addEventListener('click', (e) => {
         e.stopPropagation();
         openParityAnalysisFromTraining();
     });
-    
+
     document.getElementById('trainingCaseName').addEventListener('click', (e) => {
         e.stopPropagation();
         openShapeIndexSelector();
     });
-    
+
     document.getElementById('trainingInfoBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         openTrainingInfoModal();
     });
-    
+
     document.getElementById('trainingSettingsBtn').addEventListener('click', (e) => {
         e.stopPropagation();
         openTrainingSettingsModal();
     });
-    
+
     const timerZone = document.getElementById('trainingTimerZone');
-    
+
     // Mouse events for timer zone
     timerZone.addEventListener('mousedown', handleTimerMouseDown);
     timerZone.addEventListener('mouseup', handleTimerMouseUp);
     timerZone.addEventListener('mouseleave', handleTimerMouseLeave);
-    
+
     // Touch events for timer zone
     timerZone.addEventListener('touchstart', handleTimerTouchStart);
     timerZone.addEventListener('touchend', handleTimerTouchEnd);
@@ -121,31 +122,31 @@ function createTrainingModal() {
 
 function openTrainingModal(caseName) {
     createTrainingModal();
-    
+
     const modal = document.getElementById('trainingModal');
     const titleEl = document.getElementById('trainingCaseName');
-    
+
     currentTrainingCase = caseName;
-    
+
     pushModalState('trainingModal', closeTrainingModal);
-    
+
     // Find the original data item to get the canonical name
     const dataItem = data.find(d => d.name === caseName);
     if (!dataItem) {
         alert('Case not found.');
         return;
     }
-    
+
     // Use the canonical name from the data item to look up in shapeIndex
     const shapeIndexItem = shapeIndex.find(s => s.name === dataItem.name);
     if (!shapeIndexItem) {
         alert('Case not found in shape index.');
         return;
     }
-    
+
     // Get all available scrambles (org + mir)
     const allScrambles = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
-    
+
     // Use selected indices if they exist in memory, otherwise use all
     const selectedKey = `training_selected_${caseName}`;
     if (window.trainingSelections && window.trainingSelections[selectedKey]) {
@@ -156,12 +157,12 @@ function openTrainingModal(caseName) {
         if (!window.trainingSelections) window.trainingSelections = {};
         window.trainingSelections[selectedKey] = allScrambles;
     }
-    
+
     if (trainingScrambles.length === 0) {
         alert('No training scrambles available for this case.');
         return;
     }
-    
+
     titleEl.textContent = `Training: ${getDisplayName(caseName)}`;
     currentScrambleIndex = 0;
     preGeneratedScrambles = [];
@@ -169,23 +170,23 @@ function openTrainingModal(caseName) {
     scrambleHistory = [];
     currentHistoryIndex = -1;
     isHoldReady = false;
-    
+
     // Load training-specific settings
     const savedTrainingImageSize = localStorage.getItem('trainingScrambleImageSize');
     const savedTrainingTextSize = localStorage.getItem('trainingScrambleTextSize');
     const savedTrainingHoldToStart = localStorage.getItem('trainingHoldToStart');
-    
+
     trainingScrambleImageSize = savedTrainingImageSize ? parseInt(savedTrainingImageSize) : 200;
     trainingScrambleTextSize = savedTrainingTextSize ? parseInt(savedTrainingTextSize) : 16;
     trainingHoldToStart = savedTrainingHoldToStart ? parseFloat(savedTrainingHoldToStart) : 0.22;
-    
+
     // Pre-generate 3 scrambles
     for (let i = 0; i < 3; i++) {
         preGeneratedScrambles.push(generateNextScrambleData());
     }
-    
+
     displayNextScramble();
-    
+
     modal.classList.add('active');
     document.body.classList.add('modal-open');
 }
@@ -193,15 +194,15 @@ function openTrainingModal(caseName) {
 function closeTrainingModal() {
     const modal = document.getElementById('trainingModal');
     if (!modal) return;
-    
+
     modal.classList.remove('active');
     document.body.classList.remove('modal-open');
-    
+
     // Stop timer if running
     if (timerRunning) {
         stopTimerOnly();
     }
-    
+
     // Reset all training state
     preGeneratedScrambles = [];
     timerElapsed = 0;
@@ -209,23 +210,25 @@ function closeTrainingModal() {
     currentHistoryIndex = -1;
     currentTrainingCase = null;
     isHoldReady = false;
-    
+
     // Soft render when coming back from training
     filterAndSort(true);
 }
 
+window.generateNextScrambleData = generateNextScrambleData;
+window._origGenerateNextScrambleData_ref = null; // will be set by selector
 function generateNextScrambleData() {
     if (trainingScrambles.length === 0) return null;
-    
+
     const randomIndex = Math.floor(Math.random() * trainingScrambles.length);
     const scramble = trainingScrambles[randomIndex];
     const hexCode = generateHexFromShapeIndex(scramble);
-    
+
     let scrambleText = hexCode;
     try {
         const state = parseHexFormat(hexCode);
         scrambleText = window.sq1Tools.scrambleFromState(state) || hexCode;
-        
+
         // Apply scramble styling
         if (typeof SQ1ColorizerLib !== 'undefined' && SQ1ColorizerLib.processScramble) {
             const processed = SQ1ColorizerLib.processScramble(scrambleText);
@@ -234,7 +237,7 @@ function generateNextScrambleData() {
     } catch (error) {
         console.error('Error generating scramble:', error);
     }
-    
+
     let scrambleImage = '<div style="color: #999;">Image unavailable</div>';
     try {
         // Use training-specific image size
@@ -254,34 +257,39 @@ function generateNextScrambleData() {
     } catch (error) {
         console.error('Error generating scramble image:', error);
     }
-    
+
     return { text: scrambleText, image: scrambleImage };
 }
 
+window.displayNextScramble = displayNextScramble;
 function displayNextScramble() {
+    // Show/hide case subtitle for multi-case mode
+    const sub = document.getElementById('multiCaseSub');
+    if (sub) sub.style.display = window._multiCaseMode ? 'block' : 'none';
+
     if (preGeneratedScrambles.length === 0) return;
-    
+
     // Get the next pre-generated scramble
     const scrambleData = preGeneratedScrambles.shift();
-    
+
     if (scrambleData) {
         currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, ''); // Strip HTML for clipboard
         const scrambleEl = document.getElementById('trainingScramble');
         scrambleEl.innerHTML = scrambleData.text;
         scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
         document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
-        
+
         // Add to history
         scrambleHistory.push(scrambleData);
         currentHistoryIndex = scrambleHistory.length - 1;
-        
+
         // Limit history to 50 scrambles
         if (scrambleHistory.length > 50) {
             scrambleHistory.shift();
             currentHistoryIndex--;
         }
     }
-    
+
     // Generate a new scramble to keep the queue full (async, won't block)
     setTimeout(() => {
         preGeneratedScrambles.push(generateNextScrambleData());
@@ -290,10 +298,10 @@ function displayNextScramble() {
 
 function previousScramble() {
     if (currentHistoryIndex <= 0) return; // No previous scramble
-    
+
     stopTimerOnly();
     currentHistoryIndex--;
-    
+
     const scrambleData = scrambleHistory[currentHistoryIndex];
     currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
     const scrambleEl = document.getElementById('trainingScramble');
@@ -307,6 +315,16 @@ function nextScrambleManual() {
     displayNextScramble();
 }
 
+function regenerateScrambleLookaheadLegacy() {
+    preGeneratedScrambles = [];
+    for (let i = 0; i < 3; i++) {
+        preGeneratedScrambles.push(generateNextScrambleData());
+    }
+    if (currentHistoryIndex === scrambleHistory.length - 1 || scrambleHistory.length === 0) {
+        displayNextScramble();
+    }
+}
+
 function copyScrambleToClipboard() {
     navigator.clipboard.writeText(currentScrambleText).catch(err => {
         console.error('Failed to copy scramble:', err);
@@ -316,12 +334,12 @@ function copyScrambleToClipboard() {
 function openParityAnalysisFromTraining() {
     // Strip HTML tags to get clean scramble text
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
-    
+
     if (typeof window.ParityTracerLibrary === 'undefined') {
         alert('Parity Tracer library not loaded');
         return;
     }
-    
+
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
@@ -351,7 +369,7 @@ function handleTimerMouseDown() {
     isHoldReady = false;
     holdStartTime = Date.now();
     document.getElementById('trainingTimer').style.color = '#ffc107';
-    
+
     // Check hold duration
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) {
@@ -400,7 +418,7 @@ function handleTimerTouchStart(e) {
     isHoldReady = false;
     holdStartTime = Date.now();
     document.getElementById('trainingTimer').style.color = '#ffc107';
-    
+
     // Check hold duration
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) {
@@ -435,15 +453,15 @@ function handleTimerTouchEnd(e) {
 
 function startTimer() {
     if (timerRunning) return;
-    
+
     // Reset timer to 0 when starting a new solve
     timerElapsed = 0;
     timerRunning = true;
     timerStartTime = Date.now();
-    
+
     const timerEl = document.getElementById('trainingTimer');
     timerEl.style.color = '#2d3748';
-    
+
     timerInterval = setInterval(() => {
         timerElapsed = Date.now() - timerStartTime;
         updateTimerDisplay();
@@ -452,10 +470,10 @@ function startTimer() {
 
 function stopTimerOnly() {
     if (!timerRunning) return;
-    
+
     timerRunning = false;
     clearInterval(timerInterval);
-    
+
     const timerEl = document.getElementById('trainingTimer');
     timerEl.style.color = '#2d3748';
 }
@@ -469,12 +487,12 @@ function updateTimerDisplay() {
 function openShapeIndexSelector() {
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
-    
+
     pushModalState('shapeIndexSelectorModal', closeShapeIndexSelector);
-    
+
     // Lock background
     document.body.classList.add('modal-open');
-    
+
     // Create or get existing modal
     let selectorModal = document.getElementById('shapeIndexSelectorModal');
     if (!selectorModal) {
@@ -492,12 +510,12 @@ function openShapeIndexSelector() {
         `;
         document.body.appendChild(selectorModal);
     }
-    
+
     const selectedKey = `training_selected_${currentTrainingCase}`;
     const currentSelection = window.trainingSelections?.[selectedKey] || [];
-    
+
     const body = document.getElementById('shapeIndexSelectorBody');
-    
+
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
         const hexCode = convertShapeIndexToHexPlease(idx);
@@ -512,7 +530,7 @@ function openShapeIndexSelector() {
             </button>
         `;
     }).join('');
-    
+
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
         const hexCode = convertShapeIndexToHexPlease(idx);
         const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#000000', '#FFFFFF', 2, -4);
@@ -526,7 +544,7 @@ function openShapeIndexSelector() {
             </button>
         `;
     }).join('');
-    
+
     body.innerHTML = `
         <div class="shape-index-section">
             <div class="shape-index-section-header">
@@ -553,7 +571,7 @@ function openShapeIndexSelector() {
             </div>
         </div>
     `;
-    
+
     selectorModal.classList.add('active');
 }
 
@@ -564,27 +582,27 @@ function toggleShapeIndex(index) {
         const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
         window.trainingSelections[selectedKey] = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
     }
-    
+
     const currentSelection = window.trainingSelections[selectedKey];
     const indexPos = currentSelection.indexOf(index);
-    
+
     if (indexPos > -1) {
         currentSelection.splice(indexPos, 1);
     } else {
         currentSelection.push(index);
     }
-    
+
     // Update button appearance
     const button = document.querySelector(`button.shape-index-toggle[data-index="${index}"]`);
     if (button) {
         button.classList.toggle('active');
         button.style.background = button.classList.contains('active') ? '#ebebeb' : '#ffffff';
     }
-    
+
     // Update training scrambles and regenerate lookahead
     trainingScrambles = currentSelection;
-    regenerateScrambleLookahead();
-    
+    regenerateScrambleLookaheadLegacy();
+
     // If no indices selected, show warning but don't prevent
     if (currentSelection.length === 0) {
         console.warn('No shape indices selected');
@@ -594,51 +612,51 @@ function toggleShapeIndex(index) {
 function selectAllIndices(type) {
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
-    
+
     const selectedKey = `training_selected_${currentTrainingCase}`;
     if (!window.trainingSelections) window.trainingSelections = {};
-    
+
     const indices = type === 'org' ? (shapeIndexItem.org || []) : (shapeIndexItem.mir || []);
-    
+
     // Add all indices of this type to selection
     indices.forEach(idx => {
         if (!window.trainingSelections[selectedKey].includes(idx)) {
             window.trainingSelections[selectedKey].push(idx);
         }
     });
-    
+
     // Update button appearances
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.add('active');
         btn.style.background = '#ebebeb';
     });
-    
+
     trainingScrambles = window.trainingSelections[selectedKey];
-    regenerateScrambleLookahead();
+    regenerateScrambleLookaheadLegacy();
 }
 
 function deselectAllIndices(type) {
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
-    
+
     const selectedKey = `training_selected_${currentTrainingCase}`;
     if (!window.trainingSelections) window.trainingSelections = {};
-    
+
     const indices = type === 'org' ? (shapeIndexItem.org || []) : (shapeIndexItem.mir || []);
-    
+
     // Remove all indices of this type from selection
     window.trainingSelections[selectedKey] = window.trainingSelections[selectedKey].filter(idx => !indices.includes(idx));
-    
+
     // Update button appearances
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.remove('active');
         btn.style.background = '#ffffff';
     });
-    
+
     trainingScrambles = window.trainingSelections[selectedKey];
-    regenerateScrambleLookahead();
+    regenerateScrambleLookaheadLegacy();
 }
 
 function closeShapeIndexSelector() {
@@ -654,13 +672,13 @@ let spacePressed = false;
 document.addEventListener('keydown', (e) => {
     const modal = document.getElementById('trainingModal');
     if (!modal || !modal.classList.contains('active')) return;
-    
+
     if (e.code === 'Escape') {
         e.preventDefault();
         closeTrainingModal();
         return;
     }
-    
+
     // Any key stops the timer if running
     if (timerRunning) {
         e.preventDefault();
@@ -669,7 +687,7 @@ document.addEventListener('keydown', (e) => {
         spacePressed = false;
         return;
     }
-    
+
     if (e.code === 'Space' && !e.repeat) {
         e.preventDefault();
         if (!spacePressed) {
@@ -680,7 +698,7 @@ document.addEventListener('keydown', (e) => {
                 isHolding = true;
                 isHoldReady = false;
                 holdStartTime = Date.now();
-                
+
                 // Check hold duration
                 const holdCheckInterval = setInterval(() => {
                     if (!isHolding) {
@@ -702,13 +720,13 @@ document.addEventListener('keydown', (e) => {
 document.addEventListener('keyup', (e) => {
     const modal = document.getElementById('trainingModal');
     if (!modal || !modal.classList.contains('active')) return;
-    
+
     if (e.code === 'Space') {
         e.preventDefault();
         if (spacePressed) {
             spacePressed = false;
             const timerEl = document.getElementById('trainingTimer');
-            
+
             if (isHolding && isHoldReady) {
                 isHolding = false;
                 isHoldReady = false;
@@ -724,23 +742,12 @@ document.addEventListener('keyup', (e) => {
 });
 
 function regenerateScrambleLookahead() {
-    // Clear existing lookahead
-    preGeneratedScrambles = [];
-    
-    // Generate new scrambles
-    for (let i = 0; i < 3; i++) {
-        preGeneratedScrambles.push(generateNextScrambleData());
-    }
-    
-    // Display the first one if we're not showing history
-    if (currentHistoryIndex === scrambleHistory.length - 1 || scrambleHistory.length === 0) {
-        displayNextScramble();
-    }
+    regenerateScrambleLookaheadLegacy();
 }
 
 function openTrainingSettingsModal() {
     pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
-    
+
     let settingsModal = document.getElementById('trainingSettingsModal');
     if (!settingsModal) {
         settingsModal = document.createElement('div');
@@ -769,29 +776,30 @@ function openTrainingSettingsModal() {
             </div>
         `;
         document.body.appendChild(settingsModal);
-        
+
         // Add event listeners
         document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
             trainingScrambleImageSize = parseInt(e.target.value);
             document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px';
             localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            regenerateScrambleLookahead();
+            if (window._multiCaseMode) regenerateMultiScrambleLookahead();
+            else regenerateScrambleLookaheadLegacy();
         });
-        
+
         document.getElementById('trainingTextSizeSlider').addEventListener('input', (e) => {
             trainingScrambleTextSize = parseInt(e.target.value);
             document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
             localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
             document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
         });
-        
+
         document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
             trainingHoldToStart = parseFloat(e.target.value);
             document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
             localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
         });
     }
-    
+
     settingsModal.classList.add('active');
 }
 
@@ -804,7 +812,7 @@ function closeTrainingSettingsModal() {
 
 function openTrainingInfoModal() {
     pushModalState('trainingInfoModal', closeTrainingInfoModal);
-    
+
     let infoModal = document.getElementById('trainingInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -838,7 +846,7 @@ function openTrainingInfoModal() {
         `;
         document.body.appendChild(infoModal);
     }
-    
+
     infoModal.classList.add('active');
 }
 

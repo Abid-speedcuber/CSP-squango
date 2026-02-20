@@ -1826,7 +1826,7 @@ window.closeGeneralNotesInfoModal = function () {
 document.addEventListener("mousedown", (e) => {
     // Check if clicking on info button or its child
     const infoBtn = e.target.closest(".settings-info-btn");
-    
+
     if (infoBtn) {
         e.preventDefault();
         e.stopPropagation();
@@ -1838,7 +1838,7 @@ document.addEventListener("mousedown", (e) => {
 document.addEventListener("click", (e) => {
     // If clicking on info button or its child img, handle info display
     const infoBtn = e.target.closest(".settings-info-btn");
-    
+
     if (infoBtn) {
         e.preventDefault();
         e.stopPropagation();
@@ -1847,7 +1847,7 @@ document.addEventListener("click", (e) => {
         // Find the info box - check wrapper structure
         const wrapper = infoBtn.closest('.info-wrapper');
         let infoBox = wrapper ? wrapper.querySelector('.info-box') : infoBtn.nextElementSibling;
-        
+
         if (!infoBox || !infoBox.classList.contains("info-box")) {
             return false;
         }
@@ -1858,7 +1858,7 @@ document.addEventListener("click", (e) => {
         // Close all info boxes and restore them first
         document.querySelectorAll(".info-box.show").forEach(box => {
             box.classList.remove("show");
-            
+
             // Restore to original parent
             if (box.dataset.originalParentId) {
                 const originalParent = document.getElementById(box.dataset.originalParentId);
@@ -1883,14 +1883,14 @@ document.addEventListener("click", (e) => {
 
         // Move info box to body for proper fixed positioning
         document.body.appendChild(infoBox);
-        
+
         infoBox.classList.add("show");
 
         // Position the info box
         requestAnimationFrame(() => {
             const buttonRect = infoBtn.getBoundingClientRect();
             const infoBoxRect = infoBox.getBoundingClientRect();
-            
+
             let top = buttonRect.top - infoBoxRect.height - 5;
             let left = buttonRect.right - infoBoxRect.width;
 
@@ -1930,7 +1930,7 @@ document.addEventListener("click", (e) => {
     // Close all info boxes and restore them to original positions
     document.querySelectorAll(".info-box.show").forEach(box => {
         box.classList.remove("show");
-        
+
         // Restore to original parent
         if (box.dataset.originalParentId) {
             const originalParent = document.getElementById(box.dataset.originalParentId);
@@ -2058,61 +2058,61 @@ function showProfilePopup(isPermanent) {
     const profileBtn = document.getElementById('profileBtn');
     const popup = document.getElementById('profileModalDesktop');
     if (!profileBtn || !popup) return;
-    
+
     // If clicking on already active popup element, close it
     if (isPermanent && activeProfilePopupElement === profileBtn) {
         hideProfilePopup(true);
         return;
     }
-    
+
     // Close any existing popup if opening a new permanent one
     if (isPermanent && activeProfilePopup) {
         activeProfilePopup.classList.remove('active');
         activeProfilePopup = null;
         activeProfilePopupElement = null;
     }
-    
+
     // Don't show hover popup if there's already a permanent popup
     if (!isPermanent && activeProfilePopup && activeProfilePopupElement !== profileBtn) {
         return;
     }
-    
+
     popup.classList.remove('active'); // Reset first
     popup.className = 'profile-popup-desktop' + (isPermanent ? ' permanent' : '');
     popup.classList.add('active');
-    
+
     // Position the popup
     const rect = profileBtn.getBoundingClientRect();
     const popupContent = popup.querySelector('.profile-popup-content');
-    
+
     setTimeout(() => {
         const popupRect = popupContent.getBoundingClientRect();
-        
+
         let top = rect.bottom + 15;
         let left = window.innerWidth - popupRect.width - 20;
-        
+
         if (top + popupRect.height > window.innerHeight - 10) {
             top = rect.top - popupRect.height - 15;
         }
         if (top < 10) top = 10;
         if (left < 10) left = 10;
-        
+
         popupContent.style.top = top + 'px';
         popupContent.style.left = left + 'px';
     }, 0);
-    
+
     updateProfileStats();
-    
+
     const scrollHandler = () => {
         hideProfilePopup(isPermanent);
         window.removeEventListener('scroll', scrollHandler, true);
     };
     window.addEventListener('scroll', scrollHandler, true);
-    
+
     if (isPermanent) {
         activeProfilePopup = popup;
         activeProfilePopupElement = profileBtn;
-        
+
         setTimeout(() => {
             const clickHandler = (e) => {
                 const popupContent = popup.querySelector('.profile-popup-content');
@@ -2129,7 +2129,7 @@ function showProfilePopup(isPermanent) {
 function hideProfilePopup(isPermanent) {
     const popup = document.getElementById('profileModalDesktop');
     if (!popup) return;
-    
+
     if (isPermanent) {
         if (activeProfilePopup) {
             popup.classList.remove('active');
@@ -2156,14 +2156,14 @@ function closeProfileModalDesktop(isPermanent = false) {
 function openProfileModalMobile() {
     const modal = document.getElementById('profileModalMobile');
     if (!modal) return;
-    
+
     pushModalState('profileModalMobile', closeProfileModalMobile);
-    
+
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
     modal.classList.add('active');
-    
+
     updateProfileStats();
 }
 
@@ -2463,14 +2463,14 @@ window.toggleSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         const isOpening = !sidebar.classList.contains('active');
-        
+
         if (isOpening) {
             // Opening sidebar - lock scroll
             window.sidebarScrollY = window.scrollY;
             document.body.style.top = `-${window.sidebarScrollY}px`;
             document.body.classList.add('sidebar-open');
         }
-        
+
         sidebar.classList.toggle('active');
     }
 };
@@ -2479,12 +2479,12 @@ window.closeSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
-        
+
         // Unlock scroll
         document.body.classList.remove('sidebar-open');
         document.body.style.top = '';
         window.scrollTo(0, window.sidebarScrollY || 0);
-        
+
         // Collapse preset dropdown silently while sidebar slides out
         const presetOptions = document.getElementById('presetOptions');
         const expandIcon = document.getElementById('presetExpandIcon');

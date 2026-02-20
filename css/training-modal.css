@@ -45,7 +45,8 @@ body.modal-open .training-modal {
 }
 
 .training-modal-refresh,
-.training-modal-close {
+.training-modal-close,
+#selectorStartBtn {
     background: rgba(255, 255, 255, 0.1);
     border: none;
     color: #2d3748;
@@ -549,4 +550,24 @@ body.modal-open .training-modal {
     .training-info-text {
         font-size: 0.9rem;
     }
+}
+
+/* Multi-case training selector */
+#trainingSelectorModal .training-modal-header {
+    gap: 8px;
+}
+
+#selectorStartBtn {
+    display: flex;
+    align-items: center;
+    background: #28a745 !important;
+    color: white !important;
+    width: auto !important;
+    padding: 0 14px !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+#selectorStartBtn:hover {
+    background: #218838 !important;
 }
