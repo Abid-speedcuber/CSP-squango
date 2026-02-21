@@ -900,6 +900,7 @@ details summary::marker {
     padding: 0;
     transform-origin: top right;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .floating-profile-btn:hover {
@@ -970,8 +971,9 @@ body.modal-open .homepage-info-btn {
 
 .floating-profile-btn svg,
 .floating-profile-btn img {
-    width: 24px;
-    height: 24px;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
     flex-shrink: 0;
 }
 

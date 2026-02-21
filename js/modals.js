@@ -198,44 +198,65 @@ function generateModalHTML() {
             </div>
         </div>
 
-        <!-- Desktop Profile Modal (Popup style) -->
+         <!-- Desktop Profile Modal (Popup style) -->
         <div id="profileModalDesktop" class="profile-popup-desktop">
             <div class="profile-popup-content">
-                <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
-                    <img src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px;">
-                    <h3 style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
+                <!-- View Mode -->
+                <div id="profileViewDesktop">
+                    <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
+                        <img id="profileAvatarDesktop" src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px; border-radius: 50%; border: solid gray;">
+                        <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
+                            <h3 id="profileNameDesktop" style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
+                            <button onclick="switchToEditProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: #6c757d;" title="Edit Profile">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding: 15px;">
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileLearningProgressDesktop" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                                <div id="profileLearnedProgressDesktop" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
+                                    <span id="profileLearnedTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileCoverageProgressDesktop" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
+                                    <span id="profileCoverageTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileSafetyProgressDesktop" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
+                                    <span id="profileSafetyTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                
-                <div style="padding: 15px;">
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileLearningProgressDesktop" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
-                            <div id="profileLearnedProgressDesktop" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
-                                <span id="profileLearnedTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
-                            </div>
-                        </div>
+                <!-- Edit Mode -->
+                <div id="profileEditDesktop" style="display: none;">
+                    <div style="padding: 15px 20px; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; gap: 10px;">
+                        <button onclick="switchToViewProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: #6c757d;" title="Back">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                        </button>
+                        <span style="font-size: 1rem; font-weight: 600; color: #2d3748;">Edit Profile</span>
                     </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileCoverageProgressDesktop" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
-                                <span id="profileCoverageTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileSafetyProgressDesktop" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
-                                <span id="profileSafetyTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                            </div>
-                        </div>
+                    <div style="padding: 15px;">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #495057; margin-bottom: 6px;">Name</label>
+                        <input id="profileNameInputDesktop" type="text" maxlength="24" style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; margin-bottom: 14px;" placeholder="Your name">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #495057; margin-bottom: 8px;">Choose Avatar</label>
+                        <div id="avatarGridDesktop" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;"></div>
+                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -244,44 +265,68 @@ function generateModalHTML() {
         <!-- Mobile Profile Modal (Full modal style) -->
         <div id="profileModalMobile" class="modal">
             <div class="modal-content" style="max-width: 400px;">
-                <div class="modal-header">
-                    <span class="modal-title">Profile</span>
-                    <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
+                <!-- View Mode -->
+                <div id="profileViewMobile">
+                    <div class="modal-header">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span id="profileNameMobileTitle" class="modal-title">Profile</span>
+                            <button onclick="switchToEditProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: #6c757d;" title="Edit Profile">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            </button>
+                        </div>
+                        <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <img id="profileAvatarMobile" src="res/avatar.svg" style="width: 64px; height: 64px; border-radius: 50%; border: solid gray;">
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileLearningProgressMobile" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                                <div id="profileLearnedProgressMobile" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
+                                    <span id="profileLearnedTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileCoverageProgressMobile" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
+                                    <span id="profileCoverageTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="margin-bottom: 12px;">
+                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileSafetyProgressMobile" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                                <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
+                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
+                                    <span id="profileSafetyTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body" style="padding: 20px;">
-                    <div style="text-align: center; margin-bottom: 20px;">
-                        <img src="res/avatar.svg" style="width: 64px; height: 64px;">
-                    </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileLearningProgressMobile" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
-                            <div id="profileLearnedProgressMobile" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
-                                <span id="profileLearnedTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
-                            </div>
+                <!-- Edit Mode -->
+                <div id="profileEditMobile" style="display: none;">
+                    <div class="modal-header">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button onclick="switchToViewProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: #6c757d;" title="Back">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                            </button>
+                            <span class="modal-title">Edit Profile</span>
                         </div>
+                        <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
                     </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileCoverageProgressMobile" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
-                                <span id="profileCoverageTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div style="margin-bottom: 12px;">
-                        <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                            <div id="profileSafetyProgressMobile" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
-                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
-                                <span id="profileSafetyTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
-                            </div>
-                        </div>
+                    <div class="modal-body" style="padding: 20px;">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: #495057; margin-bottom: 6px;">Name</label>
+                        <input id="profileNameInputMobile" type="text" maxlength="24" style="width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; margin-bottom: 16px;" placeholder="Your name">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: #495057; margin-bottom: 10px;">Choose Avatar</label>
+                        <div id="avatarGridMobile" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;"></div>
+                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -2133,6 +2178,7 @@ function showProfilePopup(isPermanent) {
     }, 0);
 
     updateProfileStats();
+    applyProfileUI();
 
     const scrollHandler = () => {
         hideProfilePopup(isPermanent);
@@ -2196,6 +2242,7 @@ function openProfileModalMobile() {
     modal.classList.add('active');
 
     updateProfileStats();
+    applyProfileUI();
 }
 
 function closeProfileModalMobile() {
@@ -2224,6 +2271,81 @@ window.openProfileModalDesktop = openProfileModalDesktop;
 window.closeProfileModalDesktop = closeProfileModalDesktop;
 window.openProfileModalMobile = openProfileModalMobile;
 window.closeProfileModalMobile = closeProfileModalMobile;
+
+const AVATARS = [
+    'res/avatar.svg',
+    'res/avatar/1.svg',
+    'res/avatar/2.svg',
+    'res/avatar/3.svg',
+    'res/avatar/4.svg',
+    'res/avatar/5.svg',
+    'res/avatar/6.svg',
+    'res/avatar/7.svg',
+    'res/avatar/8.svg',
+];
+
+let tempSelectedAvatar = null;
+
+function applyProfileUI() {
+    // Update floating button
+    const btnAvatar = document.getElementById('profileBtnAvatar');
+    if (btnAvatar) btnAvatar.src = profileAvatar;
+    // Update desktop view
+    const deskAvatar = document.getElementById('profileAvatarDesktop');
+    if (deskAvatar) deskAvatar.src = profileAvatar;
+    const deskName = document.getElementById('profileNameDesktop');
+    if (deskName) deskName.textContent = profileName;
+    // Update mobile view
+    const mobAvatar = document.getElementById('profileAvatarMobile');
+    if (mobAvatar) mobAvatar.src = profileAvatar;
+    const mobTitle = document.getElementById('profileNameMobileTitle');
+    if (mobTitle) mobTitle.textContent = profileName;
+}
+
+function buildAvatarGrid(mode) {
+    const grid = document.getElementById(`avatarGrid${mode}`);
+    if (!grid) return;
+    grid.innerHTML = '';
+    AVATARS.forEach(src => {
+        const img = document.createElement('img');
+        img.src = src;
+        img.style.cssText = `width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 3px solid ${(tempSelectedAvatar || profileAvatar) === src ? '#007bff' : '#e9ecef'}; transition: border-color 0.2s; box-sizing: border-box;`;
+        img.onclick = () => {
+            tempSelectedAvatar = src;
+            grid.querySelectorAll('img').forEach(i => i.style.borderColor = '#e9ecef');
+            img.style.borderColor = '#007bff';
+        };
+        grid.appendChild(img);
+    });
+}
+
+window.switchToEditProfile = function(mode) {
+    tempSelectedAvatar = profileAvatar;
+    document.getElementById(`profileView${mode}`).style.display = 'none';
+    document.getElementById(`profileEdit${mode}`).style.display = 'block';
+    const nameInput = document.getElementById(`profileNameInput${mode}`);
+    if (nameInput) nameInput.value = profileName === 'Profile' ? '' : profileName;
+    buildAvatarGrid(mode);
+};
+
+window.switchToViewProfile = function(mode) {
+    tempSelectedAvatar = null;
+    document.getElementById(`profileEdit${mode}`).style.display = 'none';
+    document.getElementById(`profileView${mode}`).style.display = 'block';
+};
+
+window.saveProfileEdit = function(mode) {
+    const nameInput = document.getElementById(`profileNameInput${mode}`);
+    const newName = nameInput ? nameInput.value.trim() : '';
+    profileName = newName || 'Profile';
+    profileAvatar = tempSelectedAvatar || profileAvatar;
+    localStorage.setItem('profileName', profileName);
+    localStorage.setItem('profileAvatar', profileAvatar);
+    tempSelectedAvatar = null;
+    applyProfileUI();
+    switchToViewProfile(mode);
+    showToast('Profile saved!', 2000, 'success');
+};
 
 function updateProfileStats() {
     const totalCases = data.length;

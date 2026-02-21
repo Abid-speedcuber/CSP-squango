@@ -145,6 +145,8 @@ let colorScheme = {
 };
 
 let scrambleImageSize = 200; // Default size
+let profileName = localStorage.getItem('profileName') || 'Profile';
+let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
 let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
 let presetData = null; // Will store loaded preset data
 
@@ -556,7 +558,9 @@ function exportData() {
         trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
         trainingHoldToStart: localStorage.getItem('trainingHoldToStart'),
         trainingTimerSize: localStorage.getItem('trainingTimerSize'),
-        trainingShowPrevScramble: localStorage.getItem('trainingShowPrevScramble')
+        trainingShowPrevScramble: localStorage.getItem('trainingShowPrevScramble'),
+        profileName: profileName,
+        profileAvatar: profileAvatar,
     };
     // Let training-selector.js add its data
     if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
@@ -664,6 +668,14 @@ function importData(jsonStr) {
         }
         if (state.trainingHoldToStart) {
             localStorage.setItem('trainingHoldToStart', state.trainingHoldToStart);
+        }
+        if (state.profileName) {
+            profileName = state.profileName;
+            localStorage.setItem('profileName', profileName);
+        }
+        if (state.profileAvatar) {
+            profileAvatar = state.profileAvatar;
+            localStorage.setItem('profileAvatar', profileAvatar);
         }
         if (state.trainingTimerSize) {
             localStorage.setItem('trainingTimerSize', state.trainingTimerSize);
