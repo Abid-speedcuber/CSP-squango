@@ -96,7 +96,7 @@ function generateModalHTML() {
                                 </span>
                             </div>
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
-                                <span>Parity Tracing Personalization</span>
+                                <span>Tracing Scheme Settings</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>

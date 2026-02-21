@@ -339,14 +339,7 @@
             // Setup profile button
 const profileBtn = document.getElementById('profileBtn');
 if (profileBtn) {
-    profileBtn.onmouseenter = () => {
-        if (window.innerWidth > 620) showProfilePopup(false);
-    };
-    
-    profileBtn.onmouseleave = () => {
-        if (window.innerWidth > 620) hideProfilePopup(false);
-    };
-    
+
     profileBtn.onclick = (e) => {
         e.stopPropagation();
         if (window.innerWidth > 620) {
