@@ -1126,6 +1126,7 @@ function renderCard(item) {
 let renderTimeout = null;
 
 function render(softRender = false) {
+    const modal = document.getElementById('generalNotesModal');
     // Clear any pending render
     if (renderTimeout) {
         clearTimeout(renderTimeout);

@@ -684,7 +684,7 @@ function handlePresetChange(presetName) {
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); openGeneralNotesModal(); }, 100);" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
                     <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
@@ -1541,10 +1541,15 @@ function openNotesModal(caseName) {
         </div>
     `;
 
-    document.body.appendChild(modal);
+    // Cancel any pending render before locking scroll
+    if (typeof renderTimeout !== 'undefined' && renderTimeout) {
+        clearTimeout(renderTimeout);
+        renderTimeout = null;
+    }
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
+    document.body.appendChild(modal);
 }
 
 window.attemptCloseNotesModal = function (caseName) {
@@ -1655,15 +1660,18 @@ function saveNotes(caseName) {
 
 // General Notes Modal Functions
 function openGeneralNotesModal() {
-    // Close any existing modals
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
 
     pushModalState('generalNotesModal', closeGeneralNotesModal);
 
     const modal = document.createElement('div');
-    modal.className = 'modal active';
+    modal.className = 'modal';
     modal.id = 'generalNotesModal';
+    document.body.appendChild(modal);
+    // Force reflow THEN activate to ensure fixed positioning is applied before any layout
+    modal.getBoundingClientRect();
+    modal.classList.add('active');
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 900px; max-height: 85vh; height: 85vh; display: flex; flex-direction: column;">
             <div class="modal-header" style="flex-shrink: 0;">
@@ -1693,10 +1701,16 @@ function openGeneralNotesModal() {
         </div>
     `;
 
-    document.body.appendChild(modal);
-    window.modalScrollY = window.scrollY;
-    document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    // Debug: watch for card size changes
+    const firstCard = document.querySelector('.card');
+    if (firstCard) {
+        const ro = new ResizeObserver(entries => {
+            for (const entry of entries) {
+            }
+        });
+        ro.observe(firstCard);
+        modal._resizeObserver = ro;
+    }
 
     // Render the saved content
     renderGeneralNotes();
@@ -1705,10 +1719,8 @@ function openGeneralNotesModal() {
 function closeGeneralNotesModal() {
     const modal = document.getElementById('generalNotesModal');
     if (modal) {
+        if (modal._resizeObserver) modal._resizeObserver.disconnect();
         modal.remove();
-        document.body.classList.remove('modal-open');
-        document.body.style.top = '';
-        window.scrollTo(0, window.modalScrollY || 0);
     }
 }
 
@@ -1716,21 +1728,23 @@ function renderGeneralNotes() {
     const viewDiv = document.getElementById('generalNotesView');
     if (viewDiv) {
         if (generalNotes.trim()) {
-            viewDiv.innerHTML = generalNotes;
-
-            // Execute any script tags in the content
-            const scripts = viewDiv.querySelectorAll('script');
-            scripts.forEach(script => {
-                const newScript = document.createElement('script');
-                if (script.src) {
-                    newScript.src = script.src;
-                } else {
-                    newScript.textContent = script.textContent;
-                }
-                script.parentNode.replaceChild(newScript, script);
-            });
+            // Use an iframe to safely render full HTML documents without leaking styles
+            const isFullHTML = /<!DOCTYPE|<html/i.test(generalNotes);
+            if (isFullHTML) {
+                const iframe = document.createElement('iframe');
+                iframe.style.cssText = 'width: 100%; height: 100%; border: none; min-height: 400px;';
+                iframe.sandbox = 'allow-same-origin';
+                viewDiv.innerHTML = '';
+                viewDiv.style.padding = '0';
+                viewDiv.appendChild(iframe);
+                iframe.contentDocument.open();
+                iframe.contentDocument.write(generalNotes);
+                iframe.contentDocument.close();
+            } else {
+                viewDiv.innerHTML = generalNotes;
+            }
         } else {
-            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center; max-height: 80vh; min-height: 20vh;">No notes yet. Click Edit to add your first note!</p>';
+            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center;">No notes yet. Click Edit to add your first note!</p>';
         }
     }
 }
@@ -2488,7 +2502,7 @@ function generateSidebarHTML() {
                     <img src="res/avatar.svg" alt="Profile">
                     <span>Profile</span>
                 </button>
-                <button class="sidebar-item" onclick="openGeneralNotesModal(); closeSidebar();">
+                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openGeneralNotesModal(), 350);">
                     <img src="res/notes.svg" alt="Notes">
                     <span>Notes</span>
                 </button>

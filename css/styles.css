@@ -21,6 +21,7 @@ body.modal-open {
     position: fixed;
     inset: 0;
     width: 100%;
+    overflow-y: scroll;
 }
 
 .container {

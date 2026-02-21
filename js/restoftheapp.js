@@ -437,13 +437,8 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
 
     // Apply shape patterns from preset
     if (data.customShapesForParityTracerLibrary) {
-        console.log('📦 Applying preset shape patterns...');
-        console.log('🔍 Preset shapes data:', data.customShapesForParityTracerLibrary.substring(0, 200) + '...');
         localStorage.setItem('customShapesForParityTracerLibrary', data.customShapesForParityTracerLibrary);
-        console.log('✅ Saved to localStorage, verifying...');
         const verified = localStorage.getItem('customShapesForParityTracerLibrary');
-        console.log('🔍 Verified localStorage content:', verified.substring(0, 200) + '...');
-        console.log('✅ Match:', verified === data.customShapesForParityTracerLibrary);
     }
 
     // Apply preset subtitle configurations
@@ -492,13 +487,11 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
 
     // Force reload shape patterns in parity tracer library
     if (data.customShapesForParityTracerLibrary && typeof window.ParityTracerLibrary !== 'undefined') {
-        console.log('🔄 Forcing parity tracer shapes reload after preset apply...');
         try {
             // Force reload from localStorage after we've saved it
             setTimeout(() => {
                 if (window.ParityTracerLibrary.reloadShapesFromStorage) {
                     window.ParityTracerLibrary.reloadShapesFromStorage();
-                    console.log('✅ Parity tracer shapes reloaded successfully');
                 }
             }, 100);
 
@@ -506,7 +499,6 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
             setTimeout(() => {
                 if (window.ParityTracerLibrary.reloadShapesFromStorage) {
                     window.ParityTracerLibrary.reloadShapesFromStorage();
-                    console.log('✅ Second reload to ensure shapes are updated');
                 }
             }, 300);
         } catch (e) {
@@ -585,7 +577,6 @@ function importData(jsonStr) {
             if (typeof window.ParityTracerLibrary !== 'undefined') {
                 setTimeout(() => {
                     if (window.ParityTracerLibrary.reloadShapesFromStorage) {
-                        console.log('🔄 Forcing parity tracer shapes reload after import');
                         window.ParityTracerLibrary.reloadShapesFromStorage();
                     }
                 }, 100);
@@ -751,10 +742,9 @@ window.addEventListener('resize', handleResize);
 const originalRender = window.render;
 if (typeof originalRender === 'function') {
     window.render = function () {
+        const modalOpen = document.getElementById('generalNotesModal');
         if (typeof showRenderLoader === 'function') showRenderLoader();
-        // rAF #1: browser schedules a paint (loader appears)
         requestAnimationFrame(() => {
-            // rAF #2: browser actually committed the paint, NOW do heavy work
             requestAnimationFrame(() => {
                 originalRender();
                 setTimeout(updateSVGScaling, 10);
