@@ -586,40 +586,40 @@
             result: line2.result
         });
 
-        const line3 = calculateAlternatingParityWithLongName(edgesOrderLetters, true);
+        const topCorners = cornersOrderIDs.filter(c => isTopLayerCornerWithLongName(c));
+        const topCornersCodes = topCorners.map(c => getCornerCodenameWithLongName(c));
+        const line3 = calculateTrioParityWithLongName(topCornersCodes);
         steps.push({
-            name: 'Line 3: Edges at 1,3,5,7',
-            pieces: line3.detail.split(': [')[1].split(']')[0],
-            codenames: '-',
+            name: `Line 3: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Corners`,
+            pieces: topCorners.join(' '),
+            codenames: topCornersCodes.join(' '),
             detail: line3.detail,
             result: line3.result
         });
 
-        const topCorners = cornersOrderIDs.filter(c => isTopLayerCornerWithLongName(c));
-        const topCornersCodes = topCorners.map(c => getCornerCodenameWithLongName(c));
-        const line4 = calculateTrioParityWithLongName(topCornersCodes);
+        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCornerWithLongName(c));
+        const bottomCornersCodes = bottomCorners.map(c => getCornerCodenameWithLongName(c));
+        const line4 = calculateTrioParityWithLongName(bottomCornersCodes);
         steps.push({
-            name: `Line 4: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Corners`,
-            pieces: topCorners.join(' '),
-            codenames: topCornersCodes.join(' '),
+            name: `Line 4: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Corners`,
+            pieces: bottomCorners.join(' '),
+            codenames: bottomCornersCodes.join(' '),
             detail: line4.detail,
             result: line4.result
         });
 
-        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCornerWithLongName(c));
-        const bottomCornersCodes = bottomCorners.map(c => getCornerCodenameWithLongName(c));
-        const line5 = calculateTrioParityWithLongName(bottomCornersCodes);
+        const line5 = calculateAlternatingParityWithLongName(edgesOrderLetters, true);
         steps.push({
-            name: `Line 5: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Corners`,
-            pieces: bottomCorners.join(' '),
-            codenames: bottomCornersCodes.join(' '),
+            name: 'Line 5: Odd Edges',
+            pieces: line5.detail.split(': [')[1].split(']')[0],
+            codenames: '-',
             detail: line5.detail,
             result: line5.result
         });
 
         const line6 = calculateAlternatingParityWithLongName(cornersOrderIDs, false);
         steps.push({
-            name: 'Line 6: Corners at 1,3,5,7',
+            name: 'Line 6: Odd Corners',
             pieces: line6.detail.split(': [')[1].split(']')[0],
             codenames: '-',
             detail: line6.detail,
@@ -995,7 +995,7 @@
             let displayContent = '';
             const lineName = step.name.split(':')[1].trim();
 
-            if (idx < 2 || (idx >= 3 && idx < 5)) {
+            if (idx < 2 || (idx >= 2 && idx < 4)) {
                 displayContent = `${lineName}: ${createColorSquaresWithLongName(step.codenames)} = <strong>${step.result}</strong>`;
             } else {
                 displayContent = `${lineName}: ${createPositionIndicatorsWithLongName(step.pieces)} = <strong>${step.result}</strong>`;
@@ -2743,7 +2743,7 @@
         </button>
       </div>
       <div class="parity-tracer-input-container">
-        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
+        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" placeholder="Enter your scramble..." style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
       </div>
       <div id="${uniqueId}-visualization" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
       <div class="utility-buttons-container">
@@ -2789,10 +2789,9 @@
                 // Ensure we have the latest shapes before analysis
                 currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
 
-                let scrambleText = scrambleInput.value.trim();
+                let scrambleText = scrambleInput.value.trim() || '(0,0)';
                 // Store in a scope accessible to button handlers
                 window.currentParityTracerScramble = scrambleText;
-                if (!scrambleText) return;
 
                 // Apply utility transformations (z2, y2, flip color)
                 const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
@@ -3102,7 +3101,6 @@
             if (config.scrambleTextInput) {
                 performAnalysisWithLongName();
             } else {
-                scrambleInput.value = '(0,0)';
                 performAnalysisWithLongName();
             }
         }, 0);

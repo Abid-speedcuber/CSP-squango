@@ -850,7 +850,7 @@ function openNewParityAnalysis(scramble) {
     window.ParityTracerLibrary.createModal({
         backgroundColor: '#ffffff',
         hideInstructionButton: hideInstructions,
-        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
+        instructionText1: 'Enter your scramble in the top input bar to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
         instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
         topColor: colorScheme.topColor,
@@ -863,7 +863,7 @@ function openNewParityAnalysis(scramble) {
         rightColor: colorScheme.rightColor,
         backColor: colorScheme.backColor,
         leftColor: colorScheme.leftColor,
-        scrambleText: scramble,
+        scrambleText: scramble || '',
         generateImage: true,
         imageSize: scrambleImageSize || 200
     });
@@ -2510,7 +2510,7 @@ function generateSidebarHTML() {
                     <img src="res/training.svg" alt="Trainer">
                     <span>Trainer</span>
                 </button>
-                <button class="sidebar-item" onclick="openNewParityAnalysis(''); closeSidebar();">
+                <button class="sidebar-item" onclick="openNewParityAnalysis(null); closeSidebar();">
                     <img src="res/tracing.svg" alt="Parity Tracer">
                     <span>Parity Tracer</span>
                 </button>
