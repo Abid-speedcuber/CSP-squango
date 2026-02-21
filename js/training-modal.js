@@ -190,6 +190,7 @@ function openTrainingModal(caseName) {
     modal.classList.add('active');
     document.body.classList.add('modal-open');
     applyPrevScrambleBar();
+    applyTimerSize();
 }
 
 function closeTrainingModal() {
@@ -317,6 +318,12 @@ function previousScramble() {
 function nextScrambleManual() {
     stopTimerOnly();
     displayNextScramble();
+}
+
+function applyTimerSize() {
+    const size = parseInt(localStorage.getItem('trainingTimerSize') || 80);
+    const el = document.getElementById('trainingTimer');
+    if (el) el.style.fontSize = size + 'px';
 }
 
 function applyPrevScrambleBar() {
@@ -822,6 +829,10 @@ function openTrainingSettingsModal() {
                         <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
                     </div>
                     <div style="margin-bottom: 20px;">
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
+                        <input type="range" id="trainingTimerSizeSlider" min="30" max="120" step="2" value="${parseInt(localStorage.getItem('trainingTimerSize') || 80)}" style="width: 100%;">
+                    </div>
+                    <div style="margin-bottom: 20px;">
                         <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
                         <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
                     </div>
@@ -869,6 +880,13 @@ function openTrainingSettingsModal() {
             trainingHoldToStart = parseFloat(e.target.value);
             document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
             localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
+        });
+
+        document.getElementById('trainingTimerSizeSlider').addEventListener('input', (e) => {
+            const size = parseInt(e.target.value);
+            document.getElementById('trainingTimerSizeValue').textContent = size + 'px';
+            localStorage.setItem('trainingTimerSize', size);
+            applyTimerSize();
         });
     }
 

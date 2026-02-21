@@ -381,6 +381,7 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     modal.classList.add('active');
     document.body.classList.add('modal-open');
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
+    if (typeof applyTimerSize === 'function') applyTimerSize();
 };
 
 function updateMultiTrainingTitle() {

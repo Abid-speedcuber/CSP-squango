@@ -554,7 +554,9 @@ function exportData() {
         parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
         trainingScrambleImageSize: localStorage.getItem('trainingScrambleImageSize'),
         trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
-        trainingHoldToStart: localStorage.getItem('trainingHoldToStart')
+        trainingHoldToStart: localStorage.getItem('trainingHoldToStart'),
+        trainingTimerSize: localStorage.getItem('trainingTimerSize'),
+        trainingShowPrevScramble: localStorage.getItem('trainingShowPrevScramble')
     };
     // Let training-selector.js add its data
     if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
@@ -662,6 +664,12 @@ function importData(jsonStr) {
         }
         if (state.trainingHoldToStart) {
             localStorage.setItem('trainingHoldToStart', state.trainingHoldToStart);
+        }
+        if (state.trainingTimerSize) {
+            localStorage.setItem('trainingTimerSize', state.trainingTimerSize);
+        }
+        if (state.trainingShowPrevScramble !== undefined) {
+            localStorage.setItem('trainingShowPrevScramble', state.trainingShowPrevScramble);
         }
         saveState();
         updateProgress();
