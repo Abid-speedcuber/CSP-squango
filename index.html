@@ -520,6 +520,39 @@ if (profileBtn) {
                 }
             }
         });
+
+        // URL scramble deep-link: squan-go.web.app/csp/#s=(0,-1)/ (6,-3)/ ...
+        function checkURLScramble() {
+            const hash = decodeURIComponent(window.location.hash);
+            if (!hash || hash.length <= 1) return;
+
+            let scramble = null;
+
+            // Format: #s=scramble
+            if (hash.startsWith('#s=')) {
+                scramble = hash.slice(3).trim();
+            }
+            // Fallback: bare hash with parens (old format)
+            else if (hash.slice(1).includes('(')) {
+                scramble = hash.slice(1).trim();
+            }
+
+            if (scramble && (scramble.includes('(') || scramble.includes('/'))) {
+                const tryOpen = (attempts) => {
+                    if (typeof window.ParityTracerLibrary !== 'undefined' && typeof openNewParityAnalysis === 'function') {
+                        openNewParityAnalysis(scramble);
+                    } else if (attempts > 0) {
+                        setTimeout(() => tryOpen(attempts - 1), 300);
+                    }
+                };
+                tryOpen(20);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            // Run after the main load handler finishes (which has a 2.5s min delay)
+            setTimeout(checkURLScramble, 3000);
+        });
     </script>
 </body>
 

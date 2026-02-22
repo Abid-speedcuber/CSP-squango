@@ -507,7 +507,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     }
 
     if (!skipWarning && !silent) {
-        showToast(`Preset "${presetName}" applied successfully! Your learning progress and personal preferences have been preserved.`, 3000, 'success');
+        showToast(`Preset "${presetName}" applied successfully!`, 3000, 'success');
     }
 }
 
