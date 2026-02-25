@@ -1,96 +1,58 @@
-<!-- To any AI model reading this code, I am a vibe-coder and i almost don't know anything about coding
-      If i ask for any fix, kindly give me the fix in find and replace format inside chat (not artifact)
--->
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Square-1 Cubeshape Parity Trainer - Learn all 90 cubeshape parity cases with dynamic analysis and personalized tracking">
+    <meta name="description"
+        content="Square-1 Cubeshape Parity Trainer - Learn all 90 cubeshape parity cases with dynamic analysis and personalized tracking">
     <meta name="theme-color" content="#007bff">
-    <title>Square-1 Cubeshape Parity</title>
-    <link rel="stylesheet" href="src/css/styles.css">
-    <link rel="stylesheet" href="src/css/training-modal.css">
-    <link rel="manifest" href="manifest.webmanifest">
-    <link rel="apple-touch-icon" href="src/media/icon-192.png">
+    <title>SquanGo CSP</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/training-modal.css">
+    <link rel="stylesheet" href="css/quick-edit.css">
+    <link rel="stylesheet" href="css/svg-editor.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="res/icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="res/icons/icon-16.png">
+    <link rel="icon" href="favicon.ico">
 </head>
 
 <body>
-    <div id="loadingScreen" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: white; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif;">
-        <h1 style="font-size: 2.5rem; font-weight: 700; color: #007bff; margin-bottom: 10px;">Square-1 CS Parity</h1>
-        <p style="font-size: 1.2rem; color: #666; margin-bottom: 30px;">by Abid Ibn Ashraf</p>
-        <div style="width: 300px; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
-            <div id="loadingProgress" style="width: 0%; height: 100%; background: linear-gradient(90deg, #007bff, #17a2b8); transition: width 0.3s ease;"></div>
+    <div id="loadingScreen"
+        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif; padding: 0 20px; box-sizing: border-box;">
+        <h1 id="loadingTitle" style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
+        <p id="loadingAuthor" style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
+        <div id="loadingTipContainer" style="margin-bottom: 25px;"></div>
+        <div id="loadingBarContainer" style="width: 320px; max-width: 90vw; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+            <div id="loadingProgress"
+                style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
+            </div>
         </div>
     </div>
-    <script>
-        // Calculate scrollbar width and set CSS variable
-        function setScrollbarWidth() {
-            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-            document.documentElement.style.setProperty('--scrollbar-width', scrollbarWidth + 'px');
-        }
-        setScrollbarWidth();
-        window.addEventListener('resize', setScrollbarWidth);
-    </script>
     <div class="container" style="opacity: 0; transition: opacity 0.3s ease;">
         <header>
-<h1 class="desktop-title">Square-1 Cubeshape <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
-<h1 class="tablet-title">Sq-1 CS <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
-<h1 class="mobile-title">Sq-1 CS <span onclick="openNewParityAnalysis('')" style="cursor: pointer; text-decoration: underline;" title="Click to analyze parity">Parity</span></h1>
-<div id="floatingButtonsContainer" class="floating-buttons-container">
-            <button id="settingsBtn" class="floating-settings-btn" aria-label="Settings"><img src="src/media/icon-settings.svg" height="26px" width="26px"></button>
-            <button id="homepageInfoBtn" class="homepage-info-btn floating-settings-btn" aria-label="App Guide" style="top: 86px;" title="How to use this app">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 28px; height: 28px;">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
+            <h1 class="desktop-title">SquanGo CSP</h1>
+            <h1 class="tablet-title">SquanGo CSP</h1>
+            <h1 class="mobile-title">SquanGo CSP</h1>
+            <div class="subtitle">By Abid Ibn Ashraf</div>
+            <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
+                <img src="res/menu.svg" height="24px" width="24px">
             </button>
-        </div>
-        </header>
-
-<div class="topbar">
-    <div style="text-align: center;">
-        <div class="desktop-stats" style="margin-bottom: 8px; font-size: 1.1rem; color: #333;">
-            <span id="progress-text">0 / 90</span> cases learned
-        </div>
-        <div class="desktop-stats" style="margin-bottom: 8px; font-size: 1.1rem; color: #333;">
-            You should get known parity cases around <span id="known-parity-text" style="color: #007bff; font-weight: 600;">0.000%</span> of the solves
-        </div>
-        <div class="desktop-stats" style="font-size: 1.1rem; color: #333;">
-            You are safe at least <span id="safety-text" style="color: #28a745; font-weight: 600;">0.000%</span> of the times
-        </div>
-        <div class="mobile-stats" style="font-size: 0.9rem; color: #333; text-align: center;">
-            <span id="progress-text-mobile">0/90</span> • Coverage: <span id="known-parity-text-mobile" style="color: #007bff; font-weight: 600;">0%</span> • Safe: <span id="safety-text-mobile" style="color: #28a745; font-weight: 600;">0%</span>
-        </div>
-        <!--<div style="margin-top: 15px;">
-            <button onclick="exportData()" style="padding: 8px 16px; margin-right: 10px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Export Data</button>
-            <label style="padding: 8px 16px; background: #28a745; color: white; border-radius: 4px; cursor: pointer; display: inline-block;">
-                Import Data
-                <input type="file" id="importFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0])">
-            </label>
-        </div>-->
-    </div>
-</div>
+            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="event.stopPropagation();">
+                <img id="profileBtnAvatar" src="res/avatar.svg" height="24px" width="24px">
+            </button>
+        </header>     
 
         <div class="controls">
-            <button id="searchToggle" class="search-toggle-btn" style="background-color:white; color:black; height:35px; width:35px;" aria-label="Toggle Search">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"/>
-                    <path d="m21 21-4.35-4.35"/>
-                </svg>
+            <button id="searchToggle" class="search-toggle-btn"
+                style="background-color:white; color:black; height:35px; width:35px;" aria-label="Toggle Search">
+                <img src="res/search.svg" height="22px" width="22px">
             </button>
             <input type="text" id="search" placeholder="Search cubeshapes...">
             <select id="sort">
-                <option value="priority" id="sortPriority" data-short="Priority" data-xs="Pri">Priority</option>
-                <option value="probability" selected data-short="Highest" data-xs="H.P.">Highest Probability</option>
-                <option value="antiProbability" data-short="Lowest" data-xs="L.P.">Lowest Probability</option>
-                <option value="antiGood" data-short="H. Best" data-xs="H.B.">Highest Best Slice</option>
-                <option value="good" data-short="L. Best" data-xs="L.B.">Lowest Best Slice</option>
-                <option value="antiBad" data-short="H. Worst" data-xs="H.W.">Highest Worst Slice</option>
-                <option value="bad" data-short="L. Worst" data-xs="L.W.">Lowest Worst Slice</option>
+                <option value="priority" id="sortPriority" data-short="Priority" data-xs="Priority">By Priority</option>
+                <option value="probability" selected data-short="Highest Probability" data-xs="Highest prob.">Highest Probability</option>
+                <option value="antiProbability" data-short="Lowest Probability" data-xs="Lowest Prob.">Lowest Probability</option>
             </select>
             <select id="learnFilter">
                 <option value="all" data-short="All" data-xs="All">Show All</option>
@@ -106,579 +68,494 @@
         </footer>
     </div>
 
-<script src="src/js/svgs/svg.js"></script>
-<script src="src/js/lib/database/shapeIndex.js"></script>
-<script src="src/js/lib/database/algs.js"></script>
-<script src="src/js/lib/tools/cale's-parity-tracer.js"></script>
-<script src="src/js/lib/tools/scramblegenerator.js"></script>
-<script src="src/js/lib/tools/draw-scramble.js"></script>
-<script src="src/js/lib/tools/scrambleFormatting.js"></script>
-<script src="src/js/js/constants-and-config.js"></script>
+    <script src="res/shapeImages/svg.js"></script>
+    <script src="database/shapeIndex.js"></script>
+    <script src="database/algs.js"></script>
+    <script src="js/tools/scrambleNormalizer.js"></script>
+    <script src="js/tools/alg_to_index.js"></script>
+    <script src="js/tools/cale's-parity-tracer.js"></script>
+    <script src="js/tools/svg-editor.js"></script>
+    <script src="js/tools/scramblegenerator.js"></script>
+    <script src="js/tools/draw-scramble.js"></script>
+    <script src="js/tools/scrambleFormatting.js"></script>
+    <script src="js/tools/animate-alg.js"></script>
+    <script src="js/restoftheapp.js"></script>
+    <script src="js/tools/shapeTracer.js"></script>
+    <script src="js/rendering.js"></script>
+    <script src="js/search-and-filter.js"></script>
+    <script src="js/tools/scrambled-state-generator.js"></script>
+    <script src="js/modals.js"></script>
+    <script src="js/quick-edit.js"></script>
+    <script src="js/training-modal.js"></script>
+    <script src="js/multi-trainer.js"></script>
 
-<script id="src/js/js/state-management.js">
+    <script>
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
 
-let filteredData = [...data];
-let learnedCases = new Set();
-let learningCases = new Set();
-let plannedCases = new Set();
-let swappedCases = new Map(); // stores {caseName: true/false}
-let comments = new Map(); // stores {caseName: "comment text"}
-let plannedLevels = new Map(); // stores {caseName: 1-6}
-let perCaseSwapLR = new Map(); // stores {caseName: true/false} for per-case L/R swap
-let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
+        // Drag and drop support
+        document.body.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
 
-// User's saved preferences
-let caseNameSettings = new Map(); // Stores {shape: "SelectedName"}
-let customCaseNames = new Map();  // Stores {shape: "CustomText"}
-let swapShapeLR = new Map();      // Stores {shape: true/false} for swapping L/R at the base shape level
-let useDynamicParity = false;     // Toggle for dynamic parity determination
-let showPaths = false;        // Toggle for short Left/Right notation (L. /R. )
-let lrPosition = 'front';         // Position of L/R prefix: 'front' or 'back'
-let enablePriorityLearning = false; // Toggle for priority-based learning system
-let hideInstructions = false; // Toggle for hiding instruction buttons
-// --- End New Case Name Settings ---
-let useShortLR = false;
-let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
-let colorScheme = {
-    topColor: '#000000',
-    bottomColor: '#FFFFFF',
-    frontColor: '#CC0000',
-    rightColor: '#00AA00',
-    backColor: '#FF8C00',
-    leftColor: '#0066CC',
-    dividerColor: '#7a0000',
-    circleColor: 'transparent'
-};
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].name.endsWith('.json')) {
+                handleFileImport(files[0]);
+            }
+        });
 
-let scrambleImageSize = 200; // Default size
+        // Close modals when clicking outside (wait for modals to be generated)
+        window.onclick = function (event) {
+            // Use setTimeout to ensure modals are generated
+            setTimeout(() => {
+                const settingsModal = document.getElementById('settingsModal');
+                const caseNameModal = document.getElementById('caseNameModal');
+                const suggestModal = document.getElementById('suggestModal');
+                const confessionModal = document.getElementById('confessionModal');
+                const colorSchemeModal = document.getElementById('colorSchemeModal');
+                const trainingModal = document.getElementById('trainingModal');
+                const profileModal = document.getElementById('profileModal');
 
-// Check if this is first load BEFORE loading state
-const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
+                if (event.target == settingsModal) {
+                    closeSettingsModal();
+                }
+                if (event.target == caseNameModal) {
+                    closeCaseNameModal();
+                }
+                if (event.target == colorSchemeModal) {
+                    closeColorSchemeModal();
+                }
+                if (trainingModal && event.target == trainingModal) {
+                    closeTrainingModal();
+                }
 
-// Load saved state
-try {
-    const saved = localStorage.getItem('sq1-parity-progress');
-    if (saved) {
-        const state = JSON.parse(saved);
-        learnedCases = new Set(state.learned || []);
-        learningCases = new Set(state.learning || []);
-        plannedCases = new Set(state.planned || []);
-        swappedCases = new Map(Object.entries(state.swapped || {}));
-        comments = new Map(Object.entries(state.comments || {}));
-        plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
-        perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
-        parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
-        // Load new name settings
-        caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
-        customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
-        swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        useDynamicParity = state.useDynamicParity || false;
-        showPaths = state.showPaths || false;
-        useShortLR = state.useShortLR !== undefined ? state.useShortLR : true;
-        lrPosition = state.lrPosition || 'front';
-        enablePriorityLearning = state.enablePriorityLearning || false;
-        hideInstructions = state.hideInstructions || false;
-        colorScheme = state.colorScheme || colorScheme;
-        scrambleImageSize = state.scrambleImageSize || 200;
-        if (state.customShapesForParityTracerLibrary) {
-            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+                if (event.target == suggestModal) {
+                    closeSuggestModal();
+                }
+                if (event.target == confessionModal) {
+                    closeConfessionModal();
+                }
+                const profileModalMobile = document.getElementById('profileModalMobile');
+                if (profileModalMobile && event.target == profileModalMobile) {
+                    closeProfileModalMobile();
+                }
+            }, 0);
         }
-    }
-    
-    // Initialize all cases as planned with priority 4 (Normal) if not already set
-    data.forEach(item => {
-        if (!learnedCases.has(item.name) && !learningCases.has(item.name) && !plannedCases.has(item.name)) {
-            plannedCases.add(item.name);
-            plannedLevels.set(item.name, 4);
+
+        // Unified back button handler
+        const modalStack = [];
+
+        function pushModalState(modalId, closeFunction) {
+            modalStack.push({ id: modalId, close: closeFunction });
+            window.history.pushState({ modalId: modalId }, '');
         }
-        if (!plannedLevels.has(item.name) && plannedCases.has(item.name)) {
-            plannedLevels.set(item.name, 4);
+
+        function popModalState() {
+            if (modalStack.length > 0) {
+                return modalStack.pop();
+            }
+            return null;
         }
-    });
-    saveState();
-} catch (e) {
-    console.error('Error loading saved state:', e);
-}
 
+        window.addEventListener('popstate', function (event) {
+            if (modalStack.length > 0) {
+                const modal = popModalState();
+                if (modal && modal.close) {
+                    modal.close();
+                }
+            }
+        });
 
-// Set defaults if this is first load
-if (isFirstLoad) {
-    // Set showHints to true for first load
-    showHints = true;
-    localStorage.setItem('showHints', 'true');
-    // Default case name settings
-    caseNameSettings.set('Paired Edges', 'Pair');
-    caseNameSettings.set('Perpendicular Edges', 'L-Shape');
-    caseNameSettings.set('Parallel Edges', 'Line');
-    
-    // Default toggles
-    useShortLR = true;
-    lrPosition = 'front';
-    showPaths = true;
-    showHints = true;  // Changed to true for tracing guides
-    useDynamicParity = false;
-    enablePriorityLearning = false;
-    
-    // Note: sortSelect.value will be set after DOM is ready
-    
-    saveState();
-}
-
-// Apply case name defaults if not already set (for existing users too)
-if (!caseNameSettings.has('Paired Edges')) {
-    caseNameSettings.set('Paired Edges', 'Pair');
-}
-if (!caseNameSettings.has('Perpendicular Edges')) {
-    caseNameSettings.set('Perpendicular Edges', 'L-Shape');
-}
-if (!caseNameSettings.has('Parallel Edges')) {
-    caseNameSettings.set('Parallel Edges', 'Line');
-}
-
-function saveState() {
-    try {
-        localStorage.setItem('sq1-parity-progress', JSON.stringify({
-            learned: Array.from(learnedCases),
-            learning: Array.from(learningCases),
-            planned: Array.from(plannedCases),
-            swapped: Object.fromEntries(swappedCases),
-            comments: Object.fromEntries(comments),
-            plannedLevels: Object.fromEntries(plannedLevels),
-            perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
-            parityOrientations: Object.fromEntries(parityOrientations),
-            // Save new name settings
-            caseNameSettings: Object.fromEntries(caseNameSettings),
-            customCaseNames: Object.fromEntries(customCaseNames),
-            swapShapeLR: Object.fromEntries(swapShapeLR),
-            useDynamicParity: useDynamicParity,
-            showPaths: showPaths,
-            useShortLR: useShortLR,
-            lrPosition: lrPosition,
-            enablePriorityLearning: enablePriorityLearning,
-            hideInstructions: hideInstructions,
-            colorScheme: colorScheme,
-            scrambleImageSize: scrambleImageSize,
-            customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary')
-        }));
-    } catch (e) {
-        console.error('Error saving state:', e);
-    }
-}
-
-function exportData() {
-    const state = {
-        learned: Array.from(learnedCases),
-        learning: Array.from(learningCases),
-        planned: Array.from(plannedCases),
-        swapped: Object.fromEntries(swappedCases),
-        comments: Object.fromEntries(comments),
-        plannedLevels: Object.fromEntries(plannedLevels),
-        perCaseSwapLR: Object.fromEntries(perCaseSwapLR),
-        parityOrientations: Object.fromEntries(parityOrientations),
-        caseNameSettings: Object.fromEntries(caseNameSettings),
-        customCaseNames: Object.fromEntries(customCaseNames),
-        swapShapeLR: Object.fromEntries(swapShapeLR),
-        useDynamicParity: useDynamicParity,
-        showPaths: showPaths,
-        showHints: showHints,
-        hideInstructions: hideInstructions,
-        colorScheme: colorScheme,
-        scrambleImageSize: scrambleImageSize,
-        customShapesForParityTracerLibrary: localStorage.getItem('customShapesForParityTracerLibrary')
-    };
-    const dataStr = JSON.stringify(state, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'sq1-parity-progress.json';
-    link.click();
-    URL.revokeObjectURL(url);
-}
-
-function importData(jsonStr) {
-    try {
-        const state = JSON.parse(jsonStr);
-        learnedCases = new Set(state.learned || []);
-        learningCases = new Set(state.learning || []);
-        plannedCases = new Set(state.planned || []);
-        swappedCases = new Map(Object.entries(state.swapped || {}));
-        comments = new Map(Object.entries(state.comments || {}));
-        plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
-        perCaseSwapLR = new Map(Object.entries(state.perCaseSwapLR || {}));
-        parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
-        caseNameSettings = new Map(Object.entries(state.caseNameSettings || {}));
-        customCaseNames = new Map(Object.entries(state.customCaseNames || {}));
-        swapShapeLR = new Map(Object.entries(state.swapShapeLR || {}));
-        useDynamicParity = state.useDynamicParity || false;
-        showPaths = state.showPaths || false;
-        hideInstructions = state.hideInstructions || false;
-        colorScheme = state.colorScheme || colorScheme;
-        if (state.customShapesForParityTracerLibrary) {
-            localStorage.setItem('customShapesForParityTracerLibrary', state.customShapesForParityTracerLibrary);
+        // Wait for DOM to be ready before generating modals
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                generateModalHTML();
+            });
+        } else {
+            generateModalHTML();
         }
-        if (state.showHints !== undefined) {
-            showHints = state.showHints;
-            localStorage.setItem('showHints', showHints);
-            applyHintVisibility();
-        }
-        saveState();
-        updateProgress();
-        render();
-        alert('Data imported successfully!');
-    } catch (e) {
-        alert('Error importing data: ' + e.message);
-    }
-}
 
-function handleFileImport(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => importData(e.target.result);
-    reader.readAsText(file);
-}
+        // Ensure DOM is ready before initialization
+        function initializeApp() {
+            // Initialize DOM references
+            initializeDOMReferences();
 
-// DOM element references - will be initialized after DOM is ready
-let searchInput = null;
-let sortSelect = null;
-let learnFilterSelect = null;
-let grid = null;
-let progressText = null;
-let safetyText = null;
-
-// Initialize DOM references
-function initializeDOMReferences() {
-    searchInput = document.getElementById('search');
-    sortSelect = document.getElementById('sort');
-    learnFilterSelect = document.getElementById('learnFilter');
-    grid = document.getElementById('grid');
-    progressText = document.getElementById('progress-text');
-    safetyText = document.getElementById('safety-text');
-    
-    const refsFound = {
-        searchInput: !!searchInput,
-        sortSelect: !!sortSelect,
-        learnFilterSelect: !!learnFilterSelect,
-        grid: !!grid,
-        progressText: !!progressText,
-        safetyText: !!safetyText
-    };
-}
-
-</script>
-<script>
-// Dynamic SVG scaling based on viewport width
-let resizeTimer;
-function updateSVGScaling() {
-    const viewportWidth = window.innerWidth;
-    let scale;
-    
-    // Calculate scale based on viewport width
-    if (viewportWidth >= 1400) {
-        // Large screens: base scale
-        scale = Math.min(1, viewportWidth / 1400);
-    } else if (viewportWidth >= 1040) {
-        // Medium-large screens (3 columns to 2 columns transition)
-        scale = Math.min(1, viewportWidth / 1200);
-    } else if (viewportWidth >= 1000) {
-        // Transition zone: 3 col → 2 col - scale boost then decrease
-        // At 1040px: scale = 1.15, gradually decreases to 1.0 at 1000px
-        const boostFactor = 1.15 - ((1040 - viewportWidth) / (1040 - 1000)) * 0.15;
-        scale = Math.max(1.0, boostFactor);
-    } else if (viewportWidth >= 650) {
-        // Medium screens (2 columns)
-        scale = Math.min(1, viewportWidth / 900);
-    } else if (viewportWidth >= 570) {
-        // Single column mode - scale boost then decrease
-        // At 649px: scale = 1.25, gradually decreases to 1.0 at 570px
-        const boostFactor = 1.25 - ((649 - viewportWidth) / (649 - 570)) * 0.25;
-        scale = Math.max(1.0, boostFactor);
-    } else if (viewportWidth >= 400) {
-        // Below 570px: continue scaling down from 1.0
-        scale = Math.max(0.8, viewportWidth / 570);
-    } else {
-        // Extra small screens
-        scale = Math.max(0.65, viewportWidth / 500);
-    }
-    
-    // Apply scale to all card SVGs with will-change for better performance
-    document.querySelectorAll('.card-svg-container svg').forEach(svg => {
-        svg.style.transform = `scale(${scale})`;
-        svg.style.transformOrigin = 'center center';
-        svg.style.willChange = 'transform';
-    });
-    
-    // Apply scale to modal SVGs (both in detail modal and other modals)
-    document.querySelectorAll('.modal-images svg, .modal-body svg').forEach(svg => {
-        // Keep modal SVGs at full size until 768px, then scale down
-        let modalScale = 1;
-        if (viewportWidth < 768) {
-            if (viewportWidth < 400) {
-                modalScale = Math.max(0.6, viewportWidth / 600);
-            } else if (viewportWidth < 570) {
-                modalScale = Math.max(0.75, viewportWidth / 650);
-            } else {
-                modalScale = Math.max(0.85, viewportWidth / 768);
+            // Set default sort value if first load
+            if (isFirstLoad && sortSelect) {
+                sortSelect.value = 'probability';
             }
         }
-        svg.style.transform = `scale(${modalScale})`;
-        svg.style.transformOrigin = 'center center';
-        svg.style.willChange = 'transform';
-    });
-    
-    // Update floating buttons container size for narrow screens
-    const floatingBtnsContainer = document.getElementById('floatingButtonsContainer');
-    if (floatingBtnsContainer) {
-        if (viewportWidth < 400) {
-            const btnScale = Math.max(0.5, viewportWidth / 600);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
-        } else if (viewportWidth < 570) {
-            const btnScale = Math.max(0.6, viewportWidth / 700);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
-        } else if (viewportWidth < 768) {
-            const btnScale = Math.max(0.75, viewportWidth / 850);
-            floatingBtnsContainer.style.transform = `scale(${btnScale})`;
-            floatingBtnsContainer.style.transformOrigin = 'top right';
+
+        // Call initialization after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
         } else {
-            floatingBtnsContainer.style.transform = 'scale(1)';
+            initializeApp();
         }
-    }
-}
 
-// Debounced resize handler for better performance
-function handleResize() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(updateSVGScaling, 50);
-}
+        // Loading tips object
+        const loadingTips = {
+            firstLoad: [
+                "Welcome to SquanGo CSP!!",
+            ],
+            general: [
+                "Happy Learning.",
+                "There are 3678 different slicable position in a square 1",
+                "Square-1 was invented in 1990 by Karel Hršel and Vojtěch Kopský",
+                "Square-1 notation was created by Jaap Scherphuis, the creator of sq1optim",
+                "Every position on a square-1 can be solved under 13 slices (12 ignoring the equator) or under 31 face turns!",
+                "WR: 4.63 avg-Sameer Aggarwal",
+                "WR: 3.40 single-Hassan Khanani.",
+                "Back to square one, literally!",
+                "Parity monster is hiding under your bed!!",
+                "#BanMattsMuffinTracing!!!",
+                "#BanMatts5-1Tracing!!!",
+                "The name Square-1 is the short of \"Back to square 1\", one of the original names of the puzzle!",
+                "The earliest names of Square-1 was \"Back to square 1\", and \"Cube 21\"",
+                "Square-1 was one of the OG events of wca, added in 2005- one year after the creation of wca",
+                "The first square-1 average world record was by Lars Vandenbergh of 33.21s in Dutch Open 2004",
+                "The first square-1 world record was by Lars Vandenbergh of 41.80s in World Championship 2003",
+                "Mike Masonjones proved in 2005 that God's Number for the Square-1 is 13 in the twist metric (10.615 on average).",
+                "In 2017, Chen Shuang calculated the God's Number for the Square-1 to be 31 in face turn metric (25.134 on average)",
+                "csTimer was created by Chen Shuang (cs0x7f) in 2016 and stands for Chen Shuang's Timer",
+                "Square-1 was patented by Karel Hrsel and Vojtech Kopsky on 16 March 1993, US 5,193,809.",
+                "Some CSP's even-odd algs are mirror of each other!",
+                "meow :3 -Matt 2026",
+                "You can start tracing on either shape if both are 4e4c!",
+                "Parity Monster is hiding behind the curtain!!!",
+                "Cale's Parity Tracing was invented by Cale Schoon (2014SCHO02), published on May 16, 2017",
+                "You can change the tracing position and the even/odd will update automatically!",
+                "Click in the middle of a symmetric shape in Parity Tracer to trace from a different angle!",
+                "Creating stories will help you remember csp",
+                "Free Palestine"
+            ]
+        };
 
-// Update on load and resize
-window.addEventListener('load', updateSVGScaling);
-window.addEventListener('resize', handleResize);
+        // Responsive loading screen (set BEFORE creating elements)
+        function adjustLoadingScreen() {
+            const width = window.innerWidth;
+            const title = document.getElementById('loadingTitle');
+            const author = document.getElementById('loadingAuthor');
+            const tip = document.getElementById('loadingTip');
+            const evaCredit = document.getElementById('evaCredit');
+            const mattCredit = document.getElementById('mattCredit');
+            
+            if (width <= 355) {
+                if (title) title.style.fontSize = '2rem';
+                if (author) author.style.fontSize = '0.85rem';
+                if (tip) {
+                    tip.style.fontSize = '0.75rem';
+                    tip.style.maxWidth = '95vw';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.65rem';
+                    evaCredit.style.marginTop = '20px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.65rem';
+                }
+            } else if (width <= 480) {
+                if (title) title.style.fontSize = '2.5rem';
+                if (author) author.style.fontSize = '0.95rem';
+                if (tip) {
+                    tip.style.fontSize = '0.8rem';
+                    tip.style.maxWidth = '90vw';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.7rem';
+                    evaCredit.style.marginTop = '25px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.7rem';
+                }
+            } else {
+                if (title) title.style.fontSize = '3.5rem';
+                if (author) author.style.fontSize = '1.1rem';
+                if (tip) {
+                    tip.style.fontSize = '0.95rem';
+                    tip.style.maxWidth = '90vw';
+                }
+                if (evaCredit) {
+                    evaCredit.style.fontSize = '0.85rem';
+                    evaCredit.style.marginTop = '35px';
+                }
+                if (mattCredit) {
+                    mattCredit.style.fontSize = '0.85rem';
+                }
+            }
+        }
+        
+        // Select and display a random tip
+        const tipElement = document.createElement('p');
+        tipElement.id = 'loadingTip';
+        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 90vw; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box; white-space: normal; overflow-wrap: break-word;';
+        const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
+        const randomTip = tips[Math.floor(Math.random() * tips.length)];
+        tipElement.textContent = randomTip;
+        document.getElementById('loadingTipContainer').appendChild(tipElement);
+        
+        // Add Eva Kato credit
+        const evaCredit = document.createElement('p');
+        evaCredit.id = 'evaCredit';
+        evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
+        evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
+        document.getElementById('loadingScreen').appendChild(evaCredit);
+        
+        // Add Matt credit
+        const mattCredit = document.createElement('p');
+        mattCredit.id = 'mattCredit';
+        mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
+        mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
+        document.getElementById('loadingScreen').appendChild(mattCredit);
+        
+        // Apply initial sizing
+        adjustLoadingScreen();
+        window.addEventListener('resize', adjustLoadingScreen);
 
-// Also call after rendering cards
-const originalRender = window.render;
-if (typeof originalRender === 'function') {
-    window.render = function() {
-        originalRender();
-        // Small delay to ensure SVGs are in DOM
-        setTimeout(updateSVGScaling, 10);
+        // Loading screen progress simulation
+        let loadProgress = 0;
+        const progressBar = document.getElementById('loadingProgress');
+        const loadingInterval = setInterval(() => {
+            loadProgress += Math.random() * 30;
+            if (loadProgress > 90) loadProgress = 90;
+            progressBar.style.width = loadProgress + '%';
+        }, 100);
+
+        // Wait for DOM before calling these functions
+        function finalizeInitialization() {
+
+            // Setup sidebar
+            const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+            if (sidebarToggleBtn) {
+                sidebarToggleBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    toggleSidebar();
+                };
+            }
+            
+            // Setup profile button
+const profileBtn = document.getElementById('profileBtn');
+if (profileBtn) {
+
+    profileBtn.onclick = (e) => {
+        e.stopPropagation();
+        if (window.innerWidth > 620) {
+            showProfilePopup(true);
+        } else {
+            openProfileModalMobile();
+        }
     };
 }
-</script>
-<script src="src/js/lib/tools/shapeTracer.js"></script>
-<script src="src/js/display/rendering.js"></script>
-<script src="src/js/display/search-and-filter.js"></script>
-<script src="src/js/lib/tools/scrambled-state-generator.js"></script>
+            
+            // Setup search toggle for mobile
+            const searchToggle = document.getElementById('searchToggle');
+            const searchInput = document.getElementById('search');
+            const controls = document.querySelector('.controls');
 
-<script src="src/js/display/modals.js"></script>
-<script src="src/js/display/modal-parity-orientation.js"></script>
-<script src="src/js/display/modal-parity-analysis.js"></script>
-<script src="src/js/display/training-modal.js"></script>
-<script id="src/js/js/global-event-handlers.js">
+            if (searchToggle && controls && searchInput) {
+                searchToggle.onmousedown = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const isExpanded = controls.classList.toggle('search-expanded');
+                    
+                    if (isExpanded) {
+                        setTimeout(() => {
+                            searchInput.focus();
+                        }, 100);
+                    } else {
+                        searchInput.blur();
+                    }
+                };
+                
+                // Close search when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (controls.classList.contains('search-expanded') && 
+                        !controls.contains(e.target) && 
+                        !searchToggle.contains(e.target)) {
+                        controls.classList.remove('search-expanded');
+                        searchInput.blur();
+                    }
+                });
+                
+                // Close search on escape key
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        controls.classList.remove('search-expanded');
+                        searchInput.blur();
+                    }
+                });
+            }
+            
+            // Apply instruction button visibility
+            if (hideInstructions) {
+                const container = document.getElementById('floatingButtonsContainer');
+                if (container) {
+                    container.classList.add('hide-instructions');
+                }
+            }
+            if (typeof applyInstructionVisibility === 'function') {
+                applyInstructionVisibility();
+            }
 
-document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-        closeModal();
-    }
-});
-
-// Drag and drop support
-document.body.addEventListener('dragover', (e) => {
-    e.preventDefault();
-});
-
-document.body.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].name.endsWith('.json')) {
-        handleFileImport(files[0]);
-    }
-});
-
-// Close modals when clicking outside (wait for modals to be generated)
-window.onclick = function(event) {
-    // Use setTimeout to ensure modals are generated
-    setTimeout(() => {
-        const settingsModal = document.getElementById('settingsModal');
-        const caseNameModal = document.getElementById('caseNameModal');              
-        const suggestModal = document.getElementById('suggestModal');
-        const confessionModal = document.getElementById('confessionModal');
-        const colorSchemeModal = document.getElementById('colorSchemeModal');
-        const trainingModal = document.getElementById('trainingModal');
-    
-    if (event.target == settingsModal) {
-        closeSettingsModal();
-    }
-    if (event.target == caseNameModal) {
-        closeCaseNameModal();
-    }
-    if (event.target == colorSchemeModal) {
-        closeColorSchemeModal();
-    }
-    if (trainingModal && event.target == trainingModal) {
-        closeTrainingModal();
-    }
-    
-    if (event.target == suggestModal) {
-        closeSuggestModal();
-    }
-    if (event.target == confessionModal) {
-        closeConfessionModal();
-    }
-    }, 0);
-}
-
-// Unified back button handler
-const modalStack = [];
-
-function pushModalState(modalId, closeFunction) {
-    modalStack.push({ id: modalId, close: closeFunction });
-    window.history.pushState({ modalId: modalId }, '');
-}
-
-function popModalState() {
-    if (modalStack.length > 0) {
-        return modalStack.pop();
-    }
-    return null;
-}
-
-window.addEventListener('popstate', function(event) {
-    if (modalStack.length > 0) {
-        const modal = popModalState();
-        if (modal && modal.close) {
-            modal.close();
+            // These need to run after modal generation
+            setTimeout(() => {
+                updateProgress();
+                filterAndSort(true); // Soft render on initialization
+                if (typeof applyProfileUI === 'function') applyProfileUI();
+            }, 100);
         }
-    }
-});
 
-</script>
-<script id="src/js/js/initialization.js">
-
-// Wait for DOM to be ready before generating modals
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        generateModalHTML();
-    });
-} else {
-    generateModalHTML();
-}
-
-// Ensure DOM is ready before initialization
-function initializeApp() {   
-    // Initialize DOM references
-    initializeDOMReferences();
-    
-    // Set default sort value if first load
-    if (isFirstLoad && sortSelect) {
-        sortSelect.value = 'probability';
-    }
-    
-    // Initialize priority option visibility
-    const priorityOption = document.getElementById('sortPriority');
-    if (priorityOption) {
-        priorityOption.style.display = enablePriorityLearning ? 'block' : 'none';
-    }
-}
-
-// Call initialization after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initializeApp);
-} else {
-    initializeApp();
-}
-
-// Loading tips object
-const loadingTips = {
-    firstLoad: [
-        "Reading the 'How to Use' instructions can help you discover hidden features of the app.",
-    ],
-    general: [
-        "Happy Learning.",
-    ]
-};
-
-// Select and display a random tip
-const tipElement = document.createElement('p');
-tipElement.style.cssText = 'font-size: 0.95rem; color: #555; margin-top: 20px; max-width: 500px; text-align: center; line-height: 1.5;';
-const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
-const randomTip = tips[Math.floor(Math.random() * tips.length)];
-tipElement.textContent = randomTip;
-document.getElementById('loadingScreen').appendChild(tipElement);
-
-// Loading screen progress simulation
-let loadProgress = 0;
-const progressBar = document.getElementById('loadingProgress');
-const loadingInterval = setInterval(() => {
-    loadProgress += Math.random() * 30;
-    if (loadProgress > 90) loadProgress = 90;
-    progressBar.style.width = loadProgress + '%';
-}, 100);
-
-// Wait for DOM before calling these functions
-function finalizeInitialization() {
-    
-    // Setup homepage info button
-    const homepageInfoBtn = document.getElementById('homepageInfoBtn');
-    if (homepageInfoBtn) {
-        homepageInfoBtn.onclick = showHomepageInfoModal;
-    }
-
-    // Apply instruction button visibility
-    if (hideInstructions) {
-        const container = document.getElementById('floatingButtonsContainer');
-        if (container) {
-            container.classList.add('hide-instructions');
-        }
-    }
-    if (typeof applyInstructionVisibility === 'function') {
-        applyInstructionVisibility();
-    }
-    
-    // These need to run after modal generation
-    setTimeout(() => {
-        updateProgress();
-        filterAndSort();
-    }, 100);
-}
-
-// Ensure this runs after DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', finalizeInitialization);
-} else {
-    finalizeInitialization();
-}
-
-window.addEventListener('load', async () => {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    clearInterval(loadingInterval);
-    progressBar.style.width = '100%';
-    
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    document.getElementById('loadingScreen').style.opacity = '0';
-    document.querySelector('.container').style.opacity = '1';
-    
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    document.getElementById('loadingScreen').style.display = 'none';
-});
-
-</script>
-<script>
-// Register service worker (only in http/https, not file://)
-if ('serviceWorker' in navigator && (window.location.protocol === 'http:' || window.location.protocol === 'https:')) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/serviceworker.js')
-            .then(registration => {
-            })
-            .catch(err => {
+        // Ensure this runs after DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                finalizeInitialization();
+                // Set saved sort mode
+                const sortSelect = document.getElementById('sort');
+                if (sortSelect && currentSortMode) {
+                    sortSelect.value = currentSortMode;
+                }
             });
-    });
-}
-</script>
+        } else {
+            finalizeInitialization();
+            // Set saved sort mode
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect && currentSortMode) {
+                sortSelect.value = currentSortMode;
+            }
+        }
+
+        window.addEventListener('load', async () => {
+            const loadStartTime = Date.now();
+            
+            // Initialize preset FIRST
+            await initializePreset();
+            
+            // If first load, apply default preset silently
+            if (isFirstLoad) {
+                await applyPreset('Default_Preset', true, true);
+            }
+            
+            // Initialize SVGs FIRST - after svg.js is guaranteed to be loaded
+            initializeSVGData();
+            
+            // Set saved sort mode before parity calculation
+            const sortSelect = document.getElementById('sort');
+            if (sortSelect && currentSortMode) {
+                sortSelect.value = currentSortMode;
+            }
+            
+            // Calculate parity only if needed (settings changed or first load)
+            if (needsParityRecalculation()) {
+                calculateAndCacheAllParity();
+            } else {
+            }
+            
+            // Ensure minimum loading time of 3.5 seconds
+            const loadDuration = Date.now() - loadStartTime;
+            const minimumLoadTime = 2500;
+            const remainingTime = Math.max(0, minimumLoadTime - loadDuration);
+            
+            await new Promise(resolve => setTimeout(resolve, remainingTime));
+
+            clearInterval(loadingInterval);
+            progressBar.style.width = '100%';
+
+            await new Promise(resolve => setTimeout(resolve, 200));
+
+            document.getElementById('loadingScreen').style.opacity = '0';
+            document.querySelector('.container').style.opacity = '1';
+
+            await new Promise(resolve => setTimeout(resolve, 300));
+
+            document.getElementById('loadingScreen').style.display = 'none';
+        });
+
+                // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Check if Alt key is pressed
+            if (e.altKey) {
+                switch(e.key.toLowerCase()) {
+                    case 't': // Alt+T - Show tracing guides
+                        e.preventDefault();
+                        showHints = !showHints;
+                        localStorage.setItem('showHints', showHints);
+                        applyHintVisibility();
+                        const hintToggle = document.getElementById('hintToggle');
+                        if (hintToggle) hintToggle.checked = showHints;
+                        showToast(`Tracing guides ${showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
+                        break;
+                    case 'h': // Alt+H - Hide instructions
+                        e.preventDefault();
+                        hideInstructions = !hideInstructions;
+                        saveState();
+                        applyInstructionVisibility();
+                        const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
+                        if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+                        showToast(`Instruction buttons ${hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
+                        break;
+                    case 'p': // Alt+P - Hide parenthesis
+                        e.preventDefault();
+                        hideParenthesis = !hideParenthesis;
+                        saveState();
+                        render();
+                        const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
+                        if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
+                        showToast(`Parenthesis ${hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
+                        break;
+                    case 'w': // Alt+W - Parity tracing personalization
+                        e.preventDefault();
+                        openParityTracingPersonalization();
+                        break;
+                    case 'g': // Alt+G - Customize tracing guides
+                        e.preventDefault();
+                        openCustomizeSVGsModal();
+                        break;
+                    case 'q': // Alt+Q - Quick edit
+                        e.preventDefault();
+                        openQuickEditModal();
+                        break;
+                }
+            }
+        });
+
+        // URL scramble deep-link: squan-go.web.app/csp/#s=(0,-1)/ (6,-3)/ ...
+        function checkURLScramble() {
+            const hash = decodeURIComponent(window.location.hash);
+            if (!hash || hash.length <= 1) return;
+
+            let scramble = null;
+
+            // Format: #s=scramble
+            if (hash.startsWith('#s=')) {
+                scramble = hash.slice(3).trim();
+            }
+            // Fallback: bare hash with parens (old format)
+            else if (hash.slice(1).includes('(')) {
+                scramble = hash.slice(1).trim();
+            }
+
+            if (scramble && (scramble.includes('(') || scramble.includes('/'))) {
+                const tryOpen = (attempts) => {
+                    if (typeof window.ParityTracerLibrary !== 'undefined' && typeof openNewParityAnalysis === 'function') {
+                        openNewParityAnalysis(scramble);
+                    } else if (attempts > 0) {
+                        setTimeout(() => tryOpen(attempts - 1), 300);
+                    }
+                };
+                tryOpen(20);
+            }
+        }
+
+        window.addEventListener('load', () => {
+            // Run after the main load handler finishes (which has a 2.5s min delay)
+            setTimeout(checkURLScramble, 3000);
+        });
+    </script>
 </body>
 
 </html>
