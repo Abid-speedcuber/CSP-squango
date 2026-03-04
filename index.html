@@ -29,7 +29,7 @@
             </div>
         </div>
     </div>
-    <div class="container" style="opacity: 0; transition: opacity 0.3s ease;">
+    <div class="container" style="opacity: 0; transition: opacity 0.3s ease;" id="mainContainer">
         <header>
             <h1 class="desktop-title">SquanGo CSP</h1>
             <h1 class="tablet-title">SquanGo CSP</h1>
@@ -431,48 +431,57 @@ if (profileBtn) {
 
         window.addEventListener('load', async () => {
             const loadStartTime = Date.now();
-            
-            // Initialize preset FIRST
-            await initializePreset();
-            
-            // If first load, apply default preset silently
-            if (isFirstLoad) {
-                await applyPreset('Default_Preset', true, true);
-            }
-            
-            // Initialize SVGs FIRST - after svg.js is guaranteed to be loaded
-            initializeSVGData();
-            
-            // Set saved sort mode before parity calculation
-            const sortSelect = document.getElementById('sort');
-            if (sortSelect && currentSortMode) {
-                sortSelect.value = currentSortMode;
-            }
-            
-            // Calculate parity only if needed (settings changed or first load)
-            if (needsParityRecalculation()) {
-                calculateAndCacheAllParity();
+
+            const hasDeepLink = (() => {
+                const hash = decodeURIComponent(window.location.hash);
+                return hash.startsWith('#s=') || (hash.length > 1 && hash.slice(1).includes('('));
+            })();
+
+            if (hasDeepLink) {
+                // Nuke loading screen, keep container hidden until after tracer opens
+                document.getElementById('loadingScreen').style.display = 'none';
+                clearInterval(loadingInterval);
+
+                // Initialize just enough to open the tracer
+                await initializePreset();
+                if (isFirstLoad) await applyPreset('Default_Preset', true, true);
+                initializeSVGData();
+
+                // Open tracer immediately
+                checkURLScramble();
+
+                // Now render the rest of the app in the background
+                requestAnimationFrame(() => {
+                    const sortSelect = document.getElementById('sort');
+                    if (sortSelect && currentSortMode) sortSelect.value = currentSortMode;
+                    if (needsParityRecalculation()) calculateAndCacheAllParity();
+                    setTimeout(() => {
+                        document.getElementById('mainContainer').style.opacity = '1';
+                    }, 500);
+                });
+
             } else {
+                // Normal load flow
+                await initializePreset();
+                if (isFirstLoad) await applyPreset('Default_Preset', true, true);
+                initializeSVGData();
+
+                const sortSelect = document.getElementById('sort');
+                if (sortSelect && currentSortMode) sortSelect.value = currentSortMode;
+                if (needsParityRecalculation()) calculateAndCacheAllParity();
+
+                const loadDuration = Date.now() - loadStartTime;
+                const remainingTime = Math.max(0, 2500 - loadDuration);
+                await new Promise(resolve => setTimeout(resolve, remainingTime));
+
+                clearInterval(loadingInterval);
+                progressBar.style.width = '100%';
+                await new Promise(resolve => setTimeout(resolve, 200));
+                document.getElementById('loadingScreen').style.opacity = '0';
+                document.getElementById('mainContainer').style.opacity = '1';
+                await new Promise(resolve => setTimeout(resolve, 300));
+                document.getElementById('loadingScreen').style.display = 'none';
             }
-            
-            // Ensure minimum loading time of 3.5 seconds
-            const loadDuration = Date.now() - loadStartTime;
-            const minimumLoadTime = 2500;
-            const remainingTime = Math.max(0, minimumLoadTime - loadDuration);
-            
-            await new Promise(resolve => setTimeout(resolve, remainingTime));
-
-            clearInterval(loadingInterval);
-            progressBar.style.width = '100%';
-
-            await new Promise(resolve => setTimeout(resolve, 200));
-
-            document.getElementById('loadingScreen').style.opacity = '0';
-            document.querySelector('.container').style.opacity = '1';
-
-            await new Promise(resolve => setTimeout(resolve, 300));
-
-            document.getElementById('loadingScreen').style.display = 'none';
         });
 
                 // Keyboard shortcuts
@@ -552,8 +561,13 @@ if (profileBtn) {
         }
 
         window.addEventListener('load', () => {
-            // Run after the main load handler finishes (which has a 2.5s min delay)
-            setTimeout(checkURLScramble, 3000);
+            const hasDeepLink = (() => {
+                const hash = decodeURIComponent(window.location.hash);
+                return hash.startsWith('#s=') || (hash.length > 1 && hash.slice(1).includes('('));
+            })();
+            if (!hasDeepLink) {
+                setTimeout(checkURLScramble, 3000);
+            }
         });
     </script>
 </body>
