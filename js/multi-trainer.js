@@ -8,25 +8,25 @@ let selectorFilteredData = [];
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
-function saveSelectorSelection() {
+function saveSelectorSelection(key) {
     try {
-        const arr = [...selectorSelectedCases];
-        localStorage.setItem('sq1-selector-cases', JSON.stringify(arr));
+        const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
+        localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
     } catch (e) { }
 }
 
-function loadSelectorSelection() {
+function loadSelectorSelection(key) {
     try {
-        const raw = localStorage.getItem('sq1-selector-cases');
+        const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
+        const raw = localStorage.getItem(storageKey);
         if (raw) {
             const arr = JSON.parse(raw);
             selectorSelectedCases = new Set(arr.filter(n => data.some(d => d.name === n)));
         }
     } catch (e) { }
-    // Default: all cases selected
     if (selectorSelectedCases.size === 0) {
         data.forEach(item => selectorSelectedCases.add(item.name));
-        saveSelectorSelection();
+        saveSelectorSelection(key);
     }
 }
 
@@ -39,25 +39,30 @@ document.addEventListener('DOMContentLoaded', () => {
 // ─── Open selector as a modal overlay (not fullscreen) ───────────────────────
 
 window.openTrainingSelector = function () {
-    // Start training immediately with currently selected cases
-    if (selectorSelectedCases.size === 0) loadSelectorSelection();
+    window._selectorStorageKey = 'sq1-selector-cases';
+    if (selectorSelectedCases.size === 0) loadSelectorSelection('sq1-selector-cases');
     openMultiCaseTrainingModal([...selectorSelectedCases]);
 };
 
-function openSelectorModal() {
+function openSelectorModal(storageKey, onCloseCallback) {
+    if (storageKey) window._selectorStorageKey = storageKey;
+    else if (!window._selectorStorageKey) window._selectorStorageKey = 'sq1-selector-cases';
+
+    if (onCloseCallback) window._selectorCloseCallback = onCloseCallback;
+    else window._selectorCloseCallback = null;
+
+    loadSelectorSelection(window._selectorStorageKey);
+
     createSelectorModal();
     const modal = document.getElementById('trainingSelectorModal');
     if (!modal) return;
 
     pushModalState('trainingSelectorModal', closeSelectorModal);
 
-    // Don't reset search term — but DO re-render so the list matches current term
     renderSelectorCases();
-
     modal.style.display = 'flex';
     document.body.classList.add('modal-open');
 
-    // Restore search input value
     const inp = document.getElementById('selectorSearchInput');
     if (inp) inp.value = selectorSearchTerm;
 }
@@ -277,7 +282,7 @@ window.toggleSelectorCase = function (caseName) {
     } else {
         selectorSelectedCases.add(caseName);
     }
-    saveSelectorSelection();
+    saveSelectorSelection(window._selectorStorageKey);
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
@@ -326,7 +331,7 @@ window.applySelectorBulkAction = function (action) {
             selectorSelectedCases.clear();
             break;
     }
-    saveSelectorSelection();
+    saveSelectorSelection(window._selectorStorageKey);
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
@@ -353,7 +358,14 @@ window.openMultiCaseTrainingModal = function (caseNames) {
 
     pushModalState('trainingModal', closeTrainingModal);
 
-    titleEl.onclick = (e) => { e.stopPropagation(); openSelectorModal(); };
+    titleEl.onclick = (e) => {
+        e.stopPropagation();
+        openSelectorModal(window._selectorStorageKey || 'sq1-selector-cases', (chosen) => {
+            multiTrainingCases = chosen;
+            updateMultiTrainingTitle();
+            regenerateMultiScrambleLookahead();
+        });
+    };
     updateMultiTrainingTitle();
 
     const savedTrainingImageSize = localStorage.getItem('trainingScrambleImageSize');
@@ -363,6 +375,8 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     trainingScrambleImageSize = savedTrainingImageSize ? parseInt(savedTrainingImageSize) : 200;
     trainingScrambleTextSize = savedTrainingTextSize ? parseInt(savedTrainingTextSize) : 16;
     trainingHoldToStart = savedTrainingHoldToStart ? parseFloat(savedTrainingHoldToStart) : 0.22;
+    trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
+    trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
 
     timerElapsed = 0;
     scrambleHistory = [];

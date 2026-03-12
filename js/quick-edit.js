@@ -468,6 +468,67 @@ function setupQuickEditCellHandlers() {
     }, 100);
 }
 
+function getCaseShapeData(caseName) {
+    // Find the shape data for this specific case by display name or case name
+    for (const shapeData of shapeIndex) {
+        if (shapeData.name === caseName) return shapeData;
+    }
+    // Try matching by canonical shapeIndexMap
+    const canonicalIdx = parseInt(shapeIndexMap[caseName]);
+    if (isNaN(canonicalIdx)) return null;
+    for (const shapeData of shapeIndex) {
+        if (shapeData.org && shapeData.org.includes(canonicalIdx)) return shapeData;
+    }
+    return null;
+}
+
+function getCanonicalCaseNameForCell(cell) {
+    const row = cell.closest('tr');
+    if (!row) return null;
+    return row.dataset.case || null;
+}
+
+const ALL_LEGAL_TOPS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+const ALL_LEGAL_BOTTOMS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+
+function tryFixAngle(algBody, canonicalShapeIdx) {
+    // algBody is everything from first / onward
+    for (const t of ALL_LEGAL_TOPS) {
+        for (const b of ALL_LEGAL_BOTTOMS) {
+            const candidate = `(${t},${b})` + algBody;
+            try {
+                const result = window.algToShapeIndex(candidate);
+                if (result.shapeIndex === canonicalShapeIdx) {
+                    return candidate;
+                }
+            } catch(e) {}
+        }
+    }
+    return null;
+}
+
+function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
+    for (const t of ALL_LEGAL_TOPS) {
+        for (const b of ALL_LEGAL_BOTTOMS) {
+            const candidate = `/(6,6)/(${t},${b})` + algBody;
+            try {
+                const result = window.algToShapeIndex(candidate);
+                if (result.shapeIndex === canonicalShapeIdx) {
+                    return `(${t},${b})` + algBody;
+                }
+            } catch(e) {}
+        }
+    }
+    return null;
+}
+
+function stripBeforeFirstSlash(alg) {
+    // If starts with /, keep as is. Otherwise strip everything before first /
+    const firstSlash = alg.indexOf('/');
+    if (firstSlash <= 0) return alg; // starts with / or no slash found
+    return alg.slice(firstSlash);
+}
+
 function updateAlgorithmCellParity(cell) {
     const alg = cell.textContent.trim();
     if (!alg || alg === 'Done!') {
@@ -476,7 +537,6 @@ function updateAlgorithmCellParity(cell) {
         return;
     }
 
-    // Check if required functions exist
     if (typeof window.algToShapeIndex === 'undefined' ||
         typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         cell.style.color = '';
@@ -484,65 +544,68 @@ function updateAlgorithmCellParity(cell) {
         return;
     }
 
+    const caseName = getCanonicalCaseNameForCell(cell);
+    const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
+    const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
+    const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
+
     try {
-        // Get shape index from algorithm
         const result = window.algToShapeIndex(alg);
         const resultShapeIndex = result.shapeIndex;
 
-        // Find matching case in shapeIndexMap
-        let matchedCaseName = null;
-        for (const [caseName, indexStr] of Object.entries(shapeIndexMap)) {
-            if (parseInt(indexStr) === resultShapeIndex) {
-                matchedCaseName = caseName;
-                break;
-            }
-        }
+        const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(resultShapeIndex);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(resultShapeIndex);
 
-        if (matchedCaseName) {
-            // Direct match - test parity (blue for even, green for odd)
+        if (isDirectMatch || isInOrg) {
+            // Correct case - check parity
             const setup = invertScramble(alg);
             const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-                topColor: colorScheme.topColor,
-                bottomColor: colorScheme.bottomColor,
-                frontColor: colorScheme.frontColor,
-                rightColor: colorScheme.rightColor,
-                backColor: colorScheme.backColor,
-                leftColor: colorScheme.leftColor
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
 
-            cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff'; // Green for odd, blue for even
-            cell.style.fontWeight = '600';
-        } else {
-            // No direct match - check shapeIndex array for org/mir
-            let foundInOrg = false;
-            let foundInMir = false;
-
-            for (const shapeData of shapeIndex) {
-                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
-                    foundInOrg = true;
-                    break;
-                }
-                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
-                    foundInMir = true;
-                    break;
-                }
-            }
-
-            if (foundInOrg) {
-                cell.style.color = '#ca9b0dff'; // Yellow for org
-                cell.style.fontWeight = '600';
-            } else if (foundInMir) {
-                cell.style.color = '#c05c0aff'; // Orange for mir
-                cell.style.fontWeight = '600';
+            if (isDirectMatch) {
+                // Canonical angle - fix angle if needed
+                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
             } else {
-                // Not found anywhere
-                cell.style.color = '#71000bff'; // Red for invalid
-                cell.style.fontWeight = '600';
+                // Org match but not canonical - try to fix angle
+                if (canonicalIdx !== null) {
+                    const algBody = stripBeforeFirstSlash(alg);
+                    const fixed = tryFixAngle(algBody, canonicalIdx);
+                    if (fixed) {
+                        cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
+                    }
+                }
+                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
             }
+            cell.style.fontWeight = '600';
+
+        } else if (isInMir) {
+            const setup = invertScramble(alg);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+
+            if (canonicalIdx !== null) {
+                const algBody = stripBeforeFirstSlash(alg);
+                const fixed = tryFixMirroredAngle(algBody, canonicalIdx);
+                if (fixed) {
+                    cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
+                }
+            }
+            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.fontWeight = '600';
+
+        } else {
+            cell.style.color = '#71000bff';
+            cell.style.fontWeight = '600';
         }
     } catch (error) {
-        // Error occurred (invalid shape, etc.)
-        cell.style.color = '#dc3545'; // Red for error
+        cell.style.color = '#71000bff';
         cell.style.fontWeight = '600';
     }
 }
@@ -555,7 +618,6 @@ function updateAlgorithmCellParityLive(cell) {
         return;
     }
 
-    // Check if required functions exist
     if (typeof window.algToShapeIndex === 'undefined' ||
         typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' ||
         typeof window.ScrambleNormalizer === 'undefined') {
@@ -564,63 +626,41 @@ function updateAlgorithmCellParityLive(cell) {
         return;
     }
 
-    try {
-        // Normalize internally for color detection but don't change cell text
-        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+    const caseName = getCanonicalCaseNameForCell(cell);
+    const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
+    const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
+    const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
-        // Get shape index from normalized algorithm
+    try {
+        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
         const result = window.algToShapeIndex(normalized);
         const resultShapeIndex = result.shapeIndex;
 
-        // Find matching case in shapeIndexMap
-        let matchedCaseName = null;
-        for (const [caseName, indexStr] of Object.entries(shapeIndexMap)) {
-            if (parseInt(indexStr) === resultShapeIndex) {
-                matchedCaseName = caseName;
-                break;
-            }
-        }
+        const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(resultShapeIndex);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(resultShapeIndex);
 
-        if (matchedCaseName) {
-            // Direct match - test parity
+        if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
             const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-                topColor: colorScheme.topColor,
-                bottomColor: colorScheme.bottomColor,
-                frontColor: colorScheme.frontColor,
-                rightColor: colorScheme.rightColor,
-                backColor: colorScheme.backColor,
-                leftColor: colorScheme.leftColor
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-
             cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
             cell.style.fontWeight = '600';
+        } else if (isInMir) {
+            const setup = invertScramble(normalized);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.fontWeight = '600';
         } else {
-            // No direct match - check shapeIndex array
-            let foundInOrg = false;
-            let foundInMir = false;
-
-            for (const shapeData of shapeIndex) {
-                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
-                    foundInOrg = true;
-                    break;
-                }
-                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
-                    foundInMir = true;
-                    break;
-                }
-            }
-
-            if (foundInOrg) {
-                cell.style.color = '#ca9b0dff';
-                cell.style.fontWeight = '600';
-            } else if (foundInMir) {
-                cell.style.color = '#c05c0aff';
-                cell.style.fontWeight = '600';
-            } else {
-                cell.style.color = '#71000bff';
-                cell.style.fontWeight = '600';
-            }
+            cell.style.color = '#71000bff';
+            cell.style.fontWeight = '600';
         }
     } catch (error) {
         cell.style.color = '#71000bff';

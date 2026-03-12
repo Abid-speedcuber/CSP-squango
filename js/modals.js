@@ -1089,6 +1089,50 @@ function openEditCaseModal(caseName) {
     }, 200);
 }
 
+function getModalCaseShapeData(caseName) {
+    const canonicalIdx = parseInt(shapeIndexMap[caseName]);
+    if (isNaN(canonicalIdx)) return null;
+    for (const shapeData of shapeIndex) {
+        if (shapeData.org && shapeData.org.includes(canonicalIdx)) return shapeData;
+    }
+    return null;
+}
+
+const MODAL_LEGAL_TOPS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+const MODAL_LEGAL_BOTTOMS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+
+function modalTryFixAngle(algBody, canonicalShapeIdx) {
+    for (const t of MODAL_LEGAL_TOPS) {
+        for (const b of MODAL_LEGAL_BOTTOMS) {
+            const candidate = `(${t},${b})` + algBody;
+            try {
+                const result = window.algToShapeIndex(candidate);
+                if (result.shapeIndex === canonicalShapeIdx) return candidate;
+            } catch(e) {}
+        }
+    }
+    return null;
+}
+
+function modalTryFixMirroredAngle(algBody, canonicalShapeIdx) {
+    for (const t of MODAL_LEGAL_TOPS) {
+        for (const b of MODAL_LEGAL_BOTTOMS) {
+            const candidate = `/(6,6)/(${t},${b})` + algBody;
+            try {
+                const result = window.algToShapeIndex(candidate);
+                if (result.shapeIndex === canonicalShapeIdx) return `(${t},${b})` + algBody;
+            } catch(e) {}
+        }
+    }
+    return null;
+}
+
+function modalStripBeforeFirstSlash(alg) {
+    const firstSlash = alg.indexOf('/');
+    if (firstSlash <= 0) return alg;
+    return alg.slice(firstSlash);
+}
+
 // Helper function to update parity label
 function updateParityLabel(input) {
     const parityLabel = input.parentElement.querySelector('.parity-label');
@@ -1102,7 +1146,6 @@ function updateParityLabel(input) {
         return;
     }
 
-    // Check if required functions exist
     if (typeof window.algToShapeIndex === 'undefined' ||
         typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
         parityLabel.textContent = '';
@@ -1112,71 +1155,81 @@ function updateParityLabel(input) {
     }
 
     try {
-        // Get the current case being edited
+        // Get the case name from the modal title
         const modal = document.getElementById('editCaseModal');
-        const caseName = modal ? modal.querySelector('.modal-title').textContent : '';
+        if (!modal) return;
+        const titleElement = modal.querySelector('.modal-title');
+        if (!titleElement) return;
 
-        // Get shape index from algorithm
-        const result = window.algToShapeIndex(alg);
-        const resultShapeIndex = result.shapeIndex;
-
-        // Find matching case in shapeIndexMap
-        let matchedCaseName = null;
-        for (const [name, indexStr] of Object.entries(shapeIndexMap)) {
-            if (parseInt(indexStr) === resultShapeIndex) {
-                matchedCaseName = name;
+        // Find the actual caseName key
+        let caseName = null;
+        for (const dataItem of data) {
+            if (getDisplayName(dataItem.name) === titleElement.textContent || dataItem.name === titleElement.textContent) {
+                caseName = dataItem.name;
                 break;
             }
         }
 
-        if (matchedCaseName) {
-            // Direct match - test parity
+        const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
+        const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
+        const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
+
+        const result = window.algToShapeIndex(alg);
+        const resultShapeIndex = result.shapeIndex;
+
+        const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(resultShapeIndex);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(resultShapeIndex);
+
+        if (isDirectMatch || isInOrg) {
             const setup = invertScramble(alg);
             const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
-                topColor: colorScheme.topColor,
-                bottomColor: colorScheme.bottomColor,
-                frontColor: colorScheme.frontColor,
-                rightColor: colorScheme.rightColor,
-                backColor: colorScheme.backColor,
-                leftColor: colorScheme.leftColor
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
 
+            if (isInOrg && !isDirectMatch && canonicalIdx !== null) {
+                // Auto-fix angle on blur
+                const algBody = modalStripBeforeFirstSlash(alg);
+                const fixed = modalTryFixAngle(algBody, canonicalIdx);
+                if (fixed) {
+                    input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
+                }
+            }
+
             parityLabel.textContent = parityText.toLowerCase();
-            parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff'; // Green for odd, blue for even
+            parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
             parityLabel.style.fontWeight = '600';
+
+        } else if (isInMir) {
+            const setup = invertScramble(alg);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+
+            if (canonicalIdx !== null) {
+                const algBody = modalStripBeforeFirstSlash(alg);
+                const fixed = modalTryFixMirroredAngle(algBody, canonicalIdx);
+                if (fixed) {
+                    input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
+                }
+            }
+
+            parityLabel.textContent = parityText.toLowerCase() + ' (mirrored)';
+            parityLabel.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            parityLabel.style.fontWeight = '600';
+
         } else {
-            // No direct match - check shapeIndex array for org/mir
-            let foundInOrg = false;
-            let foundInMir = false;
-
-            for (const shapeData of shapeIndex) {
-                if (shapeData.org && shapeData.org.includes(resultShapeIndex)) {
-                    foundInOrg = true;
-                    break;
-                }
-                if (shapeData.mir && shapeData.mir.includes(resultShapeIndex)) {
-                    foundInMir = true;
-                    break;
-                }
-            }
-
-            if (foundInOrg) {
-                parityLabel.textContent = 'angle mismatch';
-                parityLabel.style.color = '#ca9b0dff'; // Yellow
-                parityLabel.style.fontWeight = '600';
-            } else if (foundInMir) {
-                parityLabel.textContent = 'mirrored';
-                parityLabel.style.color = '#c05c0aff'; // Orange
-                parityLabel.style.fontWeight = '600';
-            } else {
-                parityLabel.textContent = 'invalid';
-                parityLabel.style.color = '#71000bff'; // Red
-                parityLabel.style.fontWeight = '600';
-            }
+            parityLabel.textContent = 'invalid';
+            parityLabel.style.color = '#71000bff';
+            parityLabel.style.fontWeight = '600';
         }
     } catch (error) {
         parityLabel.textContent = 'invalid';
-        parityLabel.style.color = '#71000bff'; // Red
+        parityLabel.style.color = '#71000bff';
         parityLabel.style.fontWeight = '600';
     }
 }
@@ -2506,7 +2559,7 @@ function generateSidebarHTML() {
                     <img src="res/notes.svg" alt="Notes">
                     <span>Notes</span>
                 </button>
-                <button class="sidebar-item" onclick="openTrainingSelector(); closeSidebar();">
+                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openTrainerPickerModal(), 350);">
                     <img src="res/training.svg" alt="Trainer">
                     <span>Trainer</span>
                 </button>

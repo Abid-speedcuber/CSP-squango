@@ -20,10 +20,14 @@
 <body>
     <div id="loadingScreen"
         style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif; padding: 0 20px; box-sizing: border-box;">
-        <h1 id="loadingTitle" style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">SquanGo CSP</h1>
-        <p id="loadingAuthor" style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid Ibn Ashraf</p>
+        <h1 id="loadingTitle"
+            style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">
+            SquanGo CSP</h1>
+        <p id="loadingAuthor" style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid
+            Ibn Ashraf</p>
         <div id="loadingTipContainer" style="margin-bottom: 25px;"></div>
-        <div id="loadingBarContainer" style="width: 320px; max-width: 90vw; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
+        <div id="loadingBarContainer"
+            style="width: 320px; max-width: 90vw; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
             <div id="loadingProgress"
                 style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
             </div>
@@ -38,10 +42,11 @@
             <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
                 <img src="res/menu.svg" height="24px" width="24px">
             </button>
-            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile" onclick="event.stopPropagation();">
+            <button id="profileBtn" class="floating-profile-btn" aria-label="Profile"
+                onclick="event.stopPropagation();">
                 <img id="profileBtnAvatar" src="res/avatar.svg" height="24px" width="24px">
             </button>
-        </header>     
+        </header>
 
         <div class="controls">
             <button id="searchToggle" class="search-toggle-btn"
@@ -51,8 +56,10 @@
             <input type="text" id="search" placeholder="Search cubeshapes...">
             <select id="sort">
                 <option value="priority" id="sortPriority" data-short="Priority" data-xs="Priority">By Priority</option>
-                <option value="probability" selected data-short="Highest Probability" data-xs="Highest prob.">Highest Probability</option>
-                <option value="antiProbability" data-short="Lowest Probability" data-xs="Lowest Prob.">Lowest Probability</option>
+                <option value="probability" selected data-short="Highest Probability" data-xs="Highest prob.">Highest
+                    Probability</option>
+                <option value="antiProbability" data-short="Lowest Probability" data-xs="Lowest Prob.">Lowest
+                    Probability</option>
             </select>
             <select id="learnFilter">
                 <option value="all" data-short="All" data-xs="All">Show All</option>
@@ -92,6 +99,7 @@
     <script>
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
+                if (document.getElementById('evilnessQuizModal')) return;
                 closeModal();
             }
         });
@@ -163,6 +171,9 @@
         }
 
         window.addEventListener('popstate', function (event) {
+            if (window._ignoringPopstate) {
+                return;
+            }
             if (modalStack.length > 0) {
                 const modal = popModalState();
                 if (modal && modal.close) {
@@ -244,7 +255,7 @@
             const tip = document.getElementById('loadingTip');
             const evaCredit = document.getElementById('evaCredit');
             const mattCredit = document.getElementById('mattCredit');
-            
+
             if (width <= 355) {
                 if (title) title.style.fontSize = '2rem';
                 if (author) author.style.fontSize = '0.85rem';
@@ -289,7 +300,7 @@
                 }
             }
         }
-        
+
         // Select and display a random tip
         const tipElement = document.createElement('p');
         tipElement.id = 'loadingTip';
@@ -298,21 +309,21 @@
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
         document.getElementById('loadingTipContainer').appendChild(tipElement);
-        
+
         // Add Eva Kato credit
         const evaCredit = document.createElement('p');
         evaCredit.id = 'evaCredit';
         evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
         evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
         document.getElementById('loadingScreen').appendChild(evaCredit);
-        
+
         // Add Matt credit
         const mattCredit = document.createElement('p');
         mattCredit.id = 'mattCredit';
         mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
         mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
         document.getElementById('loadingScreen').appendChild(mattCredit);
-        
+
         // Apply initial sizing
         adjustLoadingScreen();
         window.addEventListener('resize', adjustLoadingScreen);
@@ -337,21 +348,21 @@
                     toggleSidebar();
                 };
             }
-            
-            // Setup profile button
-const profileBtn = document.getElementById('profileBtn');
-if (profileBtn) {
 
-    profileBtn.onclick = (e) => {
-        e.stopPropagation();
-        if (window.innerWidth > 620) {
-            showProfilePopup(true);
-        } else {
-            openProfileModalMobile();
-        }
-    };
-}
-            
+            // Setup profile button
+            const profileBtn = document.getElementById('profileBtn');
+            if (profileBtn) {
+
+                profileBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if (window.innerWidth > 620) {
+                        showProfilePopup(true);
+                    } else {
+                        openProfileModalMobile();
+                    }
+                };
+            }
+
             // Setup search toggle for mobile
             const searchToggle = document.getElementById('searchToggle');
             const searchInput = document.getElementById('search');
@@ -362,7 +373,7 @@ if (profileBtn) {
                     e.preventDefault();
                     e.stopPropagation();
                     const isExpanded = controls.classList.toggle('search-expanded');
-                    
+
                     if (isExpanded) {
                         setTimeout(() => {
                             searchInput.focus();
@@ -371,17 +382,17 @@ if (profileBtn) {
                         searchInput.blur();
                     }
                 };
-                
+
                 // Close search when clicking outside
                 document.addEventListener('click', (e) => {
-                    if (controls.classList.contains('search-expanded') && 
-                        !controls.contains(e.target) && 
+                    if (controls.classList.contains('search-expanded') &&
+                        !controls.contains(e.target) &&
                         !searchToggle.contains(e.target)) {
                         controls.classList.remove('search-expanded');
                         searchInput.blur();
                     }
                 });
-                
+
                 // Close search on escape key
                 searchInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
@@ -390,7 +401,7 @@ if (profileBtn) {
                     }
                 });
             }
-            
+
             // Apply instruction button visibility
             if (hideInstructions) {
                 const container = document.getElementById('floatingButtonsContainer');
@@ -484,11 +495,11 @@ if (profileBtn) {
             }
         });
 
-                // Keyboard shortcuts
+        // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             // Check if Alt key is pressed
             if (e.altKey) {
-                switch(e.key.toLowerCase()) {
+                switch (e.key.toLowerCase()) {
                     case 't': // Alt+T - Show tracing guides
                         e.preventDefault();
                         showHints = !showHints;

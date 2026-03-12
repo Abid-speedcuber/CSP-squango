@@ -173,6 +173,26 @@
         localStorage.setItem('parityTracerArrowSettings', JSON.stringify(arrowSettings));
     }
 
+    // Evilness (loaded from parent app state, not localStorage directly - uses window references)
+    function getEvilnessFactor() {
+        return typeof evilnessFactor !== 'undefined' ? evilnessFactor : false;
+    }
+    function getEvilnessStringReturn() {
+        return typeof evilnessStringReturn !== 'undefined' ? evilnessStringReturn : false;
+    }
+    function getEvilnessMap() {
+        return typeof evilnessMap !== 'undefined' ? evilnessMap : {};
+    }
+    function isScrambleEvilInternal(scramble) {
+        if (!getEvilnessFactor()) return false;
+        if (typeof getCaseNameFromScramble === 'function') {
+            const cn = getCaseNameFromScramble(scramble);
+            if (!cn) return false;
+            return getEvilnessMap()[cn] === true;
+        }
+        return false;
+    }
+
     // Scramble engine functions with long names
     function createSolvedStateArrayForSquareOnePuzzleWithLongName() {
         return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
@@ -415,7 +435,6 @@
     function matchPatternWithRotationCheckingWithLongName(typeStr) {
         // Ensure we're using current shapes, not stale cache
         if (!currentShapePatternsStorageWithLongName || Object.keys(currentShapePatternsStorageWithLongName).length === 0) {
-            console.warn('⚠️ Shape patterns cache empty, reloading...');
             currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
         }
 
@@ -464,7 +483,7 @@
     }
 
     // Six-step parity calculation
-    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner) {
+    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
         const steps = [];
 
         function getEdgeCodenameWithLongName(letter) {
@@ -626,10 +645,15 @@
             result: line6.result
         });
 
-        const total = steps.reduce((sum, step) => sum + step.result, 0);
-        const isOdd = (total % 2) === 1;
+        const evilStep = getEvilnessFactor() ? isScrambleEvilInternal(scrambleForEvil || '') ? 1 : 0 : null;
+        const evilness = evilStep !== null ? evilStep : 0;
 
-        return { steps, total, isOdd };
+        const total = steps.reduce((sum, step) => sum + step.result, 0);
+        const totalWithEvil = total + evilness;
+        const isOdd = (total % 2) === 1;
+        const isOddWithEvil = (totalWithEvil % 2) === 1;
+
+        return { steps, total, isOdd, evilStep, isOddWithEvil };
     }
 
     // Clustering Functions - RESTORED
@@ -853,7 +877,6 @@
 
     // Display results in modal
     function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray, layerType, patternTypes) {
-        console.group(`🎯 Arrow Position Calculation - ${layerType} Layer`);
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
@@ -987,15 +1010,30 @@
         const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 8) : adjustColorBrightness(config.backgroundColor, -2);
         const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
 
+        const allSteps = [...sixStepParity.steps];
+        if (getEvilnessFactor() && sixStepParity.evilStep !== null) {
+            allSteps.push({
+                name: 'Line 7: Evilness',
+                pieces: '-',
+                codenames: '-',
+                detail: `Evilness: ${sixStepParity.evilStep}`,
+                result: sixStepParity.evilStep
+            });
+        }
+
         container.innerHTML = `
       <div style="background: ${cardBgColor}; padding: 0.75rem; border-radius: 8px;">
         <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #2d3748; font-weight: 600;">Parity Analysis</h3>
         <div class="parity-grid-tracer-lib">
-          ${sixStepParity.steps.map((step, idx) => {
+          ${allSteps.map((step, idx) => {
             let displayContent = '';
             const lineName = step.name.split(':')[1].trim();
 
-            if (idx < 2 || (idx >= 2 && idx < 4)) {
+            if (idx === 6) {
+                // Evilness line
+                const evilLabel = step.result === 1 ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>' : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
+                displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
+            } else if (idx < 2 || (idx >= 2 && idx < 4)) {
                 displayContent = `${lineName}: ${createColorSquaresWithLongName(step.codenames)} = <strong>${step.result}</strong>`;
             } else {
                 displayContent = `${lineName}: ${createPositionIndicatorsWithLongName(step.pieces)} = <strong>${step.result}</strong>`;
@@ -1011,7 +1049,7 @@
         </div>
         <div style="background: ${innerCardBg}; margin-top: 0.5rem; padding: 0.5rem; border-radius: 6px;">
           <div style="font-weight: 600; font-size: 0.95rem; color: ${textColor};">
-            Total: ${sixStepParity.total} → <strong>${sixStepParity.isOdd ? 'ODD' : 'EVEN'} Parity</strong>
+            Total: ${getEvilnessFactor() && sixStepParity.evilStep !== null ? sixStepParity.total + '+' + sixStepParity.evilStep + '=' + (sixStepParity.total + sixStepParity.evilStep) : sixStepParity.total} → <strong>${(getEvilnessFactor() && sixStepParity.evilStep !== null ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'ODD' : 'EVEN'} Parity</strong>
           </div>
         </div>
       </div>
@@ -1391,9 +1429,30 @@
             </div>
 
             <!-- Tracing Scheme Settings Button -->
-            <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
+            <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; margin-bottom: 0.75rem;">
                 Tracing Scheme Settings
             </button>
+
+            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-top: 0.75rem;">
+                <!-- Evilness factor for parity tracing Toggle -->
+                <div style="margin-bottom: 0.75rem;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
+                        <input type="checkbox" id="evilnessFactorCheckbox-${timestamp}" ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                        <span style="font-weight: 600;">Evilness factor for parity tracing</span>
+                    </label>
+                </div>
+                <!-- Evilness String Return Toggle -->
+                <div style="margin-bottom: 0.75rem; padding-top: 0.75rem; border-top: 1px solid ${borderColor}; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'};" id="evilnessStringReturnRow-${timestamp}">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
+                        <input type="checkbox" id="evilnessStringReturnCheckbox-${timestamp}" ${typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
+                        <span style="font-weight: 600;">Evilness factor affects homescreen?</span>
+                    </label>
+                </div>
+                <!-- Evilness Cases Button -->
+                <button id="openEvilnessCases-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'}; cursor: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'pointer' : 'not-allowed'}; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
+                    Per-case Evilness settings
+                </button>
+            </div>
         `;
 
         settingsModalDiv.appendChild(settingsContent);
@@ -1483,8 +1542,6 @@
                 const centerX = rect.left + rect.width / 2;
                 const centerY = rect.top + rect.height / 2;
                 const elementAtPoint = document.elementFromPoint(centerX, centerY);
-            } else {
-                console.error('❌ Settings info button NOT found in DOM');
             }
         }, 50);
 
@@ -1589,9 +1646,113 @@
             const tracingSchemeBtn = settingsContent.querySelector(`#openTracingScheme-${timestamp}`);
             if (tracingSchemeBtn) {
                 tracingSchemeBtn.addEventListener('click', () => {
-                    // Close this modal and open tracing scheme modal
                     closeSettingsModal();
                     showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+                });
+            }
+
+            // Evilness factor for parity tracing checkbox
+            const evilnessFactorCheckbox = settingsContent.querySelector(`#evilnessFactorCheckbox-${timestamp}`);
+            const evilnessStringReturnRow = settingsContent.querySelector(`#evilnessStringReturnRow-${timestamp}`);
+            const openEvilnessCasesBtn = settingsContent.querySelector(`#openEvilnessCases-${timestamp}`);
+            if (evilnessFactorCheckbox) {
+                evilnessFactorCheckbox.addEventListener('change', (e) => {
+                    const newVal = e.target.checked;
+                    e.target.checked = !newVal;
+
+                    const choiceContainer = document.createElement('div');
+                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
+                    choiceContainer.innerHTML = `
+                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness factor for parity tracing?</h3>
+                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
+                        </div>`;
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
+                    overlay.appendChild(choiceContainer);
+                    document.body.appendChild(overlay);
+
+                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
+                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
+                        overlay.remove();
+                        e.target.checked = newVal;
+                        if (typeof evilnessFactor !== 'undefined') evilnessFactor = newVal;
+                        if (typeof saveState === 'function') saveState();
+                        const isOn = newVal;
+                        if (evilnessStringReturnRow) {
+                            evilnessStringReturnRow.style.opacity = isOn ? '1' : '0.4';
+                            evilnessStringReturnRow.style.pointerEvents = isOn ? 'auto' : 'none';
+                            const lbl = evilnessStringReturnRow.querySelector('label');
+                            if (lbl) lbl.style.pointerEvents = isOn ? 'auto' : 'none';
+                        }
+                        if (openEvilnessCasesBtn) {
+                            openEvilnessCasesBtn.style.opacity = isOn ? '1' : '0.4';
+                            openEvilnessCasesBtn.style.cursor = isOn ? 'pointer' : 'not-allowed';
+                            openEvilnessCasesBtn.style.pointerEvents = isOn ? 'auto' : 'none';
+                        }
+                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
+                        if (typeof render === 'function') render();
+                        if (typeof filterAndSort === 'function') filterAndSort();
+                        if (modalElement) {
+                            const si = modalElement.querySelector('input[type="text"]');
+                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        if (typeof showToast === 'function') showToast(`Evilness factor for parity tracing ${isOn ? 'enabled' : 'disabled'}.`, 3000, 'success');
+                    };
+                });
+            }
+
+            // Evilness string return checkbox — confirm before expensive recalculation
+            const evilnessStringReturnCheckbox = settingsContent.querySelector(`#evilnessStringReturnCheckbox-${timestamp}`);
+            if (evilnessStringReturnCheckbox) {
+                evilnessStringReturnCheckbox.addEventListener('change', (e) => {
+                    const newVal = e.target.checked;
+                    // Revert the checkbox visually until confirmed
+                    e.target.checked = !newVal;
+
+                    const choiceContainer = document.createElement('div');
+                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
+                    choiceContainer.innerHTML = `
+                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness in Parity Results?</h3>
+                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
+                        </div>`;
+                    const overlay = document.createElement('div');
+                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
+                    overlay.appendChild(choiceContainer);
+                    document.body.appendChild(overlay);
+
+                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
+                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
+                        overlay.remove();
+                        e.target.checked = newVal;
+                        if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
+                        if (typeof saveState === 'function') saveState();
+                        // Force full recalculation
+                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
+                        if (typeof render === 'function') render();
+                        if (typeof filterAndSort === 'function') filterAndSort();
+                        // Update open parity tracer modal
+                        if (modalElement) {
+                            const si = modalElement.querySelector('input[type="text"]');
+                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        if (typeof showToast === 'function') showToast('Parity results updated with evilness setting.', 3000, 'success');
+                    };
+                });
+            }
+
+            // Evilness cases button
+            if (openEvilnessCasesBtn) {
+                openEvilnessCasesBtn.addEventListener('click', () => {
+                    closeSettingsModal();
+                    showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
                 });
             }
         }, 100);
@@ -1617,6 +1778,236 @@
                 closeSettingsModal();
             }
         };
+    }
+
+    function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+        const textColor = getContrastColor(config.backgroundColor);
+        const isDark = textColor === '#FFFFFF';
+        const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
+        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
+        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+
+        const allCases = typeof defaultDisplayNames !== 'undefined' ? Object.keys(defaultDisplayNames) : (typeof data !== 'undefined' ? data.map(d => d.name) : []);
+        const getDispName = (cn) => {
+            if (typeof displayNames !== 'undefined' && displayNames[cn]) return displayNames[cn];
+            if (typeof defaultDisplayNames !== 'undefined' && defaultDisplayNames[cn]) return defaultDisplayNames[cn];
+            return cn;
+        };
+
+        let localEvilMap = Object.assign({}, typeof evilnessMap !== 'undefined' ? evilnessMap : {});
+        let hasChanges = false;
+        let evilSearchTerm = '';
+        let evilFilteredCases = [...allCases];
+
+        const evilModalDiv = document.createElement('div');
+        evilModalDiv.style.cssText = `
+            display:flex; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.55); z-index:10008;
+            align-items:center; justify-content:center; padding:20px; box-sizing:border-box;
+        `;
+
+        const evilInner = document.createElement('div');
+        evilInner.style.cssText = `
+            background:#fff; border-radius:14px; width:min(560px,100%);
+            max-height:80vh; display:flex; flex-direction:column;
+            box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden;
+        `;
+
+        evilInner.innerHTML = `
+            <!-- Header -->
+            <div style="flex-shrink:0; padding:16px 20px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; align-items:center; justify-content:space-between;">
+                <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:1.15rem; font-weight:700; color:#2d3748;">Per-case Evilness settings</span>
+                    <span id="evilCountBar" style="font-size:0.8rem; color:#888; font-weight:400;"></span>
+                </div>
+                <button id="evilModalCloseBtn" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:#666; line-height:1; padding:0;">&times;</button>
+            </div>
+            <!-- Search + Bulk action bar -->
+            <div style="flex-shrink:0; padding:10px 14px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; gap:8px; align-items:center;">
+                <div style="position:relative; flex:1; min-width:0;">
+                    <input type="text" id="evilSearchInput"
+                        placeholder="Search cases..."
+                        autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid #dee2e6; border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                        style="position:absolute; left:9px; top:50%; transform:translateY(-50%); width:15px; height:15px; pointer-events:none;">
+                        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                    </svg>
+                </div>
+                <select id="evilBulkAction"
+                    style="padding:7px 8px; border:1px solid #dee2e6; border-radius:7px; font-size:0.82rem; background:white; cursor:pointer; color:#495057; flex-shrink:0;"
+                    onchange="this.value && (() => { window._evilBulkHandler && window._evilBulkHandler(this.value); this.value=''; })()">
+                    <option value="" disabled selected>Select…</option>
+                    <option value="mark_all_evil">Mark All Evil</option>
+                    <option value="mark_all_good">Mark All Good</option>
+                    <option value="mark_these_evil">Mark These Evil</option>
+                    <option value="mark_these_good">Mark These Good</option>
+                </select>
+            </div>
+            <!-- Cases grid -->
+            <div id="evilCaseGrid" style="
+                flex:1; overflow-y:auto; padding:10px 12px;
+                display:grid; grid-template-columns:repeat(3,1fr);
+                gap:7px; align-content:start;
+            "></div>
+            <!-- Footer -->
+            <div style="flex-shrink:0; padding:12px 16px; background:#f8f9fa; border-top:1px solid #e9ecef; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
+                <span id="evilUnsavedDot" style="font-size:0.8rem; color:#e08000; font-weight:600; display:none;">● Unsaved changes</span>
+                <button id="evilResetBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
+                <button id="evilCancelBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
+                <button id="evilSaveBtn" style="padding:6px 14px; background:#28a745; color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
+            </div>
+        `;
+
+        evilModalDiv.appendChild(evilInner);
+        document.body.appendChild(evilModalDiv);
+
+        function renderEvilGrid() {
+            const grid = evilInner.querySelector('#evilCaseGrid');
+            if (!grid) return;
+
+            evilFilteredCases = evilSearchTerm
+                ? allCases.filter(cn => {
+                    const dn = getDispName(cn).toLowerCase();
+                    const term = evilSearchTerm;
+                    if (!term.includes('/')) return dn.includes(term) || cn.toLowerCase().includes(term);
+                    const [p1, p2] = term.split('/').map(p => p.trim());
+                    const parts = dn.split('/').map(p => p.trim());
+                    if (parts.length === 2) {
+                        return (parts[0].includes(p1) && parts[1].includes(p2)) ||
+                            (parts[1].includes(p1) && parts[0].includes(p2));
+                    }
+                    return false;
+                })
+                : [...allCases];
+
+            grid.innerHTML = evilFilteredCases.map(cn => {
+                const isEvil = localEvilMap[cn] === true;
+                const dn = getDispName(cn);
+                const displayText = dn.includes('/')
+                    ? dn.replace(/ /g, '\u00A0').replace('/', '/\u200B')
+                    : dn;
+
+                const bgColor = isEvil ? '#ffe0e0' : '#e8f5e9';
+                const borderColor2 = isEvil ? '#e53e3e' : '#38a169';
+                const textCol = isEvil ? '#7b1c1c' : '#1a4731';
+
+                return `<div
+                    data-case="${cn.replace(/'/g, "\\'")}"
+                    onclick="window._evilToggleCase && window._evilToggleCase('${cn.replace(/'/g, "\\'")}')"
+                    style="
+                        padding:7px 8px; background:${bgColor};
+                        border:2px solid ${borderColor2}; border-radius:7px;
+                        cursor:pointer; display:flex; align-items:center;
+                        user-select:none; box-sizing:border-box; width:100%;
+                    ">
+                    <span style="font-size:0.78rem; font-weight:600; color:${textCol}; line-height:1.3; word-break:break-word;">${displayText}</span>
+                </div>`;
+            }).join('');
+
+            const countBar = evilInner.querySelector('#evilCountBar');
+            if (countBar) {
+                const evilCount = allCases.filter(cn => localEvilMap[cn] === true).length;
+                countBar.textContent = `${evilCount} evil, ${allCases.length - evilCount} good` +
+                    (evilSearchTerm ? ` · ${evilFilteredCases.length} shown` : '');
+            }
+        }
+
+        function markChanged() {
+            hasChanges = true;
+            const saveBtn = evilInner.querySelector('#evilSaveBtn');
+            if (saveBtn) { saveBtn.style.opacity = '1'; saveBtn.style.pointerEvents = 'auto'; saveBtn.removeAttribute('disabled'); }
+            const dot = evilInner.querySelector('#evilUnsavedDot');
+            if (dot) dot.style.display = 'inline';
+        }
+
+        window._evilToggleCase = (cn) => {
+            localEvilMap[cn] = !localEvilMap[cn];
+            renderEvilGrid();
+            markChanged();
+        };
+
+        window._evilBulkHandler = (action) => {
+            switch (action) {
+                case 'mark_all_evil':
+                    allCases.forEach(cn => { localEvilMap[cn] = true; }); break;
+                case 'mark_all_good':
+                    allCases.forEach(cn => { localEvilMap[cn] = false; }); break;
+                case 'mark_these_evil':
+                    evilFilteredCases.forEach(cn => { localEvilMap[cn] = true; }); break;
+                case 'mark_these_good':
+                    evilFilteredCases.forEach(cn => { localEvilMap[cn] = false; }); break;
+            }
+            renderEvilGrid();
+            markChanged();
+        };
+
+        // Search
+        evilInner.querySelector('#evilSearchInput').addEventListener('input', (e) => {
+            evilSearchTerm = e.target.value.toLowerCase().trim();
+            renderEvilGrid();
+        });
+
+        function performSave() {
+            if (typeof evilnessMap !== 'undefined') Object.assign(evilnessMap, localEvilMap);
+            if (typeof saveState === 'function') saveState();
+            const useEvilInCalc = typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn;
+            if (useEvilInCalc) {
+                if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+                if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
+                if (typeof render === 'function') render();
+                if (typeof filterAndSort === 'function') filterAndSort();
+            } else {
+                if (typeof render === 'function') render();
+            }
+            if (modalElement) {
+                const si = modalElement.querySelector('input[type="text"]');
+                if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+            if (typeof showToast === 'function') showToast('Evilness settings saved!', 3000, 'success');
+            closeEvilModal(true);
+        }
+
+        function closeEvilModal(skipConfirm = false) {
+            if (hasChanges && !skipConfirm) {
+                const overlay = document.createElement('div');
+                overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
+                const box = document.createElement('div');
+                box.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:300px;`;
+                box.innerHTML = `<h3 style="margin:0 0 12px;color:#333;font-size:1.1rem;">Unsaved Changes</h3>
+                    <p style="margin:0 0 20px;color:#666;font-size:0.9rem;">You have unsaved changes. What would you like to do?</p>
+                    <div style="display:flex;gap:10px;justify-content:flex-end;">
+                        <button class="d-btn" style="padding:8px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Discard</button>
+                        <button class="c-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+                        <button class="s-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save</button>
+                    </div>`;
+                overlay.appendChild(box);
+                document.body.appendChild(overlay);
+                box.querySelector('.d-btn').onclick = () => { overlay.remove(); closeEvilModal(true); };
+                box.querySelector('.c-btn').onclick = () => overlay.remove();
+                box.querySelector('.s-btn').onclick = () => { overlay.remove(); performSave(); };
+                return;
+            }
+            delete window._evilToggleCase;
+            delete window._evilBulkHandler;
+            evilModalDiv.remove();
+            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+        }
+
+        evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
+        evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
+        evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
+        evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
+
+        evilInner.querySelector('#evilResetBtn').addEventListener('click', () => {
+            const presetEvil = (typeof presetData !== 'undefined' && presetData && presetData.evilnessMap) ? presetData.evilnessMap : {};
+            allCases.forEach(cn => { localEvilMap[cn] = presetEvil[cn] === true; });
+            renderEvilGrid();
+            markChanged();
+        });
+
+        renderEvilGrid();
     }
 
     function showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
@@ -2437,8 +2828,9 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
-                return sixStepParity.isOdd ? 'Odd' : 'Even';
+                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
+                const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
+                return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity calculation error:', err);
                 return 'error';
@@ -2790,6 +3182,9 @@
                 currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
 
                 let scrambleText = scrambleInput.value.trim() || '(0,0)';
+                if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
+                    scrambleText = window.ScrambleNormalizer.normalizeScramble(scrambleText) || scrambleText;
+                }
                 // Store in a scope accessible to button handlers
                 window.currentParityTracerScramble = scrambleText;
 
@@ -2896,15 +3291,13 @@
                     }
 
                     const useClockwise = (cornerStickerMode === 'clockwise');
-                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
+                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
 
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
                         const encodedScramble = encodeStateToHexStringWithLongName(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
-                                console.group('🔍 Complete Scramble Analysis');
-                                console.groupEnd();
 
                                 const imageSize = parityTracerImageSize;
                                 const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
@@ -2970,7 +3363,6 @@
 
                                         if (canCycleSymmetry) {
                                             buttonCircle.addEventListener('click', () => {
-                                                console.group('🔄 Symmetry Button Clicked');
                                                 const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
                                                 const scrambleKey = currentScramble.replace(/\s+/g, '');
                                                 if (!window.parityTracerSymmetryOffsets) {
@@ -2987,7 +3379,6 @@
                                                 const newOffset = (currentOffset + 1) % maxSymmetries;
 
                                                 window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
-                                                console.groupEnd();
 
                                                 // Re-run analysis
                                                 performAnalysisWithLongName();
@@ -3194,8 +3585,9 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise);
-                return sixStepParity.isOdd ? 'Odd' : 'Even';
+                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
+                return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity analysis error:', err);
                 return 'Error';

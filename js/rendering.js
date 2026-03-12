@@ -256,43 +256,65 @@ function invertScramble(s) {
     if (!s) return s;
     let str = String(s).trim();
 
-    // Split by / to get individual moves and turn notations
     const parts = str.split('/');
-
-    // Reverse the order
     const reversed = parts.slice().reverse();
 
-    // Invert each part
+    const invertNum = (v) => {
+        const num = parseInt(v);
+        if (isNaN(num)) return v;
+        const inv = ((-num) % 12 + 12) % 12;
+        return String(inv > 6 ? inv - 12 : inv);
+    };
+
     const inverted = reversed.map(part => {
         part = part.trim();
 
-        // Handle turn notation like (0,3) or (-1,1)
         const turnMatch = part.match(/\(([^)]+)\)/);
         if (turnMatch) {
             const values = turnMatch[1].split(',').map(v => v.trim());
-            const invertedValues = values.map(v => {
-                const num = parseInt(v);
-                if (isNaN(num)) return v;
-                return String(-num);
-            });
-            return '(' + invertedValues.join(',') + ')';
+            return '(' + values.map(invertNum).join(',') + ')';
         }
 
-        // Handle move notation like 3,0 or -2,0
         if (part.includes(',')) {
             const values = part.split(',').map(v => v.trim());
-            const invertedValues = values.map(v => {
-                const num = parseInt(v);
-                if (isNaN(num)) return v;
-                return String(-num);
-            });
-            return invertedValues.join(',');
+            return values.map(invertNum).join(',');
         }
 
         return part;
     });
 
     return inverted.join('/');
+}
+
+function getAlgDisplayMeta(alg, caseName) {
+    if (!alg || alg === 'Done!' || typeof window.algToShapeIndex === 'undefined') {
+        return { invalid: false, mirrored: false };
+    }
+    try {
+        const canonicalIdxStr = shapeIndexMap[caseName];
+        if (canonicalIdxStr === undefined) return { invalid: false, mirrored: false };
+        const canonicalIdx = parseInt(canonicalIdxStr);
+
+        const caseShapeData = (() => {
+            for (const sd of shapeIndex) {
+                if (sd.org && sd.org.includes(canonicalIdx)) return sd;
+            }
+            return null;
+        })();
+
+        const result = window.algToShapeIndex(alg);
+        const idx = result.shapeIndex;
+
+        const isDirectMatch = idx === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
+
+        if (isDirectMatch || isInOrg) return { invalid: false, mirrored: false };
+        if (isInMir) return { invalid: false, mirrored: true };
+        return { invalid: true, mirrored: false };
+    } catch(e) {
+        return { invalid: true, mirrored: false };
+    }
 }
 
 function getShapePath(scramble) {
@@ -345,6 +367,12 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
     const fontStyle = fontFamily ? `font-family: ${fontFamily};` : '';
     return algoArray.map((algo, idx) => {
         const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
+        const meta = getAlgDisplayMeta(algo, caseName);
+        const prefix = meta.mirrored ? '<span style="color: #007afcff; margin-right:4px;"><big>&lt;</big><small>z2</small><big>&gt;</big></span>' : '';
+        const wrapStyle = meta.invalid
+            ? 'display: block; opacity: 0.18;'
+            : 'display: block;';
+        const colorStyle = meta.invalid ? 'color: #dc3545;' : '';
         return `<div class="algo-line algo-interactive" 
                      id="${algoId}" 
                      data-algo="${algo.replace(/"/g, '&quot;')}" 
@@ -353,7 +381,7 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
                      onmouseleave="hideAlgoPopup(this, false)"
                      onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)"
-                     style="display: block; ${fontStyle}">${styleAlgorithmWithGrayMoves(algo)}</div>`;
+                     style="${wrapStyle} ${colorStyle} ${fontStyle}">${prefix}${styleAlgorithmWithGrayMoves(algo)}</div>`;
     }).join('');
 }
 
@@ -1087,8 +1115,8 @@ function renderCard(item) {
         <div class="card ${cardClass}" data-case-name="${item.name}">
             <div class="card-header">
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div class="card-title">
-                        ${highlightedName}
+                    <div class="card-title" style="${(typeof isCaseEvil === 'function' && isCaseEvil(item.name)) ? 'color: #8b0000;' : ''}">
+                        ${highlightedName}${(typeof isCaseEvil === 'function' && isCaseEvil(item.name)) ? ' ' : ''}
                         ${perCaseSubtitles.has(item.name) ? `<div class="card-subtitle" style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">

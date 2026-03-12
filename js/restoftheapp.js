@@ -111,6 +111,9 @@ let comments = new Map(); // stores {caseName: "comment text"}
 let plannedLevels = new Map(); // stores {caseName: 1-6}
 let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
+let evilnessFactor = false; // Toggle evilness factor on/off
+let evilnessStringReturn = false; // Toggle if string return uses evilness
+let evilnessMap = {}; // {caseName: boolean} - true = evil
 
 // Global function to set corner sticker mode
 window.setCornerStickerMode = function (mode) {
@@ -216,6 +219,66 @@ function calculateAndCacheAllParity() {
     }
 }
 
+// Build shape index → caseName lookup (computed once)
+function buildShapeIndexToCaseMap() {
+    const map = {};
+    if (typeof shapeIndexMap === 'undefined') return map;
+    for (const [caseName, idxStr] of Object.entries(shapeIndexMap)) {
+        const idx = parseInt(idxStr);
+        map[idx] = caseName;
+        // Also map all org/mir indices for robustness
+    }
+    // Map org and mir arrays too
+    if (typeof shapeIndex !== 'undefined') {
+        for (const entry of shapeIndex) {
+            const name = entry.name;
+            const allIndices = [...(entry.org || []), ...(entry.mir || [])];
+            for (const idx of allIndices) {
+                if (!map[idx]) map[idx] = name;
+            }
+        }
+    }
+    return map;
+}
+
+let _shapeIndexToCaseMap = null;
+function getShapeIndexToCaseMap() {
+    if (!_shapeIndexToCaseMap) _shapeIndexToCaseMap = buildShapeIndexToCaseMap();
+    return _shapeIndexToCaseMap;
+}
+
+// Get case name from a scramble string using shape index
+function getCaseNameFromScramble(scramble) {
+    if (!scramble || typeof window.algToShapeIndex === 'undefined') return null;
+    try {
+        // For shape detection we do NOT invert - we apply directly
+        // algToShapeIndex already inverts internally, so pass the scramble as-is
+        // but we want the shape of the *position*, not the *solution*
+        // algToShapeIndex inverts then hexifies, so passing the scramble gives us the solved shape
+        // We need to pass the setup (inverted scramble) to get the scrambled shape
+        const setup = invertScramble(scramble);
+        const result = window.algToShapeIndex(setup);
+        const map = getShapeIndexToCaseMap();
+        return map[result.shapeIndex] || null;
+    } catch (e) {
+        return null;
+    }
+}
+
+// Check if a case is evil
+function isCaseEvil(caseName) {
+    if (!evilnessFactor) return false;
+    return evilnessMap[caseName] === true;
+}
+
+// Check if a scramble's case is evil
+function isScrambleEvil(scramble) {
+    if (!evilnessFactor) return false;
+    const caseName = getCaseNameFromScramble(scramble);
+    if (!caseName) return false;
+    return isCaseEvil(caseName);
+}
+
 // Function to check if parity needs recalculation
 function needsParityRecalculation() {
     if (!lastParityCalculationSettings) return true;
@@ -234,6 +297,14 @@ function needsParityRecalculation() {
         currentSettings.customAlgorithms !== lastParityCalculationSettings.customAlgorithms
     );
 }
+
+// Load evilness settings from localStorage
+const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
+if (storedEvilnessFactor !== null) evilnessFactor = storedEvilnessFactor === 'true';
+const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
+if (storedEvilnessStringReturn !== null) evilnessStringReturn = storedEvilnessStringReturn === 'true';
+const storedEvilnessMap = localStorage.getItem('evilnessMap');
+if (storedEvilnessMap !== null) { try { evilnessMap = JSON.parse(storedEvilnessMap); } catch (e) { } }
 
 // Load saved state
 try {
@@ -341,6 +412,9 @@ function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
     localStorage.setItem('enhancedAccess', window.enhancedAccess.toString());
     localStorage.setItem('currentPreset', currentPreset);
+    localStorage.setItem('evilnessFactor', evilnessFactor.toString());
+    localStorage.setItem('evilnessStringReturn', evilnessStringReturn.toString());
+    localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({
             learned: Array.from(learnedCases),
@@ -364,6 +438,9 @@ function saveState() {
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
             generalNotes: generalNotes,
+            evilnessFactor: evilnessFactor,
+            evilnessStringReturn: evilnessStringReturn,
+            evilnessMap: evilnessMap,
         }));
     } catch (e) {
         console.error('Error saving state:', e);
@@ -455,6 +532,11 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
         window.svgData = data.svgData;
     }
 
+    // Apply preset evilness settings
+    if (data.evilnessMap !== undefined) evilnessMap = data.evilnessMap;
+    if (data.evilnessFactor !== undefined) evilnessFactor = data.evilnessFactor;
+    if (data.evilnessStringReturn !== undefined) evilnessStringReturn = data.evilnessStringReturn;
+
     // Apply preset parity orientations
     parityOrientations = new Map(Object.entries(data.parityOrientations || {}));
 
@@ -543,6 +625,9 @@ function exportData() {
         customAlgorithms: Object.fromEntries(customAlgorithms),
         svgData: window.svgData,
         generalNotes: generalNotes,
+        evilnessFactor: evilnessFactor,
+        evilnessStringReturn: evilnessStringReturn,
+        evilnessMap: evilnessMap,
         parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
         parityTracerShowArrow: localStorage.getItem('parityTracerShowArrow'),
         parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
@@ -613,6 +698,11 @@ function importData(jsonStr) {
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
 
+        // Load evilness settings
+        if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
+        if (state.evilnessStringReturn !== undefined) evilnessStringReturn = state.evilnessStringReturn;
+        if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap;
+
         // Load custom SVG data
         if (state.svgData) {
             window.svgData = state.svgData;
@@ -627,6 +717,11 @@ function importData(jsonStr) {
         }
 
         generalNotes = state.generalNotes || '';
+
+        // Import evilness settings
+        if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
+        if (state.evilnessStringReturn !== undefined) evilnessStringReturn = state.evilnessStringReturn;
+        if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap;
 
         // Import selector selections
         if (typeof window.selectorImportHook === 'function') window.selectorImportHook(state);
