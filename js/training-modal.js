@@ -1355,19 +1355,19 @@ function openTrainingInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">To select a particular angle or orientation, press the case name and select from there.</div>
+                        <div class="training-info-text">Press on the top left corner to <b></b>>, or to select a particular <b>angle</b> for one case.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">If the scramble image is too big or too small, you can change it from settings.</div>
+                        <div class="training-info-text">Change the <b>scramble image size</b> from settings.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">The colored part of the scramble means that's where the cubeshape starts changing. <span style="color: #2196F3; font-weight: 600;">Blue</span> means you have to scramble from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means you have to scramble from (1, -1) alignment.</div>
+                        <div class="training-info-text">The out-of-CS part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">To use the parity tracing guide, directly click on the scramble.</div>
+                        <div class="training-info-text">To use the Parity Tracer, directly click on the scramble.</div>
                     </div>
                 </div>
             </div>
@@ -1632,8 +1632,8 @@ function startEvilnessQuiz(chosenCaseNames) {
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
                     <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
                     <div style="font-size:0.88rem;color:#555;line-height:1.6;">
-                        You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
-                        Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
+                        You'll be shown an image of a scramble. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
+                        Press the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
                     </div>
                     <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
                 </div>
@@ -1866,8 +1866,8 @@ function startEvilnessQuiz(chosenCaseNames) {
     <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
         <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
         <div style="font-size:0.88rem;color:#555;line-height:1.6;">
-            You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
-            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
+            You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
+            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Bvil.
         </div>
         <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
     </div>`;
@@ -2193,7 +2193,7 @@ function startColorRecognitionPractice() {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display:flex;gap:10px;align-items:center;">
-                <span class="training-modal-title">Color Parity Recognition</span>
+                <span class="training-modal-title">Parity Quiz</span>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
                 <div id="colorRecogProgress" style="font-size:0.85rem;color:#888;">Q1 | 0/0</div>
@@ -2210,10 +2210,10 @@ function startColorRecognitionPractice() {
             <div class="training-modal-timer" id="colorRecogTimer">0.000</div>
             <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Color Parity Recognition</div>
+                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Parity Quiz</div>
                     <div style="font-size:0.88rem;color:#555;line-height:1.6;">
-                        You'll see three colored face labels. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
-                        Use the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
+                        You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
+                        Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                     </div>
                     <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
                 </div>

@@ -37,7 +37,7 @@ function generateModalHTML() {
                                 <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Show/hide the blue and red numbers from the case images to help you trace parity using Cale's method.<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
+                                    <span class="info-box">Show/hide the blue and red numbers in the case images. An edge labeled with 1, for example, means it's the first to be traced. (these do not update if you change your tracing positions, you'll have to go to Set Tracing Positions)<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hintToggle" onchange="toggleHints(this.checked)" style="transform: scale(1.3); cursor: pointer;">
@@ -47,24 +47,24 @@ function generateModalHTML() {
                                 <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Hide instruction buttons across the app. The irony: pressing this will eventually hide this instruction button too!<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
+                                    <span class="info-box">Hide instruction buttons across the app. But why would you do that.<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hideInstructionsToggle" onchange="toggleHideInstructions(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parenthesis</label>
+                                <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parentheses</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                    <span class="info-box">Removes parenthesis and changes the font from monospace to proportional (Arial) for a more modern algorithm display.<br><br><strong>Keyboard shortcut:</strong> Alt+P</span>
+                                    <span class="info-box">Removes parentheses and changes the font from monospace to Arial for a more modern alg display.<br><br><strong>Keyboard shortcut:</strong> Alt+P</span>
                                 </span>
                             </div>
                             <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
                         
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Algorithm Font Size: <span id="algFontSizeValue">14</span>px</label>
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Alg Font Size: <span id="algFontSizeValue">14</span>px</label>
                             <input type="range" id="algFontSizeSlider" min="10" max="20" step="1" value="14" style="width: 100%; cursor: pointer;" oninput="updateAlgFontSizePreview(this.value)">
                             <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
                                 <span>Small (10px)</span>
@@ -77,7 +77,7 @@ function generateModalHTML() {
         <label style="font-weight: 500; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
         <span class="info-wrapper">
             <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-            <span class="info-box">This setting controls the image size in the Training modal, Parity Tracer, and Animate Algorithm modal. It does NOT affect the case images on the home screen.</span>
+            <span class="info-box">This setting controls the image size in the trainer, Parity Tracer, and alg animator. It does NOT affect the size of the images on the home screen.</span>
         </span>
     </div>
     <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
@@ -92,28 +92,28 @@ function generateModalHTML() {
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
-                                    <span class="info-box">Changes the color scheme of your squan. Impacts parity tracing and training.</span>
+                                    <span class="info-box">Changes the color scheme of your squan. Impacts parity tracing and draw scramble.</span>
                                 </span>
                             </div>
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
-                                <span>Tracing Scheme Settings</span>
+                                <span>Set Tracing Positions</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
-                                    <span class="info-box">Select your parity tracing scheme. It will be used throughout the app to organize your algorithms and in the tracing guides.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
+                                    <span class="info-box">Change your tracing positions here. They will be used to calculate whether an alg is odd or even for a given case.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
                                 </span>
                             </div>
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Quick Edit</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
-                                    <span class="info-box">A table for preset creators to bulk edit the cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
+                                    <span class="info-box">A place for preset creators to bulk edit cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
                                 </span>
                             </div>
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Customize Tracing Guides</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
-                                    <span class="info-box">Lets you move the little numbers around for each image to set your tracing guide.<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
+                                    <span class="info-box">Lets you move the little numbers around to set your tracing guide for each image .<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
                                 </span>
                             </div>
                             
@@ -124,7 +124,7 @@ function generateModalHTML() {
                                     <label for="enhancedAccessToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Enable Enhanced Access</label>
                                     <span class="info-wrapper">
                                         <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                                        <span class="info-box">Enhanced access lets you change the algorithms of a case in the Edit Case modal and Quick Edit table.</span>
+                                        <span class="info-box">This lets you change the algs of a case in Edit Case and Quick Edit.</span>
                                     </span>
                                 </div>
                                 <input type="checkbox" id="enhancedAccessToggle" onchange="toggleEnhancedAccess(this.checked)" style="transform: scale(1.3); cursor: pointer;">
@@ -410,11 +410,11 @@ function generateModalHTML() {
 
         <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
           Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
-          The overall Homepage layout, case images and most of the algorithm data are based on her work.
+          The overall Homepage layout, case images and most of the alg data are based on her work.
         </p>
 
         <p style="margin: 0; font-size: 0.95rem; color: #6b7280;">
-          Additional credit to <strong>Matt Mao</strong> — Square-1 NR average holder from China —
+          Additional credit to <strong>Matt Mao</strong> — the inventor of Matt Tracing for OBLP —
           for helping me out in various way in this project. Matt's preset is built solemnly by him, and he helped me refine the site further.
         </p>
       </section>
@@ -641,7 +641,7 @@ function handlePresetChange(presetName) {
                 <div class="modal-body">
                     <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: #333;">
                         Reloading will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
-                        It will <strong>replace</strong> your algorithms, display names, notes, color scheme, SVG data, and subtitles with the preset's version.
+                        It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the newest version of this preset.
                     </p>
                     <p style="font-weight: 500;">
                         We recommend exporting your data before reloading.
@@ -677,9 +677,12 @@ function handlePresetChange(presetName) {
             </div>
             <div class="modal-body">
                 <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: #333;">
-                    Switching to "<strong>${presetName}</strong>" will <strong>keep</strong> your learning progress and personal preferences.<br><br>
-                    It will <strong>replace</strong> your algorithms, display names, notes, color scheme, SVG data, and subtitles with the new preset's version. We recommend exporting your data first.
+                    Switching to "<strong>${presetName}</strong>" will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
+                    It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the preset.
                 </p>
+                <p style="font-weight: 500;">
+                    We recommend exporting your data before reloading.
+                </p> <br>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
@@ -887,39 +890,35 @@ function showHomepageInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Enter <strong>Profile</strong> to see you progress stats</div>
+                        <div class="training-info-text">Click on <strong>Profile</strong> in the top right corner to see your progress stats. The <strong style="color: #28a745;">green bar (Learned)</strong> shows how many cases out of 90 you have learned. The <strong style="color: #007bff;">blue bar (Coverage)</strong> tells you how often you will get a CSP you know. The <strong style="color: #ffa000;">orange bar (Safety)</strong> tells you how often you won't get parity (this is equal to Safety + 0.5 * (1 - Safety)).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Click the <b>checkmark</b> on a case to mark it as <b>learning</b>, click again <em>(or right click)</em> to mark it as learned.</div>
+                        <div class="training-info-text">Click the <b>checkmark</b> on a case to mark it as <b>learning</b>; click again to mark it as <b>learned</b>. Right click to mark the case as learned; right click again to mark as learning.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">The three dot menu of a case let's you change the <b>priority state</b> of a case; lets you <b>add notes</b> (for easier memorization and quick revision of a case), <b>train the case</b> (lets you choose the angle explicitely so that you can <em>targeted practice</em> all the awkward angles) and <b>Edit the case</b>(case title, subtitles, and even algorithms)</div>
+                        <div class="training-info-text">The three dots menu of a case lets you<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;1. change the <b>priority state</b> of a case<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;2. <b>add notes</b> for the case<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;3. <b>train the case</b> (you can choose specific angles of the case to train if you want)<br>
+                        &nbsp;&nbsp;&nbsp;&nbsp;4. <b>edit case</b> (change case title, subtitles, and the algs if you have Enhanced Access on).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Hover</strong> over any algorithm to see its setup and shape path. <strong>Click on the algorithm</strong> to keep the popup open. then click the setup to <b>analyze parity</b> of the setup, or click on the shape path to see <b>animated version</b> of the algorithm.</div>
+                        <div class="training-info-text">Sort <strong>By Priority</strong> instead of by Highest Probability to organize cases by learning priority (1-7). Adjust priorities via the three dots menu.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text">In profile <strong style="color: #007bff;">blue percentage</strong> shows your coverage - the probability of encountering a known parity case.</div>
+                        <div class="training-info-text"><strong>Hover</strong> over any alg to see its setup and shape path. <strong>Click on the alg</strong> to keep the popup open. Then, you can click the setup to <b>analyze the parity</b> of the alg, or click on the shape path to <b>animate</b> the alg.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text">Use <strong>Color Scheme Settings</strong> to change the color scheme of your squan. Impacts parity tracing and draw scramble.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
-                        <div class="training-info-text">The <strong style="color: #28a745;">green percentage</strong> shows your safety - accounting for both known cases and the 50% chance of avoiding parity on unknown cases.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">7</div>
-                        <div class="training-info-text">Use <strong>Priority</strong> sorting to organize cases by learning priority (1-7). Adjust priorities via the three dots menu.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">8</div>
-                        <div class="training-info-text">Use <strong>Color Scheme Settings</strong> to customize cube colors for parity tracing and scramble images to match your preferences.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">9</div>
-                        <div class="training-info-text"><strong>Export/Import Data</strong> in Settings to backup your progress or transfer between devices.</div>
+                        <div class="training-info-text"><strong>Export/Import Data</strong> in Menu to backup your progress or transfer between devices. Exporting will download a JSON file to your device. To import, simply select that file in the file selector.</div>
                     </div>
                 </div>
             </div>
@@ -987,7 +986,7 @@ function openEditCaseModal(caseName) {
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <div style="margin-bottom: 15px;" id="algorithmsSection">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algorithms:</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algs:</label>
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
                         ${allAlgs.map((alg, idx) => `
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
@@ -1138,7 +1137,7 @@ function updateParityLabel(input) {
     const parityLabel = input.parentElement.querySelector('.parity-label');
     if (!parityLabel) return;
 
-    const alg = input.value.trim();
+    let alg = input.value.trim();
     if (!alg || alg === 'Done!') {
         parityLabel.textContent = '';
         parityLabel.style.color = '';
@@ -1174,7 +1173,14 @@ function updateParityLabel(input) {
         const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
         const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
 
-        const result = window.algToShapeIndex(alg);
+        let result
+        try {
+            result = window.algToShapeIndex(alg);
+        } catch (error) {
+            // try again with double misalign end
+            result = window.algToShapeIndex(alg + "(-1,1)");
+            alg += "(-1,1)";
+        }
         const resultShapeIndex = result.shapeIndex;
 
         const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
@@ -1218,7 +1224,7 @@ function updateParityLabel(input) {
                 }
             }
 
-            parityLabel.textContent = parityText.toLowerCase() + ' (mirrored)';
+            parityLabel.textContent = parityText.toLowerCase() + ' (z2)';
             parityLabel.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
             parityLabel.style.fontWeight = '600';
 
@@ -1478,33 +1484,21 @@ window.showEditCaseInfoModal = function () {
         infoModal.innerHTML = `
             <div class="training-info-content">
                 <div class="training-info-header">
-                    <span class="training-info-title">Algorithm Editor Guide</span>
+                    <span class="training-info-title">Edit Case Guide</span>
                     <button class="training-info-close" onclick="closeEditCaseInfoModal()">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text"><strong>Parity Labels:</strong> Each algorithm input shows a colored label indicating its parity. <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>. The label disappears while editing and reappears when you click away.</div>
+                        <div class="training-info-text"><strong>Parity Labels:</strong> Each alg has a colored label to its right, indicating its parity. <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>. <span style="color: #71000bff; font-weight: 600;">Red = Invalid</span>. (Your alg doesn't match this case at all. Double-check your input for typos or missing slices.) The label disappears while editing and reappears when you click away.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>Angle Mismatch:</strong> If you see <span style="color: #ca9b0dff; font-weight: 600;">yellow "angle mismatch"</span>, the algorithm reaches the correct shape but from the wrong angle. You may need to add cube rotations (z, z', z2) to fix it.</div>
+                        <div class="training-info-text"><strong>Auto-Normalization:</strong> When you finish editing an alg (click away from the input), it's automatically normalized to standard notation. Formatting will be standardized, and if your alg solves the z2 case, it will be marked with a "(mirrored)" tag.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text"><strong>Mirrored Cases:</strong> <span style="color: #c05c0aff; font-weight: 600;">Orange "mirrored"</span> means your algorithm solves the mirror of this case. Check if you're using the correct case or if the algorithm needs adjustment.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Invalid Algorithms:</strong> <span style="color: #71000bff; font-weight: 600;">Red "invalid"</span> indicates the algorithm doesn't match this case at all. Double-check your input for typos or incorrect moves.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>Auto-Normalization:</strong> When you finish editing an algorithm (click away from the input), it's automatically normalized to standard Square-1 notation. Spaces, case variations, and formatting are corrected automatically.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">6</div>
-                        <div class="training-info-text"><strong>Remember to Save:</strong> All changes (including name/subtitle edits) are only saved when you click "Save Changes" at the bottom. Closing without saving will prompt you to confirm.</div>
+                        <div class="training-info-text"><strong>Remember to Save:</strong> All changes (including name/subtitle edits) are only saved when you click "Save Changes" at the bottom.</div>
                     </div>
                 </div>
             </div>
@@ -1640,19 +1634,6 @@ window.showNotesInfoModal = function () {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text"><strong>Why to keep notes: </strong>Keeping notes is a good habit to help you remember a case quickly while revising the learned cases</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>What to keep as notes:</strong><br>
-                        • A one liner that remembers you what the odd or even alg is instantly.<br>
-                        • Story that you use to remember if a case is good or bad.<br>
-                        • What are the difference between the good or bad alg (like: Good=connect the right side of the 6 with the pair)<br>
-                        • Or you can write whatever floats your boat... have fun<br>
-                    </div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
                         <div class="training-info-text"><strong>Text Formatting:</strong> Notes support basic HTML formatting:<br>
                         • <b>Bold</b>: <code>&lt;b&gt;bold&lt;/b&gt;</code> or <code>&lt;strong&gt;bold&lt;/strong&gt;</code><br>
                         • <i>Italic</i>: <code>&lt;i&gt;italic&lt;/i&gt;</code> or <code>&lt;em&gt;italic&lt;/em&gt;</code><br>
@@ -1661,13 +1642,19 @@ window.showNotesInfoModal = function () {
                         • <span style="color:red;">Colored Text</span>: <code>&lt;font color="red"&gt;colored text&lt;/font&gt;</code><br>
                         • <code>&lt;br&gt;</code> for line breaks<br>
                         • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for <span role="button" tabindex="0" onclick="return false" onkeydown="return false" onmousedown="this.style.color='purple'" onmouseup="this.style.color='#00f'" onmouseleave="this.style.color='#00f'" style="color:#00f;text-decoration:underline;cursor:pointer;user-select:none;">links</span><br> <br>
-                    <strong>If you are creating preset, it is recommended to create notes with <em>text formatting</em>; your users will thank you!</strong>
-                    </div>
+                    <strong>Preset makers, write notes with text formattings!! It's so much easier to read.</strong></div>
                         
                     </div>
                     <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text">If you need to create more general notes that covers more than one cases, you should consider using general notes (inside the menu bar) instead.</div>
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">If you want to write notes that involve <b>more than one case</b>, consider using general notes (inside the menu bar) instead.</div>
+                    </div>
+
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text"><strong>Notes suggestions:</strong><br>
+                        • Something short that reminds you of either the algs or the evilness.<br>
+                        • Or you can write whatever floats your boat... have fun<br></div>
                     </div>
                 </div>
             </div>
@@ -2557,7 +2544,7 @@ function generateSidebarHTML() {
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openGeneralNotesModal(), 350);">
                     <img src="res/notes.svg" alt="Notes">
-                    <span>Notes</span>
+                    <span>General Notes</span>
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openTrainerPickerModal(), 350);">
                     <img src="res/training.svg" alt="Trainer">

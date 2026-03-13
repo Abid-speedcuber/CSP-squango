@@ -1283,35 +1283,35 @@ window.showQuickEditInfoModal = function () {
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
-                        <div class="training-info-text"><b>Quick Edit</b> lets you edit the cases faster with unifying all the cases in one big table, and allowing some faster changing methods like find and replace. it lets you make quick <b>general changes</b> (Like changing the algorithm for a 3 mover (but you need enhanced access to access the algorithm table), or generally changing the name of a cubeshape to be another). here is all you need to know about <b>Quick Edit</b>:</div>
+                        <div class="training-info-text"><b>Quick Edit</b> is a place for you to bulk edit cases.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text"><strong>Navigation:</strong> Use Tab to move to the next cell, Shift+Tab for previous. Enter moves down to the same field in the next row.</div>
+                        <div class="training-info-text"><strong>General Info Tab:</strong> <b>Edit</b> display names, subtitles, and notes for all cases. Notes support HTML formatting, but you don't have to use it. If you do, you will be writing without syntax support, but when you click away from the cell, the HTML will render.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>General Info Tab:</strong> Lets you <b>Edit</b> <em>display names, subtitles, and notes for all cases.</em> Notes support HTML formatting. It will show the formatted text in the notes column to let you see what you are dealing with, but you'll still have to edit html. If you don't know what html is, writing normal text in notes is more than okay!</div>
+                        <div class="training-info-text"><strong>Algorithms Tab:</strong> <b>Edit</b> algorithms for all cases. Algorithms are auto-normalized when you click away from the cell (so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself). They are also color-coded in real time by parity and validity: <span style="color: #00a126ff; font-weight: 600;">green = odd</span>, <span style="color: #0069d9ff; font-weight: 600;">blue = even</span>, <span style="color: #006b1aff; font-weight: 600;">barely-noticeable dark green = odd (mirrored)</span>, <span style="color: #004a9fff; font-weight: 600;">ever-so-slightly dark blue = even (mirrored)</span>, <span style="color: #71000bff; font-weight: 600;">red = invalid</span> (either doesn't solve the case or does not lead to valid squan position at all).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text"><strong>Algorithms Tab:</strong> Edit algorithms for all cases. Algorithms are auto-normalized when you defocus a cell (so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself to look like squan notation) and color-coded live by parity and validity: <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>, <span style="color: #ca9b0dff; font-weight: 600;">Yellow = Technically solves the cube but doesn't match the angle in the picture</span>, <span style="color: #c05c0aff; font-weight: 600;">Orange = Solves the mirror case</span>, <span style="color: #71000bff; font-weight: 600;">Red = Invalid (either doesn't solve the case or does not lead to valid squan position at all</span>.</div>
+                        <div class="training-info-text"><strong>Switch Tabs:</strong> To switch between the <b>General Info</b> tab and the <b>Algorithms</b>, directly click on their names. for smaller screens like phones, the tab switch might not be obvious. You have to click on the title "<b>Quick Edit</b>" to change tabs.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Switch Tabs:</strong> To switch between the <b>General Info</b> tab and the <b>Algorithms</b>, directly click on their names. for smaller screen ie. phones, the tab switch might not be obvious. You have to click on the title "<b>Quick Edit</b>" to change tabs.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F (or cmd+F in mac) or directly press the search button on top to open find and replace popup. You can move the popup around by clicking and dragging. Select scope to search in specific fields (like if you wanna do find and replace change only in the Display-Name section). Use Previous/Next arrow keys to navigate matches.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">6</div>
                         <div class="training-info-text"><strong>Reveal Columns:</strong> It is not hardcoded that you can have at most 6 algorithms for a case. Click +2 in the Algorithms tab to reveal more columns as needed.</div>
                     </div>
                     <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text"><strong>Navigation:</strong> Use Tab to move one cell to the right, Shift+Tab for one cell to the left. Use Enter to move one cell down.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F (or Cmd+F on Mac) or directly press the search button on top to open find and replace popup. You can move the popup around by clicking and dragging. Select scope to search in specific fields, e.g. only in titles. Use Previous/Next arrow keys to navigate matches.</div>
+                    </div>
+                    <div class="training-info-item">
                         <div class="training-info-number">7</div>
-                        <div class="training-info-text"><strong>Save:</strong> Click Save to apply all changes. Exit without saving to discard all the changes</div>
+                        <div class="training-info-text"><strong>Save:</strong> Click Save to apply all changes. Exit without saving to <b>discard all the changes</b></div>
                     </div>
                 </div>
             </div>
