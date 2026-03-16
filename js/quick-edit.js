@@ -110,7 +110,8 @@ function openQuickEditModal() {
                                 <th style="width: 20%;">Case Name</th>
                                 <th style="width: 25%;">Display Name</th>
                                 <th style="width: 20%;">Subtitle</th>
-                                <th style="width: 35%;">Notes</th>
+                                <th style="${(typeof evilnessFactor !== 'undefined' && evilnessFactor) ? 'width: 25%;' : 'width: 35%;'}">Notes</th>
+                                ${(typeof evilnessFactor !== 'undefined' && evilnessFactor) ? '<th style="width: 10%;">Evil</th>' : ''}
                             </tr>
                         </thead>
                         <tbody id="quickEditGeneralBody">
@@ -151,12 +152,15 @@ function generateGeneralTableRows() {
         const nameB = getDisplayName(b.name);
         return nameA.localeCompare(nameB);
     });
+    const showEvil = typeof evilnessFactor !== 'undefined' && evilnessFactor;
+
     return sortedData.map(item => {
         const displayName = getDisplayName(item.name);
         const caseNameDisplay = getDisplayName(item.name);
         const subtitle = perCaseSubtitles.get(item.name) || '';
         const note = comments.get(item.name) || '';
         const formattedNote = sanitizeNoteHTML(note);
+        const isEvil = typeof evilnessMap !== 'undefined' && evilnessMap[item.name] === true;
 
         return `
             <tr data-case="${item.name}">
@@ -164,6 +168,7 @@ function generateGeneralTableRows() {
                 <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
                 <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
                 <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
+                ${showEvil ? `<td class="editable evil-cell" data-field="evil" data-original="${isEvil}" style="text-align: center; vertical-align: middle;"><input type="checkbox" class="evil-checkbox" ${isEvil ? 'checked' : ''} style="transform: scale(1.3); cursor: pointer;"></td>` : ''}
             </tr>
         `;
     }).join('');
@@ -1117,12 +1122,30 @@ function saveQuickEditChanges() {
             comments.delete(caseName);
         }
 
+        // Save evilness
+        const evilCell = row.querySelector('[data-field="evil"]');
+        if (evilCell && typeof evilnessFactor !== 'undefined' && evilnessFactor) {
+            const checkbox = evilCell.querySelector('.evil-checkbox');
+            if (checkbox) {
+                if (checkbox.checked) {
+                    evilnessMap[caseName] = true;
+                } else {
+                    delete evilnessMap[caseName];
+                }
+            }
+        }
+
         // Update data-original attributes for general tab
         displayNameCell.dataset.original = displayName;
         subtitleCell.dataset.original = subtitle;
         notesCell.dataset.original = notes;
         notesCell.dataset.rawHtml = notes; // Also update rawHtml
     });
+
+    // Persist evilness map
+    if (typeof evilnessFactor !== 'undefined' && evilnessFactor) {
+        localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
+    }
 
     // Save algorithms
     const algoRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
@@ -1183,9 +1206,11 @@ function closeQuickEditModal() {
             const original = cell.dataset.original || '';
             let current;
 
-            // For notes cells, use raw HTML
             if (cell.classList.contains('notes-cell')) {
                 current = cell.dataset.rawHtml || '';
+            } else if (cell.classList.contains('evil-cell')) {
+                const checkbox = cell.querySelector('.evil-checkbox');
+                current = checkbox ? String(checkbox.checked) : 'false';
             } else {
                 current = cell.textContent.trim();
             }

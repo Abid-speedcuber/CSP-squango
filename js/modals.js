@@ -991,7 +991,6 @@ function openEditCaseModal(caseName) {
                         ${allAlgs.map((alg, idx) => `
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
                                 <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                                <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
                                 <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0ff; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
                                     <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
                                 </button>
@@ -1001,6 +1000,20 @@ function openEditCaseModal(caseName) {
                     <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
                 
+                <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; opacity: ${evilnessFactor ? '1' : '0.4'}; pointer-events: ${evilnessFactor ? 'auto' : 'none'};">
+                        <div>
+                            <label style="font-weight: 600; color: #495057; font-size: 0.9rem; display: block;">Evil Case</label>
+                            ${!evilnessFactor ? '<span style="font-size: 0.78rem; color: #999;">Enable Evilness Factor in Parity Tracer Settings first</span>' : ''}
+                        </div>
+                        <label style="position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0;">
+                            <input type="checkbox" id="editCaseEvilToggle" ${evilnessMap[caseName] ? 'checked' : ''} style="opacity: 0; width: 0; height: 0; position: absolute;">
+                            <span style="position: absolute; cursor: pointer; inset: 0; background: ${evilnessMap[caseName] ? '#e53e3e' : '#cbd5e0'}; border-radius: 24px; transition: background 0.2s;" id="editCaseEvilSlider">
+                                <span style="position: absolute; content: ''; height: 18px; width: 18px; left: ${evilnessMap[caseName] ? '21px' : '3px'}; bottom: 3px; background: white; border-radius: 50%; transition: left 0.2s; display: block;" id="editCaseEvilThumb"></span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                     <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
                     <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -1013,6 +1026,19 @@ function openEditCaseModal(caseName) {
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.body.classList.add('modal-open');
+
+    // Evil toggle interactivity
+    setTimeout(() => {
+        const evilCheckbox = document.getElementById('editCaseEvilToggle');
+        const evilSlider = document.getElementById('editCaseEvilSlider');
+        const evilThumb = document.getElementById('editCaseEvilThumb');
+        if (evilCheckbox && evilSlider && evilThumb) {
+            evilCheckbox.addEventListener('change', function() {
+                evilSlider.style.background = this.checked ? '#e53e3e' : '#cbd5e0';
+                evilThumb.style.left = this.checked ? '21px' : '3px';
+            });
+        }
+    }, 50);
 
     // Apply enhanced access restrictions
     if (!window.enhancedAccess) {
@@ -1051,15 +1077,14 @@ function openEditCaseModal(caseName) {
             }
 
             input.addEventListener('focus', () => {
-                const parityLabel = input.parentElement.querySelector('.parity-label');
-                if (parityLabel) parityLabel.textContent = '';
+                input.style.color = '';
+                input.style.fontWeight = '';
             });
 
             input.addEventListener('blur', () => {
                 const rawText = input.value.trim();
                 if (rawText && rawText !== 'Done!') {
-                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                    input.value = normalized;
+                    input.value = window.ScrambleNormalizer.normalizeScramble(rawText);
                 }
                 updateParityLabel(input);
             });
@@ -1134,33 +1159,26 @@ function modalStripBeforeFirstSlash(alg) {
 
 // Helper function to update parity label
 function updateParityLabel(input) {
-    const parityLabel = input.parentElement.querySelector('.parity-label');
-    if (!parityLabel) return;
-
     let alg = input.value.trim();
     if (!alg || alg === 'Done!') {
-        parityLabel.textContent = '';
-        parityLabel.style.color = '';
-        parityLabel.style.fontWeight = '';
+        input.style.color = '';
+        input.style.fontWeight = '';
         return;
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
         typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
-        parityLabel.textContent = '';
-        parityLabel.style.color = '';
-        parityLabel.style.fontWeight = '';
+        input.style.color = '';
+        input.style.fontWeight = '';
         return;
     }
 
     try {
-        // Get the case name from the modal title
         const modal = document.getElementById('editCaseModal');
         if (!modal) return;
         const titleElement = modal.querySelector('.modal-title');
         if (!titleElement) return;
 
-        // Find the actual caseName key
         let caseName = null;
         for (const dataItem of data) {
             if (getDisplayName(dataItem.name) === titleElement.textContent || dataItem.name === titleElement.textContent) {
@@ -1173,11 +1191,10 @@ function updateParityLabel(input) {
         const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
         const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
 
-        let result
+        let result;
         try {
             result = window.algToShapeIndex(alg);
         } catch (error) {
-            // try again with double misalign end
             result = window.algToShapeIndex(alg + "(-1,1)");
             alg += "(-1,1)";
         }
@@ -1196,17 +1213,13 @@ function updateParityLabel(input) {
             }, cornerStickerMode);
 
             if (isInOrg && !isDirectMatch && canonicalIdx !== null) {
-                // Auto-fix angle on blur
                 const algBody = modalStripBeforeFirstSlash(alg);
                 const fixed = modalTryFixAngle(algBody, canonicalIdx);
-                if (fixed) {
-                    input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
-                }
+                if (fixed) input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
             }
 
-            parityLabel.textContent = parityText.toLowerCase();
-            parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
-            parityLabel.style.fontWeight = '600';
+            input.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+            input.style.fontWeight = '600';
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
@@ -1219,24 +1232,19 @@ function updateParityLabel(input) {
             if (canonicalIdx !== null) {
                 const algBody = modalStripBeforeFirstSlash(alg);
                 const fixed = modalTryFixMirroredAngle(algBody, canonicalIdx);
-                if (fixed) {
-                    input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
-                }
+                if (fixed) input.value = window.ScrambleNormalizer.normalizeScramble(fixed);
             }
 
-            parityLabel.textContent = parityText.toLowerCase() + ' (z2)';
-            parityLabel.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
-            parityLabel.style.fontWeight = '600';
+            input.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            input.style.fontWeight = '600';
 
         } else {
-            parityLabel.textContent = 'invalid';
-            parityLabel.style.color = '#71000bff';
-            parityLabel.style.fontWeight = '600';
+            input.style.color = '#71000bff';
+            input.style.fontWeight = '600';
         }
     } catch (error) {
-        parityLabel.textContent = 'invalid';
-        parityLabel.style.color = '#71000bff';
-        parityLabel.style.fontWeight = '600';
+        input.style.color = '#71000bff';
+        input.style.fontWeight = '600';
     }
 }
 
@@ -1249,7 +1257,6 @@ window.addNewAlgorithmField = function () {
     newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
     newField.innerHTML = `
         <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-        <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
         <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
@@ -1259,8 +1266,8 @@ window.addNewAlgorithmField = function () {
 
     const input = newField.querySelector('.alg-input');
     input.addEventListener('focus', () => {
-        const parityLabel = input.parentElement.querySelector('.parity-label');
-        if (parityLabel) parityLabel.textContent = '';
+        input.style.color = '';
+        input.style.fontWeight = '';
     });
 
     input.addEventListener('blur', () => {
@@ -1405,6 +1412,8 @@ function closeEditCaseModal() {
     if (modal) {
         modal.remove();
         document.body.classList.remove('modal-open');
+        document.body.style.top = '';
+        window.scrollTo(0, window.modalScrollY || 0);
     }
 }
 
@@ -1524,6 +1533,17 @@ function saveEditedCase(caseName, originalName) {
 
     // Collect all algorithms
     const allAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
+
+    // Save evilness toggle
+    const evilToggle = document.getElementById('editCaseEvilToggle');
+    if (evilToggle && evilnessFactor) {
+        if (evilToggle.checked) {
+            evilnessMap[caseName] = true;
+        } else {
+            delete evilnessMap[caseName];
+        }
+        localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
+    }
 
     // Save custom algorithms
     if (allAlgs.length > 0) {
