@@ -19,6 +19,27 @@ body.modal-open .training-modal {
 .training-modal.active {
     display: flex;
     flex-direction: column;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+.training-info-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.training-info-content::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
+}
+
+.training-info-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.training-info-body::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 3px;
 }
 
 .training-modal-header {
@@ -151,30 +172,30 @@ body.modal-open .training-modal {
         height: 50px;
         padding: 0 15px;
     }
-    
+
     .training-modal-title {
         font-size: 1.2rem;
     }
-    
+
     .training-modal-refresh {
         width: 40px;
         height: 40px;
     }
-    
+
     .training-modal-refresh svg {
         width: 20px;
         height: 20px;
     }
-    
+
     .training-modal-scramble {
         padding: 12px 15px;
         font-size: 0.9rem;
     }
-    
+
     .training-modal-image-container {
         padding: 15px;
     }
-    
+
     .training-modal-timer {
         font-size: 4rem;
         letter-spacing: 3px;
@@ -186,30 +207,30 @@ body.modal-open .training-modal {
         height: 45px;
         padding: 0 12px;
     }
-    
+
     .training-modal-title {
         font-size: 1rem;
     }
-    
+
     .training-modal-refresh {
         width: 36px;
         height: 36px;
     }
-    
+
     .training-modal-refresh svg {
         width: 18px;
         height: 18px;
     }
-    
+
     .training-modal-scramble {
         padding: 10px 12px;
         font-size: 0.85rem;
     }
-    
+
     .training-modal-image-container {
         padding: 10px;
     }
-    
+
     .training-modal-timer {
         font-size: 3rem;
         letter-spacing: 2px;
@@ -227,20 +248,20 @@ body.modal-open .training-modal {
     .training-modal-header {
         height: 40px;
     }
-    
+
     .training-modal-title {
         font-size: 0.9rem;
     }
-    
+
     .training-modal-scramble {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
-    
+
     .training-modal-image-container {
         padding: 8px;
     }
-    
+
     .training-modal-timer {
         font-size: 2rem;
     }
@@ -499,25 +520,25 @@ body.modal-open .training-modal {
     .training-info-content {
         width: 95%;
     }
-    
+
     .training-info-header {
         padding: 15px 20px;
     }
-    
+
     .training-info-title {
         font-size: 1.2rem;
     }
-    
+
     .training-info-body {
         padding: 20px;
     }
-    
+
     .training-info-number {
         width: 28px;
         height: 28px;
         font-size: 1rem;
     }
-    
+
     .training-info-text {
         font-size: 0.95rem;
     }
@@ -527,26 +548,26 @@ body.modal-open .training-modal {
     .training-info-header {
         padding: 12px 15px;
     }
-    
+
     .training-info-title {
         font-size: 1.1rem;
     }
-    
+
     .training-info-body {
         padding: 15px;
     }
-    
+
     .training-info-item {
         gap: 12px;
         margin-bottom: 15px;
     }
-    
+
     .training-info-number {
         width: 26px;
         height: 26px;
         font-size: 0.95rem;
     }
-    
+
     .training-info-text {
         font-size: 0.9rem;
     }

@@ -31,7 +31,7 @@ function generateModalHTML() {
                     <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
                 </div>
                 <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
-                        
+
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
@@ -62,7 +62,7 @@ function generateModalHTML() {
                             </div>
                             <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
-                        
+
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
                             <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Alg Font Size: <span id="algFontSizeValue">14</span>px</label>
                             <input type="range" id="algFontSizeSlider" min="10" max="20" step="1" value="14" style="width: 100%; cursor: pointer;" oninput="updateAlgFontSizePreview(this.value)">
@@ -71,7 +71,7 @@ function generateModalHTML() {
                                 <span>Large (20px)</span>
                             </div>
                         </div>
-                        
+
 <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
         <label style="font-weight: 500; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
@@ -86,7 +86,7 @@ function generateModalHTML() {
         <span>Large (400px)</span>
     </div>
 </div>
-                        
+
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
                                 <span>Color Scheme Settings</span>
@@ -116,7 +116,7 @@ function generateModalHTML() {
                                     <span class="info-box">Lets you move the little numbers around to set your tracing guide for each image .<br><br><strong>Keyboard shortcut:</strong> Alt+G</span>
                                 </span>
                             </div>
-                            
+
                             <hr style="border: none; border-top: 1px solid #dddddd; margin: 12px 0;">
 
                             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -193,7 +193,7 @@ function generateModalHTML() {
                             <button class="color-btn" data-face="left" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
                             <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
-                    </div>          
+                    </div>
                 </div>
             </div>
         </div>
@@ -373,7 +373,7 @@ function generateModalHTML() {
       <section style="margin-bottom: 26px;">
         <p style="margin: 0; font-size: 1rem; color: #4a5568;">
           SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
-          who want structure, repetition, and zero fluff.  
+          who want structure, repetition, and zero fluff.
           It started as a personal motivation tool and slowly turned into something
           worth sharing.
         </p>
@@ -575,7 +575,7 @@ function openSettingsModal() {
 
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     settingsModal.classList.add('active');
 
     const hintToggleCheckbox = document.getElementById('hintToggle');
@@ -620,8 +620,7 @@ function closeSettingsModal() {
     const settingsModal = document.getElementById('settingsModal');
     if (!settingsModal) return;
     settingsModal.classList.remove('active');
-    document.body.classList.remove('modal-open');
-    document.body.style.top = '';
+    document.documentElement.classList.remove('scroll-locked');
     window.scrollTo(0, window.modalScrollY || 0);
 }
 
@@ -648,7 +647,7 @@ function handlePresetChange(presetName) {
                     </p> <br>
                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
                         <button onclick="exportData(); showToast('Data exported! You can now safely reload.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6ca; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Export First</button>
-                        <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: #f2dadc; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reload Anyway</button>
+                        <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: #f2dadc; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reload Anyway</button>
                         <button onclick="this.closest('.modal').remove();" style="padding: 10px 20px; background: #bfc8d0; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
                     </div>
                 </div>
@@ -687,10 +686,10 @@ function handlePresetChange(presetName) {
                     <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Cancel
                     </button>
                 </div>
@@ -699,7 +698,7 @@ function handlePresetChange(presetName) {
     `;
 
     document.body.appendChild(warningModal);
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
 }
 
 function toggleHints(isChecked) {
@@ -785,7 +784,7 @@ function openColorSchemeModal() {
 
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     modal.classList.add('active');
 
     pushModalState('colorSchemeModal', closeColorSchemeModal);
@@ -809,9 +808,7 @@ function openColorSchemeModal() {
 function closeColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
     modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
-    document.body.style.top = '';
-    window.scrollTo(0, window.modalScrollY || 0);
+    document.documentElement.classList.remove('scroll-locked');
 }
 
 function updateImageSizePreview(value) {
@@ -926,9 +923,7 @@ function showHomepageInfoModal() {
         document.body.appendChild(infoModal);
     }
 
-    window.modalScrollY = window.scrollY;
-    document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     infoModal.classList.add('active');
 }
 
@@ -1000,7 +995,7 @@ function openEditCaseModal(caseName) {
                     </div>
                     <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
-                
+
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
                     <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
                     <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -1012,7 +1007,7 @@ function openEditCaseModal(caseName) {
     document.body.appendChild(modal);
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
 
     // Apply enhanced access restrictions
     if (!window.enhancedAccess) {
@@ -1404,7 +1399,7 @@ function closeEditCaseModal() {
     const modal = document.getElementById('editCaseModal');
     if (modal) {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
     }
 }
 
@@ -1595,7 +1590,7 @@ function openNotesModal(caseName) {
     }
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     document.body.appendChild(modal);
 }
 
@@ -1643,7 +1638,7 @@ window.showNotesInfoModal = function () {
                         • <code>&lt;br&gt;</code> for line breaks<br>
                         • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for <span role="button" tabindex="0" onclick="return false" onkeydown="return false" onmousedown="this.style.color='purple'" onmouseup="this.style.color='#00f'" onmouseleave="this.style.color='#00f'" style="color:#00f;text-decoration:underline;cursor:pointer;user-select:none;">links</span><br> <br>
                     <strong>Preset makers, write notes with text formattings!! It's so much easier to read.</strong></div>
-                        
+
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
@@ -1676,9 +1671,7 @@ function closeNotesModal() {
     const modal = document.getElementById('notesModal');
     if (modal) {
         modal.remove();
-        document.body.classList.remove('modal-open');
-        document.body.style.top = '';
-        window.scrollTo(0, window.modalScrollY || 0);
+        document.documentElement.classList.remove('scroll-locked');
     }
 }
 
@@ -2122,17 +2115,17 @@ window.showConfirmation = function (message, onConfirm, onCancel) {
     `;
 
     document.body.appendChild(modal);
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
 
     document.getElementById('confirmOk').onclick = () => {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
         if (onConfirm) onConfirm();
     };
 
     document.getElementById('confirmCancel').onclick = () => {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
         if (onCancel) onCancel();
     };
 };
@@ -2159,23 +2152,23 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
     `;
 
     document.body.appendChild(modal);
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
 
     document.getElementById('confirmSave').onclick = () => {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
         if (onSave) onSave();
     };
 
     document.getElementById('confirmDiscard').onclick = () => {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
         if (onDiscard) onDiscard();
     };
 
     document.getElementById('confirmCancel').onclick = () => {
         modal.remove();
-        document.body.classList.remove('modal-open');
+        document.documentElement.classList.remove('scroll-locked');
         if (onCancel) onCancel();
     };
 };
@@ -2292,7 +2285,7 @@ function openProfileModalMobile() {
 
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     modal.classList.add('active');
 
     updateProfileStats();
@@ -2303,9 +2296,7 @@ function closeProfileModalMobile() {
     const modal = document.getElementById('profileModalMobile');
     if (modal) {
         modal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-        document.body.style.top = '';
-        window.scrollTo(0, window.modalScrollY || 0);
+        document.documentElement.classList.remove('scroll-locked');
     }
 }
 
@@ -2463,7 +2454,7 @@ function openAboutModal() {
 
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
-    document.body.classList.add('modal-open');
+    document.documentElement.classList.add('scroll-locked');
     modal.classList.add('active');
 
     pushModalState('aboutModal', closeAboutModal);
@@ -2472,9 +2463,7 @@ function openAboutModal() {
 function closeAboutModal() {
     const modal = document.getElementById('aboutModal');
     modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
-    document.body.style.top = '';
-    window.scrollTo(0, window.modalScrollY || 0);
+    document.documentElement.classList.remove('scroll-locked');
 }
 
 // Function to open parity tracing personalization from settings
@@ -2674,8 +2663,7 @@ window.toggleSidebar = function () {
         if (isOpening) {
             // Opening sidebar - lock scroll
             window.sidebarScrollY = window.scrollY;
-            document.body.style.top = `-${window.sidebarScrollY}px`;
-            document.body.classList.add('sidebar-open');
+            document.documentElement.classList.add('scroll-locked');
         }
 
         sidebar.classList.toggle('active');
@@ -2688,9 +2676,7 @@ window.closeSidebar = function () {
         sidebar.classList.remove('active');
 
         // Unlock scroll
-        document.body.classList.remove('sidebar-open');
-        document.body.style.top = '';
-        window.scrollTo(0, window.sidebarScrollY || 0);
+        document.documentElement.classList.remove('scroll-locked');
 
         // Collapse preset dropdown silently while sidebar slides out
         const presetOptions = document.getElementById('presetOptions');
