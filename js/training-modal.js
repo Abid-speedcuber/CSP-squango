@@ -1,4 +1,4 @@
-// Training modal variables
+﻿// Training modal variables
 let currentTrainingCase = null;
 let trainingScrambles = [];
 let currentScrambleIndex = 0;
@@ -40,7 +40,7 @@ function createTrainingModal() {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: #007bff; text-decoration: underline;" title="Click to select angles to train">Training: Case Name</button>
+                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: var(--link-color); text-decoration: underline;" title="Click to select angles to train">Training: Case Name</button>
                 <button class="training-modal-info training-info-btn" id="trainingInfoBtn" title="Training mode help">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -76,11 +76,11 @@ function createTrainingModal() {
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="trainingScrambleImage"></div>
             </div>
-            <div id="trainingTimerSubInfo" style="display:none; font-size:0.78rem;color:#888;font-weight:500;text-align:center;line-height:1.6;width:100%;"></div>
+            <div id="trainingTimerSubInfo" style="display:none; font-size:0.78rem;color:var(--text-muted);font-weight:500;text-align:center;line-height:1.6;width:100%;"></div>
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
-            <div id="trainingInspectionLabel" style="display:none; font-size:0.78rem;color:#007bff;font-weight:600;letter-spacing:0.05em;"></div>
+            <div id="trainingInspectionLabel" style="display:none; font-size:0.78rem;color:var(--accent);font-weight:600;letter-spacing:0.05em;"></div>
         </div>
-    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; background:#f0f0f0; border-top:1px solid #e0e0e0; font-family:Consolas,Monaco,'Courier New',monospace; color:#666; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color:#bbb; font-style:italic;">No previous scramble to show</span></div>
+    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; font-family:Consolas,Monaco,'Courier New',monospace; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color: var(--prevscramble-empty-color); font-style:italic;">No previous scramble to show</span></div>
     `;
 
     document.body.appendChild(modal);
@@ -259,7 +259,7 @@ function generateNextScrambleData() {
         console.error('Error generating scramble:', error);
     }
 
-    let scrambleImage = '<div style="color: #999;">Image unavailable</div>';
+    let scrambleImage = '<div style="color: var(--text-muted)">Image unavailable</div>';
     try {
         // Use training-specific image size
         if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
@@ -368,9 +368,9 @@ function applyPrevScrambleBar() {
     bar.style.display = 'block';
     const prevIdx = currentHistoryIndex - 1;
     if (prevIdx < 0 || !scrambleHistory[prevIdx]) {
-        bar.innerHTML = '<span style="color:#bbb; font-style:italic; font-family:inherit;">No previous scramble to show</span>';
+        bar.innerHTML = '<span style="color:var(--text-muted); font-style:italic; font-family:inherit;">No previous scramble to show</span>';
     } else {
-        bar.innerHTML = `<span style="color:#999; font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
+        bar.innerHTML = `<span style="color: var(--text-secondary); font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
     }
 }
 
@@ -400,7 +400,7 @@ function openParityAnalysisFromTraining() {
     }
 
     window.ParityTracerLibrary.createModal({
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--surface)',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -435,13 +435,13 @@ function handleTimerMouseDown() {
         isHolding = true;
         isHoldReady = false;
         holdStartTime = Date.now();
-        document.getElementById('trainingTimer').style.color = '#ffc107';
+        document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
         const holdCheckInterval = setInterval(() => {
             if (!isHolding) { clearInterval(holdCheckInterval); return; }
             const holdDuration = (Date.now() - holdStartTime) / 1000;
             if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                 isHoldReady = true;
-                document.getElementById('trainingTimer').style.color = '#28a745';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                 clearInterval(holdCheckInterval);
             }
         }, 10);
@@ -451,13 +451,13 @@ function handleTimerMouseDown() {
     isHolding = true;
     isHoldReady = false;
     holdStartTime = Date.now();
-    document.getElementById('trainingTimer').style.color = '#ffc107';
+    document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) { clearInterval(holdCheckInterval); return; }
         const holdDuration = (Date.now() - holdStartTime) / 1000;
         if (holdDuration >= trainingHoldToStart && !isHoldReady) {
             isHoldReady = true;
-            document.getElementById('trainingTimer').style.color = '#28a745';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
             clearInterval(holdCheckInterval);
         }
     }, 10);
@@ -473,7 +473,7 @@ function handleTimerMouseUp() {
     if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         stopInspectionAndStartTimer();
         return;
     }
@@ -481,21 +481,21 @@ function handleTimerMouseUp() {
     if (isInspectionPhase && !parityQuizPhase && isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         return;
     }
     // Normal mode: release after hold-ready → start timer
     if (!isInspectionPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         startTimer();
         return;
     }
     if (isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
     }
 }
 
@@ -505,9 +505,9 @@ function handleTimerMouseLeave() {
         isHoldReady = false;
         // If in inspection, go back to blue inspection color
         if (isInspectionPhase && !parityQuizPhase) {
-            document.getElementById('trainingTimer').style.color = '#2d3748';
+            document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         } else {
-            document.getElementById('trainingTimer').style.color = '#2d3748';
+            document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         }
     }
 }
@@ -526,13 +526,13 @@ function handleTimerTouchStart(e) {
         isHolding = true;
         isHoldReady = false;
         holdStartTime = Date.now();
-        document.getElementById('trainingTimer').style.color = '#ffc107';
+        document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
         const holdCheckInterval = setInterval(() => {
             if (!isHolding) { clearInterval(holdCheckInterval); return; }
             const holdDuration = (Date.now() - holdStartTime) / 1000;
             if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                 isHoldReady = true;
-                document.getElementById('trainingTimer').style.color = '#28a745';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                 clearInterval(holdCheckInterval);
             }
         }, 10);
@@ -542,13 +542,13 @@ function handleTimerTouchStart(e) {
     isHolding = true;
     isHoldReady = false;
     holdStartTime = Date.now();
-    document.getElementById('trainingTimer').style.color = '#ffc107';
+    document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) { clearInterval(holdCheckInterval); return; }
         const holdDuration = (Date.now() - holdStartTime) / 1000;
         if (holdDuration >= trainingHoldToStart && !isHoldReady) {
             isHoldReady = true;
-            document.getElementById('trainingTimer').style.color = '#28a745';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
             clearInterval(holdCheckInterval);
         }
     }, 10);
@@ -564,27 +564,27 @@ function handleTimerTouchEnd(e) {
     if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         stopInspectionAndStartTimer();
         return;
     }
     if (isInspectionPhase && !parityQuizPhase && isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         return;
     }
     if (!isInspectionPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         startTimer();
         return;
     }
     if (isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
     }
 }
 
@@ -594,7 +594,7 @@ function startInspection() {
     inspectionElapsed = 0;
     inspectionStartTime = Date.now();
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#007bff';
+    timerEl.style.color = 'var(--accent)';
     timerEl.textContent = '0.000';
     const subInfo = document.getElementById('trainingTimerSubInfo');
     if (subInfo) subInfo.style.display = 'none';
@@ -643,7 +643,7 @@ function startParityQuizInspection() {
     inspectionStartTime = Date.now();
 
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#007bff';
+    timerEl.style.color = 'var(--accent)';
     timerEl.textContent = '0.000';
     const existingSubInfo = document.getElementById('trainingTimerSubInfo');
     if (existingSubInfo) existingSubInfo.style.display = 'none';
@@ -750,7 +750,7 @@ function startTimer() {
     timerStartTime = Date.now();
 
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#2d3748';
+    timerEl.style.color = 'var(--text-primary)';
 
     timerInterval = setInterval(() => {
         timerElapsed = Date.now() - timerStartTime;
@@ -768,7 +768,7 @@ function stopTimerOnly() {
     const wasParityWrong = lastParityQuizWrong;
     lastParityQuizWrong = false;
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#2d3748';
+    timerEl.style.color = 'var(--text-primary)';
     timerEl.textContent = (timerElapsed / 1000).toFixed(3);
 
     const insLabel = document.getElementById('trainingInspectionLabel');
@@ -780,9 +780,9 @@ function stopTimerOnly() {
     if (trainingEnableInspection && lastInspectionElapsed > 0) {
         const insTime = (lastInspectionElapsed / 1000).toFixed(3);
         const solveTime = (timerElapsed / 1000).toFixed(3);
-        let html = `<span style="color:#007bff;font-weight:700;">(${insTime}s inspection)</span>`;
+        let html = `<span style="color:var(--accent);font-weight:700;">(${insTime}s inspection)</span>`;
         if (wasParityWrong) {
-            html += `<br><span style="color:#cc0000;font-weight:600;">✗ wrong parity answer</span>`;
+            html += `<br><span style="color:var(--bad-case);font-weight:600;">✗ wrong parity answer</span>`;
         }
         subInfo.innerHTML = html;
         subInfo.style.display = 'block';
@@ -839,11 +839,11 @@ function openShapeIndexSelector() {
         const hexCode = convertShapeIndexToHexPlease(idx);
         const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                    data-index="${idx}" 
-                    data-type="org" 
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
+                    data-index="${idx}"
+                    data-type="org"
                     onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
         `;
@@ -853,11 +853,11 @@ function openShapeIndexSelector() {
         const hexCode = convertShapeIndexToHexPlease(idx);
         const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                    data-index="${idx}" 
-                    data-type="mir" 
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
+                    data-index="${idx}"
+                    data-type="mir"
                     onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
         `;
@@ -868,8 +868,8 @@ function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Original Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('org')" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button onclick="selectAllIndices('org')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="orgToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -880,8 +880,8 @@ function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Mirror Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('mir')" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button onclick="selectAllIndices('mir')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="mirToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -914,7 +914,7 @@ function toggleShapeIndex(index) {
     const button = document.querySelector(`button.shape-index-toggle[data-index="${index}"]`);
     if (button) {
         button.classList.toggle('active');
-        button.style.background = button.classList.contains('active') ? '#ebebeb' : '#ffffff';
+        button.style.background = button.classList.contains('active') ? 'var(--surface-border)' : 'var(--surface)';
     }
 
     // Update training scrambles and regenerate lookahead
@@ -947,7 +947,7 @@ function selectAllIndices(type) {
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.add('active');
-        btn.style.background = '#ebebeb';
+        btn.style.background = 'var(--surface-border)';
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
@@ -970,7 +970,7 @@ function deselectAllIndices(type) {
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.remove('active');
-        btn.style.background = '#ffffff';
+        btn.style.background = 'var(--surface)';
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
@@ -1031,7 +1031,7 @@ document.addEventListener('keydown', (e) => {
             if (insLabel) insLabel.style.display = 'none';
             // Restore previous solve display
             const timerEl = document.getElementById('trainingTimer');
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             if (timerElapsed > 0) {
                 timerEl.textContent = (timerElapsed / 1000).toFixed(3);
             } else {
@@ -1083,20 +1083,20 @@ document.addEventListener('keydown', (e) => {
                 isHolding = true;
                 isHoldReady = false;
                 holdStartTime = Date.now();
-                document.getElementById('trainingTimer').style.color = '#ffc107';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
                 const holdCheckInterval = setInterval(() => {
                     if (!isHolding) { clearInterval(holdCheckInterval); return; }
                     const holdDuration = (Date.now() - holdStartTime) / 1000;
                     if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                         isHoldReady = true;
-                        document.getElementById('trainingTimer').style.color = '#28a745';
+                        document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                         clearInterval(holdCheckInterval);
                     }
                 }, 10);
                 return;
             }
             // Normal mode: hold to start solve
-            document.getElementById('trainingTimer').style.color = '#ffc107';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
             isHolding = true;
             isHoldReady = false;
             holdStartTime = Date.now();
@@ -1105,7 +1105,7 @@ document.addEventListener('keydown', (e) => {
                 const holdDuration = (Date.now() - holdStartTime) / 1000;
                 if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                     isHoldReady = true;
-                    document.getElementById('trainingTimer').style.color = '#28a745';
+                    document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                     clearInterval(holdCheckInterval);
                 }
             }, 10);
@@ -1169,7 +1169,7 @@ document.addEventListener('keyup', (e) => {
         if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             stopInspectionAndStartTimer();
             return;
         }
@@ -1177,21 +1177,21 @@ document.addEventListener('keyup', (e) => {
         if (isInspectionPhase && !parityQuizPhase && isHolding) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             return;
         }
         // Normal mode: release after hold-ready → start solve
         if (!isInspectionPhase && isHolding && isHoldReady) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             startTimer();
             return;
         }
         if (isHolding) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
         }
     }
 });
@@ -1216,29 +1216,29 @@ function openTrainingSettingsModal() {
                 </div>
                 <div class="training-info-body" style="overflow-y:auto;flex:1;">
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
                         <input type="range" id="trainingImageSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width: 100%;">
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
                         <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
                         <input type="range" id="trainingTimerSizeSlider" min="30" max="120" step="2" value="${parseInt(localStorage.getItem('trainingTimerSize') || 80)}" style="width: 100%;">
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
+                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
                         <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
                     </div>
                 <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:#2d3748; cursor:pointer;">
+                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
                             <input type="checkbox" id="trainingShowPrevScramble" style="transform:scale(1.3); cursor:pointer;">
                             Show previous scramble at bottom
                         </label>
                     </div>
                     <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:#2d3748; cursor:pointer;">
+                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
                             <input type="checkbox" id="trainingEnableInspection" style="transform:scale(1.3); cursor:pointer;">
                             Enable inspection
                         </label>
@@ -1273,7 +1273,7 @@ function openTrainingSettingsModal() {
         function applyParityQuizRowState() {
             const enabled = inspectionCheckbox.checked;
             parityQuizCheckbox.disabled = !enabled;
-            parityQuizLabel.style.color = enabled ? '#2d3748' : '#aaa';
+            parityQuizLabel.style.color = enabled ? 'var(--text-primary)' : '#aaa';
             parityQuizLabel.style.cursor = enabled ? 'pointer' : 'not-allowed';
         }
 
@@ -1455,7 +1455,7 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
     });
 
     let searchHTML = `<div style="padding: 0 4px 12px 4px;">
-        <input type="text" id="${modalId}_selSearch" placeholder="Search cases..." style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
+        <input type="text" id="${modalId}_selSearch" placeholder="Search cases..." style="width:100%;padding:8px 12px;border:2px solid var(--border-color);border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
     </div>`;
 
     let sectionsHTML = Object.entries(groups).map(([groupName, entries]) => {
@@ -1467,7 +1467,7 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
                         data-name="${entry.name.replace(/"/g, '&quot;')}"
                         data-dispname="${dispName.toLowerCase()}"
                         data-group="${groupName}"
-                        style="padding: 8px; background: ${isSelected ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; text-align: center; color: #2d3748;">
+                        style="padding: 8px; background: ${isSelected ? '#ebebeb' : '#ffffff'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; text-align: center; color: var(--text-ui);">
                 ${bottom}
             </button>`;
         }).join('');
@@ -1476,8 +1476,8 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">${groupName}</span>
                 <div>
-                    <button data-group="${groupName}" data-action="all" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button data-group="${groupName}" data-action="none" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button data-group="${groupName}" data-action="all" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button data-group="${groupName}" data-action="none" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px; margin-top: 10px;">
@@ -1498,11 +1498,11 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
             if (selectedCases.has(name)) {
                 selectedCases.delete(name);
                 btn.classList.remove('active');
-                btn.style.background = '#ffffff';
+                btn.style.background = 'var(--surface)';
             } else {
                 selectedCases.add(name);
                 btn.classList.add('active');
-                btn.style.background = '#ebebeb';
+                btn.style.background = 'var(--surface-border)';
             }
         });
     });
@@ -1517,11 +1517,11 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
                 if (action === 'all') {
                     selectedCases.add(name);
                     tb.classList.add('active');
-                    tb.style.background = '#ebebeb';
+                    tb.style.background = 'var(--surface-border)';
                 } else {
                     selectedCases.delete(name);
                     tb.classList.remove('active');
-                    tb.style.background = '#ffffff';
+                    tb.style.background = 'var(--surface)';
                 }
             });
         });
@@ -1630,8 +1630,8 @@ function startEvilnessQuiz(chosenCaseNames) {
             <div class="training-modal-timer" id="evilQuizTimer">0.000</div>
             <div id="evilQuizStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
-                    <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+                    <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
+                    <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll be shown an image of a scramble. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
                     </div>
@@ -1639,12 +1639,12 @@ function startEvilnessQuiz(chosenCaseNames) {
                 </div>
             </div>
         </div>
-        <div id="evilQuizSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:#fff;border-left:1px solid #e2e8f0;z-index:10001;overflow-y:auto;flex-direction:column;">
-            <div style="padding:14px 16px;font-weight:700;color:#2d3748;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <div id="evilQuizSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:var(--surface);border-left:1px solid var(--border-color);z-index:10001;overflow-y:auto;flex-direction:column;">
+            <div style="padding:14px 16px;font-weight:700;color:var(--text-ui);border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
                 <span>Case Log</span>
-                <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">&times;</button>
+                <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
-            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:#444;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
@@ -1692,7 +1692,7 @@ function startEvilnessQuiz(chosenCaseNames) {
                 </div>
                 <div class="training-info-body" style="overflow-y:auto;flex:1;">
                     <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:600;color:#2d3748;">Scramble Image Size: <span id="evilQuizImgSizeVal">${trainingScrambleImageSize}px</span></label>
+                        <label style="display:block;margin-bottom:8px;font-weight:600;color:var(--text-ui);">Scramble Image Size: <span id="evilQuizImgSizeVal">${trainingScrambleImageSize}px</span></label>
                         <input type="range" id="evilQuizImgSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width:100%;">
                     </div>
                 </div>
@@ -1719,17 +1719,17 @@ function startEvilnessQuiz(chosenCaseNames) {
     function renderSidebar() {
         const list = document.getElementById('evilQuizLogList');
         if (!list) return;
-        if (quizLog.length === 0) { list.innerHTML = '<span style="color:#aaa;font-style:italic;">No answers yet.</span>'; return; }
+        if (quizLog.length === 0) { list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>'; return; }
         list.innerHTML = [...quizLog].reverse().map((entry, i) => {
             const icon = entry.correct ? '✓' : '✗';
             const color = entry.correct ? '#2d6a2d' : '#cc0000';
             const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
             const evilStr = entry.wasEvil ? 'Evil' : 'Good';
-            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? '#f0fff0' : '#fff0f0'};border:1px solid ${entry.correct ? '#c3e6c3' : '#f5c6c6'};">
+            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
                 <span style="font-weight:600;margin-left:4px;">${entry.caseName}</span>
-                <span style="color:#888;margin-left:4px;">(${evilStr})</span>
-                <span style="float:right;color:#888;">${timeStr}</span>
+                <span style="color:var(--text-muted);margin-left:4px;">(${evilStr})</span>
+                <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
         }).join('');
     }
@@ -1753,7 +1753,7 @@ function startEvilnessQuiz(chosenCaseNames) {
             const state = parseHexFormat(currentHexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
             imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
-        } catch (e) { imgHTML = '<div style="color:#999;padding:1rem;">Image unavailable</div>'; }
+        } catch (e) { imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>'; }
 
         document.getElementById('evilQuizImage').innerHTML = imgHTML;
         document.getElementById('evilQuizTimer').textContent = '0.000';
@@ -1864,8 +1864,8 @@ function startEvilnessQuiz(chosenCaseNames) {
                 startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
                 startOverlay.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-        <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
-        <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
+        <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
             You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
             Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Bvil.
         </div>
@@ -1941,7 +1941,7 @@ function startParityQuiz(chosenCaseNames) {
                 <span class="training-modal-title">Parity Quiz</span>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
-                <div id="parityQuizProgress" style="font-size:0.85rem;color:#888;">Q1 | 0/0</div>
+                <div id="parityQuizProgress" style="font-size:0.85rem;color:var(--text-muted)">Q1 | 0/0</div>
                 <button class="training-modal-refresh" id="parityQuizSelectCases" title="Select cases" style="width:auto;padding:0 12px;font-size:0.8rem;font-weight:600;">Cases</button>
                 <button class="training-modal-close" id="parityQuizClose">
                 <button class="training-modal-close" id="parityQuizClose">
@@ -1954,12 +1954,12 @@ function startParityQuiz(chosenCaseNames) {
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="parityQuizImage"></div>
             </div>
-            <div style="font-size:1.1rem;font-weight:600;color:#2d3748;">Which alg do you need?</div>
+            <div style="font-size:1.1rem;font-weight:600;color:var(--text-ui);">Which alg do you need?</div>
             <div style="display:flex;gap:1rem;justify-content:center;width:100%;max-width:320px;">
                 <button id="parityQuizGood" style="flex:1;padding:0.9rem;background:#2d6a2d;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Good Alg</button>
                 <button id="parityQuizBad" style="flex:1;padding:0.9rem;background:#8b0000;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Bad Alg</button>
             </div>
-            <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:#2d3748;"></div>
+            <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:var(--text-ui);"></div>
             <div class="training-modal-timer" id="parityQuizTimer">0.000</div>
         </div>
     `;
@@ -1991,7 +1991,7 @@ function startParityQuiz(chosenCaseNames) {
             currentParity = quizGetParityFromHex(hexCode);
         } catch (e) {
             currentParity = null;
-            imgHTML = '<div style="color:#999;padding:1rem;">Image unavailable</div>';
+            imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
         }
 
         document.getElementById('parityQuizScramble').textContent = scrambleText;
@@ -2196,7 +2196,7 @@ function startColorRecognitionPractice() {
                 <span class="training-modal-title">Parity Quiz</span>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
-                <div id="colorRecogProgress" style="font-size:0.85rem;color:#888;">Q1 | 0/0</div>
+                <div id="colorRecogProgress" style="font-size:0.85rem;color:var(--text-muted)">Q1 | 0/0</div>
                 <button class="training-modal-refresh" id="colorRecogHamburger" title="Answer log">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                 </button>
@@ -2210,8 +2210,8 @@ function startColorRecognitionPractice() {
             <div class="training-modal-timer" id="colorRecogTimer">0.000</div>
             <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Parity Quiz</div>
-                    <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+                    <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Parity Quiz</div>
+                    <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                     </div>
@@ -2219,12 +2219,12 @@ function startColorRecognitionPractice() {
                 </div>
             </div>
         </div>
-        <div id="colorRecogSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:#fff;border-left:1px solid #e2e8f0;z-index:10001;overflow-y:auto;flex-direction:column;">
-            <div style="padding:14px 16px;font-weight:700;color:#2d3748;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <div id="colorRecogSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:var(--surface);border-left:1px solid var(--border-color);z-index:10001;overflow-y:auto;flex-direction:column;">
+            <div style="padding:14px 16px;font-weight:700;color:var(--text-ui);border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
                 <span>Answer Log</span>
-                <button id="colorRecogSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">&times;</button>
+                <button id="colorRecogSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
-            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:#444;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
@@ -2253,17 +2253,17 @@ function startColorRecognitionPractice() {
     function renderSidebar() {
         const list = document.getElementById('colorRecogLogList');
         if (!list) return;
-        if (quizLog.length === 0) { list.innerHTML = '<span style="color:#aaa;font-style:italic;">No answers yet.</span>'; return; }
+        if (quizLog.length === 0) { list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>'; return; }
         list.innerHTML = [...quizLog].reverse().map(entry => {
             const icon = entry.correct ? '✓' : '✗';
             const color = entry.correct ? '#2d6a2d' : '#cc0000';
             const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
             const answerStr = entry.correctIsEven ? 'Even' : 'Odd';
-            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? '#f0fff0' : '#fff0f0'};border:1px solid ${entry.correct ? '#c3e6c3' : '#f5c6c6'};">
+            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
                 <span style="font-size:1.1em;margin-left:4px;">${entry.emoji}</span>
                 <span style="color:#888;font-size:0.78rem;margin-left:4px;">${answerStr}</span>
-                <span style="float:right;color:#888;">${timeStr}</span>
+                <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
         }).join('');
     }
@@ -2438,7 +2438,7 @@ window.openTrainerPickerModal = function () {
 
     const style = document.getElementById('trainerPickerStyle') || document.createElement('style');
     style.id = 'trainerPickerStyle';
-    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:#f8f9fa;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:#2d3748;text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:#007bff;background:#f0f8ff;}`;
+    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:#f8f9fa;border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:#007bff;background:#f0f8ff;}`;
     if (!style.parentNode) document.head.appendChild(style);
 
     document.body.appendChild(picker);

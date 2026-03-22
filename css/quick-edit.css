@@ -31,28 +31,28 @@
     .quick-edit-header {
         padding: 1.5vw 2vw !important;
     }
-    
+
     .quick-edit-header h2 {
         font-size: 3.5vw !important;
     }
-    
+
     .quick-edit-title-wrapper {
         gap: 1.5vw !important;
     }
-    
+
     .quick-edit-subtitle {
         font-size: 2.5vw !important;
         margin-top: 0.5vw !important;
     }
-    
+
     .quick-edit-header-left {
         gap: 2vw !important;
     }
-    
+
     .quick-edit-header-right {
         gap: 1.5vw !important;
     }
-    
+
     .quick-edit-icon-btn {
         width: 7.5vw !important;
         height: 7.5vw !important;
@@ -60,14 +60,14 @@
         min-height: 30px !important;
         padding: 1.5vw !important;
     }
-    
+
     .quick-edit-icon-btn img {
         width: 4.5vw !important;
         height: 4.5vw !important;
         min-width: 18px !important;
         min-height: 18px !important;
     }
-    
+
     .quick-edit-icon-btn.instruction-btn {
         width: 6vw !important;
         height: 6vw !important;
@@ -75,14 +75,14 @@
         min-height: 24px !important;
         padding: 1vw !important;
     }
-    
+
     .quick-edit-icon-btn.instruction-btn img {
         width: 4vw !important;
         height: 4vw !important;
         min-width: 16px !important;
         min-height: 16px !important;
     }
-    
+
     .add-columns-btn-header {
         font-size: 3.2vw !important;
     }
@@ -228,13 +228,13 @@
         top: 60px !important;
         box-sizing: border-box !important;
     }
-    
+
     .find-replace-header {
         padding: 2vw 2.5vw !important;
         font-size: 3vw !important;
         box-sizing: border-box !important;
     }
-    
+
     .close-find-btn {
         width: 5vw !important;
         height: 5vw !important;
@@ -242,12 +242,12 @@
         min-height: 20px !important;
         font-size: 4vw !important;
     }
-    
+
     .find-replace-inputs {
         padding: 2.5vw !important;
         box-sizing: border-box !important;
     }
-    
+
     .find-input-row,
     .replace-input-row {
         margin-bottom: 2vw !important;
@@ -255,7 +255,7 @@
         display: flex !important;
         align-items: center !important;
     }
-    
+
     .find-input-row input,
     .replace-input-row input {
         padding: 1.5vw 2vw !important;
@@ -266,13 +266,13 @@
         min-width: 0 !important;
         box-sizing: border-box !important;
     }
-    
+
     .find-nav-buttons {
         gap: 1vw !important;
         display: flex !important;
         flex-shrink: 0 !important;
     }
-    
+
     .find-nav-buttons button {
         width: 7vw !important;
         height: 7vw !important;
@@ -281,20 +281,20 @@
         padding: 1.2vw !important;
         flex-shrink: 0 !important;
     }
-    
+
     .find-nav-buttons button img {
         width: 3.5vw !important;
         height: 3.5vw !important;
         min-width: 14px !important;
         min-height: 14px !important;
     }
-    
+
     .replace-buttons {
         gap: 1vw !important;
         display: flex !important;
         flex-shrink: 0 !important;
     }
-    
+
     .replace-buttons button {
         padding: 1.5vw 2.5vw !important;
         font-size: 2.8vw !important;
@@ -303,22 +303,22 @@
         white-space: nowrap !important;
         flex-shrink: 0 !important;
     }
-    
+
     .find-replace-footer {
         padding: 2vw 2.5vw !important;
         font-size: 2.8vw !important;
         box-sizing: border-box !important;
     }
-    
+
     .scope-selector {
         gap: 1.5vw !important;
     }
-    
+
     .scope-selector label {
         font-size: 2.8vw !important;
         white-space: nowrap !important;
     }
-    
+
     .scope-selector select {
         padding: 1vw 2vw !important;
         font-size: 2.8vw !important;
@@ -326,7 +326,7 @@
         border-radius: 4px !important;
         box-sizing: border-box !important;
     }
-    
+
     #quickEditMatchCount {
         font-size: 2.8vw !important;
     }
@@ -527,32 +527,32 @@
         padding: 8px 12px;
         font-size: 0.85rem;
     }
-    
+
     .find-replace-inputs {
         padding: 10px 12px;
     }
-    
+
     .find-input-row input,
     .replace-input-row input {
         padding: 5px 8px;
         font-size: 0.85rem;
     }
-    
+
     .find-nav-buttons button {
         width: 28px;
         height: 28px;
     }
-    
+
     .replace-buttons button {
         padding: 5px 10px;
         font-size: 0.8rem;
     }
-    
+
     .find-replace-footer {
         padding: 8px 12px;
         font-size: 0.8rem;
     }
-    
+
     .scope-selector select {
         font-size: 0.8rem;
         padding: 3px 6px;
@@ -728,17 +728,17 @@
     .quick-edit-tabs {
         display: none !important;
     }
-    
+
     .quick-edit-subtitle {
         display: block !important;
     }
-    
+
     .quick-edit-header-left {
         flex-direction: column !important;
         align-items: flex-start !important;
         gap: 1vw !important;
     }
-    
+
     .quick-edit-title-wrapper {
         gap: 1.5vw !important;
     }
@@ -749,7 +749,7 @@
     #quickEditGeneralTab {
         overflow-x: auto;
     }
-    
+
     #quickEditGeneralTab .quick-edit-table {
         min-width: 600px;
     }
@@ -762,38 +762,45 @@
         height: 100vh;
         border-radius: 0;
     }
-    
+
     .quick-edit-header {
         padding: 15px 20px;
     }
-    
+
     .quick-edit-header h2 {
         font-size: 1.2rem;
     }
-    
+
     .quick-edit-tabs {
         padding: 0 20px;
     }
-    
+
     .quick-edit-body {
         padding: 15px 20px;
     }
-    
+
     .quick-edit-table {
         font-size: 0.8rem;
     }
-    
+
     .quick-edit-table th,
     .quick-edit-table td {
         padding: 8px;
     }
-    
+
     .find-replace-content {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .find-replace-content input {
         min-width: 100%;
     }
+}
+
+/* ── Quick-edit header icon images ─────────────────────────── */
+/* The header is permanently dark (--header-dark-bg), so icon    */
+/* images must be white in both light and dark modes.            */
+.quick-edit-icon-btn img {
+    filter: brightness(0) invert(1);
 }

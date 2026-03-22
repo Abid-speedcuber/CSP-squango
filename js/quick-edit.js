@@ -1,4 +1,4 @@
-// Quick Edit System for batch editing cases
+﻿// Quick Edit System for batch editing cases
 
 let quickEditState = {
     currentTab: 'general',
@@ -61,7 +61,7 @@ function openQuickEditModal() {
                     </button>
                 </div>
             </div>
-            
+
  <div class="quick-edit-find-replace-popup" id="quickEditFindReplace" style="display: none;">
     <div class="find-replace-header">
         <span>Find and Replace</span>
@@ -101,7 +101,7 @@ function openQuickEditModal() {
         <span id="quickEditMatchCount">No matches</span>
     </div>
 </div>
-            
+
             <div class="quick-edit-body">
                 <div class="quick-edit-content" id="quickEditGeneralTab">
                     <table class="quick-edit-table">
@@ -118,7 +118,7 @@ function openQuickEditModal() {
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="quick-edit-content" id="quickEditAlgorithmsTab" style="display: none;">
                     <table class="quick-edit-table algorithms-table">
                         <thead>
@@ -568,7 +568,7 @@ function updateAlgorithmCellParity(cell) {
 
             if (isDirectMatch) {
                 // Canonical angle - fix angle if needed
-                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+                cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             } else {
                 // Org match but not canonical - try to fix angle
                 if (canonicalIdx !== null) {
@@ -578,7 +578,7 @@ function updateAlgorithmCellParity(cell) {
                         cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
                     }
                 }
-                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+                cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             }
             cell.style.fontWeight = '600';
 
@@ -597,15 +597,15 @@ function updateAlgorithmCellParity(cell) {
                     cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
                 }
             }
-            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             cell.style.fontWeight = '600';
 
         } else {
-            cell.style.color = '#71000bff';
+            cell.style.color = 'var(--parity-invalid)';
             cell.style.fontWeight = '600';
         }
     } catch (error) {
-        cell.style.color = '#71000bff';
+        cell.style.color = 'var(--parity-invalid)';
         cell.style.fontWeight = '600';
     }
 }
@@ -647,7 +647,7 @@ function updateAlgorithmCellParityLive(cell) {
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-            cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
@@ -656,14 +656,14 @@ function updateAlgorithmCellParityLive(cell) {
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             cell.style.fontWeight = '600';
         } else {
-            cell.style.color = '#71000bff';
+            cell.style.color = 'var(--parity-invalid)';
             cell.style.fontWeight = '600';
         }
     } catch (error) {
-        cell.style.color = '#71000bff';
+        cell.style.color = 'var(--parity-invalid)';
         cell.style.fontWeight = '600';
     }
 }

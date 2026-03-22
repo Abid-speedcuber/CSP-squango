@@ -1,4 +1,4 @@
-// Helper function to sanitize note HTML (allow various text formatting tags)
+﻿// Helper function to sanitize note HTML (allow various text formatting tags)
 function sanitizeNoteHTML(html) {
     if (!html) return '';
 
@@ -139,11 +139,11 @@ function styleAlgorithmWithGrayMoves(algo) {
 
         // First non-empty part (setup) - blue
         if (idx === 0 && !startsWithSlash) {
-            return `<span style="color: #6d739cff;">${wrapAlgorithmTokens(part)}</span>`;
+            return `<span style="color: var(--algo-setup-color);">${wrapAlgorithmTokens(part)}</span>`;
         }
         // Last non-empty part (finish) - light gray
         else if (idx === parts.length - 1 && !endsWithSlash) {
-            return `<span style="color: #cccccc;">${wrapAlgorithmTokens(part)}</span>`;
+            return `<span style="color: var(--text-muted);">${wrapAlgorithmTokens(part)}</span>`;
         }
         // Middle parts - normal color
         else {
@@ -345,13 +345,13 @@ function renderShapePath(path) {
     if (!path || path.length === 0) return '';
 
     const pathSteps = path.map((step, idx) => {
-        const arrow = idx < path.length - 1 ? ' <span style="color: #007bff; font-weight: bold;">→</span> ' : '';
-        return `<span style="background: #f0f9ff; padding: 2px 6px; border-radius: 3px; white-space: nowrap;">${step.top}/${step.bottom}</span>${arrow}`;
+        const arrow = idx < path.length - 1 ? ' <span class="shape-path-arrow">→</span> ' : '';
+        return `<span class="shape-path-step">${step.top}/${step.bottom}</span>${arrow}`;
     }).join('');
 
     return `
-        <div style="margin-top: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #007bff;">
-            <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px; font-weight: 600;">Shape Path:</div>
+        <div class="shape-path-block">
+            <div class="shape-path-label">Shape Path:</div>
             <div style="font-size: 0.9rem; line-height: 1.8; overflow-x: auto; white-space: nowrap;">
                 ${pathSteps}
             </div>
@@ -368,14 +368,14 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
     return algoArray.map((algo, idx) => {
         const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
         const meta = getAlgDisplayMeta(algo, caseName);
-        const prefix = meta.mirrored ? '<span style="color: #007afcff; margin-right:4px;"><big>&lt;</big><small>z2</small><big>&gt;</big></span>' : '';
+        const prefix = meta.mirrored ? '<span style="color: var(--z2-prefix-color); margin-right:4px;"><big>&lt;</big><small>z2</small><big>&gt;</big></span>' : '';
+        const colorStyle = meta.invalid ? 'color: var(--algo-invalid-color);' : '';
         const wrapStyle = meta.invalid
             ? 'display: block; opacity: 0.18;'
             : 'display: block;';
-        const colorStyle = meta.invalid ? 'color: #dc3545;' : '';
-        return `<div class="algo-line algo-interactive" 
-                     id="${algoId}" 
-                     data-algo="${algo.replace(/"/g, '&quot;')}" 
+        return `<div class="algo-line algo-interactive"
+                     id="${algoId}"
+                     data-algo="${algo.replace(/"/g, '&quot;')}"
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      data-parity="${parityType}"
                      onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
@@ -434,14 +434,14 @@ function showAlgoPopup(element, algo, isPermanent) {
     const popupFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'monospace';
     const displaySetup = stripParenthesisIfNeeded(setup);
     popup.innerHTML = `
-        <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Setup:</div>
-        <div id="${setupId}" style="font-family: ${popupFontFamily}; font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: #f8f9fa; border-radius: 3px; cursor: pointer;" title="Click to analyze parity">${displaySetup}</div>
+        <div class="popup-label">Setup:</div>
+        <div id="${setupId}" class="popup-setup" style="font-family: ${popupFontFamily}; font-size: 0.8rem; margin-bottom: 8px;" title="Click to analyze parity">${displaySetup}</div>
         ${shapePath ? `
-            <div style="font-size: 0.75rem; color: #666; margin-bottom: 4px; font-weight: 600;">Shape Path:</div>
+            <div class="popup-label">Shape Path:</div>
             <div id="${setupId}_shapepath" style="font-size: 0.75rem; line-height: 1.6; cursor: pointer; padding: 4px; border-radius: 3px; transition: background 0.15s;" title="Click to animate algorithm">
                 ${shapePath.map((step, idx) => {
         const arrow = idx < shapePath.length - 1 ? ' → ' : '';
-        return `<span style="background: #f0f9ff; padding: 1px 4px; border-radius: 2px; white-space: nowrap;">${step.top}/${step.bottom}</span>${arrow}`;
+        return `<span class="popup-step-span">${step.top}/${step.bottom}</span>${arrow}`;
     }).join('')}
             </div>
         ` : ''}
@@ -458,10 +458,10 @@ function showAlgoPopup(element, algo, isPermanent) {
             openNewParityAnalysis(setup);
         };
         setupElement.onmouseenter = () => {
-            setupElement.style.background = '#e3f2fd';
+            setupElement.style.background = 'var(--hover-bg)';
         };
         setupElement.onmouseleave = () => {
-            setupElement.style.background = '#f8f9fa';
+            setupElement.style.background = 'var(--surface2)';
         };
     }
 
@@ -480,7 +480,7 @@ function showAlgoPopup(element, algo, isPermanent) {
             openAnimateAlgModal(algo, displayName, parityType);
         };
         shapePathElement.onmouseenter = () => {
-            shapePathElement.style.background = '#f0f9ff';
+            shapePathElement.style.background = 'var(--hover-bg)';
         };
         shapePathElement.onmouseleave = () => {
             shapePathElement.style.background = 'transparent';
@@ -601,10 +601,10 @@ function showContextMenu(caseName, event) {
     menu.id = 'caseContextMenu';
     menu.style.cssText = `
         position: fixed;
-        background: white;
-        border: 1px solid #ddd;
+        background: var(--surface);
+        border-bottom: 1px solid var(--surface-border);
         border-radius: 6px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 12px var(--card-shadow);
         z-index: 10000;
         padding: 4px 0;
         min-width: 180px;
@@ -616,8 +616,8 @@ function showContextMenu(caseName, event) {
     statusIndicator.style.cssText = `
         padding: 6px 16px;
         font-size: 0.75rem;
-        color: #666;
-        border-bottom: 1px solid #e9ecef;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--surface-border);
         margin-bottom: 4px;
         text-align: center;
         font-weight: 600;
@@ -698,7 +698,7 @@ function showContextMenu(caseName, event) {
     menuItems.forEach(item => {
         if (item.divider) {
             const divider = document.createElement('div');
-            divider.style.cssText = 'height: 1px; background: #e9ecef; margin: 4px 0;';
+            divider.style.cssText = 'height: 1px; background: var(--surface-border); margin: 4px 0;';
             menu.appendChild(divider);
         } else {
             const option = document.createElement('div');
@@ -707,13 +707,13 @@ function showContextMenu(caseName, event) {
                 padding: 8px 16px;
                 cursor: ${item.disabled ? 'not-allowed' : 'pointer'};
                 font-size: 0.9rem;
-                color: ${item.disabled ? '#999' : '#333'};
+                color: ${item.disabled ? 'var(--text-muted)' : 'var(--text-ui)'}
                 opacity: ${item.disabled ? '0.5' : '1'};
             `;
 
             if (!item.disabled) {
                 option.onmouseover = () => {
-                    option.style.background = '#f5f5f5';
+                    option.style.background = 'var(--sidebar-item-hover)';
                 };
                 option.onmouseout = () => {
                     option.style.background = 'transparent';
@@ -948,8 +948,8 @@ function showPriorityMenu(name, event) {
     menu.id = 'priorityMenu';
     menu.style.cssText = `
         position: fixed;
-        background: white;
-        border: 2px solid #007bff;
+        background: var(--surface);
+        border: 2px solid var(--link-color);
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         z-index: 10000;
@@ -966,11 +966,11 @@ function showPriorityMenu(name, event) {
             cursor: pointer;
             border-radius: 4px;
             font-weight: ${level === currentLevel ? '700' : '500'};
-            background: ${level === currentLevel ? '#e3f2fd' : 'transparent'};
-            color: ${level === currentLevel ? '#007bff' : '#333'};
+            background: ${level === currentLevel ? 'var(--hover-bg)' : 'transparent'};
+            color: ${level === currentLevel ? 'var(--link-color)' : 'var(--text-ui)'};
         `;
         option.onmouseover = () => {
-            if (level !== currentLevel) option.style.background = '#f5f5f5';
+            if (level !== currentLevel) option.style.background = 'var(--sidebar-item-hover)';
         };
         option.onmouseout = () => {
             if (level !== currentLevel) option.style.background = 'transparent';
@@ -1067,10 +1067,10 @@ function renderCard(item) {
     const bottomSVG = window.svgData[item.bottom] || '';
 
     const algoFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
-    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', algoFontFamily) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
-    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', algoFontFamily) : '<div class="algo-line" style="color: #999; font-style: italic;">No algorithms available</div>';
+    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', algoFontFamily) : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
+    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', algoFontFamily) : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
 
-    const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? '#28a745' : (isLearning ? '#ffc107' : '#ccc')}" stroke-width="2">
+    const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? 'var(--card-learned-border)' : (isLearning ? 'var(--card-learning-border)' : 'var(--border-color)')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
     </svg>`;
 
@@ -1091,7 +1091,7 @@ function renderCard(item) {
             // Simple highlighting - highlight the search term
             const searchTerm = matchInfo.searchTerm;
             const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
-            highlightedName = displayName.replace(regex, '<mark style="background-color: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>');
+            highlightedName = displayName.replace(regex, '<mark style="background-color: var(--search-highlight-bg); padding: 0 2px; border-radius: 2px;">$1</mark>');
         } else if (matchInfo.type === 'slashed-normal') {
             // Normal order: highlight matching parts in their positions
             const parts = displayName.split('/');
@@ -1115,9 +1115,9 @@ function renderCard(item) {
         <div class="card ${cardClass}" data-case-name="${item.name}">
             <div class="card-header">
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                    <div class="card-title" style="${(typeof isCaseEvil === 'function' && isCaseEvil(item.name)) ? 'color: #8b0000;' : ''}">
-                        ${highlightedName}${(typeof isCaseEvil === 'function' && isCaseEvil(item.name)) ? ' ' : ''}
-                        ${perCaseSubtitles.has(item.name) ? `<div class="card-subtitle" style="font-size: 0.75rem; color: #888; font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
+                    <div class="card-title" style="${evilnessFactor ? (isCaseEvil(item.name) ? 'color: var(--bad-case);' : 'color: var(--good-case);') : ''}">
+                        ${highlightedName}
+                        ${perCaseSubtitles.has(item.name) ? `<div class="card-subtitle" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(item.name)}</div>` : ''}
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                         <div class="probability">${prob}%</div>
@@ -1125,7 +1125,7 @@ function renderCard(item) {
                             <div class="icon-btn" onmousedown="event.stopPropagation(); toggleLearned('${item.name.replace(/'/g, "\\'")}', event)" oncontextmenu="event.preventDefault();">
                                 ${learnedIcon}
                             </div>
-                            <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: #666;">
+                            <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: var(--text-secondary);">
                                 ${threeDotsIcon}
                             </div>
                         </div>
@@ -1145,7 +1145,7 @@ function renderCard(item) {
                     <span class="algo-label">Even:</span>
                     ${evenAlgoDisplay}
                 </div>
-                ${comment ? `<div style="font-size: 0.65rem; color: #333; margin-top: 8px; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
+                ${comment ? `<div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 8px; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
             </div>
         </div>
     `;
@@ -1184,32 +1184,10 @@ function showRenderLoading() {
     if (!loadingDiv) {
         loadingDiv = document.createElement('div');
         loadingDiv.id = 'renderLoadingIndicator';
-        loadingDiv.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 99999;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            font-size: 0.95rem;
-            color: #333;
-            font-weight: 500;
-        `;
+        loadingDiv.className = 'render-loading-indicator';
         loadingDiv.innerHTML = `
-            <div style="width: 20px; height: 20px; border: 3px solid #f3f3f3; border-top: 3px solid #007bff; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+            <div class="render-loading-spinner"></div>
             <span>Updating...</span>
-            <style>
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-            </style>
         `;
         document.body.appendChild(loadingDiv);
     }
@@ -1224,41 +1202,13 @@ function hideRenderLoading() {
 }
 
 function showReorderButton() {
-    // Remove existing button if any
     let reorderBtn = document.getElementById('reorderButton');
     if (reorderBtn) return; // Already showing
 
     reorderBtn = document.createElement('button');
     reorderBtn.id = 'reorderButton';
+    reorderBtn.className = 'reorder-btn';
     reorderBtn.textContent = 'Re-order Cases';
-    reorderBtn.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        padding: 12px 24px;
-        background: #007bff;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        font-size: 0.95rem;
-        box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-        z-index: 1000;
-        transition: all 0.2s;
-    `;
-
-    reorderBtn.onmouseover = () => {
-        reorderBtn.style.transform = 'translateY(-2px)';
-        reorderBtn.style.boxShadow = '0 6px 16px rgba(0, 123, 255, 0.4)';
-        reorderBtn.style.background = '#0056b3';
-    };
-
-    reorderBtn.onmouseout = () => {
-        reorderBtn.style.transform = 'translateY(0)';
-        reorderBtn.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.3)';
-        reorderBtn.style.background = '#007bff';
-    };
 
     reorderBtn.onclick = () => {
         filterAndSort(true);
@@ -1285,6 +1235,17 @@ function escapeRegex(str) {
 function highlightPartialMatch(text, searchTerm) {
     if (!searchTerm) return text;
     const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
-    return text.replace(regex, '<mark style="background-color: #ffeb3b; padding: 0 2px; border-radius: 2px;">$1</mark>');
+    return text.replace(regex, '<mark class="search-hl">$1</mark>');
 }
 
+// theme toggle
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const html = document.documentElement;
+        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-theme', next);
+        localStorage.setItem('sqg-csp-theme', next);
+    });
+}

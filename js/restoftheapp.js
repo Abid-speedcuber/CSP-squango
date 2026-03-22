@@ -1,4 +1,4 @@
-// Modular preset configuration - add new presets here
+﻿// Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
     'Default_Preset': 'presets/Default_Preset.json',
     'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'

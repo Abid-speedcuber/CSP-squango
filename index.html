@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 
 <head>
     <meta charset="UTF-8">
@@ -15,25 +15,33 @@
     <link rel="icon" type="image/png" sizes="32x32" href="res/icons/icon-32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="res/icons/icon-16.png">
     <link rel="icon" href="favicon.ico">
+
+    <!--
+        FOUC PREVENTION — must run before first paint.
+        Reads localStorage and stamps data-theme on <html>
+        so the correct theme variables apply immediately.
+    -->
+    <script>
+        (function () {
+            let saved = localStorage.getItem('sqg-csp-theme');
+            if (saved === 'dark' || saved === 'light') {
+                document.documentElement.setAttribute('data-theme', saved);
+            }
+        })();
+    </script>
 </head>
 
 <body>
-    <div id="loadingScreen"
-        style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #e8ebf0 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 99999; font-family: 'Segoe UI', sans-serif; padding: 0 20px; box-sizing: border-box;">
-        <h1 id="loadingTitle"
-            style="font-size: 3.5rem; font-weight: 800; color: #2d3748; margin-bottom: 8px; letter-spacing: -1px;">
-            SquanGo CSP</h1>
-        <p id="loadingAuthor" style="font-size: 1.1rem; color: #4a5568; margin-bottom: 3px; font-weight: 500;">by Abid
-            Ibn Ashraf</p>
-        <div id="loadingTipContainer" style="margin-bottom: 25px;"></div>
-        <div id="loadingBarContainer"
-            style="width: 320px; max-width: 90vw; height: 6px; background: #cbd5e0; border-radius: 3px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);">
-            <div id="loadingProgress"
-                style="width: 0%; height: 100%; background: linear-gradient(90deg, #4a5568, #2d3748); transition: width 0.3s ease;">
-            </div>
+    <div id="loadingScreen" class="loading-screen">
+        <h1 id="loadingTitle" class="loading-title">SquanGo CSP</h1>
+        <p id="loadingAuthor" class="loading-author">by Abid Ibn Ashraf</p>
+        <div id="loadingTipContainer"></div>
+        <div id="loadingBarContainer" class="loading-bar-container">
+            <div id="loadingProgress" class="loading-bar-progress"></div>
         </div>
     </div>
-    <div class="container" style="opacity: 0; transition: opacity 0.3s ease;" id="mainContainer">
+
+    <div class="container hidden-until-loaded" id="mainContainer">
         <header>
             <h1 class="desktop-title">SquanGo CSP</h1>
             <h1 class="tablet-title">SquanGo CSP</h1>
@@ -42,6 +50,29 @@
             <button id="sidebarToggleBtn" class="sidebar-toggle-btn" aria-label="Menu">
                 <img src="res/menu.svg" height="24px" width="24px">
             </button>
+
+            <!-- ── THEME TOGGLE ── -->
+            <button id="themeToggleBtn" class="theme-toggle-btn" aria-label="Toggle dark / light mode">
+                <!-- Moon: shown in light mode -->
+                <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+                <!-- Sun: shown in dark mode -->
+                <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1"  x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22"   x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1"  y1="12" x2="3"  y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78"  x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22"/>
+                </svg>
+            </button>
+
             <button id="profileBtn" class="floating-profile-btn" aria-label="Profile"
                 onclick="event.stopPropagation();">
                 <img id="profileBtnAvatar" src="res/avatar.svg" height="24px" width="24px">
@@ -49,8 +80,7 @@
         </header>
 
         <div class="controls">
-            <button id="searchToggle" class="search-toggle-btn"
-                style="background-color:white; color:black; height:35px; width:35px;" aria-label="Toggle Search">
+            <button id="searchToggle" class="search-toggle-btn search-toggle-icon-btn" aria-label="Toggle Search">
                 <img src="res/search.svg" height="22px" width="22px">
             </button>
             <input type="text" id="search" placeholder="Search cubeshapes...">
@@ -100,7 +130,29 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') {
                 if (document.getElementById('evilnessQuizModal')) return;
-                closeModal();
+                // code stolen from modals.js
+                // Training info modals
+                const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
+                infoModals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (modal && modal.classList.contains('active') && e.target === modal) {
+                        const closeFunc = window[`close${modalId.charAt(0).toUpperCase() + modalId.slice(1).replace('Modal', '')}Modal`];
+                        if (closeFunc) closeFunc();
+                    }
+                });
+
+                // Notes modal
+                const notesModal = document.getElementById('notesModal');
+                if (notesModal && notesModal.classList.contains('active') && e.target === notesModal) {
+                    const caseName = notesModal.querySelector('.modal-title').textContent.replace('Notes: ', '');
+                    attemptCloseNotesModal(caseName);
+                }
+
+                // General notes modal
+                const generalNotesModal = document.getElementById('generalNotesModal');
+                if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal) {
+                    attemptCloseGeneralNotesModal();
+                }
             }
         });
 
@@ -258,54 +310,25 @@
             const mattCredit = document.getElementById('mattCredit');
 
             if (width <= 355) {
-                if (title) title.style.fontSize = '2rem';
-                if (author) author.style.fontSize = '0.85rem';
-                if (tip) {
-                    tip.style.fontSize = '0.75rem';
-                    tip.style.maxWidth = '95vw';
-                }
-                if (evaCredit) {
-                    evaCredit.style.fontSize = '0.65rem';
-                    evaCredit.style.marginTop = '20px';
-                }
-                if (mattCredit) {
-                    mattCredit.style.fontSize = '0.65rem';
-                }
+                if (title) title.classList.add('loading-title--xs');
+                if (author) author.classList.add('loading-author--xs');
+                if (tip) tip.classList.add('loading-tip--xs');
+                if (evaCredit) evaCredit.classList.add('loading-credit--xs');
+                if (mattCredit) mattCredit.classList.add('loading-credit--xs');
             } else if (width <= 480) {
-                if (title) title.style.fontSize = '2.5rem';
-                if (author) author.style.fontSize = '0.95rem';
-                if (tip) {
-                    tip.style.fontSize = '0.8rem';
-                    tip.style.maxWidth = '90vw';
-                }
-                if (evaCredit) {
-                    evaCredit.style.fontSize = '0.7rem';
-                    evaCredit.style.marginTop = '25px';
-                }
-                if (mattCredit) {
-                    mattCredit.style.fontSize = '0.7rem';
-                }
-            } else {
-                if (title) title.style.fontSize = '3.5rem';
-                if (author) author.style.fontSize = '1.1rem';
-                if (tip) {
-                    tip.style.fontSize = '0.95rem';
-                    tip.style.maxWidth = '90vw';
-                }
-                if (evaCredit) {
-                    evaCredit.style.fontSize = '0.85rem';
-                    evaCredit.style.marginTop = '35px';
-                }
-                if (mattCredit) {
-                    mattCredit.style.fontSize = '0.85rem';
-                }
+                if (title) title.classList.add('loading-title--sm');
+                if (author) author.classList.add('loading-author--sm');
+                if (tip) tip.classList.add('loading-tip--sm');
+                if (evaCredit) evaCredit.classList.add('loading-credit--sm');
+                if (mattCredit) mattCredit.classList.add('loading-credit--sm');
             }
+            // else: default sizes from CSS
         }
 
         // Select and display a random tip
         const tipElement = document.createElement('p');
         tipElement.id = 'loadingTip';
-        tipElement.style.cssText = 'font-size: 0.95rem; color: #4a5568; max-width: 90vw; text-align: center; line-height: 1.5; font-weight: 400; padding: 0 15px; box-sizing: border-box; white-space: normal; overflow-wrap: break-word;';
+        tipElement.className = 'loading-tip';
         const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
         const randomTip = tips[Math.floor(Math.random() * tips.length)];
         tipElement.textContent = randomTip;
@@ -314,14 +337,14 @@
         // Add Eva Kato credit
         const evaCredit = document.createElement('p');
         evaCredit.id = 'evaCredit';
-        evaCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 35px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
+        evaCredit.className = 'loading-credit';
         evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
         document.getElementById('loadingScreen').appendChild(evaCredit);
 
         // Add Matt credit
         const mattCredit = document.createElement('p');
         mattCredit.id = 'mattCredit';
-        mattCredit.style.cssText = 'font-size: 0.85rem; color: #a0aec0; margin-top: 5px; text-align: center; font-weight: 400; padding: 0 15px; box-sizing: border-box; line-height: 1.4;';
+        mattCredit.className = 'loading-credit loading-credit--matt';
         mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
         document.getElementById('loadingScreen').appendChild(mattCredit);
 
@@ -353,7 +376,6 @@
             // Setup profile button
             const profileBtn = document.getElementById('profileBtn');
             if (profileBtn) {
-
                 profileBtn.onclick = (e) => {
                     e.stopPropagation();
                     if (window.innerWidth > 620) {
@@ -468,7 +490,7 @@
                     if (sortSelect && currentSortMode) sortSelect.value = currentSortMode;
                     if (needsParityRecalculation()) calculateAndCacheAllParity();
                     setTimeout(() => {
-                        document.getElementById('mainContainer').style.opacity = '1';
+                        document.getElementById('mainContainer').classList.remove('hidden-until-loaded');
                     }, 500);
                 });
 
@@ -489,10 +511,14 @@
                 clearInterval(loadingInterval);
                 progressBar.style.width = '100%';
                 await new Promise(resolve => setTimeout(resolve, 200));
-                document.getElementById('loadingScreen').style.opacity = '0';
-                document.getElementById('mainContainer').style.opacity = '1';
+
+                const loadingScreen = document.getElementById('loadingScreen');
+                const mainContainer = document.getElementById('mainContainer');
+                loadingScreen.classList.add('loading-screen--fade-out');
+                mainContainer.classList.remove('hidden-until-loaded');
+
                 await new Promise(resolve => setTimeout(resolve, 300));
-                document.getElementById('loadingScreen').style.display = 'none';
+                loadingScreen.style.display = 'none';
             }
         });
 

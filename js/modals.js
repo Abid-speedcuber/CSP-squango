@@ -1,4 +1,4 @@
-/*
+﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                          DYNAMIC MODAL GENERATION                         ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -25,16 +25,16 @@ function generateModalHTML() {
 
     modalContainer.innerHTML = `
         <div id="settingsModal" class="modal">
-            <div class="modal-content" style="max-width: 480px; max-height: 80vh; min-height: 20vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: white;">
-                <div class="modal-header" style="flex-shrink: 0; background: white; color: #2d3748; padding: 24px 28px; border-bottom: 2px solid #e9ecef;">
-                    <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: #2d3748;">Personalization</span>
-                    <button class="close-btn" onclick="closeSettingsModal()" style="color: #6c757d; opacity: 1;">&times;</button>
+            <div class="modal-content" style="max-width: 480px; max-height: 80vh; min-height: 20vh; display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: var(--surface);">
+                <div class="modal-header" style="flex-shrink: 0; background: var(--surface); color: var(--text-ui); padding: 24px 28px; border-bottom: 2px solid var(--surface-border);">
+                    <span class="modal-title" style="font-size: 1.5rem; font-weight: 700; color: var(--text-ui);">Personalization</span>
+                    <button class="close-btn" onclick="closeSettingsModal()" style="color: var(--sidebar-close-color); opacity: 1;">&times;</button>
                 </div>
-                <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: white;">
+                <div class="modal-body" style="overflow-y: auto; flex: 1; padding: 24px 28px; background: var(--surface);">
 
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <label for="hintToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
+                                <label for="hintToggle" style="color: var(--text-secondary); font-weight: 500; font-size: 0.95rem;">Show Tracing Guides</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Show/hide the blue and red numbers in the case images. An edge labeled with 1, for example, means it's the first to be traced. (these do not update if you change your tracing positions, you'll have to go to Set Tracing Positions)<br><br><strong>Keyboard shortcut:</strong> Alt+T</span>
@@ -44,7 +44,7 @@ function generateModalHTML() {
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <label for="hideInstructionsToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
+                                <label for="hideInstructionsToggle" style="color: var(--text-secondary); font-weight: 500; font-size: 0.95rem;">Hide Instruction Buttons</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Hide instruction buttons across the app. But why would you do that.<br><br><strong>Keyboard shortcut:</strong> Alt+H</span>
@@ -54,7 +54,7 @@ function generateModalHTML() {
                         </div>
                         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
                             <div style="display: flex; align-items: center; gap: 8px;">
-                                <label for="hideParenthesisToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Hide Parentheses</label>
+                                <label for="hideParenthesisToggle" style="color: var(--text-secondary); font-weight: 500; font-size: 0.95rem;">Hide Parentheses</label>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                     <span class="info-box">Removes parentheses and changes the font from monospace to Arial for a more modern alg display.<br><br><strong>Keyboard shortcut:</strong> Alt+P</span>
@@ -63,53 +63,53 @@ function generateModalHTML() {
                             <input type="checkbox" id="hideParenthesisToggle" onchange="toggleHideParenthesis(this.checked)" style="transform: scale(1.3); cursor: pointer;">
                         </div>
 
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
-                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: #495057; font-size: 0.95rem;">Alg Font Size: <span id="algFontSizeValue">14</span>px</label>
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
+                            <label style="display: block; font-weight: 500; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.95rem;">Alg Font Size: <span id="algFontSizeValue">14</span>px</label>
                             <input type="range" id="algFontSizeSlider" min="10" max="20" step="1" value="14" style="width: 100%; cursor: pointer;" oninput="updateAlgFontSizePreview(this.value)">
-                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
                                 <span>Small (10px)</span>
                                 <span>Large (20px)</span>
                             </div>
                         </div>
 
-<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
+<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
     <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <label style="font-weight: 500; color: #495057; font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
+        <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
         <span class="info-wrapper">
             <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
             <span class="info-box">This setting controls the image size in the trainer, Parity Tracer, and alg animator. It does NOT affect the size of the images on the home screen.</span>
         </span>
     </div>
     <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
-    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; margin-top: 5px;">
+    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
         <span>Small (100px)</span>
         <span>Large (400px)</span>
     </div>
 </div>
 
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e9ecef;">
-                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openColorSchemeModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openColorSchemeModal()" class="settings-action-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='var(--border-color)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)'">
                                 <span>Color Scheme Settings</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Changes the color scheme of your squan. Impacts parity tracing and draw scramble.</span>
                                 </span>
                             </div>
-                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openParityTracingPersonalization()" class="settings-action-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='var(--border-color)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)'">
                                 <span>Set Tracing Positions</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">Change your tracing positions here. They will be used to calculate whether an alg is odd or even for a given case.<br><br><strong>Keyboard shortcut:</strong> Alt+W</span>
                                 </span>
                             </div>
-                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openQuickEditModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openQuickEditModal()" class="settings-action-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='var(--border-color)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)'">
                                 <span>Quick Edit</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
                                     <span class="info-box">A place for preset creators to bulk edit cases.<br><br><strong>Keyboard shortcut:</strong> Alt+Q</span>
                                 </span>
                             </div>
-                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openCustomizeSVGsModal()" style="padding: 12px 20px; background: white; color: #2d3748; border: 1px solid #dee2e6; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='#adb5bd'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='#dee2e6'">
+                            <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openCustomizeSVGsModal()" class="settings-action-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='var(--border-color)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)'">
                                 <span>Customize Tracing Guides</span>
                                 <span class="info-wrapper">
                                     <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation();"><img src="res/info.svg"></button>
@@ -117,11 +117,11 @@ function generateModalHTML() {
                                 </span>
                             </div>
 
-                            <hr style="border: none; border-top: 1px solid #dddddd; margin: 12px 0;">
+                            <hr style="border: none; border-top: 1px solid var(--surface-border); margin: 12px 0;">
 
                             <div style="display: flex; align-items: center; justify-content: space-between;">
                                 <div style="display: flex; align-items: center; gap: 8px;">
-                                    <label for="enhancedAccessToggle" style="color: #495057; font-weight: 500; font-size: 0.95rem;">Enable Enhanced Access</label>
+                                    <label for="enhancedAccessToggle" style="color: var(--text-secondary); font-weight: 500; font-size: 0.95rem;">Enable Enhanced Access</label>
                                     <span class="info-wrapper">
                                         <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
                                         <span class="info-box">This lets you change the algs of a case in Edit Case and Quick Edit.</span>
@@ -145,53 +145,53 @@ function generateModalHTML() {
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Top Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="top" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="top" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Black</button>
-                            <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">White</button>
+                            <button class="color-btn" data-face="top" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
+                            <button class="color-btn" data-face="top" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
+                            <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Bottom Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="bottom" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="bottom" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Black</button>
-                            <button class="color-btn" data-face="bottom" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">White</button>
+                            <button class="color-btn" data-face="bottom" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
+                            <button class="color-btn" data-face="bottom" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
+                            <button class="color-btn" data-face="bottom" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Front Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="front" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="front" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="front" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="front" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
+                            <button class="color-btn" data-face="front" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
+                            <button class="color-btn" data-face="front" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
+                            <button class="color-btn" data-face="front" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
+                            <button class="color-btn" data-face="front" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Right Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="right" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="right" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="right" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="right" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
+                            <button class="color-btn" data-face="right" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
+                            <button class="color-btn" data-face="right" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
+                            <button class="color-btn" data-face="right" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
+                            <button class="color-btn" data-face="right" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Back Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="back" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="back" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="back" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="back" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
+                            <button class="color-btn" data-face="back" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
+                            <button class="color-btn" data-face="back" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
+                            <button class="color-btn" data-face="back" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
+                            <button class="color-btn" data-face="back" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
                         <label style="display: block; font-weight: 600; margin-bottom: 8px;">Left Color:</label>
                         <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="left" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="left" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="left" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border: 2px solid #ddd; border-radius: 4px; cursor: pointer;">Orange</button>
+                            <button class="color-btn" data-face="left" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
+                            <button class="color-btn" data-face="left" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
+                            <button class="color-btn" data-face="left" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
+                            <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
                         </div>
                     </div>
                 </div>
@@ -203,41 +203,41 @@ function generateModalHTML() {
             <div class="profile-popup-content">
                 <!-- View Mode -->
                 <div id="profileViewDesktop">
-                    <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid #e9ecef;">
-                        <img id="profileAvatarDesktop" src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px; border-radius: 50%; border: solid gray;">
+                    <div style="text-align: center; padding: 20px 20px 15px; border-bottom: 1px solid var(--surface-border);">
+                        <img id="profileAvatarDesktop" src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px; border-radius: 50%; border: 3px solid var(--avatar-border-idle);">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
-                            <h3 id="profileNameDesktop" style="margin: 0; font-size: 1.2rem; color: #2d3748; font-weight: 600;">Profile</h3>
-                            <button onclick="switchToEditProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: #6c757d;" title="Edit Profile">
+                            <h3 id="profileNameDesktop" style="margin: 0; font-size: 1.2rem; color: var(--text-ui); font-weight: 600;">Profile</h3>
+                            <button onclick="switchToEditProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
                         </div>
                     </div>
                     <div style="padding: 15px;">
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileLearningProgressDesktop" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
-                                <div id="profileLearnedProgressDesktop" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileLearningProgressDesktop" style="background: var(--bar-learning); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                                <div id="profileLearnedProgressDesktop" style="background: var(--bar-learned); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
-                                    <span id="profileLearnedTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Learned</span>
+                                    <span id="profileLearnedTextDesktop" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0/90</span>
                                 </div>
                             </div>
                         </div>
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileCoverageProgressDesktop" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileCoverageProgressDesktop" style="background: var(--bar-coverage); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
-                                    <span id="profileCoverageTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Coverage</span>
+                                    <span id="profileCoverageTextDesktop" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0.0%</span>
                                 </div>
                             </div>
                         </div>
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileSafetyProgressDesktop" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileSafetyProgressDesktop" style="background: var(--bar-safety); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
-                                    <span id="profileSafetyTextDesktop" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Safety</span>
+                                    <span id="profileSafetyTextDesktop" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0.0%</span>
                                 </div>
                             </div>
                         </div>
@@ -245,18 +245,18 @@ function generateModalHTML() {
                 </div>
                 <!-- Edit Mode -->
                 <div id="profileEditDesktop" style="display: none;">
-                    <div style="padding: 15px 20px; border-bottom: 1px solid #e9ecef; display: flex; align-items: center; gap: 10px;">
-                        <button onclick="switchToViewProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: #6c757d;" title="Back">
+                    <div style="padding: 15px 20px; border-bottom: 1px solid var(--surface-border); display: flex; align-items: center; gap: 10px;">
+                        <button onclick="switchToViewProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
-                        <span style="font-size: 1rem; font-weight: 600; color: #2d3748;">Edit Profile</span>
+                        <span style="font-size: 1rem; font-weight: 600; color: var(--text-ui);">Edit Profile</span>
                     </div>
                     <div style="padding: 15px;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #495057; margin-bottom: 6px;">Name</label>
-                        <input id="profileNameInputDesktop" type="text" maxlength="24" style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; margin-bottom: 14px;" placeholder="Your name">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #495057; margin-bottom: 8px;">Choose Avatar</label>
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Name</label>
+                        <input id="profileNameInputDesktop" type="text" maxlength="24" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; margin-bottom: 14px;" placeholder="Your name">
+                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Choose Avatar</label>
                         <div id="avatarGridDesktop" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;"></div>
-                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
+                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -270,7 +270,7 @@ function generateModalHTML() {
                     <div class="modal-header">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span id="profileNameMobileTitle" class="modal-title">Profile</span>
-                            <button onclick="switchToEditProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: #6c757d;" title="Edit Profile">
+                            <button onclick="switchToEditProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
                         </div>
@@ -278,33 +278,33 @@ function generateModalHTML() {
                     </div>
                     <div class="modal-body" style="padding: 20px;">
                         <div style="text-align: center; margin-bottom: 20px;">
-                            <img id="profileAvatarMobile" src="res/avatar.svg" style="width: 64px; height: 64px; border-radius: 50%; border: solid gray;">
+                            <img id="profileAvatarMobile" src="res/avatar.svg" style="width: 64px; height: 64px; border-radius: 50%; border: 3px solid var(--avatar-border-idle);">
                         </div>
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileLearningProgressMobile" style="background: #ffc107; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
-                                <div id="profileLearnedProgressMobile" style="background: #28a745; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileLearningProgressMobile" style="background: var(--bar-learning); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0;"></div>
+                                <div id="profileLearnedProgressMobile" style="background: var(--bar-learned); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; position: absolute; left: 0; top: 0; z-index: 1;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between; z-index: 2;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Learned</span>
-                                    <span id="profileLearnedTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0/90</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Learned</span>
+                                    <span id="profileLearnedTextMobile" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0/90</span>
                                 </div>
                             </div>
                         </div>
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileCoverageProgressMobile" style="background: linear-gradient(90deg, #007bff, #0056b3); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileCoverageProgressMobile" style="background: var(--bar-coverage); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Coverage</span>
-                                    <span id="profileCoverageTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Coverage</span>
+                                    <span id="profileCoverageTextMobile" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0.0%</span>
                                 </div>
                             </div>
                         </div>
                         <div style="margin-bottom: 12px;">
-                            <div style="background: #e9ecef; border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
-                                <div id="profileSafetyProgressMobile" style="background: linear-gradient(90deg, #ffc107, #ff8c00); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
+                            <div class="progress-track" style="border-radius: 8px; height: 24px; position: relative; overflow: hidden;">
+                                <div id="profileSafetyProgressMobile" style="background: var(--bar-safety); height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px;"></div>
                                 <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; padding: 0 10px; justify-content: space-between;">
-                                    <span style="font-size: 0.75rem; color: #2d3748; font-weight: 600;">Safety</span>
-                                    <span id="profileSafetyTextMobile" style="font-weight: 700; color: #2d3748; font-size: 0.8rem;">0.0%</span>
+                                    <span style="font-size: 0.75rem; color: var(--text-ui); font-weight: 600;">Safety</span>
+                                    <span id="profileSafetyTextMobile" style="font-weight: 700; color: var(--text-ui); font-size: 0.8rem;">0.0%</span>
                                 </div>
                             </div>
                         </div>
@@ -314,7 +314,7 @@ function generateModalHTML() {
                 <div id="profileEditMobile" style="display: none;">
                     <div class="modal-header">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <button onclick="switchToViewProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: #6c757d;" title="Back">
+                            <button onclick="switchToViewProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             </button>
                             <span class="modal-title">Edit Profile</span>
@@ -322,11 +322,11 @@ function generateModalHTML() {
                         <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
                     </div>
                     <div class="modal-body" style="padding: 20px;">
-                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: #495057; margin-bottom: 6px;">Name</label>
-                        <input id="profileNameInputMobile" type="text" maxlength="24" style="width: 100%; padding: 9px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; margin-bottom: 16px;" placeholder="Your name">
-                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: #495057; margin-bottom: 10px;">Choose Avatar</label>
+                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Name</label>
+                        <input id="profileNameInputMobile" type="text" maxlength="24" style="width: 100%; padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; margin-bottom: 16px;" placeholder="Your name">
+                        <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">Choose Avatar</label>
                         <div id="avatarGridMobile" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;"></div>
-                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
+                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -337,12 +337,12 @@ function generateModalHTML() {
       max-width: 700px;
       border-radius: 14px;
       overflow: hidden;
-      background: #ffffff;
+      background: var(--surface);
   ">
 
     <!-- Header -->
     <div style="
-        background: #1f2933;
+        background: var(--about-header-bg);
         color: #ffffff;
         padding: 22px 26px;
         display: flex;
@@ -362,16 +362,16 @@ function generateModalHTML() {
     <!-- Body -->
     <div style="
         padding: 28px 30px;
-        color: #2d3748;
+        color: var(--text-ui);
         line-height: 1.65;
         max-height: 70vh;
         overflow-y: auto;
-        background: #f8f9fa;
+        background: var(--surface2);
     ">
 
       <!-- Intro -->
       <section style="margin-bottom: 26px;">
-        <p style="margin: 0; font-size: 1rem; color: #4a5568;">
+        <p style="margin: 0; font-size: 1rem; color: var(--text-secondary);">
           SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
           who want structure, repetition, and zero fluff.
           It started as a personal motivation tool and slowly turned into something
@@ -381,39 +381,39 @@ function generateModalHTML() {
 
       <!-- Developer -->
       <section style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--surface);
+          border: 1px solid var(--border-color);
           border-radius: 10px;
           padding: 20px;
           margin-bottom: 22px;
       ">
         <p style="font-weight: 600; margin-bottom: 6px;">Developer</p>
-        <p style="margin: 0 0 10px 0; color: #6b7280;">
+        <p style="margin: 0 0 10px 0; color: var(--text-secondary);">
           Created by <strong>Abid Ibn Ashraf</strong>
         </p>
 
-        <p style="margin: 0; font-size: 0.95rem; color: #6b7280;">
+        <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
           Contact & feedback:
-          <strong>Discord — <span style="color:#1f2933;">abid_ibn_ashraf</span></strong>
+          <strong>Discord — <span style="color: var(--text-ui);">abid_ibn_ashraf</span></strong>
         </p>
       </section>
 
       <!-- Credits -->
       <section style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--surface);
+          border: 1px solid var(--border-color);
           border-radius: 10px;
           padding: 20px;
           margin-bottom: 22px;
       ">
         <p style="font-weight: 600; margin-bottom: 10px;">Credits & Inspiration</p>
 
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
           Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
           The overall Homepage layout, case images and most of the alg data are based on her work.
         </p>
 
-        <p style="margin: 0; font-size: 0.95rem; color: #6b7280;">
+        <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
           Additional credit to <strong>Matt Mao</strong> — the inventor of Matt Tracing for OBLP —
           for helping me out in various way in this project. Matt's preset is built solemnly by him, and he helped me refine the site further.
         </p>
@@ -421,14 +421,14 @@ function generateModalHTML() {
 
       <!-- Scramble -->
       <section style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--surface);
+          border: 1px solid var(--border-color);
           border-radius: 10px;
           padding: 20px;
           margin-bottom: 22px;
       ">
         <p style="font-weight: 600; margin-bottom: 8px;">Scramble Generator</p>
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
           Square-1 scrambles are generated using code from
           <strong>csTimer</strong>, written by Shuang Chen (cs0x7f),
           licensed under GPL-3.0.
@@ -436,27 +436,27 @@ function generateModalHTML() {
 
         <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js"
            target="_blank"
-           style="font-size: 0.95rem; font-weight: 500; color: #2563eb; text-decoration: none;">
+           style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
           View source on GitHub →
         </a>
       </section>
 
       <!-- Open Source -->
       <section style="
-          background: #ffffff;
-          border: 1px solid #e2e8f0;
+          background: var(--surface);
+          border: 1px solid var(--border-color);
           border-radius: 10px;
           padding: 20px;
       ">
         <p style="font-weight: 600; margin-bottom: 8px;">Open Source</p>
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: #6b7280;">
+        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
           SquanGo CSP is open source. You’re free to explore the code,
           suggest improvements, or fork it for your own use.
         </p>
 
         <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs"
            target="_blank"
-           style="font-size: 0.95rem; font-weight: 500; color: #2563eb; text-decoration: none;">
+           style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
           View repository on GitHub →
         </a>
       </section>
@@ -478,13 +478,7 @@ function generateModalHTML() {
 
             const sameFaceButtons = document.querySelectorAll(`.color-btn[data-face="${face}"]`);
             sameFaceButtons.forEach(b => {
-                if (b === this) {
-                    b.style.border = '3px solid #007bff';
-                    b.style.fontWeight = 'bold';
-                } else {
-                    b.style.border = '2px solid #ddd';
-                    b.style.fontWeight = 'normal';
-                }
+                b.classList.toggle('selected', b === this);
             });
 
             // Auto-save
@@ -505,16 +499,15 @@ function showRenderLoader() {
     if (loader) return;
     loader = document.createElement('div');
     loader.id = 'renderLoader';
-    loader.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:linear-gradient(135deg,#f5f7fa 0%,#e8ebf0 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99998;font-family:Segoe UI,sans-serif;padding:0 20px;box-sizing:border-box;';
+    loader.className = 'render-loader';
     loader.innerHTML = `
-        <h1 style="font-size:2.5rem;font-weight:800;color:#2d3748;margin-bottom:6px;letter-spacing:-1px;">SquanGo CSP</h1>
-        <p style="font-size:1rem;color:#4a5568;margin-bottom:25px;font-weight:500;">by Abid Ibn Ashraf</p>
-        <div style="width:280px;max-width:85vw;height:6px;background:#cbd5e0;border-radius:3px;overflow:hidden;">
-            <div id="renderLoaderBar" style="width:0%;height:100%;background:linear-gradient(90deg,#4a5568,#2d3748);transition:width 0.2s ease;"></div>
+        <h1 class="render-loader__title">SquanGo CSP</h1>
+        <p class="render-loader__subtitle">by Abid Ibn Ashraf</p>
+        <div class="render-loader__bar-wrap">
+            <div id="renderLoaderBar" class="render-loader__bar"></div>
         </div>
     `;
     document.body.appendChild(loader);
-    // Animate bar
     let p = 0;
     loader._interval = setInterval(() => {
         p += Math.random() * 25;
@@ -633,12 +626,12 @@ function handlePresetChange(presetName) {
         reloadModal.style.zIndex = '10002';
         reloadModal.innerHTML = `
             <div class="modal-content" style="max-width: 500px;">
-                <div class="modal-header" style="background: #fff; border-bottom: 2px solid #ddd;">
+                <div class="modal-header" style="background: var(--surface); border-bottom: 2px solid var(--border-color);">
                     <span class="modal-title">Reload ${presetName.replace(/_/g, ' ')}?</span>
                     <button class="close-btn" onclick="this.closest('.modal').remove();">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: #333;">
+                    <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
                         Reloading will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
                         It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the newest version of this preset.
                     </p>
@@ -646,9 +639,9 @@ function handlePresetChange(presetName) {
                         We recommend exporting your data before reloading.
                     </p> <br>
                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <button onclick="exportData(); showToast('Data exported! You can now safely reload.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6ca; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Export First</button>
-                        <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: #f2dadc; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reload Anyway</button>
-                        <button onclick="this.closest('.modal').remove();" style="padding: 10px 20px; background: #bfc8d0; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+                        <button onclick="exportData(); showToast('Data exported! You can now safely reload.', 3000, 'success');" style="padding: 10px 20px; background: var(--btn-safe); color: var(--text-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Export First</button>
+                        <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: var(--btn-danger-soft); color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Reload Anyway</button>
+                        <button onclick="this.closest('.modal').remove();" style="padding: 10px 20px; background: var(--delete-btn-bg); color: var(--text-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -670,26 +663,26 @@ function handlePresetChange(presetName) {
     warningModal.style.zIndex = '10002';
     warningModal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header" style="background: #ffffffff; border-bottom: 2px solid #dadadaff;">
-                <span class="modal-title" style="color: #330000ff;">Warning: Data Loss</span>
+            <div class="modal-header" style="background: var(--surface); border-bottom: 2px solid var(--border-color);">
+                <span class="modal-title" style="color: var(--text-primary);">Warning: Data Loss</span>
                 <button class="close-btn" onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: #333;">
-                    Switching to "<strong>${presetName}</strong>" will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
+                <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
+                    Switching to "<strong>${presetName.replaceAll("_", " ")}</strong>" will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
                     It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the preset.
                 </p>
                 <p style="font-weight: 500;">
                     We recommend exporting your data before reloading.
                 </p> <br>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: #c1e6caff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: var(--btn-safe); color: var(--text-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: #f2dadcff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: var(--btn-danger-soft); color: var(--text-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Switch Anyway
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: #bfc8d0ff; color: black; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
+                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: var(--delete-btn-bg); color: var(--text-primary); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">
                         Cancel
                     </button>
                 </div>
@@ -794,14 +787,7 @@ function openColorSchemeModal() {
         const face = btn.getAttribute('data-face');
         const color = btn.getAttribute('data-color');
         const currentColor = colorScheme[face + 'Color'];
-
-        if (color === currentColor) {
-            btn.style.border = '3px solid #007bff';
-            btn.style.fontWeight = 'bold';
-        } else {
-            btn.style.border = '2px solid #ddd';
-            btn.style.fontWeight = 'normal';
-        }
+        btn.classList.toggle('selected', color === currentColor);
     });
 }
 
@@ -848,7 +834,7 @@ function openNewParityAnalysis(scramble) {
     }
 
     window.ParityTracerLibrary.createModal({
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--surface)',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -887,7 +873,7 @@ function showHomepageInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Click on <strong>Profile</strong> in the top right corner to see your progress stats. The <strong style="color: #28a745;">green bar (Learned)</strong> shows how many cases out of 90 you have learned. The <strong style="color: #007bff;">blue bar (Coverage)</strong> tells you how often you will get a CSP you know. The <strong style="color: #ffa000;">orange bar (Safety)</strong> tells you how often you won't get parity (this is equal to Safety + 0.5 * (1 - Safety)).</div>
+                        <div class="training-info-text">Click on <strong>Profile</strong> in the top right corner to see your progress stats. The <strong style="color: var(--bar-learned);">green bar (Learned)</strong> shows how many cases out of 90 you have learned. The <strong style="color: var(--accent);">blue bar (Coverage)</strong> tells you how often you will get a CSP you know. The <strong style="color: var(--bar-learning);">orange bar (Safety)</strong> tells you how often you won't get parity (this is equal to Safety + 0.5 * (1 - Safety)).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
@@ -967,7 +953,7 @@ function openEditCaseModal(caseName) {
                         <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}', '${customSubtitle.replace(/'/g, "\\'")}' )" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
                             <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
                         </button>
-                        <button onclick="showEditCaseInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                        <button onclick="showEditCaseInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -975,30 +961,30 @@ function openEditCaseModal(caseName) {
                             </svg>
                         </button>
                     </div>
-                    ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: #888; margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseName)}</div>` : '<div style="font-size: 0.85rem; color: #888; margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
+                    ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseName)}</div>` : '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
                 </div>
                 <button class="close-btn" onclick="attemptCloseEditCaseModal()">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <div style="margin-bottom: 15px;" id="algorithmsSection">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">Algs:</label>
+                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-secondary);">Algs:</label>
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
                         ${allAlgs.map((alg, idx) => `
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
-                                <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                                <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
-                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0ff; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+                                <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;"></span>
+                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
                                     <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
                                 </button>
                             </div>
                         `).join('')}
                     </div>
-                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
+                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
 
-                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e9ecef;">
-                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
-                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--surface-border);">
+                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
+                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1200,7 +1186,7 @@ function updateParityLabel(input) {
             }
 
             parityLabel.textContent = parityText.toLowerCase();
-            parityLabel.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+            parityLabel.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             parityLabel.style.fontWeight = '600';
 
         } else if (isInMir) {
@@ -1220,17 +1206,17 @@ function updateParityLabel(input) {
             }
 
             parityLabel.textContent = parityText.toLowerCase() + ' (z2)';
-            parityLabel.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            parityLabel.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             parityLabel.style.fontWeight = '600';
 
         } else {
             parityLabel.textContent = 'invalid';
-            parityLabel.style.color = '#71000bff';
+            parityLabel.style.color = 'var(--parity-invalid)';
             parityLabel.style.fontWeight = '600';
         }
     } catch (error) {
         parityLabel.textContent = 'invalid';
-        parityLabel.style.color = '#71000bff';
+        parityLabel.style.color = 'var(--parity-invalid)';
         parityLabel.style.fontWeight = '600';
     }
 }
@@ -1243,9 +1229,9 @@ window.addNewAlgorithmField = function () {
     const newField = document.createElement('div');
     newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
     newField.innerHTML = `
-        <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-        <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: #666; font-style: italic;"></span>
-        <button onclick="this.parentElement.remove()" style="padding: 6px; background: #d0d0d0; color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+        <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
+        <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;"></span>
+        <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
     `;
@@ -1307,15 +1293,15 @@ window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = 
             <div class="modal-body">
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Custom Name:</label>
-                    <input type="text" id="caseRenameInput" value="${currentName}" placeholder="Leave empty for default name" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    <input type="text" id="caseRenameInput" value="${currentName}" placeholder="Leave empty for default name" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
                 </div>
                 <div style="margin-bottom: 15px;">
                     <label style="display: block; margin-bottom: 8px; font-weight: 600;">Subtitle (optional):</label>
-                    <input type="text" id="caseSubtitleRenameInput" value="${currentSubtitle}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                    <input type="text" id="caseSubtitleRenameInput" value="${currentSubtitle}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="applyCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
-                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="applyCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
+                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1485,7 +1471,7 @@ window.showEditCaseInfoModal = function () {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text"><strong>Parity Labels:</strong> Each alg has a colored label to its right, indicating its parity. <span style="color: #00a126ff; font-weight: 600;">Green = Odd</span>, <span style="color: #0069d9ff; font-weight: 600;">Blue = Even</span>. <span style="color: #71000bff; font-weight: 600;">Red = Invalid</span>. (Your alg doesn't match this case at all. Double-check your input for typos or missing slices.) The label disappears while editing and reappears when you click away.</div>
+                        <div class="training-info-text"><strong>Parity Labels:</strong> Each alg has a colored label to its right, indicating its parity. <span style="color: var(--parity-odd); font-weight: 600;">Green = Odd</span>, <span style="color: var(--parity-even); font-weight: 600;">Blue = Even</span>. <span style="color: var(--parity-invalid); font-weight: 600;">Red = Invalid</span>. (Your alg doesn't match this case at all. Double-check your input for typos or missing slices.) The label disappears while editing and reappears when you click away.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
@@ -1563,7 +1549,7 @@ function openNotesModal(caseName) {
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
-                    <button onclick="showNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                    <button onclick="showNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1574,10 +1560,10 @@ function openNotesModal(caseName) {
                 <button class="close-btn" onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )">&times;</button>
             </div>
             <div class="modal-body">
-                <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
+                <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
                 <div style="text-align: center; margin-top: 15px;">
-                    <button onclick="saveNotes('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
-                    <button onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="saveNotes('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1710,9 +1696,9 @@ function openGeneralNotesModal() {
             <div class="modal-header" style="flex-shrink: 0;">
                 <span class="modal-title">General Notes</span>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
-                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
-                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='#e9ecef'" onmouseout="this.style.background='#f8f9fa'">
+                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
+                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
+                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1725,10 +1711,10 @@ function openGeneralNotesModal() {
             <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
                 <div id="generalNotesView" style="flex: 1; padding: 20px; overflow-y: auto;"></div>
                 <div id="generalNotesEdit" style="flex: 1; display: none; flex-direction: column; padding: 20px; overflow: hidden;">
-                    <div style="margin-bottom: 10px; padding: 10px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 4px; font-size: 0.9rem; color: #856404;">
+                    <div style="margin-bottom: 10px; padding: 10px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 4px; font-size: 0.9rem; color: var(--warning-color);">
                         <strong>⚠️ Warning:</strong> This editor supports HTML, CSS, SVG, and JavaScript. Code will execute when you save and view. Use with caution!
                     </div>
-                    <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: none; overflow-y: auto;"></textarea>
+                    <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: none; overflow-y: auto;"></textarea>
                 </div>
             </div>
         </div>
@@ -1759,26 +1745,49 @@ function closeGeneralNotesModal() {
 
 function renderGeneralNotes() {
     const viewDiv = document.getElementById('generalNotesView');
-    if (viewDiv) {
-        if (generalNotes.trim()) {
-            // Use an iframe to safely render full HTML documents without leaking styles
-            const isFullHTML = /<!DOCTYPE|<html/i.test(generalNotes);
-            if (isFullHTML) {
-                const iframe = document.createElement('iframe');
-                iframe.style.cssText = 'width: 100%; height: 100%; border: none; min-height: 400px;';
-                iframe.sandbox = 'allow-same-origin';
-                viewDiv.innerHTML = '';
-                viewDiv.style.padding = '0';
-                viewDiv.appendChild(iframe);
-                iframe.contentDocument.open();
-                iframe.contentDocument.write(generalNotes);
-                iframe.contentDocument.close();
-            } else {
-                viewDiv.innerHTML = generalNotes;
-            }
+    if (!viewDiv) return;
+
+    if (generalNotes.trim()) {
+        const isFullHTML = /<!DOCTYPE|<html/i.test(generalNotes);
+        if (isFullHTML) {
+            const iframe = document.createElement('iframe');
+            iframe.style.cssText = 'width: 100%; height: 100%; border: none; min-height: 400px;';
+            iframe.sandbox = 'allow-same-origin allow-scripts';
+            viewDiv.innerHTML = '';
+            viewDiv.style.padding = '0';
+            viewDiv.appendChild(iframe);
+            iframe.contentDocument.open();
+            iframe.contentDocument.write(generalNotes);
+            iframe.contentDocument.close();
+
+            // Stamp theme onto the iframe root and inject CSS vars
+            const theme = document.documentElement.getAttribute('data-theme') || 'light';
+            iframe.contentDocument.documentElement.setAttribute('data-theme', theme);
+
+            const themeStyle = iframe.contentDocument.createElement('style');
+            themeStyle.id = 'sqg-theme-vars';
+            themeStyle.textContent = `
+                :root {
+                    --background: ${getComputedStyle(document.documentElement).getPropertyValue('--background')};
+                    --surface:    ${getComputedStyle(document.documentElement).getPropertyValue('--surface')};
+                    --text-primary:   ${getComputedStyle(document.documentElement).getPropertyValue('--text-primary')};
+                    --text-secondary: ${getComputedStyle(document.documentElement).getPropertyValue('--text-secondary')};
+                    --accent:     ${getComputedStyle(document.documentElement).getPropertyValue('--accent')};
+                    --border-color: ${getComputedStyle(document.documentElement).getPropertyValue('--border-color')};
+                    --surface-border: ${getComputedStyle(document.documentElement).getPropertyValue('--surface-border')};
+                }
+                body {
+                    background: var(--background);
+                    color: var(--text-primary);
+                }
+                a { color: var(--accent); }
+            `;
+            iframe.contentDocument.head.appendChild(themeStyle);
         } else {
-            viewDiv.innerHTML = '<p style="color: #999; font-style: italic; text-align: center;">No notes yet. Click Edit to add your first note!</p>';
+            viewDiv.innerHTML = generalNotes;
         }
+    } else {
+        viewDiv.innerHTML = '<p style="color: var(--text-muted); font-style: italic; text-align: center;">No notes yet. Click Edit to add your first note!</p>';
     }
 }
 
@@ -2067,29 +2076,14 @@ document.addEventListener("click", (e) => {
 // Toast notification system
 window.showToast = function (message, duration = 3000, type = 'info') {
     const toast = document.createElement('div');
-    toast.style.cssText = `
-        position: fixed;
-        top: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${type === 'success' ? '#c9ffd6ff' : type === 'error' ? '#ffd7dbff' : '#d1d1d1ff'};
-        color: Black;
-        padding: 12px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 100000;
-        font-size: 0.95rem;
-        font-weight: 500;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    `;
+    toast.className = `toast-notification toast-notification--${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    setTimeout(() => toast.style.opacity = '1', 10);
+    setTimeout(() => toast.classList.add('toast-notification--visible'), 10);
 
     setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.classList.remove('toast-notification--visible');
         setTimeout(() => toast.remove(), 300);
     }, duration);
 };
@@ -2101,14 +2095,14 @@ window.showConfirmation = function (message, onConfirm, onCancel) {
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px; margin: 0;">
-            <div class="modal-header" style="background: #f8f9fa;">
+            <div class="modal-header">
                 <span class="modal-title">Confirm Action</span>
             </div>
             <div class="modal-body">
                 <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
                 <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
-                    <button id="confirmCancel" style="padding: 8px 20px; background: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
-                    <button id="confirmOk" style="padding: 8px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">OK</button>
+                    <button id="confirmCancel" class="confirm-btn confirm-btn--neutral">Cancel</button>
+                    <button id="confirmOk" class="confirm-btn confirm-btn--primary">OK</button>
                 </div>
             </div>
         </div>
@@ -2137,15 +2131,15 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
     modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px; margin: 0;">
-            <div class="modal-header" style="background: #f8f9fa;">
+            <div class="modal-header">
                 <span class="modal-title">Unsaved Changes</span>
             </div>
             <div class="modal-body">
                 <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
                 <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
-                    <button id="confirmCancel" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Cancel</button>
-                    <button id="confirmDiscard" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Discard</button>
-                    <button id="confirmSave" style="padding: 8px 20px; background: #bababaff; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">Save</button>
+                    <button id="confirmCancel"  class="confirm-btn confirm-btn--neutral">Cancel</button>
+                    <button id="confirmDiscard" class="confirm-btn confirm-btn--neutral">Discard</button>
+                    <button id="confirmSave"    class="confirm-btn confirm-btn--neutral">Save</button>
                 </div>
             </div>
         </div>
@@ -2354,11 +2348,11 @@ function buildAvatarGrid(mode) {
     AVATARS.forEach(src => {
         const img = document.createElement('img');
         img.src = src;
-        img.style.cssText = `width: 100%; aspect-ratio: 1; border-radius: 50%; cursor: pointer; border: 3px solid ${(tempSelectedAvatar || profileAvatar) === src ? '#007bff' : '#e9ecef'}; transition: border-color 0.2s; box-sizing: border-box;`;
+        img.className = 'avatar-option' + ((tempSelectedAvatar || profileAvatar) === src ? ' selected' : '');
         img.onclick = () => {
             tempSelectedAvatar = src;
-            grid.querySelectorAll('img').forEach(i => i.style.borderColor = '#e9ecef');
-            img.style.borderColor = '#007bff';
+            grid.querySelectorAll('img').forEach(i => i.classList.remove('selected'));
+            img.classList.add('selected');
         };
         grid.appendChild(img);
     });
@@ -2477,7 +2471,7 @@ function openParityTracingPersonalization() {
     }
 
     const config = {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--surface)',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -2509,9 +2503,9 @@ function generateSidebarHTML() {
         <div class="sidebar-overlay" onclick="closeSidebar()"></div>
         <div class="sidebar-content">
             <div class="sidebar-header">
-                <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: #2d3748;">Menu</h2>
+                <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-ui);">Menu</h2>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="sidebar-close-btn instruction-btn" onclick="event.stopPropagation(); showHomepageInfoModal();" aria-label="Instructions" style="color: #495057;">
+                    <button class="sidebar-close-btn instruction-btn" onclick="event.stopPropagation(); showHomepageInfoModal();" aria-label="Instructions" style="color: var(--text-secondary);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -2549,7 +2543,7 @@ function generateSidebarHTML() {
                 </button>
                 <div class="sidebar-divider"></div>
                 <div style="padding: 0;">
-                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: #2d3748; font-weight: 500;" onmouseover="this.style.background='#f8f9fa'" onmouseout="this.style.background='transparent'">
+                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: var(--text-ui); font-weight: 500;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                         </svg>
@@ -2608,25 +2602,23 @@ function initializePresetSelector() {
 
     if (!currentPresetName || !presetOptions) return;
 
-    // Set current preset name
     currentPresetName.textContent = currentPreset.replace(/_/g, ' ').replace(/'/g, "'");
 
-    // Populate preset options
     presetOptions.innerHTML = '';
     for (const presetName in window.PRESET_CONFIG) {
         const displayName = presetName.replace(/_/g, ' ').replace(/'/g, "'");
         const isActive = presetName === currentPreset;
 
         const optionDiv = document.createElement('div');
-        optionDiv.style.cssText = `padding: 12px 20px; cursor: pointer; background: ${isActive ? '#e3f2fd' : 'transparent'}; color: ${isActive ? '#007bff' : '#2d3748'}; font-weight: ${isActive ? '600' : '500'}; font-size: 0.9rem; transition: background 0.2s;`;
+        optionDiv.className = 'preset-option' + (isActive ? ' active' : '');
         optionDiv.textContent = displayName;
 
         optionDiv.addEventListener('click', () => handlePresetChange(presetName));
         optionDiv.addEventListener('mouseover', () => {
-            if (!isActive) optionDiv.style.background = '#f8f9fa';
+            if (!isActive) optionDiv.classList.add('preset-option--hover');
         });
         optionDiv.addEventListener('mouseout', () => {
-            if (!isActive) optionDiv.style.background = 'transparent';
+            optionDiv.classList.remove('preset-option--hover');
         });
 
         presetOptions.appendChild(optionDiv);
@@ -2688,43 +2680,21 @@ window.closeSidebar = function () {
 
 // Quick info popup function
 window.showQuickInfo = function (message) {
-    // Remove any existing quick info
     const existing = document.getElementById('quickInfoPopup');
     if (existing) existing.remove();
 
     const popup = document.createElement('div');
     popup.id = 'quickInfoPopup';
-    popup.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.85);
-        z-index: 100000;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-    `;
-
+    popup.className = 'quick-info-overlay';
     popup.innerHTML = `
-        <div style="background: white; padding: 24px; border-radius: 12px; max-width: 500px; width: 100%; box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
-            <div style="font-size: 1rem; line-height: 1.6; color: #333;">${message}</div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button onclick="document.getElementById('quickInfoPopup').remove()" style="padding: 10px 24px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Got it</button>
-            </div>
+        <div class="quick-info-box">
+            <div>${message}</div>
+            <button class="quick-info-btn" onclick="document.getElementById('quickInfoPopup').remove()">Got it</button>
         </div>
     `;
 
-    // Close on background click
-    popup.onclick = (e) => {
-        if (e.target === popup) {
-            popup.remove();
-        }
-    };
+    popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
 
-    // Close on Escape key
     const escHandler = (e) => {
         if (e.key === 'Escape') {
             popup.remove();
