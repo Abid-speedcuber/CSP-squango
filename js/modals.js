@@ -769,7 +769,7 @@ function openNewParityAnalysis(scramble) {
     }
 
     window.ParityTracerLibrary.createModal({
-        backgroundColor: 'var(--surface)',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -2406,7 +2406,7 @@ function openParityTracingPersonalization() {
     }
 
     const config = {
-        backgroundColor: 'var(--surface)',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',

@@ -1808,34 +1808,34 @@
 
         const evilInner = document.createElement('div');
         evilInner.style.cssText = `
-            background:#fff; border-radius:14px; width:min(560px,100%);
+            background:var(--surface); border-radius:14px; width:min(560px,100%);
             max-height:80vh; display:flex; flex-direction:column;
             box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden;
         `;
 
         evilInner.innerHTML = `
             <!-- Header -->
-            <div style="flex-shrink:0; padding:16px 20px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; align-items:center; justify-content:space-between;">
+            <div style="flex-shrink:0; padding:16px 20px; background:var(--surface2); border-bottom:1px solid var(--surface-border); display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:1.15rem; font-weight:700; color:#2d3748;">Per-case Evilness settings</span>
-                    <span id="evilCountBar" style="font-size:0.8rem; color:#888; font-weight:400;"></span>
+                    <span style="font-size:1.15rem; font-weight:700; color:var(--text-ui);">Per-case Evilness settings</span>
+                    <span id="evilCountBar" style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;"></span>
                 </div>
-                <button id="evilModalCloseBtn" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:#666; line-height:1; padding:0;">&times;</button>
+                <button id="evilModalCloseBtn" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
             </div>
             <!-- Search + Bulk action bar -->
-            <div style="flex-shrink:0; padding:10px 14px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; gap:8px; align-items:center;">
+            <div style="flex-shrink:0; padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--surface-border); display:flex; gap:8px; align-items:center;">
                 <div style="position:relative; flex:1; min-width:0;">
                     <input type="text" id="evilSearchInput"
                         placeholder="Search cases..."
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid #dee2e6; border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;">
+                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid var(--border-color); border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box; background:var(--surface); color:var(--text-ui);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         style="position:absolute; left:9px; top:50%; transform:translateY(-50%); width:15px; height:15px; pointer-events:none;">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                 </div>
                 <select id="evilBulkAction"
-                    style="padding:7px 8px; border:1px solid #dee2e6; border-radius:7px; font-size:0.82rem; background:white; cursor:pointer; color:#495057; flex-shrink:0;"
+                    style="padding:7px 8px; border:1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;"
                     onchange="this.value && (() => { window._evilBulkHandler && window._evilBulkHandler(this.value); this.value=''; })()">
                     <option value="" disabled selected>Select…</option>
                     <option value="mark_all_evil">Mark All Evil</option>
@@ -1851,11 +1851,11 @@
                 gap:7px; align-content:start;
             "></div>
             <!-- Footer -->
-            <div style="flex-shrink:0; padding:12px 16px; background:#f8f9fa; border-top:1px solid #e9ecef; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
-                <span id="evilUnsavedDot" style="font-size:0.8rem; color:#e08000; font-weight:600; display:none;">● Unsaved changes</span>
-                <button id="evilResetBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
-                <button id="evilCancelBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
-                <button id="evilSaveBtn" style="padding:6px 14px; background:#28a745; color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
+            <div style="flex-shrink:0; padding:12px 16px; background:var(--surface2); border-top:1px solid var(--surface-border); display:flex; gap:8px; justify-content:flex-end; align-items:center;">
+                <span id="evilUnsavedDot" style="font-size:0.8rem; color:var(--warning-color,#e08000); font-weight:600; display:none;">● Unsaved changes</span>
+                <button id="evilResetBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
+                <button id="evilCancelBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
+                <button id="evilSaveBtn" style="padding:6px 14px; background:var(--bar-learned); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
             </div>
         `;
 

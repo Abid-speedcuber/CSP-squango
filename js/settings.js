@@ -77,9 +77,9 @@ function _buildSettingsModal() {
     const sidebar = document.createElement('nav');
     sidebar.id = 'settingsSidebar';
     sidebar.style.cssText = `
-        flex-shrink: 0; width: 140px; background: var(--surface2);
+        flex-shrink: 0; width: 58px; background: var(--surface2);
         border-right: 1px solid var(--surface-border);
-        display: flex; flex-direction: column; gap: 2px; padding: 12px 8px;
+        display: flex; flex-direction: column; gap: 2px; padding: 10px 6px;
         overflow-y: auto;
     `;
 
@@ -87,15 +87,14 @@ function _buildSettingsModal() {
         const btn = document.createElement('button');
         btn.id = `settingsTab_${tab.id}`;
         btn.dataset.tab = tab.id;
+        btn.title = tab.label;
         btn.style.cssText = `
-            display: flex; flex-direction: column; align-items: center; gap: 5px;
-            padding: 10px 6px; border-radius: 10px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            padding: 9px; border-radius: 10px; border: none; cursor: pointer;
             background: ${_settingsActiveTab === tab.id ? 'var(--surface-border)' : 'transparent'};
-            color: ${_settingsActiveTab === tab.id ? 'var(--text-ui)' : 'var(--text-secondary)'};
-            font-size: 0.72rem; font-weight: 600; transition: all 0.15s; width: 100%;
-            line-height: 1.2;
+            transition: all 0.15s; width: 100%;
         `;
-        btn.innerHTML = `<img src="${tab.icon}" width="24" height="24" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.6'}"><span>${tab.label}</span>`;
+        btn.innerHTML = `<img src="${tab.icon}" width="24" height="24" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.55'}">`;
         btn.addEventListener('click', () => _switchTab(tab.id));
         sidebar.appendChild(btn);
     });
@@ -124,8 +123,7 @@ function _switchTab(tabId) {
         if (!btn) return;
         const active = t.id === tabId;
         btn.style.background = active ? 'var(--surface-border)' : 'transparent';
-        btn.style.color = active ? 'var(--text-ui)' : 'var(--text-secondary)';
-        btn.querySelector('img').style.opacity = active ? '1' : '0.6';
+        btn.querySelector('img').style.opacity = active ? '1' : '0.55';
     });
     _renderTab(tabId);
 }
@@ -462,11 +460,11 @@ function _renderTrainerTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="tr_imgSizeVal">${imgSize}px</span></label>
                 <span class="info-wrapper">
                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls the scramble image size while training. Larger images are easier to read; smaller images leave more room for the timer.</span>
+                    <span class="info-box">Controls the scramble image size while training, and also in the Evilness Quiz and Parity Quiz. Larger images are easier to read; smaller images leave more room for the timer. Updates the trainer live.</span>
                 </span>
             </div>
             <input type="range" id="tr_imgSize" min="100" max="400" step="10" value="${imgSize}"
-                style="width:100%;cursor:pointer;" oninput="_trSave('trainingScrambleImageSize',this.value,'tr_imgSizeVal',v=>v+'px')">
+                style="width:100%;cursor:pointer;" oninput="_trSaveImgSize(this.value)">
         </div>
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -527,6 +525,33 @@ window._trSave = function(key, val, displayId, fmt) {
     if (el) el.textContent = fmt ? fmt(val) : val;
 };
 window._trSaveBool = function(key, val) { localStorage.setItem(key, val.toString()); };
+window._trSaveImgSize = function(val) {
+    localStorage.setItem('trainingScrambleImageSize', val);
+    const el = document.getElementById('tr_imgSizeVal');
+    if (el) el.textContent = val + 'px';
+    // Live update: if trainer is open, regenerate the scramble image
+    if (typeof trainingScrambleImageSize !== 'undefined') trainingScrambleImageSize = parseInt(val);
+    const modal = document.getElementById('trainingModal');
+    if (modal && modal.classList.contains('active')) {
+        if (typeof window._multiCaseMode !== 'undefined' && window._multiCaseMode) {
+            if (typeof regenerateMultiScrambleLookahead === 'function') regenerateMultiScrambleLookahead();
+        } else {
+            if (typeof regenerateScrambleLookaheadLegacy === 'function') regenerateScrambleLookaheadLegacy();
+        }
+    }
+    // Live update evilness quiz if open
+    const evilModal = document.getElementById('evilnessQuizModal');
+    if (evilModal) {
+        const imgEl = document.getElementById('evilQuizImage');
+        if (imgEl && typeof window._evilCurrentHexCode !== 'undefined' && window._evilCurrentHexCode) {
+            try {
+                const state = parseHexFormat(window._evilCurrentHexCode);
+                const notation = window.sq1Tools.scrambleFromState(state);
+                imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
+            } catch(e) {}
+        }
+    }
+};
 window._trApplyTextSize = function(val) {
     const el = document.getElementById('trainingScramble');
     if (el) { el.style.fontSize = val + 'px'; if (typeof trainingScrambleTextSize !== 'undefined') trainingScrambleTextSize = parseInt(val); }

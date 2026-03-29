@@ -400,7 +400,7 @@ function openParityAnalysisFromTraining() {
     }
 
     window.ParityTracerLibrary.createModal({
-        backgroundColor: 'var(--surface)',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -1630,14 +1630,14 @@ function startEvilnessQuiz(chosenCaseNames) {
                 <div class="training-modal-image" id="evilQuizImage"></div>
             </div>
             <div class="training-modal-timer" id="evilQuizTimer">0.000</div>
-            <div id="evilQuizStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
+            <div id="evilQuizStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
                     <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
                     <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll be shown an image of a scramble. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
                     </div>
-                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
@@ -1750,6 +1750,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         questionCount++;
 
         currentHexCode = generateHexFromShapeIndex(currentItem.idx);
+        window._evilCurrentHexCode = currentHexCode;
         let imgHTML = '';
         try {
             const state = parseHexFormat(currentHexCode);
@@ -1869,9 +1870,9 @@ function startEvilnessQuiz(chosenCaseNames) {
         <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
         <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
             You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
-            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Bvil.
+            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
         </div>
-        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
     </div>`;
                 timerZone.appendChild(startOverlay);
                 document.getElementById('evilQuizStartBtn').addEventListener('click', () => {
@@ -2210,14 +2211,14 @@ function startColorRecognitionPractice() {
         <div class="training-modal-timer-zone" id="colorRecogTimerZone" style="position:relative;flex-direction:column;gap:1rem;justify-content:center;align-items:center;cursor:default;">
             <div id="colorRecogTrio" style="display:flex;justify-content:center;gap:1rem;"></div>
             <div class="training-modal-timer" id="colorRecogTimer">0.000</div>
-            <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
+            <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
                     <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Parity Quiz</div>
                     <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                     </div>
-                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
@@ -2368,8 +2369,8 @@ function startColorRecognitionPractice() {
                 const timerZone = document.getElementById('colorRecogTimerZone');
                 const startOverlay = document.createElement('div');
                 startOverlay.id = 'colorRecogStartOverlay';
-                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
-                startOverlay.innerHTML = `<button id="colorRecogStartBtn" style="padding:1rem 2.5rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start Color Quiz</button>`;
+                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+                startOverlay.innerHTML = `<button id="colorRecogStartBtn" style="padding:1rem 2.5rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;">Start Color Quiz</button>`;
                 timerZone.appendChild(startOverlay);
                 document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
                     startOverlay.remove();
