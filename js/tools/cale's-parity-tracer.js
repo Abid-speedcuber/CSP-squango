@@ -3475,10 +3475,7 @@
             }
 
             settingsBtnElement.addEventListener('click', () => {
-                closeBtnElement.style.display = 'none';
-                settingsBtnElement.style.display = 'none';
-                // Open the new settings modal
-                showParityTracerSettingsModal(modal, config, closeBtnElement, null, settingsBtnElement);
+                window.openUnifiedSettings('parity');
             });
 
             // Close on backdrop click

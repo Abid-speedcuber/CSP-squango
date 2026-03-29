@@ -1201,8 +1201,10 @@ function regenerateScrambleLookahead() {
 }
 
 function openTrainingSettingsModal() {
+    window.openUnifiedSettings('trainer');
+}
+function _legacyOpenTrainingSettingsModal_unused() {
     pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
-
     let settingsModal = document.getElementById('trainingSettingsModal');
     if (!settingsModal) {
         settingsModal = document.createElement('div');

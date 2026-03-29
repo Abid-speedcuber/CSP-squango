@@ -72,21 +72,6 @@ function generateModalHTML() {
                             </div>
                         </div>
 
-<div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
-    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-        <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Scramble Image Size: <span id="sizeValue">200</span>px</label>
-        <span class="info-wrapper">
-            <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-            <span class="info-box">This setting controls the image size in the trainer, Parity Tracer, and alg animator. It does NOT affect the size of the images on the home screen.</span>
-        </span>
-    </div>
-    <input type="range" id="imageSizeSlider" min="100" max="400" step="10" value="200" style="width: 100%; cursor: pointer;" oninput="updateImageSizePreview(this.value)">
-    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-top: 5px;">
-        <span>Small (100px)</span>
-        <span>Large (400px)</span>
-    </div>
-</div>
-
                         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--surface-border);">
                             <div onclick="if(event.target === this || event.target.closest('span:not(.info-wrapper)')) openColorSchemeModal()" class="settings-action-btn" style="padding: 12px 20px; border-radius: 10px; cursor: pointer; width: 100%; margin-bottom: 10px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.05); position: relative; display: flex; align-items: center; justify-content: space-between;" onmouseover="this.style.transform='translateY(-1px)'; this.style.boxShadow='0 2px 6px rgba(0,0,0,0.1)'; this.style.borderColor='var(--border-color)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)'; this.style.borderColor='var(--border-color)'">
                                 <span>Color Scheme Settings</span>
@@ -562,59 +547,11 @@ function saveModalData(name) {
 */
 
 function openSettingsModal() {
-    const profileModal = document.getElementById('profileModal');
-    const settingsModal = document.getElementById('settingsModal');
-    if (!settingsModal) return;
-
-    window.modalScrollY = window.scrollY;
-    document.body.style.top = `-${window.modalScrollY}px`;
-    document.documentElement.classList.add('scroll-locked');
-    settingsModal.classList.add('active');
-
-    const hintToggleCheckbox = document.getElementById('hintToggle');
-    if (hintToggleCheckbox) hintToggleCheckbox.checked = showHints;
-
-    const showPathsToggle = document.getElementById('showPathsToggle');
-    if (showPathsToggle) showPathsToggle.checked = showPaths;
-
-    const dynamicParityToggle = document.getElementById('dynamicParityToggle');
-    if (dynamicParityToggle) dynamicParityToggle.checked = useDynamicParity;
-
-    const priorityLearningToggle = document.getElementById('priorityLearningToggle');
-    if (priorityLearningToggle) priorityLearningToggle.checked = enablePriorityLearning;
-
-    const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
-    if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
-
-    const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
-    if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
-
-    const algFontSizeSlider = document.getElementById('algFontSizeSlider');
-    if (algFontSizeSlider) {
-        algFontSizeSlider.value = algorithmFontSize;
-        document.getElementById('algFontSizeValue').textContent = algorithmFontSize;
-    }
-
-    const imageSizeSlider = document.getElementById('imageSizeSlider');
-    if (imageSizeSlider) {
-        imageSizeSlider.value = scrambleImageSize;
-        document.getElementById('sizeValue').textContent = scrambleImageSize;
-    }
-
-    const enhancedAccessToggle = document.getElementById('enhancedAccessToggle');
-    if (enhancedAccessToggle) enhancedAccessToggle.checked = enhancedAccess;
-
-    populatePresetDropdown();
-
-    pushModalState('settingsModal', closeSettingsModal);
+    window.openUnifiedSettings('homescreen');
 }
 
 function closeSettingsModal() {
-    const settingsModal = document.getElementById('settingsModal');
-    if (!settingsModal) return;
-    settingsModal.classList.remove('active');
-    document.documentElement.classList.remove('scroll-locked');
-    window.scrollTo(0, window.modalScrollY || 0);
+    _closeSettingsModal();
 }
 
 function handlePresetChange(presetName) {
@@ -766,9 +703,7 @@ function populatePresetDropdown(selectorId = 'presetSelector') {
 // Settings button click handler
 document.addEventListener('DOMContentLoaded', () => {
     const settingsBtn = document.getElementById('settingsBtn');
-    if (settingsBtn) {
-        settingsBtn.onclick = openSettingsModal;
-    }
+    if (settingsBtn) settingsBtn.onclick = () => window.openUnifiedSettings('homescreen');
 });
 
 // Color Scheme Modal Functions
@@ -2537,7 +2472,7 @@ function generateSidebarHTML() {
                     <img src="res/tracing.svg" alt="Parity Tracer">
                     <span>Parity Tracer</span>
                 </button>
-                <button class="sidebar-item" onclick="openSettingsModal(); closeSidebar();">
+                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(()=>window.openUnifiedSettings('homescreen'),350);">
                     <img src="res/settings.svg" alt="Settings">
                     <span>Personalization</span>
                 </button>
