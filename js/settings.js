@@ -5,9 +5,9 @@
 */
 
 const SETTINGS_TABS = [
-    { id: 'homescreen',    label: 'Homescreen',    icon: 'res/settings-icons/homescreen_settings.svg' },
-    { id: 'parity',        label: 'Parity Tracer', icon: 'res/settings-icons/parity_tracer_settings.svg' },
-    { id: 'trainer',       label: 'Trainer',       icon: 'res/settings-icons/trainer_settings.svg' },
+    { id: 'homescreen',    label: 'Personalization',    icon: 'res/settings.svg' },
+    { id: 'parity',        label: 'Parity Tracer', icon: 'res/tracing.svg' },
+    { id: 'trainer',       label: 'Trainer',       icon: 'res/training.svg' },
     { id: 'animate',       label: 'Alg Animator',  icon: 'res/settings-icons/animate_alg_settings.svg' },
 ];
 
@@ -204,6 +204,9 @@ function _actionBtn(label, onclick, tipHtml) {
 function _renderHomescreenTab(panel) {
     panel.innerHTML = `
         ${_sectionTitle('Display')}
+        ${_row('Dark Mode',
+            _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'toggleTheme(this.checked)'),
+            'Switch between light and dark mode.')}
         ${_row('Show Tracing Guides',
             _toggle('hs_hintToggle', showHints, 'toggleHints(this.checked)'),
             'Show/hide the numbered tracing guide overlays on case images. The numbers indicate tracing order.<br><br><strong>Keyboard shortcut:</strong> Alt+T')}
@@ -441,6 +444,14 @@ function _triggerParityLiveUpdate() {
     const input = backdrop.querySelector('input[type="text"]');
     if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
 }
+
+window.toggleTheme = function(isDark) {
+    const next = isDark ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('sqg-csp-theme', next);
+    const toggle = document.getElementById('hs_themeToggle');
+    if (toggle) toggle.checked = isDark;
+};
 
 // ── TAB: Trainer ──────────────────────────────────────────────────────────────
 

@@ -2473,8 +2473,8 @@ function generateSidebarHTML() {
                     <span>Parity Tracer</span>
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(()=>window.openUnifiedSettings('homescreen'),350);">
-                    <img src="res/settings.svg" alt="Settings">
-                    <span>Personalization</span>
+                    <img src="res/training-settings.svg" alt="Settings">
+                    <span>Settings</span>
                 </button>
                 <div class="sidebar-divider"></div>
                 <div style="padding: 0;">

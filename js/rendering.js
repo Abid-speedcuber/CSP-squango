@@ -368,11 +368,11 @@ function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
     return algoArray.map((algo, idx) => {
         const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
         const meta = getAlgDisplayMeta(algo, caseName);
-        const prefix = meta.mirrored ? '<span style="color: var(--z2-prefix-color); margin-right:4px;"><big>&lt;</big><small>z2</small><big>&gt;</big></span>' : '';
+        const prefix = meta.mirrored ? '<span style="color: var(--z2-prefix-color); margin-right:4px; display:inline; vertical-align:baseline; white-space:nowrap;"><big style="font-size:1em;">&lt;</big><small>z2</small><big style="font-size:1em;">&gt;</big></span>' : '';
         const colorStyle = meta.invalid ? 'color: var(--algo-invalid-color);' : '';
         const wrapStyle = meta.invalid
-            ? 'display: block; opacity: 0.18;'
-            : 'display: block;';
+            ? 'display: flex; align-items: baseline; flex-wrap: wrap; opacity: 0.18;'
+            : 'display: flex; align-items: baseline; flex-wrap: wrap;';
         return `<div class="algo-line algo-interactive"
                      id="${algoId}"
                      data-algo="${algo.replace(/"/g, '&quot;')}"
@@ -1236,16 +1236,4 @@ function highlightPartialMatch(text, searchTerm) {
     if (!searchTerm) return text;
     const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
     return text.replace(regex, '<mark class="search-hl">$1</mark>');
-}
-
-// theme toggle
-const themeToggleBtn = document.getElementById('themeToggleBtn');
-if (themeToggleBtn) {
-    themeToggleBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const html = document.documentElement;
-        const next = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-        html.setAttribute('data-theme', next);
-        localStorage.setItem('sqg-csp-theme', next);
-    });
 }
