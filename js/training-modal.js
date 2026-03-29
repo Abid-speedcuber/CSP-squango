@@ -1605,7 +1605,7 @@ function startEvilnessQuiz(chosenCaseNames) {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display:flex;gap:10px;align-items:center;">
-                <span class="training-modal-title" id="evilQuizCaseCount">${chosenCaseNames.length} cases selected</span>
+                <button class="training-modal-title" id="evilQuizCaseCount" style="background:none;border:none;cursor:pointer;padding:0;font:inherit;text-align:left;color:var(--link-color);text-decoration:underline;" title="Select cases">${chosenCaseNames.length} cases selected</button>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
                 <button class="training-modal-refresh" id="evilQuizPrevBtn" title="Previous" style="display:none;">
@@ -1613,9 +1613,6 @@ function startEvilnessQuiz(chosenCaseNames) {
                 </button>
                 <button class="training-modal-refresh" id="evilQuizNextBtn" title="Next">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
-                </button>
-                <button class="training-modal-refresh" id="evilQuizCasesBtn" title="Select cases">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 </button>
                 <button class="training-modal-refresh" id="evilQuizSettingsBtn" title="Settings">
                     <img src="res/training-settings.svg" height="20px" width="20px">
@@ -1681,42 +1678,24 @@ function startEvilnessQuiz(chosenCaseNames) {
 
     // Settings modal
     function openEvilQuizSettings() {
-        let sm = document.getElementById('evilQuizSettingsModal');
-        if (sm) { sm.classList.add('active'); return; }
-        sm = document.createElement('div');
-        sm.id = 'evilQuizSettingsModal';
-        sm.className = 'training-info-modal active';
-        sm.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Evilness Quiz Settings</span>
-                    <button class="training-info-close" id="evilQuizSettingsClose">&times;</button>
-                </div>
-                <div class="training-info-body" style="overflow-y:auto;flex:1;">
-                    <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:600;color:var(--text-ui);">Scramble Image Size: <span id="evilQuizImgSizeVal">${trainingScrambleImageSize}px</span></label>
-                        <input type="range" id="evilQuizImgSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width:100%;">
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(sm);
-        document.getElementById('evilQuizSettingsClose').addEventListener('click', () => sm.classList.remove('active'));
-        document.getElementById('evilQuizImgSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleImageSize = parseInt(e.target.value);
-            document.getElementById('evilQuizImgSizeVal').textContent = trainingScrambleImageSize + 'px';
-            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            const mainSlider = document.getElementById('trainingImageSizeSlider');
-            if (mainSlider) { mainSlider.value = trainingScrambleImageSize; document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px'; }
+    window.openUnifiedSettings('trainer');
+    // Patch: after the settings modal opens, hook the image size slider to update the quiz image
+    setTimeout(() => {
+        const slider = document.getElementById('tr_imgSize');
+        if (!slider) return;
+        const orig = slider.oninput;
+        slider.addEventListener('input', () => {
             if (currentHexCode) {
                 try {
                     const state = parseHexFormat(currentHexCode);
                     const notation = window.sq1Tools.scrambleFromState(state);
-                    document.getElementById('evilQuizImage').innerHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, typeof colorScheme !== 'undefined' ? colorScheme : {});
-                } catch (e) { }
+                    const imgEl = document.getElementById('evilQuizImage');
+                    if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
+                } catch (e) {}
             }
         });
-    }
+    }, 100);
+}
 
     function renderSidebar() {
         const list = document.getElementById('evilQuizLogList');
@@ -1821,7 +1800,7 @@ function startEvilnessQuiz(chosenCaseNames) {
 
     document.getElementById('evilQuizClose').addEventListener('click', closeQuiz);
     document.getElementById('evilQuizNextBtn').addEventListener('click', () => { if (quizRunning) nextQuestion(); });
-    document.getElementById('evilQuizCasesBtn').addEventListener('click', () => {
+    document.getElementById('evilQuizCaseCount').addEventListener('click', () => {
         openSelectorModal('sq1-selector-evilness', (chosen) => {
             rebuildIndices(chosen);
             document.getElementById('evilQuizCaseCount').textContent = `${chosen.length} cases selected`;
@@ -1864,7 +1843,7 @@ function startEvilnessQuiz(chosenCaseNames) {
                 const timerZone = document.getElementById('evilQuizTimerZone');
                 const startOverlay = document.createElement('div');
                 startOverlay.id = 'evilQuizStartOverlay';
-                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
                 startOverlay.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
         <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
@@ -2248,8 +2227,7 @@ function startColorRecognitionPractice() {
             const col = faceColors[face];
             const r2 = parseInt(col.substr(1, 2), 16), g2 = parseInt(col.substr(3, 2), 16), b2 = parseInt(col.substr(5, 2), 16);
             const txtCol = ((0.299 * r2 + 0.587 * g2 + 0.114 * b2) / 255) > 0.5 ? '#000' : '#fff';
-            const label = face === 'F' ? 'Front' : face === 'R' ? 'Right' : face === 'B' ? 'Back' : 'Left';
-            return `<div style="width:90px;height:90px;border-radius:14px;background:${col};display:flex;align-items:center;justify-content:center;color:${txtCol};font-weight:700;font-size:1rem;box-shadow:0 2px 10px rgba(0,0,0,0.2);">${label}</div>`;
+            return `<div style="width:90px;height:90px;border-radius:14px;background:${col};box-shadow:0 2px 10px rgba(0,0,0,0.2);border-radius:14px;"></div>`;
         }).join('');
     }
 
@@ -2366,17 +2344,7 @@ function startColorRecognitionPractice() {
                 quizRunning = false;
                 clearInterval(timerInt);
                 removeAnswerOverlay();
-                const timerZone = document.getElementById('colorRecogTimerZone');
-                const startOverlay = document.createElement('div');
-                startOverlay.id = 'colorRecogStartOverlay';
-                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
-                startOverlay.innerHTML = `<button id="colorRecogStartBtn" style="padding:1rem 2.5rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;">Start Color Quiz</button>`;
-                timerZone.appendChild(startOverlay);
-                document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
-                    startOverlay.remove();
-                    quizRunning = true;
-                    nextQuestion();
-                });
+                showColorRecogStartOverlay();
                 return;
             }
             closeQuiz();
@@ -2401,11 +2369,31 @@ function startColorRecognitionPractice() {
         }
     });
 
-    document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
-        document.getElementById('colorRecogStartOverlay').remove();
-        quizRunning = true;
-        nextQuestion();
-    });
+    function showColorRecogStartOverlay() {
+        let existing = document.getElementById('colorRecogStartOverlay');
+        if (existing) existing.remove();
+        const timerZone = document.getElementById('colorRecogTimerZone');
+        const startOverlay = document.createElement('div');
+        startOverlay.id = 'colorRecogStartOverlay';
+        startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+        startOverlay.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Parity Quiz</div>
+                <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
+                    You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
+                    Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
+                </div>
+                <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+            </div>`;
+        timerZone.appendChild(startOverlay);
+        document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
+            startOverlay.remove();
+            quizRunning = true;
+            nextQuestion();
+        });
+    }
+
+    showColorRecogStartOverlay();
 }
 
 // ============================================================
@@ -2441,7 +2429,7 @@ window.openTrainerPickerModal = function () {
 
     const style = document.getElementById('trainerPickerStyle') || document.createElement('style');
     style.id = 'trainerPickerStyle';
-    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:#f8f9fa;border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:#007bff;background:#f0f8ff;}`;
+    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:var(--surface2);border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:var(--accent);background:var(--hover-bg);}`;
     if (!style.parentNode) document.head.appendChild(style);
 
     document.body.appendChild(picker);
