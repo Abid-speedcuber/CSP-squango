@@ -14,6 +14,27 @@ let quickEditState = {
 // Load auto-select setting from localStorage
 let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
 
+// Expand :varName: tokens in an alg string using algVariables map
+function expandAlgVariables(alg) {
+    if (!alg || !algVariables || algVariables.size === 0) return alg;
+    return alg.replace(/:([a-zA-Z_][a-zA-Z0-9_]*):/g, (match, name) => {
+        return algVariables.has(name) ? algVariables.get(name) : match;
+    });
+}
+
+// Expand variables then normalize — used on defocus
+function expandAndNormalize(alg) {
+    if (!alg || alg === 'Done!') return alg;
+    const expanded = expandAlgVariables(alg);
+    return window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(expanded) : expanded;
+}
+
+// Expand variables then normalize for live color coding only (don't mutate cell)
+function expandForColorCheck(alg) {
+    if (!alg || alg === 'Done!') return alg;
+    return expandAlgVariables(alg);
+}
+
 function generateGeneralTableRowsShell() {
     const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
     return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="general"><td colspan="${evilnessFactor ? 5 : 4}" style="height:41px;"></td></tr>`).join('');
@@ -79,7 +100,7 @@ function setupRowHandlers(row, tab) {
         });
         if (cell.classList.contains('alg-cell')) {
             cell.addEventListener('input', function() { updateAlgorithmCellParityLive(this); });
-            cell.addEventListener('blur', function() { const t = this.textContent.trim(); if (t && t !== 'Done!') this.textContent = window.ScrambleNormalizer.normalizeScramble(t); updateAlgorithmCellParity(this); });
+            cell.addEventListener('blur', function() { const t = this.textContent.trim(); if (t && t !== 'Done!') this.textContent = expandAndNormalize(t); updateAlgorithmCellParity(this); });
             cell.addEventListener('paste', function(e) { e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
         }
     });
@@ -154,6 +175,9 @@ function openQuickEditModal() {
                 <div class="quick-edit-header-right">
                     <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
                         +2
+                    </button>
+                    <button class="quick-edit-icon-btn alg-variables-btn-header" onclick="openAlgVariablesModal()" title="Algorithm Variables" style="display: none;">
+                        <img src="res/var.svg" alt="Variables">
                     </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
@@ -243,6 +267,13 @@ function openQuickEditModal() {
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
+
+    // Keep modal in sync with theme changes
+    modal._themeObserver = new MutationObserver(() => {
+        modal.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || '');
+    });
+    modal._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    modal.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || '');
 
     // Add keyboard shortcuts
     setupQuickEditKeyboardShortcuts();
@@ -359,8 +390,7 @@ function addAlgorithmColumns() {
                 td.addEventListener('blur', function () {
                     const rawText = this.textContent.trim();
                     if (rawText && rawText !== 'Done!') {
-                        const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                        this.textContent = normalized;
+                        this.textContent = expandAndNormalize(rawText);
                     }
                     updateAlgorithmCellParity(this);
                 });
@@ -554,9 +584,7 @@ function setupQuickEditCellHandlers() {
             cell.addEventListener('blur', function () {
                 const rawText = this.textContent.trim();
                 if (rawText && rawText !== 'Done!') {
-                    // Normalize the scramble
-                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                    this.textContent = normalized;
+                    this.textContent = expandAndNormalize(rawText);
                 }
                 updateAlgorithmCellParity(this);
             });
@@ -745,7 +773,7 @@ function updateAlgorithmCellParityLive(cell) {
     const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
     try {
-        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+        const normalized = window.ScrambleNormalizer.normalizeScramble(expandForColorCheck(alg));
         const result = window.algToShapeIndex(normalized);
         const resultShapeIndex = result.shapeIndex;
 
@@ -829,14 +857,17 @@ function switchQuickEditTab(tab) {
     const algorithmsTab = document.getElementById('quickEditAlgorithmsTab');
     const addColumnsBtn = document.querySelector('.add-columns-btn-header');
 
+    const varBtn = document.querySelector('.alg-variables-btn-header');
     if (tab === 'general') {
         generalTab.style.display = 'block';
         algorithmsTab.style.display = 'none';
         if (addColumnsBtn) addColumnsBtn.style.display = 'none';
+        if (varBtn) varBtn.style.display = 'none';
     } else {
         generalTab.style.display = 'none';
         algorithmsTab.style.display = 'block';
         if (addColumnsBtn) addColumnsBtn.style.display = '';
+        if (varBtn) varBtn.style.display = '';
         // Initialize algorithm table headers when switching to algorithm tab
         updateAlgorithmTableHeaders();
     }
@@ -1346,8 +1377,9 @@ function closeQuickEditModal() {
 
 function forceCloseQuickEditModal() {
     const modal = document.getElementById('quickEditModal');
-    if (modal) {
+        if (modal) {
         if (modal._lazyObserver) modal._lazyObserver.disconnect();
+        if (modal._themeObserver) modal._themeObserver.disconnect();
         modal.remove();
         document.body.classList.remove('modal-open');
     }
@@ -1443,6 +1475,128 @@ window.closeQuickEditInfoModal = function () {
     }
 };
 
+// REPLACE:
+function openAlgVariablesModal() {
+    const existing = document.getElementById('algVariablesModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'algVariablesModal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 10100;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.5);
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: var(--surface);
+            border-radius: 14px;
+            width: min(560px, 95vw);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+        ">
+            <div style="
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 18px 22px; border-bottom: 1px solid var(--surface-border);
+                background: var(--surface); flex-shrink: 0;
+            ">
+                <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-ui);">Algorithm Variables</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button onclick="saveAlgVariables()" style="
+                        padding: 7px 18px; background: var(--accent); color: white;
+                        border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+                    ">Save</button>
+                    <button onclick="document.getElementById('algVariablesModal').remove()" style="
+                        background: none; border: none; cursor: pointer; font-size: 1.5rem;
+                        color: var(--sidebar-close-color); line-height: 1; padding: 2px 6px;
+                    ">&times;</button>
+                </div>
+            </div>
+            <div style="padding: 14px 22px 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
+                Use <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:0.82rem;">:varName:</code> inside any algorithm to insert the variable's value at defocus.
+                Variable values are normalized when you click away.
+            </div>
+            <div style="overflow-y: auto; flex: 1; padding: 10px 22px 18px;">
+                <table style="width:100%; border-collapse: collapse;" id="algVarTable">
+                    <thead>
+                        <tr>
+                            <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border); width:28%;">Name</th>
+                            <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border);">Value</th>
+                            <th style="width:36px; border-bottom:1px solid var(--surface-border);"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="algVarTableBody">
+                        ${renderAlgVarRows()}
+                    </tbody>
+                </table>
+                <button onclick="addAlgVarRow()" style="
+                    margin-top: 12px; padding: 7px 16px; background: var(--surface2);
+                    border: 1px dashed var(--border-color); border-radius: 7px;
+                    cursor: pointer; font-size: 0.9rem; color: var(--text-ui);
+                    width: 100%; transition: background 0.15s;
+                " onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">+ Add Variable</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('mousedown', e => { if (e.target === modal) modal.remove(); });
+}
+
+function renderAlgVarRows() {
+    if (!algVariables || algVariables.size === 0) return '';
+    return Array.from(algVariables.entries()).map(([name, value]) => algVarRowHTML(name, value)).join('');
+}
+
+function algVarRowHTML(name, value) {
+    return `
+        <tr class="alg-var-row">
+            <td style="padding: 6px 6px;">
+                <input class="alg-var-name" type="text" value="${name}" placeholder="name"
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;">
+            </td>
+            <td style="padding: 6px 6px;">
+                <input class="alg-var-value" type="text" value="${value}" placeholder="e.g. /(3,0)/(2,2)/"
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;"
+                    onblur="this.value = this.value.trim() && this.value.trim() !== 'Done!' && window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(this.value.trim()) : this.value.trim()">
+            </td>
+            <td style="padding: 6px 4px; text-align:center;">
+                <button onclick="this.closest('tr').remove()" style="
+                    background: var(--delete-btn-bg); border: none; border-radius: 5px;
+                    cursor: pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+                "><img src="res/delete.svg" style="width:14px;height:14px;" alt="Delete"></button>
+            </td>
+        </tr>
+    `;
+}
+
+function addAlgVarRow() {
+    const tbody = document.getElementById('algVarTableBody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.className = 'alg-var-row';
+    tr.innerHTML = algVarRowHTML('', '').match(/<tr[^>]*>([\s\S]*)<\/tr>/)[1];
+    tbody.appendChild(tr);
+    tr.querySelector('.alg-var-name').focus();
+}
+
+function saveAlgVariables() {
+    const rows = document.querySelectorAll('#algVarTableBody .alg-var-row');
+    algVariables = new Map();
+    rows.forEach(row => {
+        const name = row.querySelector('.alg-var-name').value.trim().replace(/[^a-zA-Z0-9_]/g, '');
+        const value = row.querySelector('.alg-var-value').value.trim();
+        if (name && value) algVariables.set(name, value);
+    });
+    saveState();
+    document.getElementById('algVariablesModal').remove();
+    showToast('Variables saved!', 2000, 'success');
+}
+
 // Make functions globally accessible
 window.openQuickEditModal = openQuickEditModal;
 window.revertQuickEditChanges = revertQuickEditChanges;
@@ -1460,6 +1614,9 @@ window.liveSearchQuickEdit = liveSearchQuickEdit;
 window.handleReplaceEnter = handleReplaceEnter;
 window.changeFindScope = changeFindScope;
 window.addAlgorithmColumns = addAlgorithmColumns;
+window.openAlgVariablesModal = openAlgVariablesModal;
+window.saveAlgVariables = saveAlgVariables;
+window.addAlgVarRow = addAlgVarRow;
 
 // Global function to toggle auto-select text on focus
 window.setAutoSelectTextOnFocus = function (enabled) {

@@ -997,8 +997,7 @@ function openEditCaseModal(caseName) {
             input.addEventListener('blur', () => {
                 const rawText = input.value.trim();
                 if (rawText && rawText !== 'Done!') {
-                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                    input.value = normalized;
+                    input.value = typeof expandAndNormalize === 'function' ? expandAndNormalize(rawText) : window.ScrambleNormalizer.normalizeScramble(rawText);
                 }
                 updateInputColor(input);
             });
@@ -1075,7 +1074,8 @@ function updateInputColorLive(input) {
         const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
         const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
         const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
-        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+        const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
+        const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
         const result = window.algToShapeIndex(normalized);
         const idx = result.shapeIndex;
         const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
@@ -1242,8 +1242,7 @@ window.addNewAlgorithmField = function () {
     input.addEventListener('blur', () => {
         const rawText = input.value.trim();
         if (rawText && rawText !== 'Done!') {
-            const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-            input.value = normalized;
+            input.value = typeof expandAndNormalize === 'function' ? expandAndNormalize(rawText) : window.ScrambleNormalizer.normalizeScramble(rawText);
         }
         updateInputColor(input);
     });

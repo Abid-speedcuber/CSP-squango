@@ -132,6 +132,7 @@ let hideInstructions = false; // Toggle for hiding instruction buttons
 let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
 let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
 let generalNotes = ''; // HTML content for general notes
+let algVariables = new Map();
 window.enhancedAccess = localStorage.getItem('enhancedAccess') === 'true'; // Toggle for enhanced access (not exported)
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
 let currentSortMode = localStorage.getItem('sortMode') || 'probability';
@@ -438,6 +439,7 @@ function saveState() {
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
             generalNotes: generalNotes,
+            algVariables: Object.fromEntries(algVariables),
             evilnessFactor: evilnessFactor,
             evilnessStringReturn: evilnessStringReturn,
             evilnessMap: evilnessMap,
@@ -625,6 +627,7 @@ function exportData() {
         customAlgorithms: Object.fromEntries(customAlgorithms),
         svgData: window.svgData,
         generalNotes: generalNotes,
+        algVariables: Object.fromEntries(algVariables),
         evilnessFactor: evilnessFactor,
         evilnessStringReturn: evilnessStringReturn,
         evilnessMap: evilnessMap,
@@ -697,6 +700,7 @@ function importData(jsonStr) {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
+        algVariables = new Map(Object.entries(state.algVariables || {}));
 
         // Load evilness settings
         if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
@@ -717,7 +721,8 @@ function importData(jsonStr) {
         }
 
         generalNotes = state.generalNotes || '';
-
+        algVariables = new Map(Object.entries(state.algVariables || {}));
+        
         // Import evilness settings
         if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
         if (state.evilnessStringReturn !== undefined) evilnessStringReturn = state.evilnessStringReturn;
