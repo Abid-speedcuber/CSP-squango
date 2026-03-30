@@ -14,6 +14,111 @@ let quickEditState = {
 // Load auto-select setting from localStorage
 let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
 
+function generateGeneralTableRowsShell() {
+    const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="general"><td colspan="${evilnessFactor ? 5 : 4}" style="height:41px;"></td></tr>`).join('');
+}
+
+function generateAlgorithmsTableRowsShell() {
+    const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`).join('');
+}
+
+function hydrateGeneralRow(row) {
+    const item = data.find(d => d.name === row.dataset.case);
+    if (!item) return;
+    const displayName = getDisplayName(item.name);
+    const subtitle = perCaseSubtitles.get(item.name) || '';
+    const note = comments.get(item.name) || '';
+    const formattedNote = sanitizeNoteHTML(note);
+    const isEvil = evilnessMap[item.name] === true;
+    row.classList.remove('qe-lazy-row');
+    row.innerHTML = `
+        <td class="uneditable">${displayName}</td>
+        <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
+        <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
+        <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
+        ${evilnessFactor ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked;saveState();const k=this.nextElementSibling;k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)';k.querySelector('span').style.left=this.checked?'18px':'2px';"><span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span></label></td>` : ''}
+    `;
+    setupRowHandlers(row, 'general');
+}
+
+function hydrateAlgorithmsRow(row) {
+    const item = data.find(d => d.name === row.dataset.case);
+    if (!item) return;
+    const visibleCols = quickEditState.visibleAlgColumns || 6;
+    const displayName = getDisplayName(item.name);
+    const customAlgs = customAlgorithms.get(item.name);
+    let allAlgs = customAlgs ? [...(customAlgs.odd || []), ...(customAlgs.even || [])] : [...(item.odd || []), ...(item.even || [])];
+    const totalCols = Math.max(visibleCols, 6);
+    while (allAlgs.length < totalCols) allAlgs.push('');
+    row.classList.remove('qe-lazy-row');
+    row.innerHTML = `
+        <td class="uneditable display-name-col">${displayName}</td>
+        ${allAlgs.slice(0, totalCols).map((alg, idx) => `<td class="editable alg-cell" contenteditable="true" data-field="alg${idx}" data-original="${alg}" style="${idx >= visibleCols ? 'display:none;' : ''}">${alg}</td>`).join('')}
+    `;
+    setupRowHandlers(row, 'algorithms');
+    row.querySelectorAll('.alg-cell').forEach(cell => { if (cell.textContent.trim()) updateAlgorithmCellParity(cell); });
+}
+
+function setupRowHandlers(row, tab) {
+    row.querySelectorAll('.editable').forEach(cell => {
+        cell.addEventListener('focus', function() {
+            if (this.classList.contains('notes-cell')) { const r = this.dataset.rawHtml || ''; this.textContent = r; }
+            if (autoSelectTextOnFocus) { const range = document.createRange(); range.selectNodeContents(this); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+            quickEditState.lastFocusedCell = this;
+            if (tab === 'general') { const f = this.dataset.field; quickEditState.findReplaceScope = f === 'displayName' ? 'name' : f === 'subtitle' ? 'subtitle' : f === 'notes' ? 'notes' : null; }
+        });
+        cell.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.shiftKey && this.dataset.field === 'notes') { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const nr = this.closest('tr').nextElementSibling; if (nr) { if (nr.classList.contains('qe-lazy-row')) { tab === 'general' ? hydrateGeneralRow(nr) : hydrateAlgorithmsRow(nr); } const sc = nr.querySelector(`[data-field="${this.dataset.field}"]`); if (sc) sc.focus(); } return; }
+            if (e.key === 'Tab') { e.preventDefault(); const cells = Array.from(this.closest('tr').querySelectorAll('.editable')); const ci = cells.indexOf(this); if (e.shiftKey) { if (ci > 0) cells[ci-1].focus(); } else { if (ci < cells.length-1) cells[ci+1].focus(); } return; }
+        });
+        cell.addEventListener('blur', function() {
+            if (this.classList.contains('notes-cell')) { const r = this.textContent.trim(); this.dataset.rawHtml = r; this.innerHTML = sanitizeNoteHTML(r); }
+        });
+        if (cell.classList.contains('alg-cell')) {
+            cell.addEventListener('input', function() { updateAlgorithmCellParityLive(this); });
+            cell.addEventListener('blur', function() { const t = this.textContent.trim(); if (t && t !== 'Done!') this.textContent = window.ScrambleNormalizer.normalizeScramble(t); updateAlgorithmCellParity(this); });
+            cell.addEventListener('paste', function(e) { e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
+        }
+    });
+}
+
+function initQuickEditLazyLoad() {
+    const modal = document.getElementById('quickEditModal');
+    if (!modal) return;
+    const body = modal.querySelector('.quick-edit-body');
+
+    // Hydrate first ~8 visible rows immediately
+    const generalRows = Array.from(document.querySelectorAll('#quickEditGeneralBody .qe-lazy-row'));
+    const algRows = Array.from(document.querySelectorAll('#quickEditAlgorithmsBody .qe-lazy-row'));
+    generalRows.slice(0, 8).forEach(hydrateGeneralRow);
+    algRows.slice(0, 8).forEach(hydrateAlgorithmsRow);
+
+    // REPLACE:
+    // Render all remaining rows in small batches so the UI stays responsive
+    const remainingGeneral = generalRows.slice(8);
+    const remainingAlg = algRows.slice(8);
+    const allRemaining = [...remainingGeneral, ...remainingAlg];
+    let idx = 0;
+    function renderNextBatch() {
+        const batchSize = 10;
+        const end = Math.min(idx + batchSize, allRemaining.length);
+        for (; idx < end; idx++) {
+            const row = allRemaining[idx];
+            if (row.classList.contains('qe-lazy-row')) {
+                row.dataset.tab === 'general' ? hydrateGeneralRow(row) : hydrateAlgorithmsRow(row);
+            }
+        }
+        if (idx < allRemaining.length) {
+            requestAnimationFrame(renderNextBatch);
+        }
+    }
+    if (allRemaining.length > 0) requestAnimationFrame(renderNextBatch);
+    modal._lazyObserver = null;
+}
+
 function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
@@ -108,13 +213,14 @@ function openQuickEditModal() {
                         <thead>
                             <tr>
                                 <th style="width: 20%;">Case Name</th>
-                                <th style="width: 25%;">Display Name</th>
-                                <th style="width: 20%;">Subtitle</th>
-                                <th style="width: 35%;">Notes</th>
+                                <th style="width: ${evilnessFactor ? '22%' : '25%'};">Display Name</th>
+                                <th style="width: ${evilnessFactor ? '18%' : '20%'};">Subtitle</th>
+                                <th style="width: ${evilnessFactor ? '28%' : '35%'};">Notes</th>
+                                ${evilnessFactor ? '<th style="width: 12%; text-align: center;">Evil</th>' : ''}
                             </tr>
                         </thead>
                         <tbody id="quickEditGeneralBody">
-                            ${generateGeneralTableRows()}
+                            ${generateGeneralTableRowsShell()}
                         </tbody>
                     </table>
                 </div>
@@ -127,7 +233,7 @@ function openQuickEditModal() {
                             </tr>
                         </thead>
                         <tbody id="quickEditAlgorithmsBody">
-                            ${generateAlgorithmsTableRows()}
+                            ${generateAlgorithmsTableRowsShell()}
                         </tbody>
                     </table>
                 </div>
@@ -141,8 +247,8 @@ function openQuickEditModal() {
     // Add keyboard shortcuts
     setupQuickEditKeyboardShortcuts();
 
-    // Setup cell focus handlers
-    setupQuickEditCellHandlers();
+    // Lazy load rows
+    initQuickEditLazyLoad();
 }
 
 function generateGeneralTableRows() {
@@ -158,12 +264,19 @@ function generateGeneralTableRows() {
         const note = comments.get(item.name) || '';
         const formattedNote = sanitizeNoteHTML(note);
 
+        const isEvil = evilnessMap[item.name] === true;
         return `
             <tr data-case="${item.name}">
                 <td class="uneditable">${caseNameDisplay}</td>
                 <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
                 <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
                 <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
+                ${evilnessFactor ? `<td style="text-align:center; vertical-align:middle;">
+                    <label style="position:relative;display:inline-block;width:36px;height:20px;">
+                        <input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked; saveState(); const k=this.nextElementSibling; k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)'; k.querySelector('span').style.left=this.checked?'18px':'2px';">
+                        <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span>
+                    </label>
+                </td>` : ''}
             </tr>
         `;
     }).join('');
@@ -1234,6 +1347,7 @@ function closeQuickEditModal() {
 function forceCloseQuickEditModal() {
     const modal = document.getElementById('quickEditModal');
     if (modal) {
+        if (modal._lazyObserver) modal._lazyObserver.disconnect();
         modal.remove();
         document.body.classList.remove('modal-open');
     }

@@ -906,8 +906,7 @@ function openEditCaseModal(caseName) {
                     <div id="editAlgsList" style="display: flex; flex-direction: column; gap: 10px;">
                         ${allAlgs.map((alg, idx) => `
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
-                                <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-                                <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;"></span>
+                                <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
                                 <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
                                     <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
                                 </button>
@@ -917,6 +916,17 @@ function openEditCaseModal(caseName) {
                     <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
 
+                ${evilnessFactor ? `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--surface-border);">
+                    <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Mark as Evil</label>
+                    <label class="evil-switch" style="position:relative;display:inline-block;width:42px;height:24px;">
+                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseName] ? 'checked' : ''} onchange="evilnessMap['${caseName.replace(/'/g, "\\'")}'] = this.checked; saveState();" style="opacity:0;width:0;height:0;">
+                        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseName] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
+                            <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseName] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
+                        </span>
+                    </label>
+                </div>
+                ` : ''}
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--surface-border);">
                     <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
                     <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -929,6 +939,20 @@ function openEditCaseModal(caseName) {
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.documentElement.classList.add('scroll-locked');
+
+    // Wire up evil switch live animation
+    if (evilnessFactor) {
+        const evilToggle = modal.querySelector('#evilCaseToggle');
+        if (evilToggle) {
+            evilToggle.addEventListener('change', function() {
+                const span = this.nextElementSibling;
+                const knob = document.getElementById('evilSwitchKnob');
+                span.style.background = this.checked ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)';
+                if (knob) knob.style.left = this.checked ? '21px' : '3px';
+            });
+        }
+    }
+
 
     // Apply enhanced access restrictions
     if (!window.enhancedAccess) {
@@ -961,14 +985,13 @@ function openEditCaseModal(caseName) {
     setTimeout(() => {
         const inputs = modal.querySelectorAll('.alg-input');
         inputs.forEach(input => {
-            // Initial update
+            // Initial color coding for pre-filled values
             if (document.activeElement !== input) {
-                updateParityLabel(input);
+                updateInputColor(input);
             }
 
             input.addEventListener('focus', () => {
-                const parityLabel = input.parentElement.querySelector('.parity-label');
-                if (parityLabel) parityLabel.textContent = '';
+                // color stays, just clear on empty
             });
 
             input.addEventListener('blur', () => {
@@ -977,18 +1000,11 @@ function openEditCaseModal(caseName) {
                     const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
                     input.value = normalized;
                 }
-                updateParityLabel(input);
+                updateInputColor(input);
             });
 
             input.addEventListener('input', () => {
-                if (input.parityTimeout) {
-                    clearTimeout(input.parityTimeout);
-                }
-                input.parityTimeout = setTimeout(() => {
-                    if (document.activeElement !== input) {
-                        updateParityLabel(input);
-                    }
-                }, 300);
+                updateInputColorLive(input);
             });
 
             input.addEventListener('paste', (e) => {
@@ -1048,7 +1064,57 @@ function modalStripBeforeFirstSlash(alg) {
     return alg.slice(firstSlash);
 }
 
-// Helper function to update parity label
+function updateInputColorLive(input) {
+    const alg = input.value.trim();
+    if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
+    if (typeof window.algToShapeIndex === 'undefined' || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
+    try {
+        const modal = document.getElementById('editCaseModal');
+        if (!modal) return;
+        const caseName = _getEditModalCaseName(modal);
+        const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
+        const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
+        const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
+        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+        const result = window.algToShapeIndex(normalized);
+        const idx = result.shapeIndex;
+        const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
+        if (isDirectMatch || isInOrg) {
+            const setup = invertScramble(normalized);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
+            input.style.fontWeight = '600';
+        } else if (isInMir) {
+            const setup = invertScramble(normalized);
+            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
+            input.style.fontWeight = '600';
+        } else {
+            input.style.color = 'var(--parity-invalid)';
+            input.style.fontWeight = '600';
+        }
+    } catch(e) { input.style.color = 'var(--parity-invalid)'; input.style.fontWeight = '600'; }
+}
+
+// Helper to get case name from the edit case modal
+function _getEditModalCaseName(modal) {
+    if (!modal) return null;
+    const titleElement = modal.querySelector('.modal-title');
+    if (!titleElement) return null;
+    for (const dataItem of data) {
+        if (getDisplayName(dataItem.name) === titleElement.textContent || dataItem.name === titleElement.textContent) return dataItem.name;
+    }
+    return null;
+}
+
+// Helper function to color-code alg input on blur (after normalization)
+function updateInputColor(input) {
+    updateInputColorLive(input);
+}
+
+// Helper function to update parity label (legacy - kept for compatibility)
 function updateParityLabel(input) {
     const parityLabel = input.parentElement.querySelector('.parity-label');
     if (!parityLabel) return;
@@ -1164,8 +1230,7 @@ window.addNewAlgorithmField = function () {
     const newField = document.createElement('div');
     newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
     newField.innerHTML = `
-        <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem;">
-        <span class="parity-label" style="min-width: 40px; font-size: 0.8rem; color: var(--text-secondary); font-style: italic;"></span>
+        <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
         <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
@@ -1174,29 +1239,17 @@ window.addNewAlgorithmField = function () {
     algsList.appendChild(newField);
 
     const input = newField.querySelector('.alg-input');
-    input.addEventListener('focus', () => {
-        const parityLabel = input.parentElement.querySelector('.parity-label');
-        if (parityLabel) parityLabel.textContent = '';
-    });
-
     input.addEventListener('blur', () => {
         const rawText = input.value.trim();
         if (rawText && rawText !== 'Done!') {
             const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
             input.value = normalized;
         }
-        updateParityLabel(input);
+        updateInputColor(input);
     });
 
     input.addEventListener('input', () => {
-        if (input.parityTimeout) {
-            clearTimeout(input.parityTimeout);
-        }
-        input.parityTimeout = setTimeout(() => {
-            if (document.activeElement !== input) {
-                updateParityLabel(input);
-            }
-        }, 300);
+        updateInputColorLive(input);
     });
 
     input.addEventListener('paste', (e) => {
