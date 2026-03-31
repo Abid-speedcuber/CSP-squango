@@ -6,9 +6,9 @@
 
 const SETTINGS_TABS = [
     { id: 'homescreen',    label: 'Personalization',    icon: 'res/settings.svg' },
-    { id: 'parity',        label: 'Parity Tracer', icon: 'res/tracing.svg' },
-    { id: 'trainer',       label: 'Trainer',       icon: 'res/training.svg' },
-    { id: 'animate',       label: 'Alg Animator',  icon: 'res/settings-icons/animate_alg_settings.svg' },
+    { id: 'parity',        label: 'Parity Tracer Settings', icon: 'res/tracing.svg' },
+    { id: 'trainer',       label: 'Trainer Settings',       icon: 'res/training.svg' },
+    { id: 'animate',       label: 'Animate Algs Settings',  icon: 'res/animate_alg_settings.svg' },
 ];
 
 let _settingsActiveTab = 'homescreen';
@@ -94,7 +94,8 @@ function _buildSettingsModal() {
             background: ${_settingsActiveTab === tab.id ? 'var(--surface-border)' : 'transparent'};
             transition: all 0.15s; width: 100%;
         `;
-        btn.innerHTML = `<img src="${tab.icon}" width="24" height="24" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.55'}">`;
+        const isAnimate = tab.id === 'animate';
+btn.innerHTML = `<img src="${tab.icon}" width="${isAnimate ? 30 : 24}" height="${isAnimate ? 30 : 24}" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.55'}">`;
         btn.addEventListener('click', () => _switchTab(tab.id));
         sidebar.appendChild(btn);
     });
@@ -102,7 +103,7 @@ function _buildSettingsModal() {
     // Panel
     const panel = document.createElement('div');
     panel.id = 'settingsPanel';
-    panel.style.cssText = 'flex:1;overflow-y:auto;padding:22px 24px;';
+    panel.style.cssText = 'flex:1;overflow-y:auto;padding:0 24px 22px;';
 
     body.appendChild(sidebar);
     body.appendChild(panel);
@@ -131,7 +132,10 @@ function _switchTab(tabId) {
 function _renderTab(tabId) {
     const panel = document.getElementById('settingsPanel');
     if (!panel) return;
-    panel.innerHTML = '';
+    const tab = SETTINGS_TABS.find(t => t.id === tabId);
+    panel.innerHTML = `<div style="position:sticky;top:0;background:var(--surface);z-index:1;padding:18px 0 4px;margin-bottom:4px;">
+        <span style="font-size:1.05rem;font-weight:700;color:var(--text-ui);">${tab ? tab.label : ''}</span>
+    </div>`;
     switch (tabId) {
         case 'homescreen': _renderHomescreenTab(panel); break;
         case 'parity':     _renderParityTab(panel);     break;
@@ -202,7 +206,7 @@ function _actionBtn(label, onclick, tipHtml) {
 // ── TAB: Homescreen ───────────────────────────────────────────────────────────
 
 function _renderHomescreenTab(panel) {
-    panel.innerHTML = `
+    panel.innerHTML += `
         ${_sectionTitle('Display')}
         ${_row('Dark Mode',
             _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'toggleTheme(this.checked)'),
@@ -286,7 +290,7 @@ function _renderParityTab(panel) {
     const evilOn = typeof evilnessFactor !== 'undefined' && evilnessFactor;
     const evilStrOn = typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn;
 
-    panel.innerHTML = `
+    panel.innerHTML += `
         ${_sectionTitle('Tracing Method')}
         ${_row('Corner Sticker for Tracing',
             `<select id="pt_cornerSticker" onchange="_ptSaveCornerSticker(this.value)"
@@ -464,7 +468,7 @@ function _renderTrainerTab(panel) {
     const insp     = localStorage.getItem('trainingEnableInspection') === 'true';
     const pquiz    = localStorage.getItem('trainingEnableParityQuiz') === 'true';
 
-    panel.innerHTML = `
+    panel.innerHTML += `
         ${_sectionTitle('Scramble Display')}
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -608,7 +612,7 @@ function _renderAnimateTab(panel) {
     const vertDis = localStorage.getItem('sq1AnimVerticalDisplay') !== null
         ? localStorage.getItem('sq1AnimVerticalDisplay') === 'true' : false;
 
-    panel.innerHTML = `
+    panel.innerHTML += `
         ${_sectionTitle('Playback')}
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -647,14 +651,10 @@ function _renderAnimateTab(panel) {
         </div>
         ${_row('Animate Both Layers Together',
             _toggle('aa_bothLayers', bothLay, "_aaSaveBool('sq1AnimBothLayers',this.checked)"),
-            'When ON, top and bottom layer moves in a <code>(x,y)</code> token are animated simultaneously. When OFF, each layer is animated separately as two distinct steps. "Both together" is more realistic; "separate" is better for learning.')}
+            null)}
         ${_row('Vertical Stack Display',
             _toggle('aa_vertDisplay', vertDis, "_aaSaveBool('sq1AnimVerticalDisplay',this.checked)"),
             'When ON, the top and bottom layer images stack vertically instead of side-by-side. Useful on narrow screens or when you prefer a tall layout.')}
-
-        <div style="margin-top:18px;padding:12px 14px;background:var(--surface2);border-radius:8px;font-size:0.82rem;color:var(--text-secondary);line-height:1.5;">
-            <strong>Note:</strong> These settings apply globally. Any Alg Animator window already open will reflect changes on the next move or when re-opened.
-        </div>
     `;
 }
 
