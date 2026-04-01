@@ -46,7 +46,7 @@ function _buildSettingsModal() {
     const overlay = document.createElement('div');
     overlay.id = 'unifiedSettingsModal';
     overlay.className = 'modal active';
-    overlay.style.cssText = 'z-index:10002;';
+    overlay.style.cssText = 'z-index:10010;';
     overlay.addEventListener('click', e => { if (e.target === overlay) _closeSettingsModal(); });
 
     const content = document.createElement('div');

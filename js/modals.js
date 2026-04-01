@@ -713,6 +713,7 @@ function openColorSchemeModal() {
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.documentElement.classList.add('scroll-locked');
+    modal.style.zIndex = '10015';
     modal.classList.add('active');
 
     pushModalState('colorSchemeModal', closeColorSchemeModal);
