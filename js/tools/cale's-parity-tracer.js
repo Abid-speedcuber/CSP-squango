@@ -3523,6 +3523,7 @@
     globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
         openConfigModal: showConfigurationModalWithLongName,
+        openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage
             currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();

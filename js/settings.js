@@ -434,12 +434,9 @@ window._ptToggleEvilStr = function(checkbox) {
     );
 };
 window._openEvilnessCasesFromSettings = function() {
-    // Delegates to the parity tracer library's evilness cases modal
     const config = _buildParityConfig();
-    if (window.ParityTracerLibrary && window.ParityTracerLibrary.openConfigModal) {
-        // The evilness cases modal lives inside the parity tracer settings flow.
-        // We open the parity tracer settings and let the user navigate there.
-        window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
+    if (window.ParityTracerLibrary && window.ParityTracerLibrary.openEvilnessCasesModal) {
+        window.ParityTracerLibrary.openEvilnessCasesModal(config);
     }
 };
 function _triggerParityLiveUpdate() {
