@@ -128,15 +128,15 @@ function generateModalHTML() {
                 </div>
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Top Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Top Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="top" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
                             <button class="color-btn" data-face="top" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
-                            <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
+                            <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; color: #000000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Bottom Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Bottom Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="bottom" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
                             <button class="color-btn" data-face="bottom" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
@@ -144,7 +144,7 @@ function generateModalHTML() {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Front Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Front Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="front" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="front" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -153,7 +153,7 @@ function generateModalHTML() {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Right Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Right Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="right" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="right" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -162,7 +162,7 @@ function generateModalHTML() {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Back Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Back Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="back" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="back" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -171,7 +171,7 @@ function generateModalHTML() {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px;">Left Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Left Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="left" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="left" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -455,6 +455,12 @@ function generateModalHTML() {
 
     // Setup color button handlers after modals are created
     document.querySelectorAll('.color-btn').forEach(btn => {
+        // Set contrast-aware text color on load
+        const bg = btn.getAttribute('data-color');
+        if (bg) {
+            const r = parseInt(bg.substr(1,2),16), g = parseInt(bg.substr(3,2),16), b = parseInt(bg.substr(5,2),16);
+            btn.style.color = (0.299*r + 0.587*g + 0.114*b) > 128 ? '#000000' : '#ffffff';
+        }
         btn.addEventListener('click', function () {
             const face = this.getAttribute('data-face');
             const color = this.getAttribute('data-color');
