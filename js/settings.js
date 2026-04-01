@@ -258,7 +258,7 @@ function _renderHomescreenTab(panel) {
 
 function _buildParityConfig() {
     return {
-        backgroundColor: 'var(--surface)',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         topLayerMainColor: colorScheme.topColor,
         topLayerColorFullName: typeof getColorName === 'function' ? getColorName(colorScheme.topColor) : 'Top',
