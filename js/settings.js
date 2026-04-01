@@ -193,8 +193,9 @@ function _actionBtn(label, onclick, tipHtml) {
     return `
     <div onclick="if(event.target===this||event.target.tagName==='SPAN')${onclick}" class="settings-action-btn"
         style="padding:11px 16px;border-radius:10px;cursor:pointer;width:100%;margin-bottom:8px;font-weight:600;font-size:0.92rem;
-               transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;"
-        onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform='translateY(0)'">
+               transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;
+               background:var(--surface2);border:1px solid var(--border-color);color:var(--text-ui);"
+        >
         <span>${label}</span>
         ${tipHtml ? `<span class="info-wrapper">
             <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation()"><img src="res/info.svg"></button>

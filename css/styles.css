@@ -2645,3 +2645,21 @@ html[data-theme="dark"] img[src$="search.svg"] {
 [data-theme="dark"] .cubeshape-svg .label-toggle[fill="#FF0303"] {
     fill: #ff7070;
 }
+
+/* ── Settings action buttons ── */
+.settings-action-btn {
+    background: var(--surface2) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-ui) !important;
+}
+
+.settings-action-btn:hover {
+    background: var(--hover-bg) !important;
+    border-color: var(--accent) !important;
+    color: var(--accent) !important;
+}
+
+.settings-action-btn:active {
+    transform: scale(0.98) !important;
+    background: var(--step-highlight-bg) !important;
+}
