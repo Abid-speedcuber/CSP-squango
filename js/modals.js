@@ -222,137 +222,138 @@ function generateModalHTML() {
         </div>
 
         <div id="aboutModal" class="modal">
-  <div class="modal-content" style="
-      max-width: 700px;
-      border-radius: 14px;
-      overflow: hidden;
-      background: var(--surface);
-  ">
+            <div class="modal-content" style="
+                max-width: 700px;
+                border-radius: 14px;
+                overflow: hidden;
+                background: var(--surface);
+            ">
 
-    <!-- Header -->
-    <div style="
-        background: var(--about-header-bg);
-        color: #ffffff;
-        padding: 22px 26px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    ">
-      <span style="font-size: 1.5rem; font-weight: 600;">
-        About SquanGo CSP
-      </span>
-      <button class="close-btn" onclick="closeAboutModal()" style="
-          color: white;
-          font-size: 1.6rem;
-          opacity: 0.9;
-      ">&times;</button>
-    </div>
+            <!-- Header -->
+            <div style="
+                background: var(--about-header-bg);
+                color: #ffffff;
+                padding: 22px 26px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            ">
+                <span style="font-size: 1.5rem; font-weight: 600;">
+                    About SquanGo CSP
+                </span>
+                <button class="close-btn" onclick="closeAboutModal()" style="
+                    color: white;
+                    font-size: 1.6rem;
+                    opacity: 0.9;
+                ">&times;</button>
+            </div>
 
-    <!-- Body -->
-    <div style="
-        padding: 28px 30px;
-        color: var(--text-ui);
-        line-height: 1.65;
-        max-height: 70vh;
-        overflow-y: auto;
-        background: var(--surface2);
-    ">
+            <!-- Body -->
+            <div style="
+                padding: 28px 30px;
+                color: var(--text-ui);
+                line-height: 1.65;
+                max-height: 70vh;
+                overflow-y: auto;
+                background: var(--surface2);
+            ">
 
-      <!-- Intro -->
-      <section style="margin-bottom: 26px;">
-        <p style="margin: 0; font-size: 1rem; color: var(--text-secondary);">
-          SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
-          who want structure, repetition, and zero fluff.
-          It started as a personal motivation tool and slowly turned into something
-          worth sharing.
-        </p>
-      </section>
+                <!-- Intro -->
+                <section style="margin-bottom: 26px;">
+                    <p style="margin: 0; font-size: 1rem; color: var(--text-secondary);">
+                    SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
+                    who want structure, repetition, and zero fluff.
+                    It started as a personal motivation tool and slowly turned into something
+                    worth sharing.
+                    </p>
+                </section>
 
-      <!-- Developer -->
-      <section style="
-          background: var(--surface);
-          border: 1px solid var(--border-color);
-          border-radius: 10px;
-          padding: 20px;
-          margin-bottom: 22px;
-      ">
-        <p style="font-weight: 600; margin-bottom: 6px;">Developer</p>
-        <p style="margin: 0 0 10px 0; color: var(--text-secondary);">
-          Created by <strong>Abid Ibn Ashraf</strong>
-        </p>
+                <!-- Developer -->
+                <section style="
+                    background: var(--surface);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin-bottom: 22px;
+                ">
+                    <p style="font-weight: 600; margin-bottom: 6px;">Developer</p>
+                    <p style="margin: 0 0 10px 0; color: var(--text-secondary);">
+                    Created by <strong>Abid Ibn Ashraf</strong>
+                    </p>
 
-        <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
-          Contact & feedback:
-          <strong>Discord — <span style="color: var(--text-ui);">abid_ibn_ashraf</span></strong>
-        </p>
-      </section>
+                    <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    Contact & feedback:
+                    <strong>Discord — <span style="color: var(--text-ui);">abid_ibn_ashraf</span></strong>
+                    </p>
+                </section>
 
-      <!-- Credits -->
-      <section style="
-          background: var(--surface);
-          border: 1px solid var(--border-color);
-          border-radius: 10px;
-          padding: 20px;
-          margin-bottom: 22px;
-      ">
-        <p style="font-weight: 600; margin-bottom: 10px;">Credits & Inspiration</p>
+                <!-- Credits -->
+                <section style="
+                    background: var(--surface);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin-bottom: 22px;
+                ">
+                    <p style="font-weight: 600; margin-bottom: 10px;">Credits & Inspiration</p>
 
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-          Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
-          The overall Homepage layout, case images and most of the alg data are based on her work.
-        </p>
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
+                    The overall Homepage layout, case images and most of the alg data are based on her work.
+                    </p>
 
-        <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
-          Additional credit to <strong>Matt Mao</strong> — the inventor of Matt Tracing for OBLP —
-          for helping me out in various way in this project. Matt's preset is built solemnly by him, and he helped me refine the site further.
-        </p>
-      </section>
+                    <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    Additional credit to my frind<strong>Matt</strong> — the Chinese NR holder for sq1 —
+                    for helping me out in this project. Matt's preset is built solemnly by him, the dark mode is also his contribution alone, and he helped me refine the site further.
+                    </p>
+                </section>
 
-      <!-- Scramble -->
-      <section style="
-          background: var(--surface);
-          border: 1px solid var(--border-color);
-          border-radius: 10px;
-          padding: 20px;
-          margin-bottom: 22px;
-      ">
-        <p style="font-weight: 600; margin-bottom: 8px;">Scramble Generator</p>
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-          Square-1 scrambles are generated using code from
-          <strong>csTimer</strong>, written by Shuang Chen (cs0x7f),
-          licensed under GPL-3.0.
-        </p>
+                <!-- Scramble -->
+                <section style="
+                    background: var(--surface);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 20px;
+                    margin-bottom: 22px;
+                ">
+                    <p style="font-weight: 600; margin-bottom: 8px;">Scramble Generator</p>
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    Square-1 scrambles are generated using code from
+                    <strong>csTimer</strong>, written by Shuang Chen (cs0x7f),
+                    licensed under GPL-3.0.
+                    </p>
 
-        <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js"
-           target="_blank"
-           style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
-          View source on GitHub →
-        </a>
-      </section>
+                    <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js"
+                    target="_blank"
+                    style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
+                    View source on GitHub →
+                    </a>
+                </section>
 
-      <!-- Open Source -->
-      <section style="
-          background: var(--surface);
-          border: 1px solid var(--border-color);
-          border-radius: 10px;
-          padding: 20px;
-      ">
-        <p style="font-weight: 600; margin-bottom: 8px;">Open Source</p>
-        <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-          SquanGo CSP is open source. You’re free to explore the code,
-          suggest improvements, or fork it for your own use.
-        </p>
+                <!-- Open Source -->
+                <section style="
+                    background: var(--surface);
+                    border: 1px solid var(--border-color);
+                    border-radius: 10px;
+                    padding: 20px;
+                ">
+                    <p style="font-weight: 600; margin-bottom: 8px;">Open Source</p>
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    SquanGo CSP is open source. You’re free to explore the code,
+                    suggest improvements, or fork it for your own use.
+                    </p>
 
-        <a href="https://github.com/Abid-speedcuber/sq1-csparity-algs"
-           target="_blank"
-           style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
-          View repository on GitHub →
-        </a>
-      </section>
+                    <a href="https://github.com/Abid-speedcuber/CSP-squango"
+                        target="_blank"
+                        style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;"
+                    >
+                        View repository on GitHub →
+                    </a>
+                </section>
 
-    </div>
-  </div>
-</div>
+            </div>
+        </div>
+        </div>
     `;
 
     document.body.appendChild(modalContainer);
