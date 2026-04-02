@@ -3,6 +3,24 @@
 (function (globalThisWindowObjectThingyForParityTracer) {
     'use strict';
 
+    // ── Dark-mode brightness offsets (tweak these to restyle the modal) ──────
+    // All values are % brightness adjustments relative to config.backgroundColor.
+    // Positive = lighter, negative = darker.
+    const DM_INPUT_BG        =  4;   // scramble input field
+    const DM_CARD_BG         =  6;   // outer result card ("Parity Analysis" wrapper)
+    const DM_INNER_CARD_BG   = 10;   // individual step cards inside result card
+    const DM_BUTTON_BG       =  8;   // close / settings floating buttons
+    const DM_HOVER_BG        = 14;   // utility btn (z2/y2/Flip) hover
+    const DM_RESULT_TITLE_COLOR = '#9299b0'; // "Parity Analysis" heading color in dark mode
+
+    // ── Light-mode brightness offsets ────────────────────────────────────────
+    const LM_INPUT_BG        = -3;
+    const LM_CARD_BG         = -2;
+    const LM_INNER_CARD_BG   = -4;
+    const LM_BUTTON_BG       = -5;
+    const LM_HOVER_BG        = -8;
+    const LM_RESULT_TITLE_COLOR = '#2d3748';
+
     // Color configuration with absurdly long name
     let superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict = {
         topLayerMainColor: '#FFD700',
@@ -1007,8 +1025,8 @@
 
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 8) : adjustColorBrightness(config.backgroundColor, -2);
-        const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
+        const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, DM_INNER_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_INNER_CARD_BG);
 
         const allSteps = [...sixStepParity.steps];
         if (getEvilnessFactor() && sixStepParity.evilStep !== null) {
@@ -1021,9 +1039,10 @@
             });
         }
 
+        const resultTitleColor = isDark ? DM_RESULT_TITLE_COLOR : LM_RESULT_TITLE_COLOR;
         container.innerHTML = `
       <div style="background: ${cardBgColor}; padding: 0.75rem; border-radius: 8px;">
-        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #2d3748; font-weight: 600;">Parity Analysis</h3>
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: ${resultTitleColor}; font-weight: 600;">Parity Analysis</h3>
         <div class="parity-grid-tracer-lib">
           ${allSteps.map((step, idx) => {
             let displayContent = '';
@@ -1430,7 +1449,7 @@
 
             <!-- Tracing Scheme Settings Button -->
             <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; margin-bottom: 0.75rem;">
-                Tracing Scheme Settings
+                Set Tracing Schemes
             </button>
 
             <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-top: 0.75rem;">
@@ -2858,10 +2877,10 @@
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
         const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
-        const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5);
-        const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -8);
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 8) : adjustColorBrightness(config.backgroundColor, -2);
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
+        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_INPUT_BG) : adjustColorBrightness(config.backgroundColor, LM_INPUT_BG);
+        const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_BUTTON_BG) : adjustColorBrightness(config.backgroundColor, LM_BUTTON_BG);
+        const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_HOVER_BG) : adjustColorBrightness(config.backgroundColor, LM_HOVER_BG);
 
         // Create backdrop
         const backdrop = document.createElement('div');
