@@ -7,8 +7,8 @@
     // All values are % brightness adjustments relative to config.backgroundColor.
     // Positive = lighter, negative = darker.
     const DM_INPUT_BG        =  4;   // scramble input field
-    const DM_CARD_BG         =  6;   // outer result card ("Parity Analysis" wrapper)
-    const DM_INNER_CARD_BG   = 10;   // individual step cards inside result card
+    const DM_CARD_BG         =  1;   // outer result card ("Parity Analysis" wrapper)
+    const DM_INNER_CARD_BG   = 2;   // individual step cards inside result card
     const DM_BUTTON_BG       =  8;   // close / settings floating buttons
     const DM_HOVER_BG        = 14;   // utility btn (z2/y2/Flip) hover
     const DM_RESULT_TITLE_COLOR = '#9299b0'; // "Parity Analysis" heading color in dark mode
