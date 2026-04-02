@@ -1306,499 +1306,6 @@
         showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
     }
 
-    function showParityTracerSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
-        // Calculate contrasting colors based on background
-        function getContrastColor(hexColor) {
-            const r = parseInt(hexColor.substr(1, 2), 16);
-            const g = parseInt(hexColor.substr(3, 2), 16);
-            const b = parseInt(hexColor.substr(5, 2), 16);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            return luminance > 0.5 ? '#000000' : '#FFFFFF';
-        }
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
-        const textColor = getContrastColor(config.backgroundColor);
-        const isDark = textColor === '#FFFFFF';
-        const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
-        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        const settingsModalDiv = document.createElement('div');
-        settingsModalDiv.className = 'parity-tracer-settings-modal';
-        settingsModalDiv.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10008;
-            padding: 2rem;
-            overflow-y: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        `;
-
-        const settingsContent = document.createElement('div');
-        settingsContent.className = 'parity-tracer-settings-content';
-        settingsContent.style.cssText = `
-            background: ${config.backgroundColor};
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            position: relative;
-        `;
-
-        const timestamp = Date.now();
-
-        settingsContent.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Parity Tracer Settings</h2>
-                <button class="settings-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; pointer-events: none;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-            </div>
-            
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
-                <!-- Corner Sticker Setting -->
-                <div style="margin-bottom: 1rem;">
-                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.5rem; font-size: 0.9rem;">Corner Sticker for Tracing:</div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
-                            <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            More counter-clockwise sticker
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
-                            <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            More clockwise sticker
-                        </label>
-                    </div>
-                </div>
-
-                <!-- z2 Tracing Setting -->
-                <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid ${borderColor};">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="z2TracingCheckbox-${timestamp}" ${z2TracingModeEnabled ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">z2 tracing for 6 and 8 edge cases</span>
-                    </label>
-                </div>
-
-                <!-- Image Size Setting -->
-                <div style="padding-top: 1rem; border-top: 1px solid ${borderColor};">
-                    <label style="font-weight: 600; color: ${textColor}; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
-                        Image Size: <span id="imageSizeValue-${timestamp}">${parityTracerImageSize}px</span>
-                    </label>
-                    <input type="range" id="imageSizeSlider-${timestamp}" min="100" max="400" value="${parityTracerImageSize}" style="width: 100%; cursor: pointer;">
-                </div>
-            </div>
-
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
-                <!-- Circular Arrow Toggle -->
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="showArrowCheckbox-${timestamp}" ${showCircularArrow ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Show Tracing Indication Arrow</span>
-                    </label>
-                </div>
-
-                <!-- Arrow Settings -->
-                <div id="arrowSettingsContainer-${timestamp}" style="padding-top: 1rem; border-top: 1px solid ${borderColor}; opacity: ${showCircularArrow ? '1' : '0.4'}; pointer-events: ${showCircularArrow ? 'auto' : 'none'};">
-                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem; font-size: 0.9rem;">Arrow Appearance:</div>
-                    
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; min-width: 45px;">Color:</label>
-                        <input type="color" id="arrowColor-${timestamp}" value="${arrowSettings.color.startsWith('rgba') ? '#fd2222' : arrowSettings.color}" style="width: 50px; height: 28px; cursor: pointer; border: 1px solid ${borderColor}; border-radius: 4px;">
-                    </div>
-                    
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Opacity: <span id="opacityValue-${timestamp}">${(arrowSettings.opacity * 100).toFixed(0)}%</span></label>
-                        <input type="range" id="arrowOpacity-${timestamp}" min="0" max="100" value="${arrowSettings.opacity * 100}" style="width: 100%; cursor: pointer;">
-                    </div>
-                    
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Stroke Width: <span id="strokeWidthValue-${timestamp}">${arrowSettings.strokeWidth.toFixed(1)}</span></label>
-                        <input type="range" id="arrowStrokeWidth-${timestamp}" min="0.5" max="5" step="0.1" value="${arrowSettings.strokeWidth}" style="width: 100%; cursor: pointer;">
-                    </div>
-                    
-                    <div>
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Radius: <span id="radiusValue-${timestamp}">${arrowSettings.radius.toFixed(2)}</span></label>
-                        <input type="range" id="arrowRadius-${timestamp}" min="0.1" max="1.1" step="0.01" value="${arrowSettings.radius}" style="width: 100%; cursor: pointer;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tracing Scheme Settings Button -->
-            <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; margin-bottom: 0.75rem;">
-                Set Tracing Schemes
-            </button>
-
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-top: 0.75rem;">
-                <!-- Evilness factor for parity tracing Toggle -->
-                <div style="margin-bottom: 0.75rem;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="evilnessFactorCheckbox-${timestamp}" ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Evilness factor for parity tracing</span>
-                    </label>
-                </div>
-                <!-- Evilness String Return Toggle -->
-                <div style="margin-bottom: 0.75rem; padding-top: 0.75rem; border-top: 1px solid ${borderColor}; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'};" id="evilnessStringReturnRow-${timestamp}">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
-                        <input type="checkbox" id="evilnessStringReturnCheckbox-${timestamp}" ${typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Evilness factor affects homescreen?</span>
-                    </label>
-                </div>
-                <!-- Evilness Cases Button -->
-                <button id="openEvilnessCases-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'}; cursor: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'pointer' : 'not-allowed'}; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
-                    Per-case Evilness settings
-                </button>
-            </div>
-        `;
-
-        settingsModalDiv.appendChild(settingsContent);
-
-        // Create floating close button
-        const settingsFloatingCloseBtn = document.createElement('button');
-        settingsFloatingCloseBtn.className = 'settings-floating-close-btn';
-        settingsFloatingCloseBtn.innerHTML = '×';
-        settingsFloatingCloseBtn.style.cssText = `
-            position: fixed;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 10009;
-            border: none;
-            background: ${isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5)};
-            color: ${textColor};
-            transition: transform 0.2s;
-        `;
-
-        document.body.appendChild(settingsFloatingCloseBtn);
-        document.body.appendChild(settingsModalDiv);
-
-        // Position the close button
-        function updateSettingsClosePosition() {
-            const rect = settingsContent.getBoundingClientRect();
-            settingsFloatingCloseBtn.style.top = `${rect.top + 8}px`;
-            settingsFloatingCloseBtn.style.right = `${window.innerWidth - rect.right + 4}px`;
-        }
-
-        setTimeout(updateSettingsClosePosition, 10);
-        window.addEventListener('resize', updateSettingsClosePosition);
-        settingsModalDiv.addEventListener('scroll', updateSettingsClosePosition);
-
-        // Function to trigger live update
-        function triggerLiveUpdate() {
-            if (modalElement) {
-                const scrambleInput = modalElement.querySelector('input[type="text"]');
-                if (scrambleInput) {
-                    const event = new Event('input', { bubbles: true });
-                    scrambleInput.dispatchEvent(event);
-                }
-            }
-        }
-
-        // Settings info button - attach AFTER modal is in DOM
-        // Use a small timeout to ensure the DOM is fully rendered
-        setTimeout(() => {
-            const settingsInfoBtn = document.querySelector('.parity-tracer-settings-modal .settings-info-btn');
-            if (settingsInfoBtn) {
-
-                settingsInfoBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof showParityTracerSettingsInstructionModal === 'function') {
-                        showParityTracerSettingsInstructionModal(config);
-                    } else {
-                        console.error('❌ showParityTracerSettingsInstructionModal is not a function!');
-                    }
-                }, true); // Use capture phase
-
-                // Also try mouseup as fallback
-                settingsInfoBtn.addEventListener('mouseup', (e) => {
-                    if (e.button === 0) { // Left click only
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (typeof showParityTracerSettingsInstructionModal === 'function') {
-                            showParityTracerSettingsInstructionModal(config);
-                        }
-                    }
-                });
-
-                settingsInfoBtn.addEventListener('mousedown', (e) => {
-                });
-
-                settingsInfoBtn.addEventListener('mouseup', (e) => {
-                });
-
-                // Check what element is actually at the button's position
-                const rect = settingsInfoBtn.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const elementAtPoint = document.elementFromPoint(centerX, centerY);
-            }
-        }, 50);
-
-        // Event listeners
-        setTimeout(() => {
-            // Corner sticker mode - save and update immediately
-            const radioButtons = settingsContent.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    cornerStickerMode = e.target.value;
-                    if (typeof window.setCornerStickerMode === 'function') {
-                        window.setCornerStickerMode(cornerStickerMode);
-                    }
-                    triggerLiveUpdate();
-                });
-            });
-
-            // z2 tracing - save and update immediately
-            const z2Checkbox = settingsContent.querySelector(`#z2TracingCheckbox-${timestamp}`);
-            if (z2Checkbox) {
-                z2Checkbox.addEventListener('change', (e) => {
-                    z2TracingModeEnabled = e.target.checked;
-                    saveZ2TracingMode(z2TracingModeEnabled);
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Image size slider
-            const imageSizeSlider = settingsContent.querySelector(`#imageSizeSlider-${timestamp}`);
-            const imageSizeValue = settingsContent.querySelector(`#imageSizeValue-${timestamp}`);
-            if (imageSizeSlider) {
-                imageSizeSlider.addEventListener('input', (e) => {
-                    const size = parseInt(e.target.value);
-                    imageSizeValue.textContent = size + 'px';
-                    parityTracerImageSize = size;
-                    saveParityTracerImageSize(size);
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Show arrow checkbox
-            const showArrowCheckbox = settingsContent.querySelector(`#showArrowCheckbox-${timestamp}`);
-            const arrowSettingsContainer = settingsContent.querySelector(`#arrowSettingsContainer-${timestamp}`);
-            if (showArrowCheckbox) {
-                showArrowCheckbox.addEventListener('change', (e) => {
-                    showCircularArrow = e.target.checked;
-                    arrowSettingsContainer.style.opacity = showCircularArrow ? '1' : '0.4';
-                    arrowSettingsContainer.style.pointerEvents = showCircularArrow ? 'auto' : 'none';
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow color
-            const arrowColorInput = settingsContent.querySelector(`#arrowColor-${timestamp}`);
-            if (arrowColorInput) {
-                arrowColorInput.addEventListener('input', (e) => {
-                    arrowSettings.color = e.target.value;
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow opacity
-            const arrowOpacityInput = settingsContent.querySelector(`#arrowOpacity-${timestamp}`);
-            const opacityValue = settingsContent.querySelector(`#opacityValue-${timestamp}`);
-            if (arrowOpacityInput) {
-                arrowOpacityInput.addEventListener('input', (e) => {
-                    const opacity = parseInt(e.target.value) / 100;
-                    arrowSettings.opacity = opacity;
-                    opacityValue.textContent = e.target.value + '%';
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow stroke width
-            const arrowStrokeWidthInput = settingsContent.querySelector(`#arrowStrokeWidth-${timestamp}`);
-            const strokeWidthValue = settingsContent.querySelector(`#strokeWidthValue-${timestamp}`);
-            if (arrowStrokeWidthInput) {
-                arrowStrokeWidthInput.addEventListener('input', (e) => {
-                    arrowSettings.strokeWidth = parseFloat(e.target.value);
-                    strokeWidthValue.textContent = parseFloat(e.target.value).toFixed(1);
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow radius
-            const arrowRadiusInput = settingsContent.querySelector(`#arrowRadius-${timestamp}`);
-            const radiusValue = settingsContent.querySelector(`#radiusValue-${timestamp}`);
-            if (arrowRadiusInput) {
-                arrowRadiusInput.addEventListener('input', (e) => {
-                    arrowSettings.radius = parseFloat(e.target.value);
-                    radiusValue.textContent = parseFloat(e.target.value).toFixed(2);
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Tracing scheme button
-            const tracingSchemeBtn = settingsContent.querySelector(`#openTracingScheme-${timestamp}`);
-            if (tracingSchemeBtn) {
-                tracingSchemeBtn.addEventListener('click', () => {
-                    closeSettingsModal();
-                    showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
-                });
-            }
-
-            // Evilness factor for parity tracing checkbox
-            const evilnessFactorCheckbox = settingsContent.querySelector(`#evilnessFactorCheckbox-${timestamp}`);
-            const evilnessStringReturnRow = settingsContent.querySelector(`#evilnessStringReturnRow-${timestamp}`);
-            const openEvilnessCasesBtn = settingsContent.querySelector(`#openEvilnessCases-${timestamp}`);
-            if (evilnessFactorCheckbox) {
-                evilnessFactorCheckbox.addEventListener('change', (e) => {
-                    const newVal = e.target.checked;
-                    e.target.checked = !newVal;
-
-                    const choiceContainer = document.createElement('div');
-                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
-                    choiceContainer.innerHTML = `
-                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness factor for parity tracing?</h3>
-                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
-                        </div>`;
-                    const overlay = document.createElement('div');
-                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
-                    overlay.appendChild(choiceContainer);
-                    document.body.appendChild(overlay);
-
-                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
-                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
-                        overlay.remove();
-                        e.target.checked = newVal;
-                        if (typeof evilnessFactor !== 'undefined') evilnessFactor = newVal;
-                        if (typeof saveState === 'function') saveState();
-                        const isOn = newVal;
-                        if (evilnessStringReturnRow) {
-                            evilnessStringReturnRow.style.opacity = isOn ? '1' : '0.4';
-                            evilnessStringReturnRow.style.pointerEvents = isOn ? 'auto' : 'none';
-                            const lbl = evilnessStringReturnRow.querySelector('label');
-                            if (lbl) lbl.style.pointerEvents = isOn ? 'auto' : 'none';
-                        }
-                        if (openEvilnessCasesBtn) {
-                            openEvilnessCasesBtn.style.opacity = isOn ? '1' : '0.4';
-                            openEvilnessCasesBtn.style.cursor = isOn ? 'pointer' : 'not-allowed';
-                            openEvilnessCasesBtn.style.pointerEvents = isOn ? 'auto' : 'none';
-                        }
-                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
-                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
-                        if (typeof render === 'function') render();
-                        if (typeof filterAndSort === 'function') filterAndSort();
-                        if (modalElement) {
-                            const si = modalElement.querySelector('input[type="text"]');
-                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        if (typeof showToast === 'function') showToast(`Evilness factor for parity tracing ${isOn ? 'enabled' : 'disabled'}.`, 3000, 'success');
-                    };
-                });
-            }
-
-            // Evilness string return checkbox — confirm before expensive recalculation
-            const evilnessStringReturnCheckbox = settingsContent.querySelector(`#evilnessStringReturnCheckbox-${timestamp}`);
-            if (evilnessStringReturnCheckbox) {
-                evilnessStringReturnCheckbox.addEventListener('change', (e) => {
-                    const newVal = e.target.checked;
-                    // Revert the checkbox visually until confirmed
-                    e.target.checked = !newVal;
-
-                    const choiceContainer = document.createElement('div');
-                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
-                    choiceContainer.innerHTML = `
-                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness in Parity Results?</h3>
-                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
-                        </div>`;
-                    const overlay = document.createElement('div');
-                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
-                    overlay.appendChild(choiceContainer);
-                    document.body.appendChild(overlay);
-
-                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
-                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
-                        overlay.remove();
-                        e.target.checked = newVal;
-                        if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
-                        if (typeof saveState === 'function') saveState();
-                        // Force full recalculation
-                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
-                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
-                        if (typeof render === 'function') render();
-                        if (typeof filterAndSort === 'function') filterAndSort();
-                        // Update open parity tracer modal
-                        if (modalElement) {
-                            const si = modalElement.querySelector('input[type="text"]');
-                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        if (typeof showToast === 'function') showToast('Parity results updated with evilness setting.', 3000, 'success');
-                    };
-                });
-            }
-
-            // Evilness cases button
-            if (openEvilnessCasesBtn) {
-                openEvilnessCasesBtn.addEventListener('click', () => {
-                    closeSettingsModal();
-                    showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
-                });
-            }
-        }, 100);
-
-        const closeSettingsModal = () => {
-            window.removeEventListener('resize', updateSettingsClosePosition);
-            settingsModalDiv.removeEventListener('scroll', updateSettingsClosePosition);
-            settingsModalDiv.remove();
-            settingsFloatingCloseBtn.remove();
-
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
-        };
-
-        // Back button handler
-        if (typeof pushModalState !== 'undefined') {
-            pushModalState('paritySettingsModal', closeSettingsModal);
-        }
-
-        settingsFloatingCloseBtn.onclick = closeSettingsModal;
-        settingsModalDiv.onclick = (e) => {
-            if (e.target === settingsModalDiv) {
-                closeSettingsModal();
-            }
-        };
-    }
-
     function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
@@ -2056,37 +1563,37 @@
         const configModalDiv = document.createElement('div');
         configModalDiv.className = 'parity-tracer-config-modal';
         configModalDiv.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 10008;
-      padding: 2rem;
-      overflow-y: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      overflow: hidden;
-    `;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10008;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            overflow: hidden;
+        `;
 
         const configContent = document.createElement('div');
         configContent.className = 'parity-tracer-config-content';
         configContent.style.cssText = `
-      background: ${config.backgroundColor};
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 600px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      position: relative;
-    `;
+            background: ${config.backgroundColor};
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: relative;
+        `;
 
         const headerDiv = document.createElement('div');
         headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
@@ -2152,15 +1659,15 @@
 
             const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
             caseDiv.style.cssText = `
-  background: ${cardBg};
-  padding: 1rem;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: all 0.2s;
-  ${gridColumn}
-`;
+                background: ${cardBg};
+                padding: 1rem;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: all 0.2s;
+                ${gridColumn}
+            `;
 
             const nameSpan = document.createElement('div');
             nameSpan.style.cssText = `font-weight: 600; color: ${textColor}; font-size: 0.9rem; margin-bottom: 0.5rem; text-align: center;`;
@@ -2184,16 +1691,16 @@
         saveBtn.textContent = 'Save & Apply';
         saveBtn.id = 'configSaveBtn';
         saveBtn.style.cssText = `
-      padding: 0.75rem 2rem;
-      border: 2px solid ${borderColor};
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: ${saveBtnBg};
-      color: ${textColor};
-    `;
+            padding: 0.75rem 2rem;
+            border: 2px solid ${borderColor};
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: ${saveBtnBg};
+            color: ${textColor};
+        `;
 
         saveBtn.onmouseover = () => {
             saveBtn.style.background = saveBtnHover;
@@ -2282,16 +1789,16 @@
         const resetBtn = document.createElement('button');
         resetBtn.textContent = 'Reset to Default';
         resetBtn.style.cssText = `
-      padding: 0.75rem 2rem;
-      border: 2px solid ${borderColor};
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: ${resetBtnBg};
-      color: ${textColor};
-    `;
+            padding: 0.75rem 2rem;
+            border: 2px solid ${borderColor};
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: ${resetBtnBg};
+            color: ${textColor};
+        `;
 
         resetBtn.onmouseover = () => {
             resetBtn.style.background = resetBtnHover;
@@ -2422,57 +1929,57 @@
         // Add style to hide webkit scrollbar for config modal and add responsive layout
         const configStyle = document.createElement('style');
         configStyle.textContent = `
-      .parity-tracer-config-modal::-webkit-scrollbar {
-        display: none;
-      }
-      .parity-tracer-config-content::-webkit-scrollbar {
-        display: none;
-      }
-      .shape-search-container {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        height: auto !important;
-        overflow: visible !important;
-        position: relative !important;
-      }
-      .shape-search-container input {
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        position: relative !important;
-      }
-      @media (max-width: 570px) {
-        .shape-search-container {
-          display: block !important;
-          visibility: visible !important;
-        }
-        .shape-search-container input {
-          opacity: 1 !important;
-          pointer-events: auto !important;
-          position: relative !important;
-        }
-        .shape-cases-grid {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-        .shape-config-item.second-to-last-card,
-        .shape-config-item.last-card {
-          transform: none !important;
-        }
-        .shape-config-item.last-odd-card {
-          grid-column: 1 / -1;
-          max-width: calc(50% - 0.5rem);
-          margin: 0 auto !important;
-        }
-      }
-      @media (max-width: 420px) {
-        .shape-cases-grid {
-          grid-template-columns: 1fr !important;
-        }
-        .shape-config-item.last-odd-card {
-          max-width: 100% !important;
-        }
-      }
-    `;
+            .parity-tracer-config-modal::-webkit-scrollbar {
+                display: none;
+            }
+            .parity-tracer-config-content::-webkit-scrollbar {
+                display: none;
+            }
+            .shape-search-container {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                height: auto !important;
+                overflow: visible !important;
+                position: relative !important;
+            }
+            .shape-search-container input {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                position: relative !important;
+            }
+            @media (max-width: 570px) {
+                .shape-search-container {
+                display: block !important;
+                visibility: visible !important;
+                }
+                .shape-search-container input {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                position: relative !important;
+                }
+                .shape-cases-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                }
+                .shape-config-item.second-to-last-card,
+                .shape-config-item.last-card {
+                transform: none !important;
+                }
+                .shape-config-item.last-odd-card {
+                grid-column: 1 / -1;
+                max-width: calc(50% - 0.5rem);
+                margin: 0 auto !important;
+                }
+            }
+            @media (max-width: 420px) {
+                .shape-cases-grid {
+                grid-template-columns: 1fr !important;
+                }
+                .shape-config-item.last-odd-card {
+                max-width: 100% !important;
+                }
+            }
+        `;
         document.head.appendChild(configStyle);
 
         // Create floating close button for config modal
@@ -2480,22 +1987,22 @@
         configFloatingCloseBtn.className = 'config-floating-close-btn';
         configFloatingCloseBtn.innerHTML = '×';
         configFloatingCloseBtn.style.cssText = `
-      position: fixed;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10009;
-      border: none;
-      background: #f7fafc;
-      color: #2d3748;
-      transition: transform 0.2s;
-    `;
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10009;
+            border: none;
+            background: #f7fafc;
+            color: #2d3748;
+            transition: transform 0.2s;
+        `;
 
         const configCloseBg = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5);
         const configCloseHover = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -8);
@@ -2886,18 +2393,18 @@
         const backdrop = document.createElement('div');
         backdrop.className = 'parity-tracer-backdrop';
         backdrop.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 10005;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    `;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10005;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        `;
 
         // Create modal structure
         const modal = document.createElement('div');
@@ -2908,17 +2415,17 @@
         const padding = vw <= 420 ? '1rem' : '1.5rem';
         const borderRadius = vw <= 420 ? '12px' : '16px';
         modal.style.cssText = `
-      position: relative;
-      background: ${config.backgroundColor};
-      border-radius: ${borderRadius};
-      padding: ${padding};
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      max-width: 600px;
-      width: 90%;
-      max-height: ${maxHeight};
-      overflow-y: auto;
-      z-index: 10006;
-    `;
+            position: relative;
+            background: ${config.backgroundColor};
+            border-radius: ${borderRadius};
+            padding: ${padding};
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: ${maxHeight};
+            overflow-y: auto;
+            z-index: 10006;
+        `;
 
         const uniqueId = 'pt-' + Math.random().toString(36).substr(2, 9);
 
