@@ -296,10 +296,10 @@ function _renderParityTab(panel) {
                 <option value="counterclockwise" ${cornerMode==='counterclockwise'?'selected':''}>Counter-clockwise sticker</option>
                 <option value="clockwise" ${cornerMode==='clockwise'?'selected':''}>Clockwise sticker</option>
             </select>`,
-            'Determines which sticker of a corner piece you use for tracing. Counter-clockwise = the sticker that appears first going counter-clockwise from the "seam". This is purely personal preference and does <em>not</em> change the parity result.')}
+            'Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn not affect parity calculations, just your personal preference.')}
         ${_row('z2 Tracing for 6/8-Edge Cases',
             _toggle('pt_z2', z2On, '_ptSaveZ2(this.checked)'),
-            'When enabled, for cases with 6 or 8 edges the tracer automatically starts from the more edge-dense face regardless of layer. This is the safest tracing mode — without it, those cases flip parity depending on which layer the edges sit on.')}
+            'z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it is on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped')}
 
         ${_sectionTitle('Visualization')}
         <div style="margin-bottom:18px;">
@@ -307,7 +307,7 @@ function _renderParityTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="pt_imgSizeVal">${ptSize}px</span></label>
                 <span class="info-wrapper">
                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls the size of the scramble visualization inside the Parity Tracer modal.</span>
+                    <span class="info-box">Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference.</span>
                 </span>
             </div>
             <input type="range" id="pt_imgSize" min="100" max="400" step="10" value="${ptSize}"
@@ -315,7 +315,7 @@ function _renderParityTab(panel) {
         </div>
         ${_row('Show Tracing Arrow',
             _toggle('pt_showArrow', showArrow, '_ptSaveArrow(this.checked)'),
-            'Overlays a dashed circular arrow on each layer\'s image showing where tracing begins. Useful as a visual reminder of your tracing start-point.')}
+            'The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.')}
 
         <div id="pt_arrowSettings" style="opacity:${showArrow?'1':'0.4'};pointer-events:${showArrow?'auto':'none'};">
             <div style="margin-bottom:12px;">
@@ -349,14 +349,14 @@ function _renderParityTab(panel) {
         ${_sectionTitle('Evilness')}
         ${_row('Enable Evilness Factor',
             _toggle('pt_evilness', evilOn, '_ptToggleEvilness(this)'),
-            'When enabled, each case can be flagged as "evil". Evil cases add +1 to the parity total, flipping the result. Useful for people who separate CSP into good/evil alg sets.')}
+            'When enabled, each case can be flagged as "evil". Evil cases add +1 to the parity total, flipping the result.')}
         <div id="pt_evilSubSettings" style="opacity:${evilOn?'1':'0.4'};pointer-events:${evilOn?'auto':'none'};">
             ${_row('Evilness Affects Homescreen',
                 _toggle('pt_evilStr', evilStrOn, '_ptToggleEvilStr(this)'),
-                'When ON, the parity tags (Odd/Even) shown on algs on the homescreen also factor in the evilness of each case. Requires a full parity recalculation.')}
+                'When ON, the parity tags (Odd/Even) shown on algs on the homescreen also factor in the evilness of each case.')}
             ${_actionBtn('Per-case Evilness Settings',
                 '_closeSettingsModal();setTimeout(()=>_openEvilnessCasesFromSettings(),200)',
-                'Mark individual cases as evil or good. You can bulk-select and search.')}
+                'Mark individual cases as evil or good.')}
         </div>
     `;
 }
@@ -401,7 +401,7 @@ window._ptToggleEvilness = function(checkbox) {
     checkbox.checked = !newVal; // revert until confirmed
     _confirmExpensiveOp(
         `${newVal ? 'Enable' : 'Disable'} Evilness factor?`,
-        'This will recalculate parity for all 90 cases and may briefly freeze the page.',
+        'This will update the parity calculations and may freeze your page for a brief moment.',
         () => {
             checkbox.checked = newVal;
             if (typeof evilnessFactor !== 'undefined') evilnessFactor = newVal;
@@ -420,7 +420,7 @@ window._ptToggleEvilStr = function(checkbox) {
     checkbox.checked = !newVal;
     _confirmExpensiveOp(
         `${newVal ? 'Enable' : 'Disable'} Evilness in Parity Results?`,
-        'This will recalculate parity for all 90 cases.',
+        'This will update the parity calculations and may freeze your page for a brief moment.',
         () => {
             checkbox.checked = newVal;
             if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
@@ -468,10 +468,6 @@ function _renderTrainerTab(panel) {
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="tr_imgSizeVal">${imgSize}px</span></label>
-                <span class="info-wrapper">
-                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls the scramble image size while training, and also in the Evilness Quiz and Parity Quiz. Larger images are easier to read; smaller images leave more room for the timer. Updates the trainer live.</span>
-                </span>
             </div>
             <input type="range" id="tr_imgSize" min="100" max="400" step="10" value="${imgSize}"
                 style="width:100%;cursor:pointer;" oninput="_trSaveImgSize(this.value)">
@@ -479,10 +475,6 @@ function _renderTrainerTab(panel) {
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Scramble Text Size: <span id="tr_txtSizeVal">${txtSize}px</span></label>
-                <span class="info-wrapper">
-                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls the font size of the scramble notation text shown below the timer.</span>
-                </span>
             </div>
             <input type="range" id="tr_txtSize" min="10" max="24" step="1" value="${txtSize}"
                 style="width:100%;cursor:pointer;" oninput="_trSave('trainingScrambleTextSize',this.value,'tr_txtSizeVal',v=>v+'px');_trApplyTextSize(this.value)">
@@ -492,10 +484,6 @@ function _renderTrainerTab(panel) {
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Timer Text Size: <span id="tr_tmrSizeVal">${tmrSize}px</span></label>
-                <span class="info-wrapper">
-                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls how large the timer digits appear. Useful if you want a big countdown-clock feel or a more compact display.</span>
-                </span>
             </div>
             <input type="range" id="tr_tmrSize" min="30" max="120" step="2" value="${tmrSize}"
                 style="width:100%;cursor:pointer;" oninput="_trSave('trainingTimerSize',this.value,'tr_tmrSizeVal',v=>v+'px');_trApplyTimerSize(this.value)">
@@ -505,7 +493,7 @@ function _renderTrainerTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Hold-to-Start: <span id="tr_holdVal">${holdVal.toFixed(2)}s</span></label>
                 <span class="info-wrapper">
                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">How long you must hold the spacebar (or press the timer zone) before the timer turns green and releases. Lower = faster start, higher = less accidental starts.</span>
+                    <span class="info-box">How long you must hold the spacebar (or press the timer zone) before starting the timer.</span>
                 </span>
             </div>
             <input type="range" id="tr_hold" min="0.1" max="0.7" step="0.01" value="${holdVal}"
@@ -515,16 +503,15 @@ function _renderTrainerTab(panel) {
         ${_sectionTitle('Display')}
         ${_row('Show Previous Scramble',
             _toggle('tr_showPrev', showPrev, "_trSaveBool('trainingShowPrevScramble',this.checked);_trApplyPrevBar()"),
-            'Shows the previous scramble at the very bottom of the screen while training, so you can glance back at what you just solved.')}
+            'Shows the previous scramble at the very bottom of the screen.')}
 
         ${_sectionTitle('Inspection')}
         ${_row('Enable Inspection',
-            _toggle('tr_insp', insp, '_trToggleInspection(this.checked)'),
-            'Adds an inspection phase before each solve. Tap / press space to start inspection, then hold again to begin the solve timer — just like in WCA competitions.')}
+            _toggle('tr_insp', insp, '_trToggleInspection(this.checked)'))}
         <div id="tr_pquizRow" style="opacity:${insp?'1':'0.4'};pointer-events:${insp?'auto':'none'};">
             ${_row('Parity Quiz During Inspection',
                 _toggle('tr_pquiz', pquiz, '_trTogglePQuiz(this.checked)'),
-                'During inspection, the timer zone is split into two halves — "Even" on the left and "Odd" on the right. You must guess the parity of the scramble before the solve timer starts. Wrong guesses flash red but don\'t penalize your time.')}
+                'During inspection, the trainer will quiz you about the parity state of the current scramble')}
         </div>
     `;
 }
@@ -612,10 +599,6 @@ function _renderAnimateTab(panel) {
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Animation Speed: <span id="aa_speedVal">${speed.toFixed(1)}x</span></label>
-                <span class="info-wrapper">
-                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">How fast each move animates. 1.0× is the default speed; higher values speed up rotation; lower values slow it down for careful analysis.</span>
-                </span>
             </div>
             <input type="range" id="aa_speed" min="0.2" max="2" step="0.1" value="${speed}"
                 style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AnimSpeed',this.value,'aa_speedVal',v=>parseFloat(v).toFixed(1)+'x')">
@@ -625,7 +608,7 @@ function _renderAnimateTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Auto-play Delay: <span id="aa_delayVal">${delay}ms</span></label>
                 <span class="info-wrapper">
                     <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">The pause between moves when auto-playing an algorithm. Set to 0 for no pause between moves.</span>
+                    <span class="info-box">The pause between moves when auto-playing an algorithm.</span>
                 </span>
             </div>
             <input type="range" id="aa_delay" min="0" max="1000" step="50" value="${delay}"
@@ -636,10 +619,6 @@ function _renderAnimateTab(panel) {
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="aa_imgSizeVal">${imgSize}px</span></label>
-                <span class="info-wrapper">
-                    <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
-                    <span class="info-box">Controls the size of the cube images inside the Alg Animator modal.</span>
-                </span>
             </div>
             <input type="range" id="aa_imgSize" min="100" max="400" step="10" value="${imgSize}"
                 style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AnimImageSize',this.value,'aa_imgSizeVal',v=>v+'px')">
@@ -649,7 +628,7 @@ function _renderAnimateTab(panel) {
             null)}
         ${_row('Vertical Stack Display',
             _toggle('aa_vertDisplay', vertDis, "_aaSaveBool('sq1AnimVerticalDisplay',this.checked)"),
-            'When ON, the top and bottom layer images stack vertically instead of side-by-side. Useful on narrow screens or when you prefer a tall layout.')}
+            'When ON, the top and bottom layer images stack vertically instead of side-by-side.')}
     `;
 }
 

@@ -1202,7 +1202,7 @@
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">Image size controls how large the puzzle visualization appears. Adjust this based on your screen size and preference.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
@@ -1249,38 +1249,18 @@
         instructionModal.innerHTML = `
             <div class="training-info-content" style="background: ${config.backgroundColor};">
                 <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
-                    <span class="training-info-title">Shape Orientation Guide</span>
+                    <span class="training-info-title">Setting Tracing Scheme Guide</span>
                     <button class="training-info-close" style="color: ${textColor};">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">This feature is currently limited - it only allows you to select one piece as the starting point: either an edge or a corner.</div>
+                        <div class="training-info-text" style="color: ${textColor};">For each shape, select one piece as your starting point. When you trace CSP, you would start from this piece, and go clockwise.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you select a corner, the first edge in your tracing will be the very first edge that appears clockwise from that corner.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Please just don't trace counterclockwise.</div>
                     </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you select an edge, the first corner in your tracing will be the very first corner that appears clockwise from that edge.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">In your tracing method, if your corner comes before the edge, select the corner. If your edge comes before the corner, select the edge.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counter-clockwise, you are gay and nobody loves you.</div>
-                    </div>
-<!--                    <div class="training-info-item">
-                        <div class="training-info-number">6</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you trace using the right most sticker or the more counterclockwise color of a corner, you should set the "Corner Sticker for Tracing" to be "Most Counter-Clockwise sticker" and if you use most clockwise sticker like Matt, then you should select it to be "Most clockwise sticker". This is completely personal choice and it DOES NOT change the parity at all.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means prioritizing the more edge dense face to start your tracing. So no matter if the 6/8 face is on bottom or top, you trace from that face. z2 tracing is the safest mode of tracing. And if you do not do z2 tracing, then for 6 edges cases will flip their parity depending which face they appear.</div>
-                    </div> -->
                 </div>
             </div>
         `;
