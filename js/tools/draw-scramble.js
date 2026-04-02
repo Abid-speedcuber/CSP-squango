@@ -597,6 +597,7 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   const strokeThick = desiredSize * 0.005;
   const strokeRing = 0;
   const strokeLine = desiredSize * 0.008;
+  const sliceTrim = 0.70;
 
   const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
   const marginLeft = centerToCenterDistance - svgSize;
@@ -606,8 +607,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 255);
+  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -627,8 +628,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 285);
+  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -735,6 +736,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   const strokeWidth = (size / 200) * strokeWidthBase;
   const strokeRing = 0;
   const strokeLine = size * 0.008;
+  const sliceTrim = 0.70;
 
   const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
   const marginLeft = centerToCenterDistance - svgSize;
@@ -744,8 +746,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 255);
+  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -764,8 +766,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 285);
+  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 

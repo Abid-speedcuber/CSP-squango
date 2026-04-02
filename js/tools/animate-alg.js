@@ -990,7 +990,7 @@
                     svgs.forEach((svg, index) => {
                         if (index === 1) {
                             const svgStyle = svg.getAttribute('style') || '';
-                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
+                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
                             svg.setAttribute('style', newStyle);
                         }
                     });
@@ -1044,7 +1044,7 @@
             svgs.forEach((svg, index) => {
                 if (index === 1) {
                     const svgStyle = svg.getAttribute('style') || '';
-                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
+                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
                     svg.setAttribute('style', newStyle);
                 }
             });
