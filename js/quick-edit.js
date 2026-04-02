@@ -1498,11 +1498,12 @@ function openAlgVariablesModal() {
             flex-direction: column;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            border: 1px solid var(--surface-border);
         ">
             <div style="
                 display: flex; align-items: center; justify-content: space-between;
                 padding: 18px 22px; border-bottom: 1px solid var(--surface-border);
-                background: var(--surface); flex-shrink: 0;
+                background: var(--modal-header-bg); flex-shrink: 0;
             ">
                 <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-ui);">Algorithm Variables</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
@@ -1516,17 +1517,17 @@ function openAlgVariablesModal() {
                     ">&times;</button>
                 </div>
             </div>
-            <div style="padding: 14px 22px 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5;">
-                Use <code style="background:var(--surface2);padding:1px 5px;border-radius:4px;font-size:0.82rem;">:varName:</code> inside any algorithm to insert the variable's value at defocus.
+            <div style="padding: 14px 22px 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; background: var(--surface);">
+                Use <code style="background:var(--surface2);border:1px solid var(--border-color);padding:1px 5px;border-radius:4px;font-size:0.82rem;color:var(--text-primary);">:varName:</code> inside any algorithm to insert the variable's value at defocus.
                 Variable values are normalized when you click away.
             </div>
             <div style="overflow-y: auto; flex: 1; padding: 10px 22px 18px;">
                 <table style="width:100%; border-collapse: collapse;" id="algVarTable">
-                    <thead>
+                    <thead style="background: var(--surface2); position: sticky; top: 0;">
                         <tr>
                             <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border); width:28%;">Name</th>
                             <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border);">Value</th>
-                            <th style="width:36px; border-bottom:1px solid var(--surface-border);"></th>
+                            <th style="width:36px; border-bottom:1px solid var(--surface-border); background: var(--surface2);"></th>
                         </tr>
                     </thead>
                     <tbody id="algVarTableBody">

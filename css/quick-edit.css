@@ -804,3 +804,120 @@
 .quick-edit-icon-btn img {
     filter: brightness(0) invert(1);
 }
+
+/* ── Dark mode overrides for quick-edit ── */
+.quick-edit-fullscreen {
+    background: var(--surface);
+    color: var(--text-primary);
+}
+
+.quick-edit-table thead {
+    background: var(--surface2);
+}
+
+.quick-edit-table th {
+    color: var(--text-secondary);
+    border-bottom-color: var(--surface-border);
+    background: var(--surface2);
+}
+
+.quick-edit-table td {
+    border-bottom-color: var(--surface-border);
+    color: var(--text-primary);
+}
+
+.quick-edit-table td.uneditable {
+    background: var(--surface2);
+    color: var(--text-secondary);
+}
+
+.quick-edit-table td.editable:hover {
+    background: var(--hover-bg);
+}
+
+.quick-edit-table td.editable:focus {
+    background: var(--surface);
+    outline-color: var(--accent);
+}
+
+.quick-edit-table tr:hover td {
+    background: var(--hover-bg);
+}
+
+.quick-edit-table tr:hover td.editable:hover {
+    background: var(--step-highlight-bg);
+}
+
+.quick-edit-find-replace-popup {
+    background: var(--surface);
+    border-color: var(--border-color);
+}
+
+.find-replace-header {
+    background: var(--modal-header-bg);
+    border-bottom-color: var(--surface-border);
+    color: var(--text-ui);
+}
+
+.close-find-btn {
+    color: var(--text-secondary);
+}
+
+.close-find-btn:hover {
+    background: var(--surface-border);
+    color: var(--text-ui);
+}
+
+.find-input-row input,
+.replace-input-row input {
+    background: var(--surface2);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.find-input-row input:focus,
+.replace-input-row input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(58, 123, 213, 0.15);
+}
+
+.find-nav-buttons button {
+    background: var(--surface2);
+    border-color: var(--border-color);
+    color: var(--text-ui);
+}
+
+.find-nav-buttons button:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent);
+}
+
+.find-replace-footer {
+    background: var(--modal-header-bg);
+    border-top-color: var(--surface-border);
+}
+
+.scope-selector {
+    color: var(--text-secondary);
+}
+
+.scope-selector select {
+    background: var(--surface2);
+    border-color: var(--border-color);
+    color: var(--text-ui);
+}
+
+#quickEditMatchCount {
+    color: var(--text-secondary);
+}
+
+.find-match-highlight {
+    background: var(--search-highlight-bg);
+    color: var(--search-highlight-color);
+}
+
+.find-match-current {
+    background: var(--bar-learning);
+    color: #000;
+    box-shadow: 0 0 0 2px var(--accent);
+}
