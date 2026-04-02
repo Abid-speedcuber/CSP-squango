@@ -831,15 +831,15 @@ function showHomepageInfoModal() {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">Sort <strong>By Priority</strong> instead of by Highest Probability to organize cases by learning priority (1-7). Adjust priorities via the three dots menu.</div>
+                        <div class="training-info-text">Sort <strong>By Priority</strong> instead of by Highest Probability to organize cases by learning priority (1-7). However the <b>Learning Cases</b> are the highest priority. Adjust priorities via the three dots menu.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text"><strong>Hover</strong> over any alg to see its setup and shape path. <strong>Click on the alg</strong> to keep the popup open. Then, you can click the setup to <b>analyze the parity</b> of the alg, or click on the shape path to <b>animate</b> the alg.</div>
+                        <div class="training-info-text"><strong>Hover</strong> over any alg to see its setup and shape path. <strong>Click on the alg</strong> to keep the popup open. Then, you can click the setup to <b>see the parity analysis</b> of the alg, or click on the shape path to <b>watch animation</b> of the alg.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
-                        <div class="training-info-text">Use <strong>Color Scheme Settings</strong> to change the color scheme of your squan. Impacts parity tracing and draw scramble.</div>
+                        <div class="training-info-text">Use <strong>Color Scheme Settings</strong> to change the color scheme of your squan. Impacts parity tracing and "draw scramble".</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
@@ -1705,9 +1705,6 @@ function openGeneralNotesModal() {
             <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
                 <div id="generalNotesView" style="flex: 1; padding: 20px; overflow-y: auto;"></div>
                 <div id="generalNotesEdit" style="flex: 1; display: none; flex-direction: column; padding: 20px; overflow: hidden;">
-                    <div style="margin-bottom: 10px; padding: 10px; background: var(--warning-bg); border: 1px solid var(--warning-border); border-radius: 4px; font-size: 0.9rem; color: var(--warning-color);">
-                        <strong>⚠️ Warning:</strong> This editor supports HTML, CSS, SVG, and JavaScript. Code will execute when you save and view. Use with caution!
-                    </div>
                     <textarea id="generalNotesTextarea" style="flex: 1; width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: 'Courier New', monospace; font-size: 0.9rem; resize: none; overflow-y: auto;"></textarea>
                 </div>
             </div>
@@ -1888,10 +1885,12 @@ window.showGeneralNotesInfoModal = function () {
         infoModal.innerHTML = `
             <div class="training-info-content" style="max-width: 600px;">
                 <div class="training-info-header">
-                    <span class="training-info-title">HTML Formatting Guide</span>
+                    <span class="training-info-title">General Notes Edit Guild</span>
                     <button class="training-info-close" onclick="closeGeneralNotesInfoModal()">&times;</button>
                 </div>
                 <div class="training-info-body" style="max-height: 70vh; overflow-y: auto;">
+                    <p>This editor supports <strong>HTML, CSS, Javascript &amp; SVG</strong>. If you are not sure what you are doing, Write plain text instead.</p><br>
+                    <h3>Here is a quick HTML formatting guide:</h3> <br>
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
                         <div class="training-info-text"><strong>Bold Text:</strong> <code>&lt;strong&gt;Your text&lt;/strong&gt;</code> or <code>&lt;b&gt;Your text&lt;/b&gt;</code></div>
