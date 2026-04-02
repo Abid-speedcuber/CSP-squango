@@ -2641,7 +2641,7 @@
         </button>
       </div>
       <div class="parity-tracer-input-container">
-        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" placeholder="Enter your scramble..." style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
+        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" placeholder="Enter your scramble..." style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor}; border-radius:8px;">
       </div>
       <div id="${uniqueId}-visualization" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
       <div class="utility-buttons-container">
