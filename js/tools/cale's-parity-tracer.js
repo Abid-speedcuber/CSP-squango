@@ -2687,6 +2687,16 @@
                 // Ensure we have the latest shapes before analysis
                 currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
 
+                // Re-read all live settings from localStorage on every analysis
+                const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+                z2TracingModeEnabled = storedZ2 !== null ? storedZ2 === 'true' : true;
+                const storedImgSize = localStorage.getItem('parityTracerImageSize');
+                parityTracerImageSize = storedImgSize !== null ? parseInt(storedImgSize) : 200;
+                const storedArrow = localStorage.getItem('parityTracerShowArrow');
+                showCircularArrow = storedArrow !== null ? storedArrow === 'true' : true;
+                const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
+                if (storedArrowSettings) { try { arrowSettings = JSON.parse(storedArrowSettings); } catch(_) {} }
+
                 let scrambleText = scrambleInput.value.trim() || '(0,0)';
                 if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
                     scrambleText = window.ScrambleNormalizer.normalizeScramble(scrambleText) || scrambleText;
