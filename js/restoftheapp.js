@@ -331,6 +331,7 @@ try {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
+        algVariables = new Map(Object.entries(state.algVariables || {}));
 
         // Load display names
         if (state.displayNames) {
