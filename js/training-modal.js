@@ -1357,19 +1357,44 @@ function openTrainingInfoModal() {
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Press on the top left corner to <b></b>>, or to select a particular <b>angle</b> for one case.</div>
+                        <div class="training-info-text">Press on the top left corner to <b>select cases to train</b>, or to select a particular <b>angle</b> for one case <i>(for case-wise training)</i>.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Change the <b>scramble image size</b> from settings.</div>
+                        <div class="training-info-text">Use <b>< button</b> or keyboard <b>left arrow</b> for previous scramble, use the 🔄 <b>button</b> or keyboard <b>right key</b> to regenerate scramble.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">The out-of-CS part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
+                        <div class="training-info-text">Check settings for a bunch of customizability.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">To use the Parity Tracer, directly click on the scramble.</div>
+                        <div class="training-info-text">The <b>out-of-cubeshape</b> part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text">To use the Parity Tracer for the <b>current scramble</b>, directly <b>click</b> on the scramble.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text">Enable <b>inspection</b> and then enable <b>Parity quiz during inspection</b> to activate the <b>parity quiz</b> feature in inspection.</div>
+                    </div>
+                    <h3>Parity Quiz guide:</h3></br>
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">If your evilness is turned <b>off</b>, the app will ask you if the scramble is <b>even</b> or <b>odd</b> parity.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">If your evilness is turned <b>on</b>, the app will ask you if the scramble requires <b>good alg</b> or <b>bad alg</b> (I believe you already know what those are).</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text">Click on the left side of the screen, or <b>any left side key</b> (ie. QWERASDFZXCV1234 etc) on your keyboard to answer <b>Even/ Good Alg</b>. Do the opposite to answer <b>Odd/ Bad alg</b></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">Time your time to trace parity, and the time to plan the algorithm for better grasp over a case.</div>
                     </div>
                 </div>
             </div>
