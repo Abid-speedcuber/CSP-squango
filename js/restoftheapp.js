@@ -843,15 +843,8 @@ window.addEventListener('resize', handleResize);
 const originalRender = window.render;
 if (typeof originalRender === 'function') {
     window.render = function () {
-        const modalOpen = document.getElementById('generalNotesModal');
-        if (typeof showRenderLoader === 'function') showRenderLoader();
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                originalRender();
-                setTimeout(updateSVGScaling, 10);
-                if (typeof hideRenderLoader === 'function') hideRenderLoader();
-            });
-        });
+        originalRender();
+        setTimeout(updateSVGScaling, 10);
     };
 }
 

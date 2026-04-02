@@ -1153,30 +1153,90 @@ function renderCard(item) {
 
 let renderTimeout = null;
 
-function render(softRender = false) {
-    const modal = document.getElementById('generalNotesModal');
-    // Clear any pending render
-    if (renderTimeout) {
-        clearTimeout(renderTimeout);
-    }
+let _progressiveRenderToken = 0;
 
-    // Debounce rendering for better performance
+function render(softRender = false) {
+    if (renderTimeout) clearTimeout(renderTimeout);
+
     renderTimeout = setTimeout(() => {
-        // Show loading indicator for hard renders
         if (!softRender && needsParityRecalculation()) {
             showRenderLoading();
-
-            // Use requestAnimationFrame to prevent UI blocking
             requestAnimationFrame(() => {
                 calculateAndCacheAllParity();
-                grid.innerHTML = filteredData.map(renderCard).join('');
                 hideRenderLoading();
+                _doProgressiveRender();
             });
         } else {
-            grid.innerHTML = filteredData.map(renderCard).join('');
+            _doProgressiveRender();
         }
         renderTimeout = null;
     }, 50);
+}
+
+function _doProgressiveRender() {
+    const token = ++_progressiveRenderToken;
+    const items = filteredData;
+
+    // Figure out how many cards fit in the viewport
+    // Estimate ~320px per card row, at least 8 cards visible
+    const cardHeight = 320;
+    const cols = Math.max(1, Math.floor(grid.offsetWidth / 320));
+    const visibleRows = Math.ceil(window.innerHeight / cardHeight);
+    const initialCount = Math.min((visibleRows + 2) * cols, items.length);
+
+    // Render visible portion immediately
+    grid.innerHTML = items.slice(0, initialCount).map(renderCard).join('');
+
+    // Append placeholder rows for remaining items so scroll height is correct
+    if (items.length > initialCount) {
+        const placeholder = document.createElement('div');
+        placeholder.id = '_render_placeholder';
+        placeholder.style.cssText = `height:${Math.ceil((items.length - initialCount) / cols) * cardHeight}px;`;
+        grid.appendChild(placeholder);
+    }
+
+    if (items.length <= initialCount) return;
+
+    // Trickle-render the rest one card at a time in idle callbacks
+    let idx = initialCount;
+    function renderNext() {
+        if (token !== _progressiveRenderToken) return; // stale render, abort
+        if (idx >= items.length) {
+            // Remove placeholder once done
+            const ph = document.getElementById('_render_placeholder');
+            if (ph) ph.remove();
+            return;
+        }
+
+        const card = document.createElement('div');
+        card.innerHTML = renderCard(items[idx]);
+        const cardEl = card.firstElementChild;
+
+        // Insert before placeholder
+        const ph = document.getElementById('_render_placeholder');
+        if (ph) {
+            grid.insertBefore(cardEl, ph);
+            // Shrink placeholder
+            const remaining = items.length - idx - 1;
+            ph.style.height = `${Math.ceil(remaining / cols) * cardHeight}px`;
+            if (remaining === 0) ph.remove();
+        } else {
+            grid.appendChild(cardEl);
+        }
+
+        idx++;
+        if (typeof requestIdleCallback !== 'undefined') {
+            requestIdleCallback(renderNext, { timeout: 100 });
+        } else {
+            setTimeout(renderNext, 8);
+        }
+    }
+
+    if (typeof requestIdleCallback !== 'undefined') {
+        requestIdleCallback(renderNext, { timeout: 100 });
+    } else {
+        setTimeout(renderNext, 8);
+    }
 }
 
 function showRenderLoading() {

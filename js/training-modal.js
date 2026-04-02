@@ -1351,7 +1351,7 @@ function openTrainingInfoModal() {
         infoModal.innerHTML = `
             <div class="training-info-content">
                 <div class="training-info-header">
-                    <span class="training-info-title">Training Mode Guide</span>
+                    <span class="training-info-title">Training Guides</span>
                     <button class="training-info-close" onclick="closeTrainingInfoModal()">&times;</button>
                 </div>
                 <div class="training-info-body">
