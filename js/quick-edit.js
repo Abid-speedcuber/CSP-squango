@@ -236,11 +236,11 @@ function openQuickEditModal() {
                     <table class="quick-edit-table">
                         <thead>
                             <tr>
-                                <th style="width: 20%;">Case Name</th>
-                                <th style="width: ${evilnessFactor ? '22%' : '25%'};">Display Name</th>
-                                <th style="width: ${evilnessFactor ? '18%' : '20%'};">Subtitle</th>
-                                <th style="width: ${evilnessFactor ? '28%' : '35%'};">Notes</th>
-                                ${evilnessFactor ? '<th style="width: 12%; text-align: center;">Evil</th>' : ''}
+                                <th>Case Name</th>
+                                <th>Display Name</th>
+                                <th>Subtitle</th>
+                                <th class="notes-header">Notes</th>
+                                ${evilnessFactor ? '<th style="text-align:center;">Evil</th>' : ''}
                             </tr>
                         </thead>
                         <tbody id="quickEditGeneralBody">
@@ -253,7 +253,7 @@ function openQuickEditModal() {
                     <table class="quick-edit-table algorithms-table">
                         <thead>
                             <tr id="algorithmTableHeader">
-                                <th class="display-name-header">Display Name</th>
+                                <th class="display-name-header" style="white-space:nowrap;">Display Name</th>
                             </tr>
                         </thead>
                         <tbody id="quickEditAlgorithmsBody">

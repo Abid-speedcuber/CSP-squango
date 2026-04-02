@@ -503,7 +503,11 @@
 
 .algorithms-table .display-name-col {
     font-family: inherit;
-    min-width: 150px;
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--surface);
 }
 
 .alg-header {
@@ -513,6 +517,11 @@
 
 .display-name-header {
     font-family: inherit;
+    white-space: nowrap;
+    position: sticky;
+    left: 0;
+    z-index: 11;
+    background: var(--surface2);
 }
 
 .add-columns-btn-header {
@@ -627,6 +636,7 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 0.9rem;
+    table-layout: auto;
 }
 
 .quick-edit-table thead {
@@ -749,10 +759,6 @@
     #quickEditGeneralTab {
         overflow-x: auto;
     }
-
-    #quickEditGeneralTab .quick-edit-table {
-        min-width: 600px;
-    }
 }
 
 /* Responsive adjustments */
@@ -829,6 +835,10 @@
 .quick-edit-table td.uneditable {
     background: var(--surface2);
     color: var(--text-secondary);
+}
+
+.algorithms-table td.uneditable {
+    background: var(--surface2);
 }
 
 .quick-edit-table td.editable:hover {
@@ -920,4 +930,23 @@
     background: var(--bar-learning);
     color: #000;
     box-shadow: 0 0 0 2px var(--accent);
+}
+
+/* General tab column sizing */
+#quickEditGeneralTab .quick-edit-table {
+    table-layout: auto;
+    width: 100%;
+}
+
+#quickEditGeneralTab th,
+#quickEditGeneralTab td {
+    white-space: nowrap;
+}
+
+#quickEditGeneralTab th.notes-header,
+#quickEditGeneralTab td.notes-cell {
+    white-space: normal;
+    width: 100%;
+    max-width: min(40vw, 600px);
+    min-width: 150px;
 }
