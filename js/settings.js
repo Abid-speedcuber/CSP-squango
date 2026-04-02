@@ -235,9 +235,6 @@ function _renderHomescreenTab(panel) {
         ${_actionBtn('Color Scheme Settings',
             'openColorSchemeModal()',
             'Change your Square-1 colour scheme. This affects parity tracing and draw-scramble visualizations.')}
-        ${_actionBtn('Set Tracing Positions',
-            'openParityTracingPersonalization()',
-            'Change where on each shape your tracing starts. These positions are used to compute odd/even parity.<br><br><strong>Keyboard shortcut:</strong> Alt+W')}
         ${_actionBtn('Quick Edit',
             'openQuickEditModal()',
             'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q')}
@@ -345,7 +342,7 @@ function _renderParityTab(panel) {
         </div>
 
         ${_sectionTitle('Tools')}
-        ${_actionBtn('Tracing Scheme Settings',
+        ${_actionBtn('Set Tracing Scheme',
             '_closeSettingsModal();setTimeout(()=>openParityTracingPersonalization(),200)',
             'Set the starting piece (edge or corner) for each shape. This determines the order in which pieces are traced and therefore the odds/evens assigned to your algs.')}
 
