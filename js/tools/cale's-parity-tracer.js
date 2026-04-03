@@ -1132,35 +1132,32 @@
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Enter your scramble in the input bar. The parity analysis will update automatically using Cale's method.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Enter your scramble in the input bar to analyze the parity of the scramble using the <span style="font-weight: 550; font-style:italic;">Cale's tracing</span> method.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">Customize the tracing start point and appearance from the settings button at the bottom right.</div>
+                        <div class="training-info-text" style="color: ${textColor};">You can customize your entire parity tracer from the settings button down below. If you need to change the color scheme, go the <b>Color Scheme Settings</b> under personalization tab in settings.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">For symmetric shapes, click the center of the puzzle image to cycle through different symmetry orientations.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Toggle the <b>z2</b> button on if you want to trace parity from the z2 orientation. Similarly toggle the <b>y2</b> button on to trace parity from y2 orientation. If you scrambled you square one with wrong color on front, toggle <b>Flip Color</b> on. </div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Tracing Scheme Settings.</div>
-                    </div>
-                                        <div class="training-info-item">
-                        <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Settings:
+                            <ol>
+                                <li><b>Corner sticker mode</b> determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</li>
+                                <li><b>z2 tracing for 6 and 8 edge cases</b> means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped.</li>
+                                <li><b>Image size</b> determine how big the image of the square 1 appear on the parity tracer screen.</li>
+                                <li><b>Tracing arrow</b> shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</li>
+                                <li><b>Set your tracing scheme</b> for each shape to have fully personalized parity tracing. This affets the parity of the <span style="font-weight:600; font-style:italic;">Algorithms on the Homescreen</span>, <span style="font-weight:600; font-style:italic;">Case in Trainer</span>, basically the <span style="font-weight:650; font-style:italic;">entire app</span>!</li>
+                                <li><span style="font-weight:600; font-style:italic;">Evilness</span> refers to a special tracing technique where you add 1 to your tracing for certain cases to force good alg for even parity all the time. If you are a practitioner of this technique, toggle <b>Evilness Factor</b> on from the settings. If you don't want evilness factor affects the parity of an algorithm on the homescreen, you can toggle <b>Evilness Affects Homescreen</b> off.</li>
+                            </ol>
+                        </div>
                     </div>
                     <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text" style="color: ${textColor};">For <b>symmetric shapes</b> (eg. square, barrel, 2-2-2, 4-4, star), click the center of the image of the shape to trace from <span style="font-weight: 550; font-style:italic;">different symmetry.</span></div>
                     </div>
                 </div>
             </div>
