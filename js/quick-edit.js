@@ -1437,7 +1437,7 @@ window.showQuickEditInfoModal = function () {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>Algorithms Tab:</strong> <b>Edit</b> algorithms for all cases. Algorithms are auto-normalized when you click away from the cell (so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself). They are also color-coded in real time by parity and validity: <span style="color: var(--parity-odd); font-weight: 600;">green = odd</span>, <span style="color: var(--parity-even); font-weight: 600;">blue = even</span>, <span style="color: var(--parity-odd-mirror); font-weight: 600;">barely-noticeable dark green = odd (mirrored)</span>, <span style="color: var(--parity-even-mirror); font-weight: 600;">ever-so-slightly dark blue = even (mirrored)</span>, <span style="color: var(--parity-invalid); font-weight: 600;">red = invalid</span> (either doesn't solve the case or does not lead to valid squan position at all).</div>
+                        <div class="training-info-text"><strong>Algorithms Tab:</strong> <b>Edit</b> algorithms for all cases. Algorithms are auto-normalized when you click away from the cell <span style="font-weight:500">(so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself)</span>. They are also color-coded in real time by parity and validity: <span style="color: var(--parity-odd); font-weight: 600;">green = odd</span>, <span style="color: var(--parity-even); font-weight: 600;">blue = even</span>, <span style="color: var(--parity-odd-mirror); font-weight: 600;">dark-green = odd (mirrored)</span>, <span style="color: var(--parity-even-mirror); font-weight: 600;">dark-blue = even (mirrored)</span>, <span style="color: var(--parity-invalid); font-weight: 600;">red = invalid</span> (either doesn't solve the case or does not lead to valid squan position at all).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
@@ -1454,6 +1454,10 @@ window.showQuickEditInfoModal = function () {
                     <div class="training-info-item">
                         <div class="training-info-number">6</div>
                         <div class="training-info-text"><strong>Find and Replace:</strong> Press Ctrl+F (or Cmd+F on Mac) or directly press the search button on top to open find and replace popup. You can move the popup around by clicking and dragging. Select scope to search in specific fields, e.g. only in titles. Use Previous/Next arrow keys to navigate matches.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
+                        <div class="training-info-text"><strong>Variable Table:</strong> While in the algorithm tab, press the <b>"var"</b> button on the toolbar to access variable table. There you can store commonly use algorithm parts <b>(</b>like, <span style="font-weight:500">scal-kite=/(-1,-2)/(-3,0)/</span><b>)</b> and you can reuse them anywhere. To reuse the variable, wrap it around two colons (:variableName:). (ie, the algorithm for <span style="font-weight:500">left 5-1/pair</span> can be written as <span style="font-weight:500">/(-2,3):scal-kite:</span> provided that you have scal-kite saved in the variable table.). The variable will expand when you click away. The color-coding works even with variables.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">7</div>
