@@ -1146,6 +1146,22 @@
                         <div class="training-info-number">4</div>
                         <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Tracing Scheme Settings.</div>
                     </div>
+                                        <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text" style="color: ${textColor};">Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
+                    </div>
                 </div>
             </div>
         `;
@@ -1181,36 +1197,6 @@
         }
 
         const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        const instructionModal = document.createElement('div');
-        instructionModal.className = 'training-info-modal';
-        instructionModal.style.zIndex = '10011';
-        instructionModal.innerHTML = `
-            <div class="training-info-content" style="background: ${config.backgroundColor};">
-                <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
-                    <span class="training-info-title">Parity Tracer Settings Guide</span>
-                    <button class="training-info-close" style="color: ${textColor};">&times;</button>
-                </div>
-                <div class="training-info-body">
-                    <div class="training-info-item">
-                        <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
-                    </div>
-                </div>
-            </div>
-        `;
 
         document.body.appendChild(instructionModal);
         instructionModal.classList.add('active');
