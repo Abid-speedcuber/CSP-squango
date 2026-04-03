@@ -172,11 +172,11 @@
     --z2-prefix-color:    #6a9ef8;
     --algo-invalid-color: #ff6b6b;
 
-    --parity-odd:         #4ade80;
-    --parity-even:        #60a5fa;
-    --parity-odd-mirror:  #34d058;
-    --parity-even-mirror: #4a90e2;
-    --parity-invalid:     #ff6b6b;
+    --parity-odd:         #86efac;
+    --parity-even:        #89b7ec;
+    --parity-odd-mirror:  #00ff4c;
+    --parity-even-mirror: #0088ff;
+    --parity-invalid:     #fc8888;
 
     --svg-stroke:   #c8ccd8;
     --svg-fill:     #d0d4e0;

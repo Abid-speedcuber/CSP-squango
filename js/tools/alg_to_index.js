@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Square-1 Algorithm to Shape Index Converter
  * Pipeline: Parse → Invert → Hexify → Shape Index
