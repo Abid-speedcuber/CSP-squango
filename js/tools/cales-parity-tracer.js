@@ -850,13 +850,13 @@
                 const pA = p2c(cx, cy, scaled_r_outer, centerAngle - half);
                 const pB = p2c(cx, cy, scaled_r_outer, centerAngle + half);
 
-                svgContent += `<polygon 
-            class="shape-piece shape-piece-${idPrefix}" 
+                svgContent += `<polygon
+            class="shape-piece shape-piece-${idPrefix}"
             data-piece-index="${index}"
-            points="${ptsToStr([pInner, pA, pB])}" 
-            fill="${fillColor}" 
-            stroke="#000" 
-            stroke-width="2" 
+            points="${ptsToStr([pInner, pA, pB])}"
+            fill="${fillColor}"
+            stroke="#000"
+            stroke-width="2"
           />`;
 
                 angleIndex += 1;
@@ -872,13 +872,13 @@
                 const pApex = p2c(cx, cy, scaled_r_outer_apex, centerAngle);
                 const pOuterL = p2c(cx, cy, scaled_r_outer, centerAngle + half);
 
-                svgContent += `<polygon 
-            class="shape-piece shape-piece-${idPrefix}" 
+                svgContent += `<polygon
+            class="shape-piece shape-piece-${idPrefix}"
             data-piece-index="${index}"
-            points="${ptsToStr([pInner, pOuterR, pApex, pOuterL])}" 
-            fill="${fillColor}" 
-            stroke="#000" 
-            stroke-width="2" 
+            points="${ptsToStr([pInner, pOuterR, pApex, pOuterL])}"
+            fill="${fillColor}"
+            stroke="#000"
+            stroke-width="2"
           />`;
 
                 angleIndex += 2;
@@ -970,13 +970,13 @@
 
         return `
         <g opacity="${opacity}">
-            <path d="${pathD}" 
-                  fill="none" 
-                  stroke="${arrowColor}" 
-                  stroke-width="${strokeWidth}" 
+            <path d="${pathD}"
+                  fill="none"
+                  stroke="${arrowColor}"
+                  stroke-width="${strokeWidth}"
                   stroke-dasharray="${size * 0.008},${size * 0.004}"
                   stroke-linecap="round"/>
-            <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
+            <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}"
                     fill="${arrowColor}" stroke="none"/>
             <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
                      fill="${arrowColor}" stroke="none"/>
@@ -1716,28 +1716,6 @@
             }
             if (typeof filterAndSort === 'function') {
                 filterAndSort();
-            }
-
-            // If there's an open case modal, close and reopen it to refresh
-            const caseModal = document.getElementById('caseModal');
-            if (caseModal && typeof openModal === 'function') {
-                const modalTitle = caseModal.querySelector('.modal-title');
-                if (modalTitle) {
-                    const caseName = modalTitle.textContent.trim();
-                    // Find the actual case name from data
-                    if (typeof data !== 'undefined') {
-                        const matchedCase = data.find(item => {
-                            const displayName = typeof getDisplayName === 'function' ? getDisplayName(item.name) : item.name;
-                            return displayName === caseName;
-                        });
-                        if (matchedCase) {
-                            closeModal();
-                            setTimeout(() => {
-                                openModal(matchedCase.name);
-                            }, 100);
-                        }
-                    }
-                }
             }
 
             if (typeof showToast === 'function') {
@@ -2571,7 +2549,7 @@
           transform: scale(1.1);
           opacity: 0.9;
         }
-        
+
         .parity-tracer-modal-container .color-dot {
           display: inline-block;
           width: 16px;
@@ -2632,7 +2610,7 @@
         <button class="utility-toggle-btn" id="${uniqueId}-y2-btn">y2</button>
         <button class="utility-toggle-btn" id="${uniqueId}-flip-btn">Flip Color</button>
       </div>
-      <div id="${uniqueId}-results" class="results-section"></div>    
+      <div id="${uniqueId}-results" class="results-section"></div>
     `;
 
         // Attach event handlers - COMPLETE LOGIC

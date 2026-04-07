@@ -426,31 +426,6 @@ function hideRenderLoader() {
     }, 150);
 }
 
-function toggleCaseSwapLR(name) {
-    const currentSwap = perCaseSwapLR.get(name) || false;
-    perCaseSwapLR.set(name, !currentSwap);
-    saveState();
-    closeModal();
-    openModal(name);
-}
-
-function saveModalData(name) {
-    const commentBox = document.getElementById('commentBox');
-    if (commentBox) {
-        const commentText = commentBox.value.trim();
-        if (commentText) {
-            comments.set(name, commentText);
-        } else {
-            comments.delete(name);
-        }
-    }
-
-    saveState();
-    render();
-    closeModal();
-}
-
-
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                               SETTINGS MODAL                               ║
