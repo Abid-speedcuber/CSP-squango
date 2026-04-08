@@ -1167,41 +1167,13 @@
         instructionModal.classList.add('active');
 
         const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
-        };
-
-        instructionModal.onclick = (e) => {
-            if (e.target === instructionModal) {
+        const close = () => {
+            closeModalWithHistory(() => {
                 instructionModal.remove();
-            }
+            });
         };
-    }
-
-
-    // Parity Tracer Settings Instruction Modal
-    function showParityTracerSettingsInstructionModal(config) {
-        const textColor = getContrastColor(config.backgroundColor);
-        const isDark = textColor === '#FFFFFF';
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        document.body.appendChild(instructionModal);
-        instructionModal.classList.add('active');
-
-        const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
-        };
+        closeBtn.onclick = close;
+        pushModalState('instructionModal', close);
 
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
@@ -1252,21 +1224,19 @@
         instructionModal.classList.add('active');
 
         const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
+        const close = () => {
+            closeModalWithHistory(() => {
+                instructionModal.remove();
+            });
         };
+        closeBtn.onclick = close;
+        pushModalState('configOrientationInstructionModal', close);
 
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
-                instructionModal.remove();
+                close();
             }
         };
-    }
-
-    // Configure modal popup - RESTORED AND COMPLETE
-    function showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
-        // This now opens the Tracing Scheme Settings modal (shape orientations only)
-        showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
     }
 
     function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
@@ -1479,15 +1449,18 @@
             }
             delete window._evilToggleCase;
             delete window._evilBulkHandler;
-            evilModalDiv.remove();
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            closeModalWithHistory(() => {
+                evilModalDiv.remove();
+                if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+                if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            });
         }
 
         evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
         evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
         evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
         evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
+        pushModalState('evilModal', () => closeEvilModal(false));
 
         evilInner.querySelector('#evilResetBtn').addEventListener('click', () => {
             const presetEvil = (typeof presetData !== 'undefined' && presetData && presetData.evilnessMap) ? presetData.evilnessMap : {};
@@ -1582,8 +1555,8 @@
         searchDiv.className = 'shape-search-container';
         searchDiv.style.cssText = 'margin-bottom: 1.5rem;';
         searchDiv.innerHTML = `
-      <input type="text" id="shape-search-input" placeholder="Search shapes by name..." style="width: 100%; padding: 0.75rem; border: 2px solid ${borderColor}; background: ${inputBgColor}; color: ${textColor}; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s;">
-    `;
+            <input type="text" id="shape-search-input" placeholder="Search shapes by name..." style="width: 100%; padding: 0.75rem; border: 2px solid ${borderColor}; background: ${inputBgColor}; color: ${textColor}; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s;">
+        `;
 
         const casesListDiv = document.createElement('div');
         casesListDiv.className = 'shape-cases-grid';
@@ -1755,7 +1728,7 @@
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
-            showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+            showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
 
         buttonsDiv.appendChild(saveBtn);
@@ -2066,31 +2039,33 @@
                 return;
             }
 
-            // Clean up scroll listeners first
-            configContent.removeEventListener('scroll', updateFloatingSaveBtn);
-            window.removeEventListener('resize', resizeHandler);
-            configModalDiv.removeEventListener('scroll', scrollHandler);
-            const backdrop = document.querySelector('.parity-tracer-backdrop');
-            if (backdrop) {
-                backdrop.removeEventListener('scroll', scrollHandler);
-            }
+            closeModalWithHistory(() => {
+                // Clean up scroll listeners first
+                configContent.removeEventListener('scroll', updateFloatingSaveBtn);
+                window.removeEventListener('resize', resizeHandler);
+                configModalDiv.removeEventListener('scroll', scrollHandler);
+                const backdrop = document.querySelector('.parity-tracer-backdrop');
+                if (backdrop) {
+                    backdrop.removeEventListener('scroll', scrollHandler);
+                }
 
-            // Clear any update intervals
-            if (typeof updateInterval !== 'undefined') {
-                clearInterval(updateInterval);
-            }
+                // Clear any update intervals
+                if (typeof updateInterval !== 'undefined') {
+                    clearInterval(updateInterval);
+                }
 
-            // Remove elements
-            if (floatingSaveBtn && floatingSaveBtn.parentNode) {
-                floatingSaveBtn.remove();
-            }
-            configModalDiv.remove();
-            configFloatingCloseBtn.remove();
-            configStyle.remove();
+                // Remove elements
+                if (floatingSaveBtn && floatingSaveBtn.parentNode) {
+                    floatingSaveBtn.remove();
+                }
+                configModalDiv.remove();
+                configFloatingCloseBtn.remove();
+                configStyle.remove();
 
-            // Restore main modal buttons if they exist
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+                // Restore main modal buttons if they exist
+                if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+                if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            });
         };
         function setCornerStickerMode(mode) {
             cornerStickerMode = mode;
@@ -2922,18 +2897,20 @@
             });
 
             const closeMainModal = () => {
-                // Reset utility states when closing
-                utilityZ2Enabled = false;
-                utilityY2Enabled = false;
-                utilityFlipColorEnabled = false;
+                closeModalWithHistory(() => {
+                    // Reset utility states when closing
+                    utilityZ2Enabled = false;
+                    utilityY2Enabled = false;
+                    utilityFlipColorEnabled = false;
 
-                window.removeEventListener('resize', updateButtonPositions);
-                backdrop.remove();
-                closeBtnElement.remove();
-                settingsBtnElement.remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.top = '';
-                window.scrollTo(0, window.modalScrollY || 0);
+                    window.removeEventListener('resize', updateButtonPositions);
+                    backdrop.remove();
+                    closeBtnElement.remove();
+                    settingsBtnElement.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.top = '';
+                    window.scrollTo(0, window.modalScrollY || 0);
+                });
             };
 
             // Use unified back button handler
@@ -2999,7 +2976,7 @@
     // Export the single function
     globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
-        openConfigModal: showConfigurationModalWithLongName,
+        openConfigModal: showTracingSchemeSettingsModal,
         openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage

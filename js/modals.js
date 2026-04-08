@@ -451,7 +451,7 @@ function handlePresetChange(presetName) {
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header" style="background: var(--surface); border-bottom: 2px solid var(--border-color);">
                     <span class="modal-title">Reload ${presetName.replace(/_/g, ' ')}?</span>
-                    <button class="close-btn" onclick="this.closest('.modal').remove();">&times;</button>
+                    <button class="close-btn">&times;</button>
                 </div>
                 <div class="modal-body">
                     <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
@@ -469,6 +469,12 @@ function handlePresetChange(presetName) {
                 </div>
             </div>
         `;
+        const close = (e) => {
+            reloadModal.remove();
+            removeCloseModalFromStack(close);
+        }
+        reloadModal.querySelector(".close-btn").onclick = close;
+        pushModalState('reloadPresetModal', close);
         document.body.appendChild(reloadModal);
         return;
     }
@@ -488,7 +494,7 @@ function handlePresetChange(presetName) {
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header" style="background: var(--surface); border-bottom: 2px solid var(--border-color);">
                 <span class="modal-title" style="color: var(--text-primary);">Warning: Data Loss</span>
-                <button class="close-btn" onclick="this.closest('.modal').remove(); document.getElementById('presetSelector').value = \`${currentPreset}\`;">&times;</button>
+                <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
                 <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
@@ -505,7 +511,7 @@ function handlePresetChange(presetName) {
                     <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: transparent; color: var(--parity-invalid); border: 2px solid var(--parity-invalid); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--parity-invalid)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--parity-invalid)'">
                         Switch Anyway
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); document.getElementById('presetSelector').value = \`${currentPreset}\`;" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='transparent'">
+                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked');" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='transparent'">
                         Cancel
                     </button>
                 </div>
@@ -513,6 +519,12 @@ function handlePresetChange(presetName) {
         </div>
     `;
 
+    const close = (e) => {
+        warningModal.remove();
+        removeCloseModalFromStack(close);
+    }
+    warningModal.querySelector(".close-btn").onclick = close;
+    pushModalState('presetWarningModal', close);
     document.body.appendChild(warningModal);
     document.documentElement.classList.add('scroll-locked');
 }
@@ -614,9 +626,11 @@ function openColorSchemeModal() {
 }
 
 function closeColorSchemeModal() {
-    const modal = document.getElementById('colorSchemeModal');
-    modal.classList.remove('active');
-    document.documentElement.classList.remove('scroll-locked');
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('colorSchemeModal');
+        modal.classList.remove('active');
+        document.documentElement.classList.remove('scroll-locked');
+    });
 }
 
 function updateImageSizePreview(value) {
@@ -736,10 +750,12 @@ function showHomepageInfoModal() {
 }
 
 function closeHomepageInfoModal() {
-    const modal = document.getElementById('homepageInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('homepageInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 }
 
 function openEditCaseModal(caseName) {
@@ -1256,11 +1272,13 @@ window.saveCaseRename = function (caseName) {
 };
 
 function closeEditCaseModal() {
-    const modal = document.getElementById('editCaseModal');
-    if (modal) {
-        modal.remove();
-        document.documentElement.classList.remove('scroll-locked');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('editCaseModal');
+        if (modal) {
+            modal.remove();
+            document.documentElement.classList.remove('scroll-locked');
+        }
+    });
 }
 
 window.attemptCloseEditCaseModal = function () {
@@ -1361,14 +1379,17 @@ window.showEditCaseInfoModal = function () {
         document.body.appendChild(infoModal);
     }
 
+    pushModalState('editCaseInfoModal', closeEditCaseInfoModal);
     infoModal.classList.add('active');
 };
 
 window.closeEditCaseInfoModal = function () {
-    const modal = document.getElementById('editCaseInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('editCaseInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 };
 
 function saveEditedCase(caseName, originalName) {
@@ -1517,22 +1538,27 @@ window.showNotesInfoModal = function () {
         document.body.appendChild(infoModal);
     }
 
+    pushModalState('notesInfoModal', closeNotesInfoModal);
     infoModal.classList.add('active');
 };
 
 window.closeNotesInfoModal = function () {
-    const modal = document.getElementById('notesInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('notesInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 };
 
 function closeNotesModal() {
-    const modal = document.getElementById('notesModal');
-    if (modal) {
-        modal.remove();
-        document.documentElement.classList.remove('scroll-locked');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('notesModal');
+        if (modal) {
+            modal.remove();
+            document.documentElement.classList.remove('scroll-locked');
+        }
+    });
 }
 
 function saveNotes(caseName) {
@@ -1607,11 +1633,13 @@ function openGeneralNotesModal() {
 }
 
 function closeGeneralNotesModal() {
-    const modal = document.getElementById('generalNotesModal');
-    if (modal) {
-        if (modal._resizeObserver) modal._resizeObserver.disconnect();
-        modal.remove();
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('generalNotesModal');
+        if (modal) {
+            if (modal._resizeObserver) modal._resizeObserver.disconnect();
+            modal.remove();
+        }
+    });
 }
 
 function renderGeneralNotes() {
@@ -1817,14 +1845,17 @@ window.showGeneralNotesInfoModal = function () {
         document.body.appendChild(infoModal);
     }
 
+    pushModalState('generalNotesInfoModal', closeGeneralNotesInfoModal);
     infoModal.classList.add('active');
 };
 
 window.closeGeneralNotesInfoModal = function () {
-    const modal = document.getElementById('generalNotesInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('generalNotesInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 };
 
 // Info button click handlers with fixed positioning - use CAPTURE phase to intercept before parent buttons
@@ -2160,11 +2191,13 @@ function openProfileModalMobile() {
 }
 
 function closeProfileModalMobile() {
-    const modal = document.getElementById('profileModalMobile');
-    if (modal) {
-        modal.classList.remove('active');
-        document.documentElement.classList.remove('scroll-locked');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('profileModalMobile');
+        if (modal) {
+            modal.classList.remove('active');
+            document.documentElement.classList.remove('scroll-locked');
+        }
+    });
 }
 
 // Unified function that detects device type
@@ -2328,9 +2361,11 @@ function openAboutModal() {
 }
 
 function closeAboutModal() {
-    const modal = document.getElementById('aboutModal');
-    modal.classList.remove('active');
-    document.documentElement.classList.remove('scroll-locked');
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('aboutModal');
+        modal.classList.remove('active');
+        document.documentElement.classList.remove('scroll-locked');
+    });
 }
 
 // Function to open parity tracing personalization from settings

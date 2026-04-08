@@ -1,28 +1,75 @@
+window.closeModalStack = [];
+window._sqgModalPopstateClosing = false;
+window._sqgModalSkipPopstate = false;
+
+window.pushModalState = function (modalId, closeFn, ...args) {
+    if (typeof closeFn !== 'function') return;
+    const entry = args.length ? [closeFn, ...args] : closeFn;
+    window.closeModalStack.push(entry);
+    try {
+        window.history.pushState({ sqgModal: true, modalId }, '');
+    } catch (e) {
+        // Some browsers may reject pushState in unusual contexts; ignore silently.
+    }
+};
+
+window.removeCloseModalFromStack = function (closeFn) {
+    if (typeof closeFn !== 'function') return;
+    window.closeModalStack = window.closeModalStack.filter((entry) => {
+        if (typeof entry === 'function') return entry !== closeFn;
+        if (Array.isArray(entry) && typeof entry[0] === 'function') return entry[0] !== closeFn;
+        return true;
+    });
+};
+
+window.popCloseModalStack = function () {
+    if (window.closeModalStack.length === 0) return false;
+    const entry = window.closeModalStack.pop();
+    if (typeof entry === 'function') {
+        entry();
+    } else if (Array.isArray(entry)) {
+        const closeFn = entry[0];
+        if (typeof closeFn === 'function') {
+            closeFn(...entry.slice(1));
+        }
+    }
+    return true;
+};
+
+window.closeModalWithHistory = function (closeFn, ...args) {
+    if (typeof closeFn !== 'function') return;
+    window.removeCloseModalFromStack(closeFn);
+
+    const shouldPopHistory = !window._sqgModalPopstateClosing && window.history.state && window.history.state.sqgModal;
+    if (shouldPopHistory) {
+        window._sqgModalSkipPopstate = true;
+    }
+
+    closeFn(...args);
+
+    if (shouldPopHistory) {
+        window.history.back();
+    }
+};
+
+window.addEventListener('popstate', function () {
+    if (window._sqgModalSkipPopstate) {
+        window._sqgModalSkipPopstate = false;
+        return;
+    }
+
+    if (window.closeModalStack.length > 0) {
+        window._sqgModalPopstateClosing = true;
+        window.popCloseModalStack();
+        window._sqgModalPopstateClosing = false;
+    }
+});
+
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         if (document.getElementById('evilnessQuizModal')) return;
-        // code stolen from modals.js
-        // Training info modals
-        const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
-        infoModals.forEach(modalId => {
-            const modal = document.getElementById(modalId);
-            if (modal && modal.classList.contains('active') && e.target === modal) {
-                const closeFunc = window[`close${modalId.charAt(0).toUpperCase() + modalId.slice(1).replace('Modal', '')}Modal`];
-                if (closeFunc) closeFunc();
-            }
-        });
-
-        // Notes modal
-        const notesModal = document.getElementById('notesModal');
-        if (notesModal && notesModal.classList.contains('active') && e.target === notesModal) {
-            const caseName = notesModal.querySelector('.modal-title').textContent.replace('Notes: ', '');
-            attemptCloseNotesModal(caseName);
-        }
-
-        // General notes modal
-        const generalNotesModal = document.getElementById('generalNotesModal');
-        if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal) {
-            attemptCloseGeneralNotesModal();
+        if (window.closeModalStack.length > 0) {
+            window.popCloseModalStack();
         }
     }
 });
@@ -77,33 +124,6 @@ window.onclick = function (event) {
         }
     }, 0);
 }
-
-// Unified back button handler
-const modalStack = [];
-
-function pushModalState(modalId, closeFunction) {
-    modalStack.push({ id: modalId, close: closeFunction });
-    window.history.pushState({ modalId: modalId }, '');
-}
-
-function popModalState() {
-    if (modalStack.length > 0) {
-        return modalStack.pop();
-    }
-    return null;
-}
-
-window.addEventListener('popstate', function (event) {
-    if (window._ignoringPopstate) {
-        return;
-    }
-    if (modalStack.length > 0) {
-        const modal = popModalState();
-        if (modal && modal.close) {
-            modal.close();
-        }
-    }
-});
 
 // Wait for DOM to be ready before generating modals
 if (document.readyState === 'loading') {

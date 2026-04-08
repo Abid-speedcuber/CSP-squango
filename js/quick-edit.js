@@ -267,6 +267,7 @@ function openQuickEditModal() {
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
+    pushModalState('quickEditModal', closeQuickEditModal);
 
     // Keep modal in sync with theme changes
     modal._themeObserver = new MutationObserver(() => {
@@ -1376,25 +1377,27 @@ function closeQuickEditModal() {
 }
 
 function forceCloseQuickEditModal() {
-    const modal = document.getElementById('quickEditModal');
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('quickEditModal');
         if (modal) {
-        if (modal._lazyObserver) modal._lazyObserver.disconnect();
-        if (modal._themeObserver) modal._themeObserver.disconnect();
-        modal.remove();
-        document.body.classList.remove('modal-open');
-    }
+            if (modal._lazyObserver) modal._lazyObserver.disconnect();
+            if (modal._themeObserver) modal._themeObserver.disconnect();
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        }
 
-    // Reset state
-    quickEditState = {
-        currentTab: 'general',
-        findReplaceOpen: false,
-        findReplaceScope: null,
-        currentFindIndex: -1,
-        findMatches: [],
-        lastFocusedCell: null,
-        allMatchRanges: [],
-        visibleAlgColumns: 6
-    };
+        // Reset state
+        quickEditState = {
+            currentTab: 'general',
+            findReplaceOpen: false,
+            findReplaceScope: null,
+            currentFindIndex: -1,
+            findMatches: [],
+            lastFocusedCell: null,
+            allMatchRanges: [],
+            visibleAlgColumns: 6
+        };
+    });
 }
 
 function revertQuickEditChanges() {
@@ -1470,13 +1473,16 @@ window.showQuickEditInfoModal = function () {
     }
 
     infoModal.classList.add('active');
+    if (typeof pushModalState === 'function') pushModalState('quickEditInfoModal', closeQuickEditInfoModal);
 };
 
 window.closeQuickEditInfoModal = function () {
-    const modal = document.getElementById('quickEditInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('quickEditInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 };
 
 // REPLACE:
@@ -1515,7 +1521,7 @@ function openAlgVariablesModal() {
                         padding: 7px 18px; background: var(--accent); color: white;
                         border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
                     ">Save</button>
-                    <button onclick="document.getElementById('algVariablesModal').remove()" style="
+                    <button onclick="closeAlgVariablesModal()" style="
                         background: none; border: none; cursor: pointer; font-size: 1.5rem;
                         color: var(--sidebar-close-color); line-height: 1; padding: 2px 6px;
                     ">&times;</button>
@@ -1549,7 +1555,15 @@ function openAlgVariablesModal() {
     `;
 
     document.body.appendChild(modal);
-    modal.addEventListener('mousedown', e => { if (e.target === modal) modal.remove(); });
+    modal.addEventListener('mousedown', e => { if (e.target === modal) closeAlgVariablesModal(); });
+    if (typeof pushModalState === 'function') pushModalState('algVariablesModal', closeAlgVariablesModal);
+}
+
+function closeAlgVariablesModal() {
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('algVariablesModal');
+        if (modal) modal.remove();
+    });
 }
 
 function renderAlgVarRows() {

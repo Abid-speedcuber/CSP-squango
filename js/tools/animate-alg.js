@@ -1121,12 +1121,16 @@
 
             // Close button
             const closeBtn = document.getElementById(`${modalId}-close-btn`);
-            closeBtn.onclick = () => {
-                document.getElementById(modalId).remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.top = '';
-                window.scrollTo(0, window.modalScrollY || 0);
+            const close = () => {
+                closeModalWithHistory(() => {
+                    document.getElementById(modalId).remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.top = '';
+                    window.scrollTo(0, window.modalScrollY || 0);
+                });
             };
+            closeBtn.onclick = close;
+            pushModalState(modalId, close);
 
             // Sidebar speed slider
             const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);

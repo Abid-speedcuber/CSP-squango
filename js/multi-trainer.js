@@ -68,10 +68,12 @@ function openSelectorModal(storageKey, onCloseCallback) {
 }
 
 window.closeSelectorModal = function () {
-    const modal = document.getElementById('trainingSelectorModal');
-    if (!modal) return;
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingSelectorModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    });
 };
 
 // ─── Modal Creation ───────────────────────────────────────────────────────────

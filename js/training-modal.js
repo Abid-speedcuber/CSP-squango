@@ -209,31 +209,33 @@ function openTrainingModal(caseName) {
 }
 
 function closeTrainingModal() {
-    const modal = document.getElementById('trainingModal');
-    if (!modal) return;
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingModal');
+        if (!modal) return;
 
-    modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
 
-    // Stop timer if running
-    if (timerRunning) {
-        stopTimerOnly();
-    }
+        // Stop timer if running
+        if (timerRunning) {
+            stopTimerOnly();
+        }
 
-    // Reset all training state
-    preGeneratedScrambles = [];
-    timerElapsed = 0;
-    scrambleHistory = [];
-    currentHistoryIndex = -1;
-    currentTrainingCase = null;
-    isHoldReady = false;
-    inspectionRunning = false;
-    isInspectionPhase = false;
-    parityQuizPhase = false;
-    clearInterval(inspectionInterval);
+        // Reset all training state
+        preGeneratedScrambles = [];
+        timerElapsed = 0;
+        scrambleHistory = [];
+        currentHistoryIndex = -1;
+        currentTrainingCase = null;
+        isHoldReady = false;
+        inspectionRunning = false;
+        isInspectionPhase = false;
+        parityQuizPhase = false;
+        clearInterval(inspectionInterval);
 
-    // Soft render when coming back from training
-    filterAndSort(true);
+        // Soft render when coming back from training
+        filterAndSort(true);
+    });
 }
 
 window.generateNextScrambleData = generateNextScrambleData;
@@ -978,11 +980,13 @@ function deselectAllIndices(type) {
 }
 
 function closeShapeIndexSelector() {
-    const modal = document.getElementById('shapeIndexSelectorModal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('shapeIndexSelectorModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
+    });
 }
 
 // Keyboard events for timer
@@ -1334,10 +1338,10 @@ function _legacyOpenTrainingSettingsModal_unused() {
 }
 
 function closeTrainingSettingsModal() {
-    const modal = document.getElementById('trainingSettingsModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingSettingsModal');
+        if (modal) modal.classList.remove('active');
+    });
 }
 
 function openTrainingInfoModal() {
@@ -1406,10 +1410,10 @@ function openTrainingInfoModal() {
 }
 
 function closeTrainingInfoModal() {
-    const modal = document.getElementById('trainingInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingInfoModal');
+        if (modal) modal.classList.remove('active');
+    });
 }
 
 // ============================================================
@@ -1466,6 +1470,15 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
         </div>
     `;
     document.body.appendChild(selectorModal);
+
+    const closeSelector = () => {
+        closeModalWithHistory(() => {
+            selectorModal.classList.remove('active');
+            selectorModal.remove();
+        });
+    };
+
+    pushModalState(modalId + '_selectorModal', closeSelector);
 
     const stored = (() => { try { return JSON.parse(localStorage.getItem(storageKey)) || null; } catch (e) { return null; } })();
     let selectedCases = new Set(stored ? stored : shapeIndex.map(e => e.name));
@@ -1567,12 +1580,9 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
     });
 
     // Close
-    document.getElementById(modalId + '_selClose').addEventListener('click', () => {
-        selectorModal.classList.remove('active');
-        selectorModal.remove();
-    });
+    document.getElementById(modalId + '_selClose').addEventListener('click', closeSelector);
     selectorModal.addEventListener('click', (e) => {
-        if (e.target === selectorModal) { selectorModal.classList.remove('active'); selectorModal.remove(); }
+        if (e.target === selectorModal) closeSelector();
     });
 
     // Confirm
@@ -1673,33 +1683,23 @@ function startEvilnessQuiz(chosenCaseNames) {
     `;
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        const sm = document.getElementById('evilQuizSettingsModal');
-        if (sm) sm.remove();
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            const sm = document.getElementById('evilQuizSettingsModal');
+            if (sm) sm.remove();
 
-        const evilIdx = modalStack.findIndex(m => m.id === 'evilnessQuizModal');
-        if (evilIdx !== -1) modalStack.splice(evilIdx, 1);
-        window.history.replaceState(null, '');
-        const obs = new MutationObserver((mutations) => {
+            const obs = new MutationObserver((mutations) => {
+            });
+            obs.observe(document.body, { childList: true, subtree: false });
+            modal.remove();
+            setTimeout(() => obs.disconnect(), 500);
+            document.body.classList.remove('modal-open');
         });
-        obs.observe(document.body, { childList: true, subtree: false });
-        modal.remove();
-        setTimeout(() => obs.disconnect(), 500);
-        document.body.classList.remove('modal-open');
-        return;
     };
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'evilnessQuizModal' }, '');
-    const evilPopHandler = (e) => {
-        if (document.getElementById('evilnessQuizModal')) {
-            const evt = new KeyboardEvent('keydown', { code: 'Escape', bubbles: true });
-            document.dispatchEvent(evt);
-            window.removeEventListener('popstate', evilPopHandler);
-        }
-    };
-    window.addEventListener('popstate', evilPopHandler);
+    pushModalState('evilnessQuizModal', closeQuiz);
 
     // Settings modal
     function openEvilQuizSettings() {
@@ -1973,14 +1973,7 @@ function startParityQuiz(chosenCaseNames) {
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'parityQuizModal' }, '');
-    const parityPopHandler = () => {
-        if (document.getElementById('parityQuizModal')) {
-            closeQuiz();
-            window.removeEventListener('popstate', parityPopHandler);
-        }
-    };
-    window.addEventListener('popstate', parityPopHandler);
+    pushModalState('parityQuizModal', closeQuiz);
 
     function nextQuestion() {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
@@ -2035,9 +2028,11 @@ function startParityQuiz(chosenCaseNames) {
     }
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
     };
 
     document.getElementById('parityQuizGood').addEventListener('click', () => handleAnswer(true));
@@ -2237,15 +2232,7 @@ function startColorRecognitionPractice() {
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'colorRecogModal' }, '');
-    const colorPopHandler = () => {
-        if (document.getElementById('colorRecogModal')) {
-            const evt = new KeyboardEvent('keydown', { code: 'Escape', bubbles: true });
-            document.dispatchEvent(evt);
-            window.removeEventListener('popstate', colorPopHandler);
-        }
-    };
-    window.addEventListener('popstate', colorPopHandler);
+    pushModalState('colorRecogModal', closeQuiz);
 
     function renderTrio(trio) {
         return trio.map(face => {
@@ -2352,10 +2339,12 @@ function startColorRecognitionPractice() {
     }
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        document.removeEventListener('keydown', handleColorKeyDown);
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            document.removeEventListener('keydown', handleColorKeyDown);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
     };
 
     function handleColorKeyDown(e) {
@@ -2458,9 +2447,17 @@ window.openTrainerPickerModal = function () {
     if (!style.parentNode) document.head.appendChild(style);
 
     document.body.appendChild(picker);
-    document.getElementById('trainerPickerClose').addEventListener('click', () => picker.remove());
-    picker.addEventListener('click', e => { if (e.target === picker) picker.remove(); });
+    pushModalState('trainerPickerModal', closeTrainerPickerModal);
+    document.getElementById('trainerPickerClose').addEventListener('click', closeTrainerPickerModal);
+    picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
 };
+
+function closeTrainerPickerModal() {
+    closeModalWithHistory(() => {
+        const picker = document.getElementById('trainerPickerModal');
+        if (picker) picker.remove();
+    });
+}
 
 window.trainerPickerLaunch = function (type) {
     const picker = document.getElementById('trainerPickerModal');

@@ -148,12 +148,14 @@ function _renderTab(tabId) {
 
 window.closeUnifiedSettingsModal = _closeSettingsModal;
 function _closeSettingsModal() {
-    const modal = document.getElementById('unifiedSettingsModal');
-    if (!modal) return;
-    modal.remove();
-    _settingsOpen = false;
-    document.documentElement.classList.remove('scroll-locked');
-    window.scrollTo(0, window.modalScrollY || 0);
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('unifiedSettingsModal');
+        if (!modal) return;
+        modal.remove();
+        _settingsOpen = false;
+        document.documentElement.classList.remove('scroll-locked');
+        window.scrollTo(0, window.modalScrollY || 0);
+    });
 }
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
