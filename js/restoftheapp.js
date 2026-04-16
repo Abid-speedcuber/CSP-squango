@@ -1,4 +1,4 @@
-﻿// Modular preset configuration - add new presets here
+// Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
     'Default_Preset': 'presets/Default_Preset.json',
     'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
@@ -162,7 +162,7 @@ const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 // Function to calculate and cache parity for all cases
 function calculateAndCacheAllParity() {
 
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+    if (typeof window.ParityAnalyzerLib === 'undefined') {
         console.warn('Parity analyzer not available, skipping parity calculation');
         return;
     }
@@ -194,7 +194,7 @@ function calculateAndCacheAllParity() {
 
             try {
                 const setup = invertScramble(alg);
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
@@ -824,30 +824,6 @@ function initializeDOMReferences() {
     };
 }
 
-// Dynamic SVG scaling based on viewport width
-let resizeTimer;
-function updateSVGScaling() {
-    // No longer needed - CSS handles scaling with aspect-ratio
-}
-
-// Debounced resize handler for better performance
-function handleResize() {
-    // Reserved for future resize logic if needed
-}
-
-// Update on load and resize
-window.addEventListener('load', updateSVGScaling);
-window.addEventListener('resize', handleResize);
-
-// Also call after rendering cards
-const originalRender = window.render;
-if (typeof originalRender === 'function') {
-    window.render = function () {
-        originalRender();
-        setTimeout(updateSVGScaling, 10);
-    };
-}
-
 // Initialize preset system when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize preset on app load
@@ -864,11 +840,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-window.openInvertScrambleModal = function () {
-    // TODO: Implement invert scramble modal
-    showToast('Invert scramble - to be implemented', 2000, 'info');
-};
-
 window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedParity = '') {
     if (typeof window.Square1AlgorithmViewer === 'undefined') {
         showToast('Algorithm viewer library not loaded', 2000, 'error');
@@ -882,7 +853,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
     if (!parity && algorithm && algorithm !== 'Done!') {
         try {
             const setup = invertScramble(algorithm);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,
@@ -909,7 +880,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
 };
 
 // Apply VW-based sizing to topbar on mobile
-function applyTopbarVWScaling() {
+function applyTopbarScaling() {
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
 
@@ -920,5 +891,5 @@ function applyTopbarVWScaling() {
     }
 }
 
-window.addEventListener('resize', applyTopbarVWScaling);
-document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);
+window.addEventListener('resize', applyTopbarScaling);
+document.addEventListener('DOMContentLoaded', applyTopbarScaling);

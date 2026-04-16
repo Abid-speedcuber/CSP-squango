@@ -1,4 +1,4 @@
-﻿/*
+/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                          DYNAMIC MODAL GENERATION                         ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
@@ -543,11 +543,6 @@ function applyHintVisibility() {
     }
 }
 
-function toggleShowPaths(isChecked) {
-    // Shape paths always shown now
-    return;
-}
-
 function toggleHideInstructions(isChecked) {
     hideInstructions = isChecked;
     saveState();
@@ -559,11 +554,6 @@ function applyInstructionVisibility() {
     instructionBtns.forEach(btn => {
         btn.style.display = hideInstructions ? 'none' : 'flex';
     });
-}
-
-function togglePriorityLearning(isChecked) {
-    // Priority learning is always enabled now
-    return;
 }
 
 function toggleHideParenthesis(isChecked) {
@@ -969,7 +959,7 @@ function modalStripBeforeFirstSlash(alg) {
 function updateInputColorLive(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
-    if (typeof window.algToShapeIndex === 'undefined' || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
+    if (typeof window.algToShapeIndex === 'undefined' || typeof window.ParityAnalyzerLib === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
     try {
         const modal = document.getElementById('editCaseModal');
         if (!modal) return;
@@ -986,12 +976,12 @@ function updateInputColorLive(input) {
         const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
             input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             input.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
             input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             input.style.fontWeight = '600';
         } else {
@@ -1031,7 +1021,7 @@ function updateParityLabel(input) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        typeof window.ParityAnalyzerLib === 'undefined') {
         parityLabel.textContent = '';
         parityLabel.style.color = '';
         parityLabel.style.fontWeight = '';
@@ -1074,7 +1064,7 @@ function updateParityLabel(input) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -1095,7 +1085,7 @@ function updateParityLabel(input) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -2366,37 +2356,6 @@ function closeAboutModal() {
         modal.classList.remove('active');
         document.documentElement.classList.remove('scroll-locked');
     });
-}
-
-// Function to open parity tracing personalization from settings
-function openParityTracingPersonalization() {
-    closeSettingsModal();
-
-    // Call the config modal directly via the exported library function
-    if (typeof window.ParityTracerLibrary === 'undefined' || !window.ParityTracerLibrary.openConfigModal) {
-        showToast('Configuration modal not available', 3000, 'error');
-        return;
-    }
-
-    const config = {
-        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
-        hideInstructionButton: hideInstructions,
-        instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Cale\'s method.',
-        instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
-        instructionText3: 'Customize the tracing start point from the settings button at the bottom right.',
-        topLayerMainColor: colorScheme.topColor,
-        topLayerColorFullName: getColorName(colorScheme.topColor),
-        topLayerColorAbbreviation: getColorName(colorScheme.topColor).charAt(0),
-        bottomLayerMainColor: colorScheme.bottomColor,
-        bottomLayerColorFullName: getColorName(colorScheme.bottomColor),
-        bottomLayerColorAbbreviation: getColorName(colorScheme.bottomColor).charAt(0),
-        frontFaceColorForVisualization: colorScheme.frontColor,
-        rightFaceColorForVisualization: colorScheme.rightColor,
-        backFaceColorForVisualization: colorScheme.backColor,
-        leftFaceColorForVisualization: colorScheme.leftColor
-    };
-
-    window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }
 
 // Sidebar functions

@@ -1,6 +1,5 @@
 // Square-1 Parity Tracer Library - Complete Refactored Edition
-// With ridiculously long variable names to avoid conflicts with parent apps
-(function (globalThisWindowObjectThingyForParityTracer) {
+(function (lib) {
     'use strict';
 
     // ── Dark-mode brightness offsets (tweak these to restyle the modal) ──────
@@ -22,7 +21,7 @@
     const LM_RESULT_TITLE_COLOR = '#2d3748';
 
     // Color configuration with absurdly long name
-    let superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict = {
+    let colorConfig = {
         topLayerMainColor: '#FFD700',
         topLayerColorFullName: 'Yellow',
         topLayerColorAbbreviation: 'Y',
@@ -36,36 +35,36 @@
     };
 
     // Piece labels mapping - ridiculously long name
-    const absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle = {
+    const pieceLabels = {
         A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
         G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
         M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
         T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
     };
 
-    function createColorLabelHTMLWithLongName(str) {
+    function createColorLabelHTML(str) {
         return str.replace(/[WYGBRO]/g, m => `<span class="color-dot ${m}"></span>`);
     }
 
-    const pieceNameHTMLMapWithLongName = {};
-    for (const k in absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle) {
-        pieceNameHTMLMapWithLongName[k] = createColorLabelHTMLWithLongName(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[k]);
+    const pieceLabelHTML = {};
+    for (const k in pieceLabels) {
+        pieceLabelHTML[k] = createColorLabelHTML(pieceLabels[k]);
     }
 
-    const edgePiecesSetWithVeryLongNameToAvoidConflicts = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+    const edgePieces = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
 
-    const cornerPartnerMappingWithExtremelyLongName = {
+    const cornerPartner = {
         A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
         N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
     };
 
-    const cornerIdentifierMappingWithRidiculouslyLongName = {
+    const cornerIdentifier = {
         A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
         N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
     };
 
-    const solvedEdgesArrayWithLongName = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
-    const solvedCornersArrayWithLongName = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
+    const solvedEdges = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
+    const solvedCorners = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
 
     // Helper functions used across multiple modals
     function getContrastColor(hexColor) {
@@ -86,7 +85,7 @@
     }
 
     // Default shape patterns with long name
-    const defaultShapePatternsForSquareOnePuzzleWithLongName = {
+    const defaultShapePatterns = {
         'ECECECEC': 'Square',
         'EECECCEC': 'Kite',
         'EECCEECC': 'Barrel',
@@ -119,23 +118,23 @@
     };
 
     // Load custom shapes from localStorage or use defaults
-    function loadShapesFromStorageWithLongName() {
+    function loadShapes() {
         const stored = localStorage.getItem('customShapesForParityTracerLibrary');
         if (stored) {
             try {
                 return JSON.parse(stored);
             } catch (e) {
-                return { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
+                return { ...defaultShapePatterns };
             }
         }
-        return { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
+        return { ...defaultShapePatterns };
     }
 
-    function saveShapesToStorageWithLongName(shapes) {
+    function saveShapes(shapes) {
         localStorage.setItem('customShapesForParityTracerLibrary', JSON.stringify(shapes));
     }
 
-    let currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+    let shapePatterns = loadShapes();
 
     // Utility button states (always start as false when modal opens)
     let utilityZ2Enabled = false;
@@ -212,11 +211,11 @@
     }
 
     // Scramble engine functions with long names
-    function createSolvedStateArrayForSquareOnePuzzleWithLongName() {
+    function createSolvedState() {
         return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
     }
 
-    function rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(arr, start, len, k) {
+    function rotateSection(arr, start, len, k) {
         const n = ((k % len) + len) % len;
         if (n === 0) return;
         const seg = arr.slice(start, start + len);
@@ -229,13 +228,13 @@
         }
     }
 
-    function performSliceSwapOperationWithVeryLongName(arr) {
+    function sliceSwap(arr) {
         for (let i = 0; i < 6; i++) {
             [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
         }
     }
 
-    function* tokenizeScrambleStringGeneratorWithExtremelyLongName(s) {
+    function* tokenizeScramble(s) {
         let i = 0;
         const L = s.length;
         const ws = /\s/;
@@ -388,21 +387,21 @@
         return tokens;
     }
 
-    function applyScrambleToStateArrayWithLongName(scr) {
-        const a = createSolvedStateArrayForSquareOnePuzzleWithLongName();
-        for (const tok of tokenizeScrambleStringGeneratorWithExtremelyLongName(scr)) {
+    function applyScramble(scr) {
+        const a = createSolvedState();
+        for (const tok of tokenizeScramble(scr)) {
             if (tok.k === 'tb') {
-                rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(a, 0, 12, tok.t);
-                rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(a, 12, 12, tok.b);
-                if (tok.slash) performSliceSwapOperationWithVeryLongName(a);
+                rotateSection(a, 0, 12, tok.t);
+                rotateSection(a, 12, 12, tok.b);
+                if (tok.slash) sliceSwap(a);
             } else {
-                performSliceSwapOperationWithVeryLongName(a);
+                sliceSwap(a);
             }
         }
         return a;
     }
 
-    function validateCornersTogetherSameLayerWithLongName(state) {
+    function validateCorners(state) {
         const pairs = [['A', 'B'], ['D', 'E'], ['G', 'H'], ['J', 'K'], ['N', 'O'], ['Q', 'R'], ['T', 'U'], ['W', 'X']];
         for (const [x, y] of pairs) {
             const ix = state.indexOf(x), iy = state.indexOf(y);
@@ -415,34 +414,34 @@
         return { ok: true };
     }
 
-    const rotateStringCircularlyWithLongName = (s, k) => {
+    const rotateString = (s, k) => {
         const n = s.length;
         k = ((k % n) + n) % n;
         return s.slice(k) + s.slice(0, k);
     };
 
-    const rotateArrayCircularlyWithLongName = (a, k) => {
+    const rotateArray = (a, k) => {
         const n = a.length;
         k = ((k % n) + n) % n;
         return a.slice(k).concat(a.slice(0, k));
     };
 
-    function buildUnitsFromStateLayerWithLongName(state, start) {
+    function buildUnits(state, start) {
         const units = [];
         let i = 0;
         while (i < 12) {
             const ch = state[start + i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
+            if (edgePieces.has(ch)) {
                 units.push({ type: 'E', edge: ch });
                 i += 1;
                 continue;
             }
             const nextCh = state[start + ((i + 1) % 12)];
-            if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWithRidiculouslyLongName[ch], rep: ch });
+            if (cornerPartner[ch] === nextCh) {
+                units.push({ type: 'C', pair: cornerIdentifier[ch], rep: ch });
                 i += 2;
             } else {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWithRidiculouslyLongName[ch] || '??', rep: ch });
+                units.push({ type: 'C', pair: cornerIdentifier[ch] || '??', rep: ch });
                 i += 1;
             }
         }
@@ -450,10 +449,10 @@
         return { types, units };
     }
 
-    function matchPatternWithRotationCheckingWithLongName(typeStr) {
+    function matchPattern(typeStr) {
         // Ensure we're using current shapes, not stale cache
-        if (!currentShapePatternsStorageWithLongName || Object.keys(currentShapePatternsStorageWithLongName).length === 0) {
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        if (!shapePatterns || Object.keys(shapePatterns).length === 0) {
+            shapePatterns = loadShapes();
         }
 
         // Define symmetric shapes and their symmetry degrees
@@ -465,7 +464,7 @@
             'Star': 6
         };
 
-        for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+        for (const [pat, name] of Object.entries(shapePatterns)) {
             if (pat.length !== typeStr.length) continue;
 
             // Try natural rotation order: CCW first, then CW with increasing distance
@@ -478,9 +477,9 @@
             }
 
             for (const rotationAmount of rotationOrder) {
-                // Normalize rotation to positive value for rotateStringCircularlyWithLongName
+                // Normalize rotation to positive value for rotateString
                 const normalizedRotation = ((rotationAmount % typeStr.length) + typeStr.length) % typeStr.length;
-                if (rotateStringCircularlyWithLongName(typeStr, normalizedRotation) === pat) {
+                if (rotateString(typeStr, normalizedRotation) === pat) {
                     return {
                         name,
                         pat,
@@ -494,17 +493,17 @@
         return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr, symmetryDegree: 1 };
     }
 
-    function countEdgesAndCornersWithLongName(units) {
+    function countPieces(units) {
         const e = units.filter(u => u.type === 'E').length;
         const c = units.length - e;
         return { e, c, label: `${e}E${c}C` };
     }
 
     // Six-step parity calculation
-    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
+    function calculateParity(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
         const steps = [];
 
-        function getEdgeCodenameWithLongName(letter) {
+        function getEdgeCodename(letter) {
             const colorMap = {
                 'L': 'O', 'C': 'G', 'F': 'R', 'I': 'B',
                 'M': 'R', 'P': 'G', 'S': 'O', 'V': 'B'
@@ -512,7 +511,7 @@
             return colorMap[letter] || '?';
         }
 
-        function getCornerCodenameWithLongName(id) {
+        function getCornerCodename(id) {
             // Default map is for counter-clockwise (most counter-clockwise sticker)
             const counterClockwiseMap = {
                 'AB': 'O', 'DE': 'G', 'GH': 'R', 'JK': 'B',
@@ -529,15 +528,15 @@
             return colorMap[id] || '?';
         }
 
-        function isTopLayerEdgeWithLongName(letter) {
+        function isTopLayerEdge(letter) {
             return ['L', 'C', 'F', 'I'].includes(letter);
         }
 
-        function isTopLayerCornerWithLongName(id) {
+        function isTopLayerCorner(id) {
             return ['AB', 'DE', 'GH', 'JK'].includes(id);
         }
 
-        function calculateTrioParityWithLongName(codenames) {
+        function calculateTrioParity(codenames) {
             if (codenames.length < 3) return { result: 0, detail: 'Not enough pieces' };
 
             const trio = codenames.slice(0, 3);
@@ -581,15 +580,15 @@
             };
         }
 
-        function calculateAlternatingParityWithLongName(pieces, isEdge) {
+        function calculateAlternatingParity(pieces, isEdge) {
             const positions = [0, 2, 4, 6];
             const selected = positions.map(i => pieces[i]).filter(p => p !== undefined);
 
             let topLayerCount = 0;
             if (isEdge) {
-                topLayerCount = selected.filter(p => isTopLayerEdgeWithLongName(p)).length;
+                topLayerCount = selected.filter(p => isTopLayerEdge(p)).length;
             } else {
-                topLayerCount = selected.filter(p => isTopLayerCornerWithLongName(p)).length;
+                topLayerCount = selected.filter(p => isTopLayerCorner(p)).length;
             }
 
             const result = (topLayerCount === 1 || topLayerCount === 3) ? 1 : 0;
@@ -597,55 +596,55 @@
 
             return {
                 result,
-                detail: `Positions 1,3,5,7: [${selectedStr}], ${topLayerCount} ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName.toLowerCase()} = ${result}`
+                detail: `Positions 1,3,5,7: [${selectedStr}], ${topLayerCount} ${colorConfig.topLayerColorFullName.toLowerCase()} = ${result}`
             };
         }
 
-        const topEdges = edgesOrderLetters.filter(e => isTopLayerEdgeWithLongName(e));
-        const topEdgesCodes = topEdges.map(e => getEdgeCodenameWithLongName(e));
-        const line1 = calculateTrioParityWithLongName(topEdgesCodes);
+        const topEdges = edgesOrderLetters.filter(e => isTopLayerEdge(e));
+        const topEdgesCodes = topEdges.map(e => getEdgeCodename(e));
+        const line1 = calculateTrioParity(topEdgesCodes);
         steps.push({
-            name: `Line 1: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Edges`,
+            name: `Line 1: ${colorConfig.topLayerColorFullName} Edges`,
             pieces: topEdges.join(' '),
             codenames: topEdgesCodes.join(' '),
             detail: line1.detail,
             result: line1.result
         });
 
-        const bottomEdges = edgesOrderLetters.filter(e => !isTopLayerEdgeWithLongName(e));
-        const bottomEdgesCodes = bottomEdges.map(e => getEdgeCodenameWithLongName(e));
-        const line2 = calculateTrioParityWithLongName(bottomEdgesCodes);
+        const bottomEdges = edgesOrderLetters.filter(e => !isTopLayerEdge(e));
+        const bottomEdgesCodes = bottomEdges.map(e => getEdgeCodename(e));
+        const line2 = calculateTrioParity(bottomEdgesCodes);
         steps.push({
-            name: `Line 2: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Edges`,
+            name: `Line 2: ${colorConfig.bottomLayerColorFullName} Edges`,
             pieces: bottomEdges.join(' '),
             codenames: bottomEdgesCodes.join(' '),
             detail: line2.detail,
             result: line2.result
         });
 
-        const topCorners = cornersOrderIDs.filter(c => isTopLayerCornerWithLongName(c));
-        const topCornersCodes = topCorners.map(c => getCornerCodenameWithLongName(c));
-        const line3 = calculateTrioParityWithLongName(topCornersCodes);
+        const topCorners = cornersOrderIDs.filter(c => isTopLayerCorner(c));
+        const topCornersCodes = topCorners.map(c => getCornerCodename(c));
+        const line3 = calculateTrioParity(topCornersCodes);
         steps.push({
-            name: `Line 3: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Corners`,
+            name: `Line 3: ${colorConfig.topLayerColorFullName} Corners`,
             pieces: topCorners.join(' '),
             codenames: topCornersCodes.join(' '),
             detail: line3.detail,
             result: line3.result
         });
 
-        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCornerWithLongName(c));
-        const bottomCornersCodes = bottomCorners.map(c => getCornerCodenameWithLongName(c));
-        const line4 = calculateTrioParityWithLongName(bottomCornersCodes);
+        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCorner(c));
+        const bottomCornersCodes = bottomCorners.map(c => getCornerCodename(c));
+        const line4 = calculateTrioParity(bottomCornersCodes);
         steps.push({
-            name: `Line 4: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Corners`,
+            name: `Line 4: ${colorConfig.bottomLayerColorFullName} Corners`,
             pieces: bottomCorners.join(' '),
             codenames: bottomCornersCodes.join(' '),
             detail: line4.detail,
             result: line4.result
         });
 
-        const line5 = calculateAlternatingParityWithLongName(edgesOrderLetters, true);
+        const line5 = calculateAlternatingParity(edgesOrderLetters, true);
         steps.push({
             name: 'Line 5: Odd Edges',
             pieces: line5.detail.split(': [')[1].split(']')[0],
@@ -654,7 +653,7 @@
             result: line5.result
         });
 
-        const line6 = calculateAlternatingParityWithLongName(cornersOrderIDs, false);
+        const line6 = calculateAlternatingParity(cornersOrderIDs, false);
         steps.push({
             name: 'Line 6: Odd Corners',
             pieces: line6.detail.split(': [')[1].split(']')[0],
@@ -675,11 +674,11 @@
     }
 
     // Clustering Functions - RESTORED
-    function buildClustersFromShapeArrayWithLongName(shapeArray) {
+    function buildClusters(shapeArray) {
         const slots = [];
         const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
-        function processLayerWithLongName(start, end) {
+        function processLayer(start, end) {
             let i = start;
             while (i < end) {
                 const isCorner = shapeArray[i] === 1;
@@ -715,32 +714,32 @@
             }
         }
 
-        processLayerWithLongName(0, 12);
-        processLayerWithLongName(12, 24);
+        processLayer(0, 12);
+        processLayer(12, 24);
 
         return slots;
     }
 
     // Encoding functions - RESTORED
-    const pieceToHexMappingWithLongName = {
+    const pieceToHex = {
         'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33', 'YB': '2', 'YBO': '11',
         'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99', 'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
     };
 
-    function encodeStateToHexStringWithLongName(state) {
+    function encodeState(state) {
         const topPieces = [];
         const bottomPieces = [];
 
         let i = 0;
         while (i < 12) {
             const ch = state[i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
-                topPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
+            if (edgePieces.has(ch)) {
+                topPieces.push(pieceLabels[ch]);
                 i++;
             } else {
                 const nextCh = state[(i + 1) % 12];
-                if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                    topPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
+                if (cornerPartner[ch] === nextCh) {
+                    topPieces.push(pieceLabels[ch]);
                     i += 2;
                 } else {
                     return 'Error: Invalid corner pairing in top layer';
@@ -751,13 +750,13 @@
         i = 12;
         while (i < 24) {
             const ch = state[i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
-                bottomPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
+            if (edgePieces.has(ch)) {
+                bottomPieces.push(pieceLabels[ch]);
                 i++;
             } else {
                 const nextCh = state[12 + ((i - 12 + 1) % 12)];
-                if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                    bottomPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
+                if (cornerPartner[ch] === nextCh) {
+                    bottomPieces.push(pieceLabels[ch]);
                     i += 2;
                 } else {
                     return 'Error: Invalid corner pairing in bottom layer';
@@ -765,8 +764,8 @@
             }
         }
 
-        const topHex = topPieces.map(p => pieceToHexMappingWithLongName[p] || '?').join('');
-        const bottomHex = bottomPieces.map(p => pieceToHexMappingWithLongName[p] || '?').join('');
+        const topHex = topPieces.map(p => pieceToHex[p] || '?').join('');
+        const bottomHex = bottomPieces.map(p => pieceToHex[p] || '?').join('');
 
         if (topHex.includes('?') || bottomHex.includes('?')) {
             return `Error: Unknown piece mapping`;
@@ -784,7 +783,7 @@
     }
 
     // Shape visualization for config modal - RESTORED
-    function generateSimpleShapeVisualizationSVGWithLongName(pattern, size, idPrefix) {
+    function generateShapeSVG(pattern, size, idPrefix) {
         const cx = size / 2;
         const cy = size / 2;
 
@@ -894,7 +893,7 @@
     }
 
     // Display results in modal
-    function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray, layerType, patternTypes) {
+    function calculateArrowAngle(rotationAmount, unitsArray, layerType, patternTypes) {
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
@@ -917,7 +916,7 @@
         return { startAngle: finalAngle, arcDegrees: arcDegrees };
     }
 
-    function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
+    function generateArrowSVG(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
         if (!showCircularArrow) {
             return '';
         }
@@ -984,7 +983,7 @@
     `;
     }
 
-    function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
+    function displayResults(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
             const g = parseInt(hexColor.substr(3, 2), 16);
@@ -1002,7 +1001,7 @@
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
 
-        function createColorSquaresWithLongName(codenames) {
+        function createColorSquares(codenames) {
             if (codenames === '-') return '';
             const colorMap = {
                 'O': `<span class="color-dot" style="background: ${config.backFaceColorForVisualization};"></span>`,
@@ -1013,7 +1012,7 @@
             return codenames.split(' ').slice(0, 3).map(c => colorMap[c] || '').join('');
         }
 
-        function createPositionIndicatorsWithLongName(pieces) {
+        function createPositionIndicators(pieces) {
             return pieces.split(' ').map(p => {
                 const isTopLayer = ['L', 'C', 'F', 'I', 'AB', 'DE', 'GH', 'JK'].includes(p);
                 const letter = isTopLayer ? config.topLayerColorAbbreviation : config.bottomLayerColorAbbreviation;
@@ -1053,9 +1052,9 @@
                 const evilLabel = step.result === 1 ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>' : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
                 displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
             } else if (idx < 2 || (idx >= 2 && idx < 4)) {
-                displayContent = `${lineName}: ${createColorSquaresWithLongName(step.codenames)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createColorSquares(step.codenames)} = <strong>${step.result}</strong>`;
             } else {
-                displayContent = `${lineName}: ${createPositionIndicatorsWithLongName(step.pieces)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createPositionIndicators(step.pieces)} = <strong>${step.result}</strong>`;
             }
 
             return `
@@ -1076,7 +1075,7 @@
     }
 
     // Function to set shape orientation - RESTORED
-    function setShapeOrientationWithLongName(pattern, clickedIndex, layerId) {
+    function setShapeOrientation(pattern, clickedIndex, layerId) {
         // Calculate rotation amount based on piece type
         // We need to count how many pattern positions (E or C) come before the clicked piece
         const pieces = pattern.split('');
@@ -1086,10 +1085,10 @@
             rotationAmount++;
         }
 
-        const rotated = rotateStringCircularlyWithLongName(pattern, rotationAmount);
+        const rotated = rotateString(pattern, rotationAmount);
 
         let shapeName = '';
-        for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+        for (const [pat, name] of Object.entries(shapePatterns)) {
             if (pat === pattern) {
                 shapeName = name;
                 break;
@@ -1097,9 +1096,9 @@
         }
 
         if (shapeName) {
-            delete currentShapePatternsStorageWithLongName[pattern];
-            currentShapePatternsStorageWithLongName[rotated] = shapeName;
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            delete shapePatterns[pattern];
+            shapePatterns[rotated] = shapeName;
+            saveShapes(shapePatterns);
         }
     }
 
@@ -1563,7 +1562,7 @@
         casesListDiv.style.cssText = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;';
 
         // Sort entries alphabetically by name
-        const sortedEntries = Object.entries(currentShapePatternsStorageWithLongName).sort((a, b) => a[1].localeCompare(b[1]));
+        const sortedEntries = Object.entries(shapePatterns).sort((a, b) => a[1].localeCompare(b[1]));
 
         sortedEntries.forEach(([pattern, name], idx) => {
             const caseDiv = document.createElement('div');
@@ -1610,7 +1609,7 @@
             nameSpan.textContent = name;
 
             const vizDiv = document.createElement('div');
-            vizDiv.innerHTML = generateSimpleShapeVisualizationSVGWithLongName(pattern, 112, 'config-' + pattern);
+            vizDiv.innerHTML = generateShapeSVG(pattern, 112, 'config-' + pattern);
             vizDiv.style.cssText = 'margin-bottom: 0.5rem;';
 
             caseDiv.appendChild(nameSpan);
@@ -1648,7 +1647,7 @@
 
         const performSave = () => {
             // Save shape patterns and corner sticker mode
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            saveShapes(shapePatterns);
             if (typeof saveState === 'function') {
                 saveState();
             }
@@ -1723,8 +1722,8 @@
         };
 
         resetBtn.onclick = () => {
-            currentShapePatternsStorageWithLongName = { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            shapePatterns = { ...defaultShapePatterns };
+            saveShapes(shapePatterns);
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
@@ -2101,7 +2100,7 @@
                             // Save scroll position before update
                             const scrollPos = configModalDiv.scrollTop;
 
-                            setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
+                            setShapeOrientation(pattern, clickedIndex, 'config');
                             dataChanged = true;
                             updateFloatingSaveBtn();
 
@@ -2116,7 +2115,7 @@
 
                                 // Find the new pattern for this shape
                                 let newPattern = '';
-                                for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+                                for (const [pat, name] of Object.entries(shapePatterns)) {
                                     if (name.toLowerCase() === shapeName) {
                                         newPattern = pat;
                                         break;
@@ -2124,7 +2123,7 @@
                                 }
 
                                 if (newPattern) {
-                                    vizDiv.innerHTML = generateSimpleShapeVisualizationSVGWithLongName(newPattern, 112, 'config-' + newPattern);
+                                    vizDiv.innerHTML = generateShapeSVG(newPattern, 112, 'config-' + newPattern);
 
                                     // Re-attach click handlers to new pieces
                                     vizDiv.querySelectorAll('[class*="shape-piece-config-"]').forEach(newPiece => {
@@ -2151,7 +2150,7 @@
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
     function createSquareOneParityTracerModalWithAllParametersIncluded(options = {}) {
         // CRITICAL: Always reload shapes from storage when modal opens
-        currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        shapePatterns = loadShapes();
 
         const config = {
             backgroundColor: options.backgroundColor || '#ffffff',
@@ -2177,7 +2176,7 @@
         };
 
         // Set global color configuration
-        superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict = {
+        colorConfig = {
             topLayerMainColor: config.topLayerMainColor,
             topLayerColorFullName: config.topLayerColorFullName,
             topLayerColorAbbreviation: config.topLayerColorAbbreviation,
@@ -2193,9 +2192,9 @@
         // If returnOnlyValue, calculate and return only the parity result - COMPLETE LOGIC
         if (config.returnOnlyParityValue && config.scrambleTextInput) {
             try {
-                const state = applyScrambleToStateArrayWithLongName(config.scrambleTextInput);
-                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                const state = applyScramble(config.scrambleTextInput);
+                const topRaw = buildUnits(state, 0);
+                const botRaw = buildUnits(state, 12);
                 // Check if we have stored symmetry offsets for this scramble
                 // Use original scramble for key, not transformed
                 const scrambleKey = scrambleText.replace(/\s+/g, '');
@@ -2206,8 +2205,8 @@
                     window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                 }
 
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
 
                 // Apply symmetry offsets if they exist
                 const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -2232,10 +2231,10 @@
                 topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                 botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                const topCounts = countPieces(topUnits);
+                const botCounts = countPieces(botUnits);
 
                 const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
 
@@ -2270,7 +2269,7 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
+                const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
@@ -2619,9 +2618,9 @@
             window.addEventListener('resize', updateButtonPositions);
             backdrop.addEventListener('scroll', updateButtonPositions);
 
-            function performAnalysisWithLongName() {
+            function performAnalysis() {
                 // Ensure we have the latest shapes before analysis
-                currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+                shapePatterns = loadShapes();
 
                 // Re-read all live settings from localStorage on every analysis
                 const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
@@ -2644,14 +2643,14 @@
                 const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
 
                 try {
-                    const state = applyScrambleToStateArrayWithLongName(transformedScramble);
+                    const state = applyScramble(transformedScramble);
 
                     // Validation - RESTORED
-                    const val = validateCornersTogetherSameLayerWithLongName(state);
+                    const val = validateCorners(state);
 
                     // Build units - COMPLETE
-                    const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                    const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                    const topRaw = buildUnits(state, 0);
+                    const botRaw = buildUnits(state, 12);
 
                     // Check if we have stored symmetry offsets for this scramble
                     // Use original scramble for key, not transformed
@@ -2663,8 +2662,8 @@
                         window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                     }
 
-                    const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                    const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                    const topMatch = matchPattern(topRaw.types);
+                    const botMatch = matchPattern(botRaw.types);
 
                     // Apply symmetry offsets if they exist
                     const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -2689,10 +2688,10 @@
                     topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                     botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                    const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                    const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                    const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                    const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                    const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                    const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                    const topCounts = countPieces(topUnits);
+                    const botCounts = countPieces(botUnits);
 
                     // Determine order - always Top → Bottom
                     const orderMode = 'TB';
@@ -2743,16 +2742,16 @@
                     }
 
                     const useClockwise = (cornerStickerMode === 'clockwise');
-                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                    const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
 
                     // Visualize scramble if enabled - COMPLETE
-                    if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
-                        const encodedScramble = encodeStateToHexStringWithLongName(state);
+                    if (config.shouldGenerateImage && lib.Square1VisualizerLibraryWithSillyNames) {
+                        const encodedScramble = encodeState(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
 
                                 const imageSize = parityTracerImageSize;
-                                const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                const svgContent = lib.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
                                     encodedScramble,
                                     imageSize,
                                     {
@@ -2767,8 +2766,8 @@
 
                                 // Calculate arrow positions
                                 // Note: We need to calculate based on the UNROTATED units to find the physical position
-                                const topArrowData = calculateArrowStartAngleWithLongName(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
-                                const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+                                const topArrowData = calculateArrowAngle(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
+                                const botArrowData = calculateArrowAngle(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
 
                                 // Calculate circle dimensions (matching draw-scramble logic)
                                 const unit10vh = imageSize * 0.4;
@@ -2785,12 +2784,12 @@
                                 if (svgs.length >= 2) {
                                     // Add arrow to first SVG (top layer)
                                     const firstSvg = svgs[0];
-                                    const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
+                                    const arrowSvg1 = generateArrowSVG(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
                                     firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
 
                                     // Add arrow to second SVG (bottom layer)
                                     const secondSvg = svgs[1];
-                                    const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
+                                    const arrowSvg2 = generateArrowSVG(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
                                     secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
                                 }
 
@@ -2833,7 +2832,7 @@
                                                 window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
 
                                                 // Re-run analysis
-                                                performAnalysisWithLongName();
+                                                performAnalysis();
                                             });
                                         }
 
@@ -2855,7 +2854,7 @@
                     }
 
                     // Display results
-                    displayResultsInModalWithVeryLongFunctionName(resultsContainer, sixStepParity, config);
+                    displayResults(resultsContainer, sixStepParity, config);
 
                 } catch (err) {
                     console.error(err);
@@ -2864,7 +2863,7 @@
             }
 
             scrambleInput.addEventListener('input', () => {
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             scrambleInput.addEventListener('keydown', (e) => {
@@ -2881,19 +2880,19 @@
             z2Btn.addEventListener('click', () => {
                 utilityZ2Enabled = !utilityZ2Enabled;
                 z2Btn.classList.toggle('active', utilityZ2Enabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             y2Btn.addEventListener('click', () => {
                 utilityY2Enabled = !utilityY2Enabled;
                 y2Btn.classList.toggle('active', utilityY2Enabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             flipBtn.addEventListener('click', () => {
                 utilityFlipColorEnabled = !utilityFlipColorEnabled;
                 flipBtn.classList.toggle('active', utilityFlipColorEnabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             const closeMainModal = () => {
@@ -2941,9 +2940,9 @@
 
             // Auto-analyze if scramble is provided, otherwise use (0,0)
             if (config.scrambleTextInput) {
-                performAnalysisWithLongName();
+                performAnalysis();
             } else {
-                performAnalysisWithLongName();
+                performAnalysis();
             }
         }, 0);
         // Create close button
@@ -2974,33 +2973,33 @@
     }
 
     // Export the single function
-    globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
+    lib.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
         openConfigModal: showTracingSchemeSettingsModal,
         openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+            shapePatterns = loadShapes();
         },
         version: '2.0.0'
     };
 
     // Export parity analysis function for use by other parts of the app
-    globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
+    lib.ParityAnalyzerLib = {
         getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
             // Always use fresh shapes from storage
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+            shapePatterns = loadShapes();
 
             try {
-                const state = applyScrambleToStateArrayWithLongName(scrambleText);
-                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
-                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                const state = applyScramble(scrambleText);
+                const topRaw = buildUnits(state, 0);
+                const botRaw = buildUnits(state, 12);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
+                const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                const topCounts = countPieces(topUnits);
+                const botCounts = countPieces(botUnits);
 
                 const shouldSwapForParity = z2TracingModeEnabled &&
                     (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
@@ -3037,7 +3036,7 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {

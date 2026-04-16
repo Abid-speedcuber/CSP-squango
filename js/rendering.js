@@ -1,4 +1,4 @@
-﻿// Helper function to sanitize note HTML (allow various text formatting tags)
+// Helper function to sanitize note HTML (allow various text formatting tags)
 function sanitizeNoteHTML(html) {
     if (!html) return '';
 
@@ -323,8 +323,8 @@ function getShapePath(scramble) {
     }
 
     try {
-        if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
-            const shapePathString = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePathPlease(scramble);
+        if (typeof window.ShapePathTracerLib !== 'undefined') {
+            const shapePathString = window.ShapePathTracerLib.traceSolutionToSolutionShapePathPlease(scramble);
             if (shapePathString) {
                 // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
                 const steps = shapePathString.split(' → ').map(s => s.trim());

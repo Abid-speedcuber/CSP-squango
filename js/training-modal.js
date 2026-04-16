@@ -1,4 +1,4 @@
-﻿// Training modal variables
+// Training modal variables
 let currentTrainingCase = null;
 let trainingScrambles = [];
 let currentScrambleIndex = 0;
@@ -627,8 +627,8 @@ function startParityQuizInspection() {
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
     let parity = null;
     try {
-        if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-            parity = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (typeof window.ParityAnalyzerLib !== 'undefined') {
+            parity = window.ParityAnalyzerLib.getParityTextFromScramblePlease(
                 cleanScramble,
                 typeof colorScheme !== 'undefined' ? colorScheme : {},
                 typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -1207,135 +1207,6 @@ function regenerateScrambleLookahead() {
 function openTrainingSettingsModal() {
     window.openUnifiedSettings('trainer');
 }
-function _legacyOpenTrainingSettingsModal_unused() {
-    pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
-    let settingsModal = document.getElementById('trainingSettingsModal');
-    if (!settingsModal) {
-        settingsModal = document.createElement('div');
-        settingsModal.id = 'trainingSettingsModal';
-        settingsModal.className = 'training-info-modal';
-        settingsModal.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Training Settings</span>
-                    <button class="training-info-close" onclick="closeTrainingSettingsModal()">&times;</button>
-                </div>
-                <div class="training-info-body" style="overflow-y:auto;flex:1;">
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
-                        <input type="range" id="trainingImageSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
-                        <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
-                        <input type="range" id="trainingTimerSizeSlider" min="30" max="120" step="2" value="${parseInt(localStorage.getItem('trainingTimerSize') || 80)}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
-                        <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
-                    </div>
-                <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
-                            <input type="checkbox" id="trainingShowPrevScramble" style="transform:scale(1.3); cursor:pointer;">
-                            Show previous scramble at bottom
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
-                            <input type="checkbox" id="trainingEnableInspection" style="transform:scale(1.3); cursor:pointer;">
-                            Enable inspection
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;" id="parityQuizSettingRow">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; cursor:pointer;" id="parityQuizSettingLabel">
-                            <input type="checkbox" id="trainingEnableParityQuiz" style="transform:scale(1.3); cursor:pointer;">
-                            Enable parity quiz during inspection
-                        </label>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(settingsModal);
-
-        // Restore checkbox state
-        const showPrevSaved = localStorage.getItem('trainingShowPrevScramble');
-        const showPrevCheckbox = document.getElementById('trainingShowPrevScramble');
-        if (showPrevCheckbox) {
-            showPrevCheckbox.checked = showPrevSaved === 'true';
-            showPrevCheckbox.addEventListener('change', (e) => {
-                localStorage.setItem('trainingShowPrevScramble', e.target.checked);
-                applyPrevScrambleBar();
-            });
-        }
-
-        // Add event listeners
-        const inspectionCheckbox = document.getElementById('trainingEnableInspection');
-        const parityQuizCheckbox = document.getElementById('trainingEnableParityQuiz');
-        const parityQuizLabel = document.getElementById('parityQuizSettingLabel');
-
-        function applyParityQuizRowState() {
-            const enabled = inspectionCheckbox.checked;
-            parityQuizCheckbox.disabled = !enabled;
-            parityQuizLabel.style.color = enabled ? 'var(--text-primary)' : '#aaa';
-            parityQuizLabel.style.cursor = enabled ? 'pointer' : 'not-allowed';
-        }
-
-        inspectionCheckbox.checked = localStorage.getItem('trainingEnableInspection') === 'true';
-        parityQuizCheckbox.checked = localStorage.getItem('trainingEnableParityQuiz') === 'true';
-        applyParityQuizRowState();
-
-        inspectionCheckbox.addEventListener('change', (e) => {
-            trainingEnableInspection = e.target.checked;
-            localStorage.setItem('trainingEnableInspection', trainingEnableInspection);
-            if (!trainingEnableInspection) {
-                trainingEnableParityQuiz = false;
-                parityQuizCheckbox.checked = false;
-                localStorage.setItem('trainingEnableParityQuiz', 'false');
-            }
-            applyParityQuizRowState();
-        });
-
-        parityQuizCheckbox.addEventListener('change', (e) => {
-            if (!trainingEnableInspection) { e.target.checked = false; return; }
-            trainingEnableParityQuiz = e.target.checked;
-            localStorage.setItem('trainingEnableParityQuiz', trainingEnableParityQuiz);
-        });
-
-        document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleImageSize = parseInt(e.target.value);
-            document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px';
-            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            if (window._multiCaseMode) regenerateMultiScrambleLookahead();
-            else regenerateScrambleLookaheadLegacy();
-        });
-
-        document.getElementById('trainingTextSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleTextSize = parseInt(e.target.value);
-            document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
-            localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
-            document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
-            applyPrevScrambleBar();
-        });
-
-        document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
-            trainingHoldToStart = parseFloat(e.target.value);
-            document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
-            localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
-        });
-
-        document.getElementById('trainingTimerSizeSlider').addEventListener('input', (e) => {
-            const size = parseInt(e.target.value);
-            document.getElementById('trainingTimerSizeValue').textContent = size + 'px';
-            localStorage.setItem('trainingTimerSize', size);
-            applyTimerSize();
-        });
-    }
-
-    settingsModal.classList.add('active');
-}
 
 function closeTrainingSettingsModal() {
     closeModalWithHistory(() => {
@@ -1441,8 +1312,8 @@ function quizGetParityFromHex(hexCode) {
     try {
         const state = parseHexFormat(hexCode);
         const notation = window.sq1Tools.scrambleFromState(state);
-        if (!notation || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') return null;
-        return window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (!notation || typeof window.ParityAnalyzerLib === 'undefined') return null;
+        return window.ParityAnalyzerLib.getParityTextFromScramblePlease(
             notation,
             typeof colorScheme !== 'undefined' ? colorScheme : {},
             typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -2051,7 +1922,7 @@ function startParityQuiz(chosenCaseNames) {
         });
     });
     document.getElementById('parityQuizSelectCases').addEventListener('click', () => {
-        openUniversalCaseSelector(TRAINER_STORAGE_KEYS.parity, (chosen) => {
+        openSelectorModal('sq1-selector-parity', (chosen) => {
             allIndices.length = 0;
             chosen.forEach(cn => {
                 const entry = shapeIndex.find(e => e.name === cn);

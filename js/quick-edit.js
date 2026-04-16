@@ -1,4 +1,4 @@
-﻿// Quick Edit System for batch editing cases
+// Quick Edit System for batch editing cases
 
 let quickEditState = {
     currentTab: 'general',
@@ -680,7 +680,7 @@ function updateAlgorithmCellParity(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        typeof window.ParityAnalyzerLib === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
         return;
@@ -702,7 +702,7 @@ function updateAlgorithmCellParity(cell) {
         if (isDirectMatch || isInOrg) {
             // Correct case - check parity
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -726,7 +726,7 @@ function updateAlgorithmCellParity(cell) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -761,7 +761,7 @@ function updateAlgorithmCellParityLive(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' ||
+        typeof window.ParityAnalyzerLib === 'undefined' ||
         typeof window.ScrambleNormalizer === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
@@ -784,7 +784,7 @@ function updateAlgorithmCellParityLive(cell) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -793,7 +793,7 @@ function updateAlgorithmCellParityLive(cell) {
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
