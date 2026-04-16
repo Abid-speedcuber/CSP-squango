@@ -103,70 +103,25 @@ function shapeToHex(shapeIndex) {
 // Initialize shapes
 initShapes();
 
-// === CONSTANTS WITH SILLY NAMES ===
-const pieceLabels = {
-  A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
-  G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
-  M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
-  T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
-};
+// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
+const pieceLabels = window.pieceLabels;
+const theseAreEdgePiecesIPromise = window.edgePieces;
+const cornerPartners = window.cornerPartner;
+const whatIsMyCornerIDAgain = window.cornerIdentifier;
+const hexToPieceMapButBackwards = window.pieceToHex;
 
-const theseAreEdgePiecesIPromise = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+// === ALIASES TO CONSOLIDATED FUNCTIONS ===
+// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
+const rotateString = window.rotateString;
+const rotateArray = window.rotateArray;
+const solvedCube = window.createSolvedState;
+const rotateSection = window.rotateSection;
+const sliceSwap = window.sliceSwap;
+const applyScramble = window.applyScramble;
+const encodeToHex = window.stateToHex;
+const invertScramble = window.invertScramble;
 
-const cornerPartners = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-const whatIsMyCornerIDAgain = {
-  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
-};
-
-const hexToPieceMapButBackwards = {
-  'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
-  'YB': '2', 'YBO': '11', 'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99',
-  'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
-};
-
-// === BASIC HELPER FUNCTIONS ===
-function rotateString(str, rotAmount) {
-  const len = str.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return str.slice(normalizedRot) + str.slice(0, normalizedRot);
-}
-
-function rotateArray(arr, rotAmount) {
-  const len = arr.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return arr.slice(normalizedRot).concat(arr.slice(0, normalizedRot));
-}
-
-function solvedCube() {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
-
-function rotateSection(arr, startIdx, length, rotAmount) {
-  const normalizedRot = ((rotAmount % length) + length) % length;
-  if (normalizedRot === 0) return;
-
-  const segment = arr.slice(startIdx, startIdx + length);
-  const rotated = [];
-  for (let i = 0; i < length; i++) {
-    rotated[(i + normalizedRot) % length] = segment[i];
-  }
-  for (let i = 0; i < length; i++) {
-    arr[startIdx + i] = rotated[i];
-  }
-}
-
-function sliceSwap(arr) {
-  for (let i = 0; i < 6; i++) {
-    [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-}
-
-// === SCRAMBLE PARSING ===
+// === SCRAMBLE PARSING (local override needed for different token format) ===
 function* tokenizeScramble(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;
@@ -220,121 +175,6 @@ function* tokenizeScramble(scrambleString) {
 
     idx++;
   }
-}
-
-function applyScramble(scrambleString) {
-  const cubeState = solvedCube();
-
-  for (const token of tokenizeScramble(scrambleString)) {
-    if (token.moveType === 'turn') {
-      rotateSection(cubeState, 0, 12, token.top);
-      rotateSection(cubeState, 12, 12, token.bottom);
-      if (token.hasSlash) sliceSwap(cubeState);
-    } else {
-      sliceSwap(cubeState);
-    }
-  }
-
-  return cubeState;
-}
-
-// === STATE ENCODING ===
-function encodeToHex(cubeStateArray) {
-  const topLayerPieces = [];
-  const bottomLayerPieces = [];
-
-  // Process top layer (0-11)
-  let idx = 0;
-  while (idx < 12) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      topLayerPieces.push(pieceLabels[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[(idx + 1) % 12];
-      if (cornerPartners[piece] === nextPiece) {
-        topLayerPieces.push(pieceLabels[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in top layer';
-      }
-    }
-  }
-
-  // Process bottom layer (12-23)
-  idx = 12;
-  while (idx < 24) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      bottomLayerPieces.push(pieceLabels[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[12 + ((idx - 12 + 1) % 12)];
-      if (cornerPartners[piece] === nextPiece) {
-        bottomLayerPieces.push(pieceLabels[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in bottom layer';
-      }
-    }
-  }
-
-  // Convert to hex
-  const topHexString = topLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-  const bottomHexString = bottomLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-
-  if (topHexString.includes('?') || bottomHexString.includes('?')) {
-    return 'Error: Unknown piece mapping';
-  }
-
-  if (topHexString.length !== 12 || bottomHexString.length !== 12) {
-    return 'Error: Invalid hex length';
-  }
-
-  // Format: reverse(L-A) | reverse(M-R) + reverse(S-X)
-  const leftTopReversed = topHexString.split('').reverse().join('');
-  const rightBottom1Reversed = bottomHexString.slice(0, 6).split('').reverse().join('');
-  const rightBottom2Reversed = bottomHexString.slice(6, 12).split('').reverse().join('');
-
-  return `${leftTopReversed}|${rightBottom1Reversed}${rightBottom2Reversed}`;
-}
-
-// === INVERT SCRAMBLE (for solution visualization) ===
-function invertScramble(scrambleString) {
-  if (!scrambleString) return scrambleString;
-  let str = String(scrambleString).trim();
-
-  const parts = str.split('/');
-  const reversed = parts.slice().reverse();
-
-  const inverted = reversed.map(part => {
-    part = part.trim();
-
-    const turnMatch = part.match(/\(([^)]+)\)/);
-    if (turnMatch) {
-      const values = turnMatch[1].split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return '(' + invertedValues.join(',') + ')';
-    }
-
-    if (part.includes(',')) {
-      const values = part.split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return invertedValues.join(',');
-    }
-
-    return part;
-  });
-
-  return inverted.join('/');
 }
 
 // === SHAPE BUILDING ===

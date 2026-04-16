@@ -252,39 +252,8 @@ function countSlashes(str, count) {
 }
 
 
-function invertScramble(s) {
-    if (!s) return s;
-    let str = String(s).trim();
-
-    const parts = str.split('/');
-    const reversed = parts.slice().reverse();
-
-    const invertNum = (v) => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        const inv = ((-num) % 12 + 12) % 12;
-        return String(inv > 6 ? inv - 12 : inv);
-    };
-
-    const inverted = reversed.map(part => {
-        part = part.trim();
-
-        const turnMatch = part.match(/\(([^)]+)\)/);
-        if (turnMatch) {
-            const values = turnMatch[1].split(',').map(v => v.trim());
-            return '(' + values.map(invertNum).join(',') + ')';
-        }
-
-        if (part.includes(',')) {
-            const values = part.split(',').map(v => v.trim());
-            return values.map(invertNum).join(',');
-        }
-
-        return part;
-    });
-
-    return inverted.join('/');
-}
+// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
+const invertScrambleForRendering = window.invertScramble;
 
 function getAlgDisplayMeta(alg, caseName) {
     if (!alg || alg === 'Done!' || typeof window.algToShapeIndex === 'undefined') {
@@ -422,7 +391,7 @@ function showAlgoPopup(element, algo, isPermanent) {
 
     if (algo === 'Done!' || !algo || algo.trim() === '') return;
 
-    const setup = invertScramble(algo);
+    const setup = invertScrambleForRendering(algo);
     const shapePath = getShapePath(algo);
 
     const popup = document.createElement('div');

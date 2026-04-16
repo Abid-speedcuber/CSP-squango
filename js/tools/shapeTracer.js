@@ -4,18 +4,15 @@
 // Traces the shape journey through every slash!
 // ========================================
 
-// === CONSTANTS WITH SILLY NAMES ===
-const theseAreTotallyEdgePiecesForShapeTracing = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
+const theseAreTotallyEdgePiecesForShapeTracing = window.edgePieces;
+const whoIsMyPartnerForShapeTracing = window.cornerPartner;
+const whatIsMyCornerIDForShapeTracing = window.cornerIdentifier;
 
-const whoIsMyPartnerForShapeTracing = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-const whatIsMyCornerIDForShapeTracing = {
-  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
-};
+const gimmeASolvedSquareOneCubePlease = window.createSolvedState;
+const pleaseRotateSectionForShapeTracing = window.rotateSection;
+const doTheSliceSwapForShapeTracing = window.sliceSwap;
+const rotateStringForPatternSearch = window.rotateString;
 
 // Default shape patterns
 const defaultShapePatternsForTracing = {
@@ -50,95 +47,13 @@ const defaultShapePatternsForTracing = {
   'CCCCCC': 'Star'
 };
 
-// === BASIC HELPER FUNCTIONS ===
-function gimmeASolvedSquareOneCubePlease() {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
+// === USE window.rotateString for rotation ===
 
-function pleaseRotateSectionForShapeTracing(arr, startIdx, length, rotAmount) {
-  const normalizedRot = ((rotAmount % length) + length) % length;
-  if (normalizedRot === 0) return;
+// === USE CONSOLIDATED FUNCTIONS ===
+const pleaseStandardizeThisScrambleForMe = (s) => s ? s.trim() : '';
+const pleaseInvertThisScrambleForShapeTracing = window.invertScramble;
 
-  const segment = arr.slice(startIdx, startIdx + length);
-  const rotated = [];
-  for (let i = 0; i < length; i++) {
-    rotated[(i + normalizedRot) % length] = segment[i];
-  }
-  for (let i = 0; i < length; i++) {
-    arr[startIdx + i] = rotated[i];
-  }
-}
-
-function doTheSliceSwapForShapeTracing(arr) {
-  for (let i = 0; i < 6; i++) {
-    [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-}
-
-function rotateStringForPatternSearch(str, rotAmount) {
-  const len = str.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return str.slice(normalizedRot) + str.slice(0, normalizedRot);
-}
-
-// === SCRAMBLE STANDARDIZATION ===
-function pleaseStandardizeThisScrambleForMe(scrambleString) {
-  if (!scrambleString) return '';
-
-  let str = scrambleString.trim();
-
-  // Check if starts with /
-  if (str.startsWith('/')) {
-    str = '(0,0)' + str;
-  }
-
-  // Check if ends with /
-  if (str.endsWith('/')) {
-    str = str + '(0,0)';
-  }
-
-  return str;
-}
-
-// === SCRAMBLE INVERSION ===
-function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
-  if (!scrambleString) return scrambleString;
-  let str = String(scrambleString).trim();
-
-  const parts = str.split('/');
-  const reversed = parts.slice().reverse();
-
-  const inverted = reversed.map(part => {
-    part = part.trim();
-
-    const turnMatch = part.match(/\(([^)]+)\)/);
-    if (turnMatch) {
-      const values = turnMatch[1].split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return '(' + invertedValues.join(',') + ')';
-    }
-
-    if (part.includes(',')) {
-      const values = part.split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return invertedValues.join(',');
-    }
-
-    return part;
-  });
-
-  return inverted.join('/');
-}
-
-// === TOKENIZER ===
+// === TOKENIZER (use consolidated) ===
 function* pleaseTokenizeThisScrambleForShapeTracing(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;

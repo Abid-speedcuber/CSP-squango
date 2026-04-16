@@ -210,75 +210,11 @@
         return false;
     }
 
-    // Scramble engine functions with long names
-    function createSolvedState() {
-        return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-    }
-
-    function rotateSection(arr, start, len, k) {
-        const n = ((k % len) + len) % len;
-        if (n === 0) return;
-        const seg = arr.slice(start, start + len);
-        const out = [];
-        for (let i = 0; i < len; i++) {
-            out[(i + n) % len] = seg[i];
-        }
-        for (let i = 0; i < len; i++) {
-            arr[start + i] = out[i];
-        }
-    }
-
-    function sliceSwap(arr) {
-        for (let i = 0; i < 6; i++) {
-            [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-        }
-    }
-
-    function* tokenizeScramble(s) {
-        let i = 0;
-        const L = s.length;
-        const ws = /\s/;
-        const int = /^([+-]?\d+)/;
-
-        const skip = () => {
-            while (i < L && ws.test(s[i])) i++;
-        };
-
-        while (true) {
-            skip();
-            if (i >= L) return;
-
-            const ch = s[i];
-            if (ch === '(') {
-                i++;
-                skip();
-                let m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const t = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ',') i++;
-                skip();
-                m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const b = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ')') i++;
-                skip();
-                const hadSlash = (s[i] === '/');
-                if (hadSlash) i++;
-                yield { k: 'tb', t, b, slash: hadSlash };
-                continue;
-            }
-            if (ch === '/') {
-                i++;
-                yield { k: '/' };
-                continue;
-            }
-            i++;
-        }
-    }
+    // Use consolidated functions from utils.js
+    const createSolvedState = window.createSolvedState;
+    const rotateSection = window.rotateSection;
+    const sliceSwap = window.sliceSwap;
+    const tokenizeScramble = window.tokenizeScramble;
 
     function applyUtilityTransformationsToScramble(scramble) {
         // First normalize the base scramble
@@ -388,17 +324,8 @@
     }
 
     function applyScramble(scr) {
-        const a = createSolvedState();
-        for (const tok of tokenizeScramble(scr)) {
-            if (tok.k === 'tb') {
-                rotateSection(a, 0, 12, tok.t);
-                rotateSection(a, 12, 12, tok.b);
-                if (tok.slash) sliceSwap(a);
-            } else {
-                sliceSwap(a);
-            }
-        }
-        return a;
+        // Use consolidated function from utils.js
+        return window.applyScramble(scr);
     }
 
     function validateCorners(state) {
@@ -726,61 +653,8 @@
         'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99', 'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
     };
 
-    function encodeState(state) {
-        const topPieces = [];
-        const bottomPieces = [];
-
-        let i = 0;
-        while (i < 12) {
-            const ch = state[i];
-            if (edgePieces.has(ch)) {
-                topPieces.push(pieceLabels[ch]);
-                i++;
-            } else {
-                const nextCh = state[(i + 1) % 12];
-                if (cornerPartner[ch] === nextCh) {
-                    topPieces.push(pieceLabels[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in top layer';
-                }
-            }
-        }
-
-        i = 12;
-        while (i < 24) {
-            const ch = state[i];
-            if (edgePieces.has(ch)) {
-                bottomPieces.push(pieceLabels[ch]);
-                i++;
-            } else {
-                const nextCh = state[12 + ((i - 12 + 1) % 12)];
-                if (cornerPartner[ch] === nextCh) {
-                    bottomPieces.push(pieceLabels[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in bottom layer';
-                }
-            }
-        }
-
-        const topHex = topPieces.map(p => pieceToHex[p] || '?').join('');
-        const bottomHex = bottomPieces.map(p => pieceToHex[p] || '?').join('');
-
-        if (topHex.includes('?') || bottomHex.includes('?')) {
-            return `Error: Unknown piece mapping`;
-        }
-
-        if (topHex.length !== 12 || bottomHex.length !== 12) {
-            return `Error: Invalid hex length`;
-        }
-
-        const leftTop = topHex.split('').reverse().join('');
-        const rightBottom1 = bottomHex.slice(0, 6).split('').reverse().join('');
-        const rightBottom2 = bottomHex.slice(6, 12).split('').reverse().join('');
-
-        return `${leftTop}|${rightBottom1}${rightBottom2}`;
-    }
+    // Use consolidated function from utils.js
+    const encodeState = window.stateToHex;
 
     // Shape visualization for config modal - RESTORED
     function generateShapeSVG(pattern, size, idPrefix) {
@@ -2746,7 +2620,7 @@
 
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && lib.Square1VisualizerLibraryWithSillyNames) {
-                        const encodedScramble = encodeState(state);
+                        const encodedScramble = window.Square1Utils ? window.Square1Utils.stateToHex(state) : encodeState(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
 

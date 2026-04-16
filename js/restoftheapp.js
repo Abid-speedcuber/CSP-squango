@@ -561,7 +561,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     lastParityCalculationSettings = null;
 
     saveState();
-    updateProgress();
+    if (typeof updateProgress === 'function') updateProgress();
 
     // Recalculate parity with new settings
     if (needsParityRecalculation()) {
@@ -776,7 +776,7 @@ function importData(jsonStr) {
             localStorage.setItem('trainingShowPrevScramble', state.trainingShowPrevScramble);
         }
         saveState();
-        updateProgress();
+        if (typeof updateProgress === 'function') updateProgress();
 
         // Force recalculate all parity with new settings
         if (needsParityRecalculation()) {
