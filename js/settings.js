@@ -546,7 +546,7 @@ window._trSaveImgSize = function(val) {
             try {
                 const state = parseHexFormat(window._evilCurrentHexCode);
                 const notation = window.sq1Tools.scrambleFromState(state);
-                imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
+                imgEl.innerHTML = visualizeFromScramble(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
             } catch(e) {}
         }
     }

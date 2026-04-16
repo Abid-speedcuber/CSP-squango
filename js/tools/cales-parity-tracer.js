@@ -2751,7 +2751,7 @@
                             try {
 
                                 const imageSize = parityTracerImageSize;
-                                const svgContent = lib.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                const svgContent = lib.Square1VisualizerLibraryWithSillyNames.visualizeFromHex(
                                     encodedScramble,
                                     imageSize,
                                     {

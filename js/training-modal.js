@@ -264,12 +264,12 @@ function generateNextScrambleData() {
     let scrambleImage = '<div style="color: var(--text-muted)">Image unavailable</div>';
     try {
         // Use training-specific image size
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScramble !== 'undefined') {
             const scrambleNotation = hexCode;
             try {
                 const state = parseHexFormat(hexCode);
                 const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-                scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+                scrambleImage = visualizeFromScramble(notation, trainingScrambleImageSize, colorScheme);
             } catch (e) {
                 console.error('Error with new visualizer:', e);
                 scrambleImage = generateScrambleSVGFromHex(hexCode);
@@ -1586,7 +1586,7 @@ function startEvilnessQuiz(chosenCaseNames) {
                     const state = parseHexFormat(currentHexCode);
                     const notation = window.sq1Tools.scrambleFromState(state);
                     const imgEl = document.getElementById('evilQuizImage');
-                    if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
+                    if (imgEl) imgEl.innerHTML = visualizeFromScramble(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
                 } catch (e) {}
             }
         });
@@ -1630,7 +1630,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         try {
             const state = parseHexFormat(currentHexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgHTML = visualizeFromScramble(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
         } catch (e) { imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>'; }
 
         document.getElementById('evilQuizImage').innerHTML = imgHTML;
@@ -1858,7 +1858,7 @@ function startParityQuiz(chosenCaseNames) {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
             scrambleText = notation || hexCode;
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgHTML = visualizeFromScramble(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
             currentParity = quizGetParityFromHex(hexCode);
         } catch (e) {
             currentParity = null;

@@ -1,4 +1,4 @@
-﻿// ╔══════════════════════════════════════════════════════════════════════════╗
+// ╔══════════════════════════════════════════════════════════════════════════╗
 // ║                        MULTI-CASE TRAINING SELECTOR                     ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
@@ -458,10 +458,10 @@ function generateMultiCaseScrambleData() {
     } catch (e) { console.error('Multi scramble gen error:', e); }
 
     try {
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScramble !== 'undefined') {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-            scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+            scrambleImage = visualizeFromScramble(notation, trainingScrambleImageSize, colorScheme);
         } else {
             scrambleImage = generateScrambleSVGFromHex(hexCode);
         }
