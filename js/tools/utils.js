@@ -200,4 +200,222 @@
         return inverted.join('/');
     };
 
+    // === SHAPE CUBIE CLASS ===
+    lib.Square1Cubie = function () {
+        this.ul = 0x011233;
+        this.ur = 0x455677;
+        this.dl = 0x998bba;
+        this.dr = 0xddcffe;
+        this.ml = 0;
+    };
+
+    lib.Square1Cubie.prototype.toString = function () {
+        return this.ul.toString(16).padStart(6, '0') +
+            this.ur.toString(16).padStart(6, '0') +
+            "|/".charAt(this.ml) +
+            this.dl.toString(16).padStart(6, '0') +
+            this.dr.toString(16).padStart(6, '0');
+    };
+
+    lib.Square1Cubie.prototype.setPiece = function (idx, value) {
+        if (idx < 6) {
+            this.ul &= ~(0xf << ((5 - idx) << 2));
+            this.ul |= value << ((5 - idx) << 2);
+        } else if (idx < 12) {
+            this.ur &= ~(0xf << ((11 - idx) << 2));
+            this.ur |= value << ((11 - idx) << 2);
+        } else if (idx < 18) {
+            this.dl &= ~(0xf << ((17 - idx) << 2));
+            this.dl |= value << ((17 - idx) << 2);
+        } else {
+            this.dr &= ~(0xf << ((23 - idx) << 2));
+            this.dr |= value << ((23 - idx) << 2);
+        }
+    };
+
+    // === SHAPE INDEX CONSTANTS ===
+    lib.halfLayerShapes = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
+    lib.validShapeIndices = [];
+
+    lib.initShapes = function () {
+        let count = 0;
+        const halfShapes = lib.halfLayerShapes;
+        for (let i = 0; i < 28561; i++) {
+            const dr = halfShapes[i % 13];
+            const dl = halfShapes[Math.floor(i / 13) % 13];
+            const ur = halfShapes[Math.floor(Math.floor(i / 13) / 13) % 13];
+            const ul = halfShapes[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
+            const value = ul << 18 | ur << 12 | dl << 6 | dr;
+
+            let bitCount = 0;
+            let temp = value;
+            while (temp) {
+                bitCount += temp & 1;
+                temp >>= 1;
+            }
+
+            if (bitCount === 16) {
+                lib.validShapeIndices[count++] = value;
+            }
+        }
+    };
+
+    lib.cubeFromShape = function (shapeIndex) {
+        const f = new lib.Square1Cubie();
+        const shape = lib.validShapeIndices[shapeIndex];
+        let corner = 0x01234567 << 1 | 0x11111111;
+        let edge = 0x01234567 << 1;
+        let n_corner = 8, n_edge = 8;
+
+        for (let i = 0; i < 24; i++) {
+            if (((shape >> i) & 1) === 0) {
+                const rnd = Math.floor(Math.random() * n_edge) << 2;
+                f.setPiece(23 - i, (edge >> rnd) & 0xf);
+                const m = (1 << rnd) - 1;
+                edge = (edge & m) + ((edge >> 4) & ~m);
+                n_edge--;
+            } else {
+                const rnd = Math.floor(Math.random() * n_corner) << 2;
+                f.setPiece(23 - i, (corner >> rnd) & 0xf);
+                f.setPiece(22 - i, (corner >> rnd) & 0xf);
+                const m = (1 << rnd) - 1;
+                corner = (corner & m) + ((corner >> 4) & ~m);
+                n_corner--;
+                i++;
+            }
+        }
+        f.ml = Math.floor(Math.random() * 2);
+        return f;
+    };
+
+    lib.shapeIndexToHex = function (shapeIndex) {
+        const cube = lib.cubeFromShape(shapeIndex);
+        return cube.toString().replace('/', '|');
+    };
+
+    // Initialize shapes on load
+    lib.initShapes();
+
+    // === PARSE SCRAMBLE (for alg to hex) ===
+    lib.parseScramble = function (scramble) {
+        const moves = [];
+        let i = 0;
+        while (i < scramble.length) {
+            const char = scramble[i];
+            if (char === '/' || char === '\\') {
+                moves.push({ type: 'twist' });
+                i++;
+            } else if (char === '(' || char === '-' || /\d/.test(char)) {
+                let moveStr = '';
+                let parenDepth = 0;
+                // Note: startPos is defined but not used (kept for parity with original)
+                while (i < scramble.length) {
+                    const c = scramble[i];
+                    if (c === '(') parenDepth++;
+                    if (c === ')') parenDepth--;
+                    if (c === '/' || c === '\\') break;
+                    if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
+                        moveStr += c;
+                    }
+                    i++;
+                    if (parenDepth === 0 && moveStr.includes(',')) break;
+                }
+                const cleaned = moveStr.replace(/[()]/g, '').trim();
+                if (cleaned.includes(',')) {
+                    const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
+                    moves.push({ type: 'turn', top, bottom });
+                }
+            } else if (/\s/.test(char)) {
+                i++;
+            } else {
+                i++;
+            }
+        }
+        return moves;
+    };
+
+    // === TWIST (slash swaps layers) ===
+    lib.twist = function (tlHex, blHex) {
+        const tlFirst6 = tlHex.slice(0, 6);
+        const tlLast6 = tlHex.slice(6);
+        const blFirst6 = blHex.slice(0, 6);
+        const blLast6 = blHex.slice(6);
+        return {
+            tlHex: tlFirst6 + blFirst6,
+            blHex: tlLast6 + blLast6
+        };
+    };
+
+    // === CYCLE LEFT (rotate hex string) ===
+    lib.cycleLeft = function (hex, places) {
+        const normalized = ((places % 12) + 12) % 12;
+        return hex.slice(normalized) + hex.slice(0, normalized);
+    };
+
+    // === SQ1 ALG TO HEX ===
+    lib.sq1AlgToHex = function (scramble) {
+        let tlHex = '011233455677';
+        let blHex = '998bbaddcffe';
+        const moves = lib.parseScramble(scramble);
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+            if (move.type === 'twist') {
+                const result = lib.twist(tlHex, blHex);
+                tlHex = result.tlHex;
+                blHex = result.blHex;
+            } else if (move.type === 'turn') {
+                tlHex = lib.cycleLeft(tlHex, move.top);
+                blHex = lib.cycleLeft(blHex, move.bottom);
+            }
+        }
+        return { tlHex, blHex };
+    };
+
+    // === GET SHAPE INDEX FROM HEX ===
+    lib.getShapeIndexFromHex = function (tlHex, blHex) {
+        const hexScrambleCode = tlHex + '|' + blHex;
+        if (hexScrambleCode.length !== 25) {
+            throw new Error('Invalid hex format - needs 25 characters!');
+        }
+        const shapeArray = new Array(24);
+        let scrambleIdx = 0;
+        for (let i = 0; i < 12; i++) {
+            if (scrambleIdx === 12) scrambleIdx++;
+            const piece = hexScrambleCode[scrambleIdx];
+            const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
+            shapeArray[i] = isCorner ? 1 : 0;
+            scrambleIdx++;
+        }
+        scrambleIdx = 13;
+        for (let i = 12; i < 24; i++) {
+            const piece = hexScrambleCode[scrambleIdx];
+            const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
+            shapeArray[i] = isCorner ? 1 : 0;
+            scrambleIdx++;
+        }
+        let shapeValue = 0;
+        for (let i = 0; i < 24; i++) {
+            shapeValue |= shapeArray[23 - i] << i;
+        }
+        const shapeIndex = lib.validShapeIndices.indexOf(shapeValue);
+        if (shapeIndex === -1) {
+            throw new Error('Invalid shape - not found in shape index array');
+        }
+        return shapeIndex;
+    };
+
+    // === ALG TO SHAPE INDEX PIPELINE ===
+    lib.algToShapeIndex = function (scrambleText) {
+        const invertedScramble = lib.invertScramble(scrambleText);
+        const { tlHex, blHex } = lib.sq1AlgToHex(invertedScramble);
+        const shapeIndex = lib.getShapeIndexFromHex(tlHex, blHex);
+        return {
+            original: scrambleText,
+            inverted: invertedScramble,
+            tlHex: tlHex,
+            blHex: blHex,
+            shapeIndex: shapeIndex
+        };
+    };
+
 })(typeof window !== 'undefined' ? window : global);

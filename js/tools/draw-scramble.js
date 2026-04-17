@@ -1,107 +1,7 @@
 // ========================================
 // Square-1 Scramble Visualizer Library
-// With ridiculously funny names to avoid conflicts!
+// Uses consolidated functions from utils.js
 // ========================================
-
-// === SCRAMBLED STATE GENERATOR FUNCTIONS ===
-function randomBelow(n) {
-  return Math.floor(Math.random() * n);
-}
-
-function Square1Cubie() {
-  this.ul = 0x011233;
-  this.ur = 0x455677;
-  this.dl = 0x998bba;
-  this.dr = 0xddcffe;
-  this.ml = 0;
-}
-
-Square1Cubie.prototype.toString = function () {
-  return this.ul.toString(16).padStart(6, '0') +
-    this.ur.toString(16).padStart(6, '0') +
-    "|/".charAt(this.ml) +
-    this.dl.toString(16).padStart(6, '0') +
-    this.dr.toString(16).padStart(6, '0');
-}
-
-Square1Cubie.prototype.setPiece = function (idx, value) {
-  if (idx < 6) {
-    this.ul &= ~(0xf << ((5 - idx) << 2));
-    this.ul |= value << ((5 - idx) << 2);
-  } else if (idx < 12) {
-    this.ur &= ~(0xf << ((11 - idx) << 2));
-    this.ur |= value << ((11 - idx) << 2);
-  } else if (idx < 18) {
-    this.dl &= ~(0xf << ((17 - idx) << 2));
-    this.dl |= value << ((17 - idx) << 2);
-  } else {
-    this.dr &= ~(0xf << ((23 - idx) << 2));
-    this.dr |= value << ((23 - idx) << 2);
-  }
-}
-
-const halfLayerShapes = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-const validShapeIndices = [];
-
-function initShapes() {
-  let count = 0;
-  for (let i = 0; i < 28561; i++) {
-    const dr = halfLayerShapes[i % 13];
-    const dl = halfLayerShapes[Math.floor(i / 13) % 13];
-    const ur = halfLayerShapes[Math.floor(Math.floor(i / 13) / 13) % 13];
-    const ul = halfLayerShapes[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-    const value = ul << 18 | ur << 12 | dl << 6 | dr;
-
-    let bitCount = 0;
-    let temp = value;
-    while (temp) {
-      bitCount += temp & 1;
-      temp >>= 1;
-    }
-
-    if (bitCount === 16) {
-      validShapeIndices[count++] = value;
-    }
-  }
-}
-
-function cubeFromShape(shapeIndex) {
-  const f = new Square1Cubie();
-  const shape = validShapeIndices[shapeIndex];
-  let corner = 0x01234567 << 1 | 0x11111111;
-  let edge = 0x01234567 << 1;
-  let n_corner = 8, n_edge = 8;
-
-  for (let i = 0; i < 24; i++) {
-    if (((shape >> i) & 1) === 0) {
-      const rnd = randomBelow(n_edge) << 2;
-      f.setPiece(23 - i, (edge >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      edge = (edge & m) + ((edge >> 4) & ~m);
-      n_edge--;
-    } else {
-      const rnd = randomBelow(n_corner) << 2;
-      f.setPiece(23 - i, (corner >> rnd) & 0xf);
-      f.setPiece(22 - i, (corner >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      corner = (corner & m) + ((corner >> 4) & ~m);
-      n_corner--;
-      i++;
-    }
-  }
-  f.ml = randomBelow(2);
-  return f;
-}
-
-function shapeToHex(shapeIndex) {
-  const cube = cubeFromShape(shapeIndex);
-  const hexString = cube.toString();
-  // Normalize separator to always use | instead of /
-  return hexString.replace('/', '|');
-}
-
-// Initialize shapes
-initShapes();
 
 // === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
 const pieceLabels = window.pieceLabels;
@@ -111,7 +11,6 @@ const cornerIdentifier = window.cornerIdentifier;
 const pieceToHex = window.pieceToHex;
 
 // === ALIASES TO CONSOLIDATED FUNCTIONS ===
-// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
 const rotateString = window.rotateString;
 const rotateArray = window.rotateArray;
 const solvedCube = window.createSolvedState;
@@ -120,6 +19,12 @@ const sliceSwap = window.sliceSwap;
 const applyScramble = window.applyScramble;
 const encodeToHex = window.stateToHex;
 const invertScramble = window.invertScramble;
+
+// === RE-EXPORT FROM utils.js ===
+const initShapes = window.initShapes;
+const Square1Cubie = window.Square1Cubie;
+const cubeFromShape = window.cubeFromShape;
+const shapeIndexToHex = window.shapeIndexToHex;
 
 // === SCRAMBLE PARSING (local override needed for different token format) ===
 function* tokenizeScramble(scrambleString) {
@@ -486,16 +391,6 @@ function generateFullSVG(hexScrambleCode, equatorChar, desiredSize, colorScheme,
   htmlOutput += `</svg></div>`;
 
   return htmlOutput;
-}
-
-// ========================================
-// === SHAPE INDEX TO HEX CONVERSION ===
-// ========================================
-
-function shapeIndexToHex(shapeIndex) {
-  const hexString = shapeToHex(shapeIndex);
-  // Ensure we always use | separator
-  return hexString.replace('/', '|');
 }
 
 // ========================================
