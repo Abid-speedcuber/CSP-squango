@@ -46,7 +46,7 @@
     // ========================================
     // INVERT FUNCTION (from hexify.js)
     // ========================================
-    function pleaseInvertThisScrambleForSolutionVisualization(scrambleString) {
+    function invertScramble(scrambleString) {
       if (!scrambleString) return scrambleString;
       let str = String(scrambleString).trim();
 
@@ -233,7 +233,7 @@
     // ========================================
 
     // Step 1: Invert the scramble
-    const invertedScramble = pleaseInvertThisScrambleForSolutionVisualization(scrambleText);
+    const invertedScramble = invertScramble(scrambleText);
 
     // Step 2: Hexify the inverted scramble
     const { tlHex, blHex } = sq1AlgToHex(invertedScramble);

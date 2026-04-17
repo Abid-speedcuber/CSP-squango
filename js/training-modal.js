@@ -628,7 +628,7 @@ function startParityQuizInspection() {
     let parity = null;
     try {
         if (typeof window.ParityAnalyzerLib !== 'undefined') {
-            parity = window.ParityAnalyzerLib.getParityTextFromScramblePlease(
+            parity = window.ParityAnalyzerLib.getParityText(
                 cleanScramble,
                 typeof colorScheme !== 'undefined' ? colorScheme : {},
                 typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -838,8 +838,8 @@ function openShapeIndexSelector() {
 
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = shapeIndexToHex(idx);
+        const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -852,8 +852,8 @@ function openShapeIndexSelector() {
     }).join('');
 
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = shapeIndexToHex(idx);
+        const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -1313,7 +1313,7 @@ function quizGetParityFromHex(hexCode) {
         const state = parseHexFormat(hexCode);
         const notation = window.sq1Tools.scrambleFromState(state);
         if (!notation || typeof window.ParityAnalyzerLib === 'undefined') return null;
-        return window.ParityAnalyzerLib.getParityTextFromScramblePlease(
+        return window.ParityAnalyzerLib.getParityText(
             notation,
             typeof colorScheme !== 'undefined' ? colorScheme : {},
             typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'

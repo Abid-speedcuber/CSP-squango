@@ -105,10 +105,10 @@ initShapes();
 
 // === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
 const pieceLabels = window.pieceLabels;
-const theseAreEdgePiecesIPromise = window.edgePieces;
+const edgePieces = window.edgePieces;
 const cornerPartners = window.cornerPartner;
-const whatIsMyCornerIDAgain = window.cornerIdentifier;
-const hexToPieceMapButBackwards = window.pieceToHex;
+const cornerIdentifier = window.cornerIdentifier;
+const pieceToHex = window.pieceToHex;
 
 // === ALIASES TO CONSOLIDATED FUNCTIONS ===
 // === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
@@ -734,11 +734,11 @@ function visualizeFromSolution(solution, size = 200, colors = {}, ringDistance =
 
 // For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
-  window.Square1VisualizerLibraryWithSillyNames = {
+  window.Square1Visualizer = {
     visualizeFromHex,
     visualizeFromScramble,
     visualizeFromSolution,
-    visualizeShapes  // <-- This line should be here!
+    visualizeShapes
   };
 }
 

@@ -194,7 +194,7 @@ function calculateAndCacheAllParity() {
 
             try {
                 const setup = invertScramble(alg);
-                const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+                const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
@@ -853,7 +853,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
     if (!parity && algorithm && algorithm !== 'Done!') {
         try {
             const setup = invertScramble(algorithm);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,

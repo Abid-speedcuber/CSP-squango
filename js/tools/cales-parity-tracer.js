@@ -2619,13 +2619,13 @@
                     const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
 
                     // Visualize scramble if enabled - COMPLETE
-                    if (config.shouldGenerateImage && lib.Square1VisualizerLibraryWithSillyNames) {
+                    if (config.shouldGenerateImage && lib.Square1Visualizer) {
                         const encodedScramble = window.Square1Utils ? window.Square1Utils.stateToHex(state) : encodeState(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
 
                                 const imageSize = parityTracerImageSize;
-                                const svgContent = lib.Square1VisualizerLibraryWithSillyNames.visualizeFromHex(
+                                const svgContent = lib.Square1Visualizer.visualizeFromHex(
                                     encodedScramble,
                                     imageSize,
                                     {
@@ -2860,7 +2860,7 @@
 
     // Export parity analysis function for use by other parts of the app
     lib.ParityAnalyzerLib = {
-        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
+        getParityText: function (scrambleText, colorConfig, cornerMode, customRotation) {
             // Always use fresh shapes from storage
             shapePatterns = loadShapes();
 

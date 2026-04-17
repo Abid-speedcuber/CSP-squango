@@ -5,14 +5,14 @@
 // ========================================
 
 // === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
-const theseAreTotallyEdgePiecesForShapeTracing = window.edgePieces;
-const whoIsMyPartnerForShapeTracing = window.cornerPartner;
-const whatIsMyCornerIDForShapeTracing = window.cornerIdentifier;
+const shapeEdgePieces = window.edgePieces;
+const shapeCornerPartners = window.cornerPartner;
+const shapeCornerId = window.cornerIdentifier;
 
-const gimmeASolvedSquareOneCubePlease = window.createSolvedState;
-const pleaseRotateSectionForShapeTracing = window.rotateSection;
-const doTheSliceSwapForShapeTracing = window.sliceSwap;
-const rotateStringForPatternSearch = window.rotateString;
+const getSolvedCube = window.createSolvedState;
+const rotateCubeSection = window.rotateSection;
+const doSliceSwap = window.sliceSwap;
+const rotatePattern = window.rotateString;
 
 // Default shape patterns
 const defaultShapePatternsForTracing = {
@@ -50,11 +50,11 @@ const defaultShapePatternsForTracing = {
 // === USE window.rotateString for rotation ===
 
 // === USE CONSOLIDATED FUNCTIONS ===
-const pleaseStandardizeThisScrambleForMe = (s) => s ? s.trim() : '';
-const pleaseInvertThisScrambleForShapeTracing = window.invertScramble;
+const standardizeScramble = (s) => s ? s.trim() : '';
+const invertScrambleForTracing = window.invertScramble;
 
 // === TOKENIZER (use consolidated) ===
-function* pleaseTokenizeThisScrambleForShapeTracing(scrambleString) {
+function* tokenizeScrambleForTracing(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;
   const whitespaceRegex = /\s/;
@@ -116,18 +116,18 @@ function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
 
   while (i < 12) {
     const piece = cubeState[startIdx + i];
-    if (theseAreTotallyEdgePiecesForShapeTracing.has(piece)) {
+    if (shapeEdgePieces.has(piece)) {
       units.push({ type: 'E', edge: piece });
       i += 1;
       continue;
     }
 
     const nextPiece = cubeState[startIdx + ((i + 1) % 12)];
-    if (whoIsMyPartnerForShapeTracing[piece] === nextPiece) {
-      units.push({ type: 'C', pair: whatIsMyCornerIDForShapeTracing[piece], rep: piece });
+    if (shapeCornerPartners[piece] === nextPiece) {
+      units.push({ type: 'C', pair: shapeCornerId[piece], rep: piece });
       i += 2;
     } else {
-      units.push({ type: 'C', pair: whatIsMyCornerIDForShapeTracing[piece] || '??', rep: piece });
+      units.push({ type: 'C', pair: shapeCornerId[piece] || '??', rep: piece });
       i += 1;
     }
   }
@@ -141,7 +141,7 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
   for (const [pattern, name] of Object.entries(shapePatterns)) {
     if (pattern.length !== typeStr.length) continue;
     for (let rotation = 0; rotation < typeStr.length; rotation++) {
-      if (rotateStringForPatternSearch(typeStr, rotation) === pattern) {
+      if (rotatePattern(typeStr, rotation) === pattern) {
         return name;
       }
     }
@@ -152,16 +152,16 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
 // === SHAPE PATH TRACING ===
 function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
   const shapePath = [];
-  const cubeState = gimmeASolvedSquareOneCubePlease();
+  const cubeState = getSolvedCube();
 
   let currentStep = null;
 
   // Apply moves and capture shapes after each slash
-  for (const token of pleaseTokenizeThisScrambleForShapeTracing(scrambleString)) {
+  for (const token of tokenizeScrambleForTracing(scrambleString)) {
     if (token.moveType === 'turn') {
       // Apply rotations
-      pleaseRotateSectionForShapeTracing(cubeState, 0, 12, token.top);
-      pleaseRotateSectionForShapeTracing(cubeState, 12, 12, token.bottom);
+      rotateCubeSection(cubeState, 0, 12, token.top);
+      rotateCubeSection(cubeState, 12, 12, token.bottom);
 
       // If this turn has a slash, capture the state BEFORE the slash
       if (token.hasSlash) {
@@ -180,11 +180,11 @@ function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
         shapePath.push(currentStep);
 
         // Now do the slash
-        doTheSliceSwapForShapeTracing(cubeState);
+        doSliceSwap(cubeState);
       }
     } else {
       // Standalone slash
-      doTheSliceSwapForShapeTracing(cubeState);
+      doSliceSwap(cubeState);
     }
   }
 
@@ -216,11 +216,11 @@ function formatShapePathAsString(shapePath) {
 /**
  * Option 1: Scramble input → Scramble shape path output
  */
-function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
+function traceScrambleToScrambleShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(scramble);
+  const standardized = standardizeScramble(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -232,11 +232,11 @@ function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
 /**
  * Option 2: Scramble input → Solution shape path output (reversed)
  */
-function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
+function traceScrambleToSolutionShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(scramble);
+  const standardized = standardizeScramble(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -251,14 +251,14 @@ function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
 /**
  * Option 3: Solution input → Scramble shape path output (invert then trace)
  */
-function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
+function traceSolutionToScrambleShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = invertScrambleForTracing(solution);
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
+  const standardized = standardizeScramble(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -270,14 +270,14 @@ function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
 /**
  * Option 4: Solution input → Solution shape path output (invert, trace, reverse)
  */
-function traceSolutionToSolutionShapePathPlease(solution, options = {}) {
+function traceSolutionToSolutionShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = invertScrambleForTracing(solution);
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
+  const standardized = standardizeScramble(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -295,11 +295,11 @@ function traceSolutionToSolutionShapePathPlease(solution, options = {}) {
 
 // For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
-  window.Square1ShapePathTracerLibraryWithSillyNames = {
-    traceScrambleToScrambleShapePathPlease,
-    traceScrambleToSolutionShapePathPlease,
-    traceSolutionToScrambleShapePathPlease,
-    traceSolutionToSolutionShapePathPlease,
+  window.Square1ShapeTracer = {
+    traceScrambleToScrambleShapePath,
+    traceScrambleToSolutionShapePath,
+    traceSolutionToScrambleShapePath,
+    traceSolutionToSolutionShapePath,
     // Expose default shape patterns for reference
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
@@ -308,10 +308,10 @@ if (typeof window !== 'undefined') {
 // For module systems (Node.js, bundlers, etc.)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    traceScrambleToScrambleShapePathPlease,
-    traceScrambleToSolutionShapePathPlease,
-    traceSolutionToScrambleShapePathPlease,
-    traceSolutionToSolutionShapePathPlease,
+    traceScrambleToScrambleShapePath,
+    traceScrambleToSolutionShapePath,
+    traceSolutionToScrambleShapePath,
+    traceSolutionToSolutionShapePath,
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
 }

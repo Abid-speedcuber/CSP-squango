@@ -492,13 +492,13 @@
     }
 
     function renderVisualization(hex, colorScheme, imageSize) {
-        if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
+        if (typeof window.Square1Visualizer === 'undefined') {
             return '<div style="color: var(--algo-invalid-color); font-style: italic;">draw-scramble.js not found</div>';
         }
 
         try {
             const hexCode = hex.tlHex + '|' + hex.blHex;
-            const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+            const svgHtml = window.Square1Visualizer.visualizeFromHex(
                 hexCode,
                 imageSize,
                 {

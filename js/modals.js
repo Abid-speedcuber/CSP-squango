@@ -976,12 +976,12 @@ function updateInputColorLive(input) {
         const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
             input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             input.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
             input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             input.style.fontWeight = '600';
         } else {
@@ -1064,7 +1064,7 @@ function updateParityLabel(input) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(alg);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -1085,7 +1085,7 @@ function updateParityLabel(input) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor

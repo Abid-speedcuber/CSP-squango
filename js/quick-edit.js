@@ -702,7 +702,7 @@ function updateAlgorithmCellParity(cell) {
         if (isDirectMatch || isInOrg) {
             // Correct case - check parity
             const setup = invertScramble(alg);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -726,7 +726,7 @@ function updateAlgorithmCellParity(cell) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -784,7 +784,7 @@ function updateAlgorithmCellParityLive(cell) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -793,7 +793,7 @@ function updateAlgorithmCellParityLive(cell) {
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.ParityAnalyzerLib.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor

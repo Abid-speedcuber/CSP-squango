@@ -292,8 +292,8 @@ function getShapePath(scramble) {
     }
 
     try {
-        if (typeof window.ShapePathTracerLib !== 'undefined') {
-            const shapePathString = window.ShapePathTracerLib.traceSolutionToSolutionShapePathPlease(scramble);
+        if (typeof window.Square1ShapeTracer !== 'undefined') {
+            const shapePathString = window.Square1ShapeTracer.traceSolutionToSolutionShapePath(scramble);
             if (shapePathString) {
                 // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
                 const steps = shapePathString.split(' → ').map(s => s.trim());
