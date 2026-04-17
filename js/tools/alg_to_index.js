@@ -55,43 +55,6 @@
     };
   }
 
-  // ========================================
-  // EXPORTS
-  // ========================================
+  
 
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = algToShapeIndex;
-  }
-
-  if (typeof window !== 'undefined') {
-    window.algToShapeIndex = algToShapeIndex;
-  }
-
-  if (typeof define === 'function' && define.amd) {
-    define([], function () {
-      return algToShapeIndex;
-    });
-  }
-
-  // ========================================
-  // CLI USAGE
-  // ========================================
-
-  if (typeof require !== 'undefined' && require.main === module) {
-    const args = process.argv.slice(2);
-
-    if (args.length === 0) {
-      process.exit(1);
-    }
-
-    const scramble = args.join(' ');
-
-    try {
-      const result = algToShapeIndex(scramble);
-    } catch (error) {
-      console.error('Error:', error.message);
-      process.exit(1);
-    }
-  }
-
-})(typeof window !== 'undefined' ? window : global);
+})(window);

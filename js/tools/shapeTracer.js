@@ -305,9 +305,9 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// For module systems (Node.js, bundlers, etc.)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
+// Expose to window
+if (typeof window !== 'undefined') {
+  window.ShapeTracer = {
     traceScrambleToScrambleShapePath,
     traceScrambleToSolutionShapePath,
     traceSolutionToScrambleShapePath,

@@ -437,15 +437,6 @@ if (typeof window !== 'undefined') {
     };
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        normalizeScramble,
-        checkForVariables,
-        expandVariablesRecursive,
-        normalizeScrambleFormat
-    };
-}
-
 /**
  * Generate x2 algorithm from normalized scramble
  * @param {string} normalizedScramble - Normalized scramble string
@@ -477,11 +468,7 @@ function generateX2Algorithm(normalizedScramble) {
     return tokens.join(' ');
 }
 
-// Add to exports
+// Add to window
 if (typeof window !== 'undefined') {
     window.ScrambleNormalizer.generateX2Algorithm = generateX2Algorithm;
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports.generateX2Algorithm = generateX2Algorithm;
 }

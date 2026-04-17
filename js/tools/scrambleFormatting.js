@@ -1,5 +1,5 @@
 // sq1ColorizerLib.js
-(function (global) {
+(function (window) {
   'use strict';
 
   // === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
@@ -59,11 +59,6 @@
     };
   }
 
-  // Export as module or global
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { processScramble };
-  } else {
-    global.SQ1ColorizerLib = { processScramble };
-  }
+  window.SQ1ColorizerLib = { processScramble };
 
-})(this);
+})(window);
