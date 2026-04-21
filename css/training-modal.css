@@ -581,7 +581,7 @@ body.modal-open .training-modal {
 #selectorStartBtn {
     display: flex;
     align-items: center;
-    background: var(--modal-algo-label) !important;
+    background: var(--modal-alg-label) !important;
     color: white !important;
     width: auto !important;
     padding: 0 14px !important;
