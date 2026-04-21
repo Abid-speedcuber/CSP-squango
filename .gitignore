@@ -67,3 +67,11 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
+# added by abid
+error.txt
+eslint.config.mjs
+package-lock.json
+package.json
+singlefilify.py
+unsinglefilify.py
