@@ -502,7 +502,7 @@ if (typeof module !== 'undefined' && module.exports) {
  *   Browser: const result = algToShapeIndex("/(4,2)/...");
  */
 
-(function (global) {
+(function () {
   'use strict';
 
   function algToShapeIndex(scrambleText) {
@@ -852,15 +852,6 @@ if (typeof module !== 'undefined' && module.exports) {
         return luminance > 0.5 ? '#000000' : '#FFFFFF';
     }
 
-    function adjustColorBrightness(hexColor, percent) {
-        const num = parseInt(hexColor.replace('#', ''), 16);
-        const amt = Math.round(2.55 * percent);
-        const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-        const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-        const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-    }
-
     // Default shape patterns with long name
     const defaultShapePatterns_w_w = {
         'ECECECEC': 'Square',
@@ -900,7 +891,7 @@ if (typeof module !== 'undefined' && module.exports) {
         if (stored) {
             try {
                 return JSON.parse(stored);
-            } catch (e) {
+            } catch {
                 return { ...defaultShapePatterns_w_w };
             }
         }
@@ -949,7 +940,7 @@ if (typeof module !== 'undefined' && module.exports) {
     if (storedArrowSettings !== null) {
         try {
             arrowSettings = JSON.parse(storedArrowSettings);
-        } catch (e) {
+        } catch {
             // Use defaults
         }
     }
@@ -1093,7 +1084,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Local fallback simplification if normalizer not available
-    function simplifyScrambleLocal(tokens, steps) {
+    function simplifyScrambleLocal(tokens) {
         function addSets(a, b) {
             let m = /\((-?\d+),(-?\d+)\)/.exec(a);
             let n = /\((-?\d+),(-?\d+)\)/.exec(b);
@@ -1435,53 +1426,6 @@ if (typeof module !== 'undefined' && module.exports) {
         const isOddWithEvil = (totalWithEvil % 2) === 1;
 
         return { steps, total, isOdd, evilStep, isOddWithEvil };
-    }
-
-    // Clustering Functions - RESTORED
-    function buildClustersFromShapeArray_w(shapeArray) {
-        const slots = [];
-        const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-
-        function processLayer_w(start, end) {
-            let i = start;
-            while (i < end) {
-                const isCorner = shapeArray[i] === 1;
-
-                if (isCorner) {
-                    const nextIdx = (i - start + 1) % 12 + start;
-                    if (nextIdx < end && shapeArray[nextIdx] === 1) {
-                        slots.push({
-                            type: 'corner',
-                            startLetter: i,
-                            lettersCount: 2,
-                            label: letters[i] + letters[nextIdx]
-                        });
-                        i += 2;
-                    } else {
-                        slots.push({
-                            type: 'half-corner',
-                            startLetter: i,
-                            lettersCount: 1,
-                            label: letters[i]
-                        });
-                        i += 1;
-                    }
-                } else {
-                    slots.push({
-                        type: 'edge',
-                        startLetter: i,
-                        lettersCount: 1,
-                        label: letters[i]
-                    });
-                    i += 1;
-                }
-            }
-        }
-
-        processLayer_w(0, 12);
-        processLayer_w(12, 24);
-
-        return slots;
     }
 
     // Encoding functions - RESTORED
@@ -1839,7 +1783,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Function to set shape orientation - RESTORED
-    function setShapeOrientation_w(pattern, clickedIndex, layerId) {
+    function setShapeOrientation_w(pattern, clickedIndex) {
         // Calculate rotation amount based on piece type
         // We need to count how many pattern positions (E or C) come before the clicked piece
         const pieces = pattern.split('');
@@ -2002,12 +1946,9 @@ if (typeof module !== 'undefined' && module.exports) {
         };
     }
 
-    function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+    function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainSettingsBtn) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
-        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
 
         const allCases = typeof defaultDisplayNames !== 'undefined' ? Object.keys(defaultDisplayNames) : (typeof data !== 'undefined' ? data.map(d => d.name) : []);
         const getDispName = (cn) => {
@@ -2311,8 +2252,6 @@ if (typeof module !== 'undefined' && module.exports) {
         `;
 
         headerDiv.appendChild(headerTitle);
-
-        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
 
         const searchDiv = document.createElement('div');
         searchDiv.className = 'shape-search-container';
@@ -2830,10 +2769,6 @@ if (typeof module !== 'undefined' && module.exports) {
                 if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
             });
         };
-        function setCornerStickerMode(mode) {
-            cornerStickerMode = mode;
-            saveState();
-        }
 
         // Back button handler for config modal using unified system
         if (typeof pushModalState !== 'undefined') {
@@ -2875,7 +2810,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
                                 // Update only the visualization in this card
                                 const vizDiv = cardElement.querySelector('div:nth-child(2)');
-                                const patternSpan = cardElement.querySelector('div:nth-child(3)');
 
                                 // Find the new pattern for this shape
                                 let newPattern = '';
@@ -3063,7 +2997,6 @@ if (typeof module !== 'undefined' && module.exports) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
         const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
         const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_INPUT_BG) : adjustColorBrightness(config.backgroundColor, LM_INPUT_BG);
         const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_BUTTON_BG) : adjustColorBrightness(config.backgroundColor, LM_BUTTON_BG);
         const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_HOVER_BG) : adjustColorBrightness(config.backgroundColor, LM_HOVER_BG);
@@ -3357,7 +3290,6 @@ if (typeof module !== 'undefined' && module.exports) {
             const vizContainer = modal.querySelector(`#${uniqueId}-visualization`);
             const resultsContainer = modal.querySelector(`#${uniqueId}-results`);
             const closeBtnElement = document.getElementById(`${uniqueId}-close`);
-            const instructionBtnElement = document.getElementById(`${uniqueId}-instruction`);
             const settingsBtnElement = document.getElementById(`${uniqueId}-settings`);
 
             // Position buttons based on modal position
@@ -3410,7 +3342,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     const state = applyScrambleToStateArray_w(transformedScramble);
 
                     // Validation - RESTORED
-                    const val = validateCornersTogetherSameLayer_w(state);
+                    validateCornersTogetherSameLayer_w(state);
 
                     // Build units - COMPLETE
                     const topRaw = buildUnitsFromStateLayer_w(state, 0);
@@ -3750,7 +3682,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     // Export parity analysis function for use by other parts of the app
     Cglobal.Square1ParityAnalyzerLibraryWithSillyNames = {
-        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
+        getParityTextFromScramblePlease: function (scrambleText, cornerMode) {
             // Always use fresh shapes from storage
             currentShapePatternsStorage_w = loadShapesFromStorage_w();
 
@@ -4386,13 +4318,11 @@ const SVGEditor = {
         const tokens = pathData.match(/[a-df-zA-DF-Z]|[-+]?[0-9]*\.?[0-9]+(?:[eE][-+]?[0-9]+)?/g);
 
         let i = 0;
-        let currentCmd = '';
 
         while (i < tokens.length) {
             const token = tokens[i];
 
             if (/[a-zA-Z]/.test(token)) {
-                currentCmd = token;
                 commands.push({ cmd: token, params: [] });
                 i++;
             } else {
@@ -5093,37 +5023,6 @@ if (document.readyState === 'loading') {
             sq.ml = obj.ml;
         }
 
-        function FullCube_randomCube(indice) {
-            var f, i, shape, edge, corner, n_edge, n_corner, rnd, m;
-            if (indice === undefined) {
-                indice = rn(3678);
-            }
-            f = new SqCubie;
-            shape = Shape_ShapeIdx[indice];
-            corner = 0x01234567 << 1 | 0x11111111;
-            edge = 0x01234567 << 1;
-            n_corner = n_edge = 8;
-            for (i = 0; i < 24; i++) {
-                if (((shape >> i) & 1) == 0) { //edge
-                    rnd = rn(n_edge) << 2;
-                    f.setPiece(23 - i, (edge >> rnd) & 0xf);
-                    m = (1 << rnd) - 1;
-                    edge = (edge & m) + ((edge >> 4) & ~m);
-                    --n_edge;
-                } else { //corner
-                    rnd = rn(n_corner) << 2;
-                    f.setPiece(23 - i, (corner >> rnd) & 0xf);
-                    f.setPiece(22 - i, (corner >> rnd) & 0xf);
-                    m = (1 << rnd) - 1;
-                    corner = (corner & m) + ((corner >> 4) & ~m);
-                    --n_corner;
-                    ++i;
-                }
-            }
-            f.ml = rn(2);
-            return f;
-        }
-
         function Search_init2(obj) {
             var corner, edge, i, j, ml, prun;
             obj.Search_d.copy(obj.Search_c);
@@ -5633,34 +5532,6 @@ function parseHexFormat(input) {
     }
 }
 
-// Generate scramble from input
-function generateScramble() {
-    const input = document.getElementById('hexInput').value.trim();
-    const output = document.getElementById('scrambleOutput');
-
-    if (!input) {
-        output.textContent = 'Please enter a hex format state first.';
-        output.className = 'output error';
-        return;
-    }
-
-    try {
-        const state = parseHexFormat(input);
-        const scramble = window.sq1Tools.scrambleFromState(state);
-
-        if (scramble) {
-            output.textContent = scramble;
-            output.className = 'output success';
-        } else {
-            output.textContent = 'Could not generate scramble for this state.';
-            output.className = 'output error';
-        }
-    } catch (error) {
-        output.textContent = 'Error: ' + error.message;
-        output.className = 'output error';
-    }
-}
-
 /* ==== FILE: js/tools/draw-scramble.js ==== */
 
 // ========================================
@@ -5783,10 +5654,6 @@ const findMyPartnerPleaseAndThankYou = {
   N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
 };
 
-const whatIsMyCornerIDAgain = {
-  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
-};
 
 const hexToPieceMapButBackwards = {
   'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
@@ -5795,18 +5662,6 @@ const hexToPieceMapButBackwards = {
 };
 
 // === BASIC HELPER FUNCTIONS ===
-function canYouRotateThisStringPlease(str, rotAmount) {
-  const len = str.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return str.slice(normalizedRot) + str.slice(0, normalizedRot);
-}
-
-function pleaseRotateThisArrayForMe(arr, rotAmount) {
-  const len = arr.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return arr.slice(normalizedRot).concat(arr.slice(0, normalizedRot));
-}
-
 function gimmeASolvedCubeRightNow() {
   return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 }
@@ -6157,12 +6012,12 @@ function gimmeCornerColorsAsHexCodesPlease(hexChar, isThisBottomLayer, colorSche
   return { top: topColor, left: leftColor, right: rightColor };
 }
 
-function whatColorIsThisHalfCornerPlease(hexChar) {
+function whatColorIsThisHalfCornerPlease() {
   return 'fill="#ff9999"';
 }
 
 // === SVG GENERATION FOR INDIVIDUAL PIECES ===
-function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, unit10vh, isBottomLayer, strokeThin, strokeMedium, strokeThick, colorScheme) {
+function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
   isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
 
   let svgMarkup = '';
@@ -6216,12 +6071,11 @@ function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAn
 }
 
 // === MAIN SVG GENERATION ===
-function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, desiredSize, colorScheme, ringDistance = 5) {
+function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
 
-  const actualEquator = hexScrambleCode[12];
   const shapeArray = new Array(24);
   let scrambleIdx = 0;
 
@@ -6277,13 +6131,13 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
+  const leftLayerAngles = Array.from({ length: 12 }, (v, j) => 90 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
       const piece = pieceAssignments[slot.label];
       const angle = gimmeTheAngleForThisSlotPlease(slot, leftLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, false, strokeThin, strokeMedium, strokeThick, colorScheme);
+      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6298,13 +6152,13 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
+  const rightLayerAngles = Array.from({ length: 12 }, (v, j) => 300 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
       const piece = pieceAssignments[slot.label];
       const angle = gimmeTheAngleForThisSlotPlease(slot, rightLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, true, strokeThin, strokeMedium, strokeThick, colorScheme);
+      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6416,7 +6270,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
+  const leftLayerAngles = Array.from({ length: 12 }, (v, j) => 90 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
@@ -6436,7 +6290,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
+  const rightLayerAngles = Array.from({ length: 12 }, (v, j) => 300 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
@@ -6509,7 +6363,7 @@ function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistan
     circleColor: colors.circleColor || 'transparent'
   };
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, hexCode[12], size, colorScheme, ringDistance);
+  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
 }
 
 /**
@@ -6538,7 +6392,7 @@ function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, 
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
   }
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, hexCode[12], size, colorScheme, ringDistance);
+  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
 }
 
 /**
@@ -6831,7 +6685,6 @@ if (typeof module !== 'undefined' && module.exports) {
                     let moveStr = '';
                     let parenDepth = 0;
                     let foundComma = false;
-                    const startPos = i;
 
                     while (i < scramble.length) {
                         const c = scramble[i];
@@ -6966,41 +6819,6 @@ if (typeof module !== 'undefined' && module.exports) {
             }
         }
         return { tlHex, blHex };
-    }
-
-    function getShapeIndexFromHex(tlHex, blHex) {
-        const hexScrambleCode = tlHex + '|' + blHex;
-
-        if (hexScrambleCode.length !== 25) {
-            return -1;
-        }
-
-        const shapeArray = new Array(24);
-        let scrambleIdx = 0;
-
-        for (let i = 0; i < 12; i++) {
-            if (scrambleIdx === 12) scrambleIdx++;
-            const piece = hexScrambleCode[scrambleIdx];
-            const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-            shapeArray[i] = isCorner ? 1 : 0;
-            scrambleIdx++;
-        }
-
-        scrambleIdx = 13;
-        for (let i = 12; i < 24; i++) {
-            const piece = hexScrambleCode[scrambleIdx];
-            const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-            shapeArray[i] = isCorner ? 1 : 0;
-            scrambleIdx++;
-        }
-
-        let shapeValue = 0;
-        for (let i = 0; i < 24; i++) {
-            shapeValue |= shapeArray[23 - i] << i;
-        }
-
-        const shapeIndex = Shape_ShapeIdx.indexOf(shapeValue);
-        return shapeIndex;
     }
 
     // ========================================
@@ -7223,7 +7041,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     function renderVisualization(hex, colorScheme, imageSize) {
         if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
-            return '<div style="color: var(--algo-invalid-color); font-style: italic;">draw-scramble.js not found</div>';
+            return '<div style="color: var(--alg-invalid-color); font-style: italic;">draw-scramble.js not found</div>';
         }
 
         try {
@@ -7245,7 +7063,7 @@ if (typeof module !== 'undefined' && module.exports) {
             );
             return svgHtml;
         } catch (e) {
-            return '<div style="color: var(--algo-invalid-color); font-style: italic;">Error rendering: ' + e.message + '</div>';
+            return '<div style="color: var(--alg-invalid-color); font-style: italic;">Error rendering: ' + e.message + '</div>';
         }
     }
 
@@ -7954,10 +7772,6 @@ if (typeof module !== 'undefined' && module.exports) {
             });
         }
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
-
         function autoRunNextStep() {
             if (!state.isAutoRunning) return;
 
@@ -8644,18 +8458,18 @@ function calculateAndCacheAllParity() {
 
     for (const item of data) {
         const customAlgs = customAlgorithms.get(item.name);
-        const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
-        const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
-        const allAlgorithms = [...oddAlgos, ...evenAlgos];
+        const oddAlgs = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
+        const evenAlgs = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
+        const allAlgorithms = [...oddAlgs, ...evenAlgs];
 
-        let dynamicOddAlgos = [];
-        let dynamicEvenAlgos = [];
+        let dynamicOddAlgs = [];
+        let dynamicEvenAlgs = [];
 
         for (const alg of allAlgorithms) {
             if (!alg || alg.trim() === '') continue;
 
             if (alg === 'Done!') {
-                dynamicEvenAlgos.push(alg);
+                dynamicEvenAlgs.push(alg);
                 continue;
             }
 
@@ -8671,9 +8485,9 @@ function calculateAndCacheAllParity() {
                 }, cornerStickerMode);
 
                 if (parityText === 'Odd') {
-                    dynamicOddAlgos.push(alg);
+                    dynamicOddAlgs.push(alg);
                 } else if (parityText === 'Even') {
-                    dynamicEvenAlgos.push(alg);
+                    dynamicEvenAlgs.push(alg);
                 }
             } catch (error) {
                 console.error('Error testing algorithm:', alg, error);
@@ -8681,8 +8495,8 @@ function calculateAndCacheAllParity() {
         }
 
         cachedParityAlgorithms.set(item.name, {
-            odd: dynamicOddAlgos,
-            even: dynamicEvenAlgos
+            odd: dynamicOddAlgs,
+            even: dynamicEvenAlgs
         });
     }
 }
@@ -8737,14 +8551,6 @@ function getCaseNameFromScramble(scramble) {
 function isCaseEvil(caseName) {
     if (!evilnessFactor) return false;
     return evilnessMap[caseName] === true;
-}
-
-// Check if a scramble's case is evil
-function isScrambleEvil(scramble) {
-    if (!evilnessFactor) return false;
-    const caseName = getCaseNameFromScramble(scramble);
-    if (!caseName) return false;
-    return isCaseEvil(caseName);
 }
 
 // Function to check if parity needs recalculation
@@ -9891,40 +9697,40 @@ function sanitizeNoteHTML(html) {
 }
 
 // Helper function to strip parenthesis if hideParenthesis is enabled
-function stripParenthesisIfNeeded(algo) {
-    if (!algo || typeof algo !== 'string') return algo;
+function stripParenthesisIfNeeded(alg) {
+    if (!alg || typeof alg !== 'string') return alg;
     if (hideParenthesis) {
-        return algo.replace(/\(/g, ' ').replace(/\)/g, ' ');
+        return alg.replace(/\(/g, ' ').replace(/\)/g, ' ');
     }
-    return algo;
+    return alg;
 }
 
 // Helper function to wrap algorithm tokens to prevent breaking inside parentheses
-function wrapAlgorithmTokens(algo) {
-    if (!algo || typeof algo !== 'string') return algo;
+function wrapAlgorithmTokens(alg) {
+    if (!alg || typeof alg !== 'string') return alg;
 
     // Strip parenthesis first if needed
-    algo = stripParenthesisIfNeeded(algo);
+    alg = stripParenthesisIfNeeded(alg);
 
     // If parenthesis are hidden, wrap the number,number patterns
     if (hideParenthesis) {
-        return algo.replace(/([-]?\d+,[-]?\d+)/g, '<span style="white-space: nowrap;">$1</span>');
+        return alg.replace(/([-]?\d+,[-]?\d+)/g, '<span style="white-space: nowrap;">$1</span>');
     }
 
     // Replace (number,number) patterns with non-breaking spans
     // This regex captures patterns like (0,3), (-1,2), etc.
-    return algo.replace(/(\([^)]+\))/g, '<span style="white-space: nowrap;">$1</span>');
+    return alg.replace(/(\([^)]+\))/g, '<span style="white-space: nowrap;">$1</span>');
 }
 
 // Helper function to style algorithm with gray setup/finish moves
-function styleAlgorithmWithGrayMoves(algo) {
-    if (!algo || typeof algo !== 'string' || algo === 'Done!') return algo;
+function styleAlgorithmWithGrayMoves(alg) {
+    if (!alg || typeof alg !== 'string' || alg === 'Done!') return alg;
 
-    const parts = algo.split('/');
+    const parts = alg.split('/');
 
     // If only one part or empty, return as is
     if (parts.length <= 1) {
-        return wrapAlgorithmTokens(algo);
+        return wrapAlgorithmTokens(alg);
     }
 
     // Check if starts with slash (first part empty)
@@ -9938,7 +9744,7 @@ function styleAlgorithmWithGrayMoves(algo) {
 
         // First non-empty part (setup) - blue
         if (idx === 0 && !startsWithSlash) {
-            return `<span style="color: var(--algo-setup-color);">${wrapAlgorithmTokens(part)}</span>`;
+            return `<span style="color: var(--alg-setup-color);">${wrapAlgorithmTokens(part)}</span>`;
         }
         // Last non-empty part (finish) - light gray
         else if (idx === parts.length - 1 && !endsWithSlash) {
@@ -9967,89 +9773,11 @@ function getDisplayName(caseName) {
     return displayNames[caseName] || caseName;
 }
 
-/**
- * Gets short display name for compact views.
- */
-function getShortDisplayName(fullName) {
-    let shortName = fullName;
-
-    // Apply specific replacements
-    const replacements = {
-        'Paired Edges': 'Pair',
-        'Perpendicular Edges': 'L',
-        'L-Shape': 'L',
-        'Parallel Edges': 'Line',
-        'Square': 'Sq',
-        'Muffin': 'Muff',
-        'Barrel': 'Barr',
-        'Scallop': 'Scal',
-        'Left': 'L.',
-        'Right': 'R.'
-    };
-
-    for (const [pattern, replacement] of Object.entries(replacements)) {
-        const regex = new RegExp(pattern, 'gi');
-        shortName = shortName.replace(regex, replacement);
-    }
-
-    // Remove hyphens from numbers
-    shortName = shortName.replace(/(\d)-(\d)/g, '$1$2');
-
-    return shortName;
-}
-
-/**
- * Gets all possible search aliases for a case name.
- */
-function getAliases(caseName) {
-    const displayName = getDisplayName(caseName);
-    const aliases = [
-        caseName.toLowerCase(),
-        displayName.toLowerCase()
-    ];
-
-    // Add variations
-    if (displayName.includes('/')) {
-        const parts = displayName.split('/');
-        aliases.push(...parts.map(p => p.trim().toLowerCase()));
-    }
-
-    // Add number variations (e.g., "4-2" -> "42")
-    aliases.push(displayName.replace(/-/g, '').toLowerCase());
-    aliases.push(caseName.replace(/-/g, '').toLowerCase());
-
-    // Add common shape variations
-    const variations = {
-        'perpendicular': ['l-shape', 'l shape', 'arrow'],
-        'l-shape': ['perpendicular', 'arrow'],
-        'parallel': ['line', 'crown'],
-        'line': ['parallel', 'crown'],
-        'paired': ['pair'],
-        'pair': ['paired'],
-        'muffin': ['mushroom'],
-        'mushroom': ['muffin']
-    };
-
-    for (const [key, alts] of Object.entries(variations)) {
-        if (displayName.toLowerCase().includes(key)) {
-            aliases.push(...alts);
-        }
-    }
-
-    return [...new Set(aliases)];
-}
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                             ALGORITHM DISPLAY                              ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
-
-function countSlashes(str, count) {
-    if (count === 0) return 0;
-    const parts = str.split('/');
-    return parts.slice(0, count).join('/').length + 1;
-}
-
 
 function invertScramble(s) {
     if (!s) return s;
@@ -10140,47 +9868,25 @@ function getShapePath(scramble) {
     return null;
 }
 
-function renderShapePath(path) {
-    if (!path || path.length === 0) return '';
-
-    const pathSteps = path.map((step, idx) => {
-        const arrow = idx < path.length - 1 ? ' <span class="shape-path-arrow">→</span> ' : '';
-        return `<span class="shape-path-step">${step.top}/${step.bottom}</span>${arrow}`;
-    }).join('');
-
-    return `
-        <div class="shape-path-block">
-            <div class="shape-path-label">Shape Path:</div>
-            <div style="font-size: 0.9rem; line-height: 1.8; overflow-x: auto; white-space: nowrap;">
-                ${pathSteps}
-            </div>
-        </div>
-    `;
-}
-
-function renderAlgorithm(algoArray) {
-    return algoArray.map(algo => `<div class="algo-line">${styleAlgorithmWithGrayMoves(algo)}</div>`).join('');
-}
-
-function renderAlgorithmWithPopup(algoArray, caseName, parityType, fontFamily) {
+function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFamily) {
     const fontStyle = fontFamily ? `font-family: ${fontFamily};` : '';
-    return algoArray.map((algo, idx) => {
-        const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
-        const meta = getAlgDisplayMeta(algo, caseName);
+    return algArray.map((alg, idx) => {
+        const algId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
+        const meta = getAlgDisplayMeta(alg, caseName);
         const prefix = meta.mirrored ? '<span style="color: var(--z2-prefix-color); margin-right:4px; display:inline; vertical-align:baseline; white-space:nowrap;"><big style="font-size:1em;">&lt;</big><small>z2</small><big style="font-size:1em;">&gt;</big></span>' : '';
-        const colorStyle = meta.invalid ? 'color: var(--algo-invalid-color);' : '';
+        const colorStyle = meta.invalid ? 'color: var(--alg-invalid-color);' : '';
         const wrapStyle = meta.invalid
             ? 'display: flex; align-items: baseline; flex-wrap: wrap; opacity: 0.18;'
             : 'display: flex; align-items: baseline; flex-wrap: wrap;';
-        return `<div class="algo-line algo-interactive"
-                     id="${algoId}"
-                     data-algo="${algo.replace(/"/g, '&quot;')}"
+        return `<div class="alg-line alg-interactive"
+                     id="${algId}"
+                     data-alg="${alg.replace(/"/g, '&quot;')}"
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      data-parity="${parityType}"
-                     onmouseenter="showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', false)"
-                     onmouseleave="hideAlgoPopup(this, false)"
-                     onclick="event.stopPropagation(); showAlgoPopup(this, '${algo.replace(/'/g, "\\'")}', true)"
-                     style="${wrapStyle} ${colorStyle} ${fontStyle}">${prefix}${styleAlgorithmWithGrayMoves(algo)}</div>`;
+                     onmouseenter="showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', false)"
+                     onmouseleave="hideAlgPopup(this, false)"
+                     onclick="event.stopPropagation(); showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', true)"
+                     style="${wrapStyle} ${colorStyle} ${fontStyle}">${prefix}${styleAlgorithmWithGrayMoves(alg)}</div>`;
     }).join('');
 }
 
@@ -10188,7 +9894,7 @@ let activePopup = null;
 let activePopupElement = null;
 let popupHoverTimeout = null;
 
-function showAlgoPopup(element, algo, isPermanent) {
+function showAlgPopup(element, alg, isPermanent) {
     // Clear any pending hide timeout
     if (popupHoverTimeout) {
         clearTimeout(popupHoverTimeout);
@@ -10197,7 +9903,7 @@ function showAlgoPopup(element, algo, isPermanent) {
 
     // If clicking on already active popup element, close it
     if (isPermanent && activePopupElement === element) {
-        hideAlgoPopup(element, true);
+        hideAlgPopup(element, true);
         return;
     }
 
@@ -10215,17 +9921,17 @@ function showAlgoPopup(element, algo, isPermanent) {
 
     // Remove any existing non-permanent popup
     if (!isPermanent) {
-        const existingHover = document.querySelector('.algo-popup:not(.permanent)');
+        const existingHover = document.querySelector('.alg-popup:not(.permanent)');
         if (existingHover) existingHover.remove();
     }
 
-    if (algo === 'Done!' || !algo || algo.trim() === '') return;
+    if (alg === 'Done!' || !alg || alg.trim() === '') return;
 
-    const setup = invertScramble(algo);
-    const shapePath = getShapePath(algo);
+    const setup = invertScramble(alg);
+    const shapePath = getShapePath(alg);
 
     const popup = document.createElement('div');
-    popup.className = 'algo-popup' + (isPermanent ? ' permanent' : '');
+    popup.className = 'alg-popup' + (isPermanent ? ' permanent' : '');
     popup.dataset.isPermanent = isPermanent;
 
     const setupId = 'popup-setup-' + Math.random().toString(36).substr(2, 9);
@@ -10253,7 +9959,7 @@ function showAlgoPopup(element, algo, isPermanent) {
     if (setupElement) {
         setupElement.onclick = (e) => {
             e.stopPropagation();
-            hideAlgoPopup(element, isPermanent);
+            hideAlgPopup(element, isPermanent);
             openNewParityAnalysis(setup);
         };
         setupElement.onmouseenter = () => {
@@ -10269,14 +9975,14 @@ function showAlgoPopup(element, algo, isPermanent) {
     if (shapePathElement) {
         shapePathElement.onclick = (e) => {
             e.stopPropagation();
-            hideAlgoPopup(element, isPermanent);
+            hideAlgPopup(element, isPermanent);
 
             // Get case name and parity from the element
             const caseName = element.getAttribute('data-case') || '';
             const parityType = element.getAttribute('data-parity') || '';
             const displayName = getDisplayName(caseName);
 
-            openAnimateAlgModal(algo, displayName, parityType);
+            openAnimateAlgModal(alg, displayName, parityType);
         };
         shapePathElement.onmouseenter = () => {
             shapePathElement.style.background = 'var(--hover-bg)';
@@ -10336,9 +10042,9 @@ function showAlgoPopup(element, algo, isPermanent) {
     // Add scroll handler - immediate close for all popups
     const scrollHandler = () => {
         if (isPermanent) {
-            hideAlgoPopup(element, true);
+            hideAlgPopup(element, true);
         } else {
-            hideAlgoPopup(element, false);
+            hideAlgPopup(element, false);
         }
         window.removeEventListener('scroll', scrollHandler, true);
         if (clickHandler) document.removeEventListener('mousedown', clickHandler);
@@ -10354,7 +10060,7 @@ function showAlgoPopup(element, algo, isPermanent) {
         setTimeout(() => {
             clickHandler = (e) => {
                 if (!popup.contains(e.target) && e.target !== element) {
-                    hideAlgoPopup(element, true);
+                    hideAlgPopup(element, true);
                     document.removeEventListener('mousedown', clickHandler);
                     window.removeEventListener('scroll', scrollHandler, true);
                 }
@@ -10364,7 +10070,7 @@ function showAlgoPopup(element, algo, isPermanent) {
     }
 }
 
-function hideAlgoPopup(element, isPermanent) {
+function hideAlgPopup(element, isPermanent) {
     if (isPermanent) {
         if (activePopup) {
             activePopup.remove();
@@ -10373,7 +10079,7 @@ function hideAlgoPopup(element, isPermanent) {
         }
     } else {
         // Immediately remove hover popup
-        const hoverPopup = document.querySelector('.algo-popup:not(.permanent)');
+        const hoverPopup = document.querySelector('.alg-popup:not(.permanent)');
         if (hoverPopup) {
             hoverPopup.remove();
         }
@@ -10713,125 +10419,6 @@ function adjustPriority(name, delta) {
     }
 }
 
-function togglePlanned(name, level = 1, event = null) {
-    if (event && event.button === 2) { // Right click
-        event.preventDefault();
-        // Cycle behavior
-        const currentLevel = plannedLevels.get(name) || 4;
-        const nextLevel = currentLevel % 7 + 1;
-        plannedLevels.set(name, nextLevel);
-        saveState();
-
-        // Show reorder button if in priority mode
-        if (currentSortMode === 'priority') {
-            needsReorder = true;
-            showReorderButton();
-        } else {
-            render(true);
-        }
-    } else if (event && event.button === 0) { // Left click
-        event.preventDefault();
-        showPriorityMenu(name, event);
-    }
-}
-
-function showPriorityMenu(name, event) {
-    // Remove any existing menu
-    const existingMenu = document.getElementById('priorityMenu');
-    if (existingMenu) existingMenu.remove();
-
-    const currentLevel = plannedLevels.get(name) || 4;
-    const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
-
-    const menu = document.createElement('div');
-    menu.id = 'priorityMenu';
-    menu.style.cssText = `
-        position: fixed;
-        background: var(--surface);
-        border: 2px solid var(--link-color);
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-        z-index: 10000;
-        padding: 8px;
-        min-width: 120px;
-    `;
-
-    priorityNames.forEach((pName, idx) => {
-        const level = idx + 1;
-        const option = document.createElement('div');
-        option.textContent = pName;
-        option.style.cssText = `
-            padding: 8px 12px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: ${level === currentLevel ? '700' : '500'};
-            background: ${level === currentLevel ? 'var(--hover-bg)' : 'transparent'};
-            color: ${level === currentLevel ? 'var(--link-color)' : 'var(--text-ui)'};
-        `;
-        option.onmouseover = () => {
-            if (level !== currentLevel) option.style.background = 'var(--sidebar-item-hover)';
-        };
-        option.onmouseout = () => {
-            if (level !== currentLevel) option.style.background = 'transparent';
-        };
-        option.onclick = () => {
-            plannedLevels.set(name, level);
-            saveState();
-
-            // Re-render the specific card
-            const cardElement = document.querySelector(`[data-case-name="${name}"]`);
-            if (cardElement) {
-                const item = data.find(d => d.name === name);
-                if (item) {
-                    cardElement.outerHTML = renderCard(item);
-                }
-            }
-
-            // Show reorder button if in priority mode
-            if (currentSortMode === 'priority') {
-                needsReorder = true;
-                showReorderButton();
-            }
-            menu.remove();
-        };
-        menu.appendChild(option);
-    });
-
-    document.body.appendChild(menu);
-
-    // Position the menu
-    const rect = event.target.closest('.icon-btn').getBoundingClientRect();
-    let top = rect.bottom + 5;
-    let left = rect.left;
-
-    // Adjust if menu goes off screen
-    setTimeout(() => {
-        const menuRect = menu.getBoundingClientRect();
-        if (menuRect.bottom > window.innerHeight) {
-            top = rect.top - menuRect.height - 5;
-        }
-        if (menuRect.right > window.innerWidth) {
-            left = window.innerWidth - menuRect.width - 10;
-        }
-        if (left < 10) left = 10;
-        if (top < 10) top = 10;
-
-        menu.style.top = top + 'px';
-        menu.style.left = left + 'px';
-    }, 0);
-
-    // Close menu when clicking outside (after a small delay to prevent immediate closure)
-    setTimeout(() => {
-        const closeMenu = (e) => {
-            if (!menu.contains(e.target) && e.target !== event.target) {
-                menu.remove();
-                document.removeEventListener('mousedown', closeMenu);
-            }
-        };
-        document.addEventListener('mousedown', closeMenu);
-    }, 100);
-}
-
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                              CARD RENDERING                                ║
@@ -10858,16 +10445,16 @@ function renderCard(item) {
 
     // Use cached parity calculations
     const cachedAlgs = cachedParityAlgorithms.get(item.name);
-    const oddAlgos = cachedAlgs ? cachedAlgs.odd : [];
-    const evenAlgos = cachedAlgs ? cachedAlgs.even : [];
+    const oddAlgs = cachedAlgs ? cachedAlgs.odd : [];
+    const evenAlgs = cachedAlgs ? cachedAlgs.even : [];
 
     // Fetch SVGs dynamically from svgData using string keys
     const topSVG = window.svgData[item.top] || '';
     const bottomSVG = window.svgData[item.bottom] || '';
 
-    const algoFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
-    const oddAlgoDisplay = oddAlgos.length > 0 ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', algoFontFamily) : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
-    const evenAlgoDisplay = evenAlgos.length > 0 ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', algoFontFamily) : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
+    const algFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
+    const oddAlgDisplay = oddAlgs.length > 0 ? renderAlgorithmWithPopup(oddAlgs, item.name, 'odd', algFontFamily) : '<div class="alg-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
+    const evenAlgDisplay = evenAlgs.length > 0 ? renderAlgorithmWithPopup(evenAlgs, item.name, 'even', algFontFamily) : '<div class="alg-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
 
     const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? 'var(--card-learned-border)' : (isLearning ? 'var(--card-learning-border)' : 'var(--border-color)')}" stroke-width="2">
         <path d="M20 6L9 17l-5-5"/>
@@ -10936,13 +10523,13 @@ function renderCard(item) {
                 <div style="width: 50%; height: auto;">${bottomSVG}</div>
             </div>
             <div class="card-body">
-                <div class="algo-section">
-                    <span class="algo-label">Odd:</span>
-                    ${oddAlgoDisplay}
+                <div class="alg-section">
+                    <span class="alg-label">Odd:</span>
+                    ${oddAlgDisplay}
                 </div>
-                <div class="algo-section">
-                    <span class="algo-label">Even:</span>
-                    ${evenAlgoDisplay}
+                <div class="alg-section">
+                    <span class="alg-label">Even:</span>
+                    ${evenAlgDisplay}
                 </div>
                 ${comment ? `<div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 8px; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
             </div>
@@ -12718,7 +12305,7 @@ function applyAlgorithmFontSize() {
     const style = document.getElementById('algorithm-font-size-style') || document.createElement('style');
     style.id = 'algorithm-font-size-style';
     style.textContent = `
-        .algo-line, .algo-interactive {
+        .alg-line, .alg-interactive {
             font-size: ${algorithmFontSize}px !important;
         }
     `;
@@ -15988,8 +15575,8 @@ function saveQuickEditChanges() {
     });
 
     // Save algorithms
-    const algoRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
-    algoRows.forEach(row => {
+    const algRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
+    algRows.forEach(row => {
         const caseName = row.dataset.case;
         const algCells = row.querySelectorAll('.alg-cell');
 
@@ -16060,8 +15647,8 @@ function closeQuickEditModal() {
     });
 
     // Check algorithms tab changes
-    const algoRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
-    algoRows.forEach(row => {
+    const algRows = modal.querySelectorAll('#quickEditAlgorithmsBody tr');
+    algRows.forEach(row => {
         const cells = row.querySelectorAll('.alg-cell');
         cells.forEach(cell => {
             const original = cell.dataset.original || '';
@@ -17885,152 +17472,6 @@ function quizGetParityFromHex(hexCode) {
     } catch (e) {
         return null;
     }
-}
-
-function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
-    // Reuse the exact same modal structure as openShapeIndexSelector
-    let selectorModal = document.getElementById(modalId + '_selectorModal');
-    if (selectorModal) selectorModal.remove();
-
-    selectorModal = document.createElement('div');
-    selectorModal.id = modalId + '_selectorModal';
-    selectorModal.className = 'shape-index-selector-modal';
-    selectorModal.innerHTML = `
-        <div class="shape-index-selector-content">
-            <div class="shape-index-selector-header">
-                <span class="shape-index-selector-title">${title}</span>
-                <button class="shape-index-selector-close" id="${modalId}_selClose">&times;</button>
-            </div>
-            <div class="shape-index-selector-body" id="${modalId}_selBody"></div>
-        </div>
-    `;
-    document.body.appendChild(selectorModal);
-
-    const closeSelector = () => {
-        closeModalWithHistory(() => {
-            selectorModal.classList.remove('active');
-            selectorModal.remove();
-        });
-    };
-
-    pushModalState(modalId + '_selectorModal', closeSelector);
-
-    const stored = (() => { try { return JSON.parse(localStorage.getItem(storageKey)) || null; } catch (e) { return null; } })();
-    let selectedCases = new Set(stored ? stored : shapeIndex.map(e => e.name));
-
-    const body = document.getElementById(modalId + '_selBody');
-
-    // Group by top shape, same as openShapeIndexSelector groups by org/mir
-    const groups = {};
-    shapeIndex.forEach(entry => {
-        const dispName = (typeof displayNames !== 'undefined' && displayNames[entry.name]) ? displayNames[entry.name] : entry.name;
-        const top = dispName.includes('/') ? dispName.split('/')[0].trim() : dispName;
-        if (!groups[top]) groups[top] = [];
-        groups[top].push(entry);
-    });
-
-    let searchHTML = `<div style="padding: 0 4px 12px 4px;">
-        <input type="text" id="${modalId}_selSearch" placeholder="Search cases..." style="width:100%;padding:8px 12px;border:2px solid var(--border-color);border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
-    </div>`;
-
-    let sectionsHTML = Object.entries(groups).map(([groupName, entries]) => {
-        const dispEntries = entries.map(entry => {
-            const dispName = (typeof displayNames !== 'undefined' && displayNames[entry.name]) ? displayNames[entry.name] : entry.name;
-            const bottom = dispName.includes('/') ? dispName.split('/')[1].trim() : dispName;
-            const isSelected = selectedCases.has(entry.name);
-            return `<button class="${modalId}_selToggle shape-index-toggle ${isSelected ? 'active' : ''}"
-                        data-name="${entry.name.replace(/"/g, '&quot;')}"
-                        data-dispname="${dispName.toLowerCase()}"
-                        data-group="${groupName}"
-                        style="padding: 8px; background: ${isSelected ? '#ebebeb' : '#ffffff'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; text-align: center; color: var(--text-ui);">
-                ${bottom}
-            </button>`;
-        }).join('');
-
-        return `<div class="shape-index-section ${modalId}_selGroup" data-group="${groupName}">
-            <div class="shape-index-section-header">
-                <span style="font-weight: 600;">${groupName}</span>
-                <div>
-                    <button data-group="${groupName}" data-action="all" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button data-group="${groupName}" data-action="none" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
-                </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px; margin-top: 10px;">
-                ${dispEntries}
-            </div>
-        </div>`;
-    }).join('');
-
-    body.innerHTML = searchHTML + sectionsHTML + `
-        <div style="margin-top: 20px; text-align: center;">
-            <button id="${modalId}_selConfirm" style="padding: 0.7rem 2rem; background: #4299e1; color: #fff; border: none; border-radius: 8px; font-weight: 600; font-size: 0.95rem; cursor: pointer;">Start</button>
-        </div>`;
-
-    // Toggle individual
-    body.querySelectorAll(`.${modalId}_selToggle`).forEach(btn => {
-        btn.addEventListener('click', () => {
-            const name = btn.getAttribute('data-name');
-            if (selectedCases.has(name)) {
-                selectedCases.delete(name);
-                btn.classList.remove('active');
-                btn.style.background = 'var(--surface)';
-            } else {
-                selectedCases.add(name);
-                btn.classList.add('active');
-                btn.style.background = 'var(--surface-border)';
-            }
-        });
-    });
-
-    // Group all/none
-    body.querySelectorAll('[data-action]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const group = btn.getAttribute('data-group');
-            const action = btn.getAttribute('data-action');
-            body.querySelectorAll(`.${modalId}_selToggle[data-group="${group}"]`).forEach(tb => {
-                const name = tb.getAttribute('data-name');
-                if (action === 'all') {
-                    selectedCases.add(name);
-                    tb.classList.add('active');
-                    tb.style.background = 'var(--surface-border)';
-                } else {
-                    selectedCases.delete(name);
-                    tb.classList.remove('active');
-                    tb.style.background = 'var(--surface)';
-                }
-            });
-        });
-    });
-
-    // Search
-    document.getElementById(modalId + '_selSearch').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
-        body.querySelectorAll(`.${modalId}_selToggle`).forEach(btn => {
-            btn.style.display = btn.getAttribute('data-dispname').includes(term) ? '' : 'none';
-        });
-        body.querySelectorAll(`.${modalId}_selGroup`).forEach(grp => {
-            const any = Array.from(grp.querySelectorAll(`.${modalId}_selToggle`)).some(b => b.style.display !== 'none');
-            grp.style.display = any ? '' : 'none';
-        });
-    });
-
-    // Close
-    document.getElementById(modalId + '_selClose').addEventListener('click', closeSelector);
-    selectorModal.addEventListener('click', (e) => {
-        if (e.target === selectorModal) closeSelector();
-    });
-
-    // Confirm
-    document.getElementById(modalId + '_selConfirm').addEventListener('click', () => {
-        const chosen = Array.from(selectedCases);
-        if (chosen.length === 0) { if (typeof showToast === 'function') showToast('Select at least one case.', 2000, 'error'); return; }
-        localStorage.setItem(storageKey, JSON.stringify(chosen));
-        selectorModal.classList.remove('active');
-        selectorModal.remove();
-        onConfirm(chosen);
-    });
-
-    selectorModal.classList.add('active');
 }
 
 // ============================================================
