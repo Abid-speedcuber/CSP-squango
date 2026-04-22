@@ -3326,7 +3326,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 const storedArrow = localStorage.getItem('parityTracerShowArrow');
                 showCircularArrow = storedArrow !== null ? storedArrow === 'true' : true;
                 const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
-                if (storedArrowSettings) { try { arrowSettings = JSON.parse(storedArrowSettings); } catch(_) {} }
+                if (storedArrowSettings) arrowSettings = JSON.parse(storedArrowSettings);
 
                 let scrambleText = scrambleInput.value.trim() || '(0,0)';
                 if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
@@ -8578,7 +8578,7 @@ if (storedEvilnessFactor !== null) evilnessFactor = storedEvilnessFactor === 'tr
 const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
 if (storedEvilnessStringReturn !== null) evilnessStringReturn = storedEvilnessStringReturn === 'true';
 const storedEvilnessMap = localStorage.getItem('evilnessMap');
-if (storedEvilnessMap !== null) { try { evilnessMap = JSON.parse(storedEvilnessMap); } catch (e) { } }
+if (storedEvilnessMap !== null) evilnessMap = JSON.parse(storedEvilnessMap);
 
 // Load saved state
 try {
@@ -8879,7 +8879,7 @@ window.initializePreset = async function () {
     }
 }
 
-function exportData() {
+window.exportData = function() {
     const state = {
         learned: Array.from(learnedCases),
         learning: Array.from(learningCases),
@@ -9894,7 +9894,7 @@ let activePopup = null;
 let activePopupElement = null;
 let popupHoverTimeout = null;
 
-function showAlgPopup(element, alg, isPermanent) {
+window.showAlgPopup = function(element, alg, isPermanent) {
     // Clear any pending hide timeout
     if (popupHoverTimeout) {
         clearTimeout(popupHoverTimeout);
@@ -10070,7 +10070,7 @@ function showAlgPopup(element, alg, isPermanent) {
     }
 }
 
-function hideAlgPopup(element, isPermanent) {
+window.hideAlgPopup = function(isPermanent) {
     if (isPermanent) {
         if (activePopup) {
             activePopup.remove();
@@ -10090,7 +10090,7 @@ function hideAlgPopup(element, isPermanent) {
     }
 }
 
-function showContextMenu(caseName, event) {
+window.showContextMenu = function(caseName, event) {
     event.stopPropagation();
 
     // Close any existing context menu
@@ -10326,7 +10326,7 @@ function updateProgress() {
     }
 }
 
-function toggleLearned(name, event = null) {
+window.toggleLearned = function(name, event = null) {
     // Close any open context menu
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
@@ -11267,10 +11267,8 @@ function _renderParityTab(panel) {
 
     // Arrow appearance (from stored settings)
     let arrowSettings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
-    try {
-        const s = localStorage.getItem('parityTracerArrowSettings');
-        if (s) arrowSettings = JSON.parse(s);
-    } catch (_) {}
+    const s = localStorage.getItem('parityTracerArrowSettings');
+    if (s) arrowSettings = JSON.parse(s);
 
     const cornerMode = typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise';
     const evilOn = typeof evilnessFactor !== 'undefined' && evilnessFactor;
@@ -11369,9 +11367,10 @@ window._ptSaveArrow = function(val) {
     if (container) { container.style.opacity = val ? '1' : '0.4'; container.style.pointerEvents = val ? 'auto' : 'none'; }
     _triggerParityLiveUpdate();
 };
-window._ptSaveArrowProp = function(prop, val, input) {
+window._ptSaveArrowProp = function(prop, val) {
     let settings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
-    try { const s = localStorage.getItem('parityTracerArrowSettings'); if (s) settings = JSON.parse(s); } catch(_){}
+    const s = localStorage.getItem('parityTracerArrowSettings');
+    if (s) settings = JSON.parse(s);
     settings[prop] = val;
     localStorage.setItem('parityTracerArrowSettings', JSON.stringify(settings));
     // Update display span
@@ -11540,7 +11539,7 @@ window._trApplyTextSize = function(val) {
     if (el) { el.style.fontSize = val + 'px'; if (typeof trainingScrambleTextSize !== 'undefined') trainingScrambleTextSize = parseInt(val); }
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
-window._trApplyTimerSize = function(val) {
+window._trApplyTimerSize = function() {
     if (typeof trainingScrambleTextSize !== 'undefined') {}
     if (typeof applyTimerSize === 'function') applyTimerSize();
 };
@@ -12048,7 +12047,7 @@ function generateModalHTML() {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-function openSettingsModal() {
+window.openSettingsModal = function() {
     window.openUnifiedSettings('homescreen');
 }
 
@@ -12145,7 +12144,7 @@ function handlePresetChange(presetName) {
     document.documentElement.classList.add('scroll-locked');
 }
 
-function toggleHints(isChecked) {
+window.toggleHints = function(isChecked) {
     showHints = isChecked;
     localStorage.setItem('showHints', showHints);
     applyHintVisibility();
@@ -12159,12 +12158,12 @@ function applyHintVisibility() {
     }
 }
 
-function toggleShowPaths(isChecked) {
+window.toggleShowPaths = function(isChecked) {
     // Shape paths always shown now
     return;
 }
 
-function toggleHideInstructions(isChecked) {
+window.toggleHideInstructions = function(isChecked) {
     hideInstructions = isChecked;
     saveState();
     applyInstructionVisibility();
@@ -12177,13 +12176,13 @@ function applyInstructionVisibility() {
     });
 }
 
-function toggleHideParenthesis(isChecked) {
+window.toggleHideParenthesis = function(isChecked) {
     hideParenthesis = isChecked;
     saveState();
     render();
 }
 
-function toggleEnhancedAccess(isChecked) {
+window.toggleEnhancedAccess = function(isChecked) {
     window.enhancedAccess = isChecked;
     localStorage.setItem('enhancedAccess', isChecked.toString());
 }
@@ -12216,7 +12215,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Color Scheme Modal Functions
-function openColorSchemeModal() {
+window.openColorSchemeModal = function() {
     const modal = document.getElementById('colorSchemeModal');
 
     window.modalScrollY = window.scrollY;
@@ -12244,13 +12243,13 @@ function closeColorSchemeModal() {
     });
 }
 
-function updateImageSizePreview(value) {
+window.updateImageSizePreview = function(value) {
     document.getElementById('sizeValue').textContent = value;
     scrambleImageSize = parseInt(value);
     saveState();
 }
 
-function updateAlgFontSizePreview(value) {
+window.updateAlgFontSizePreview = function(value) {
     document.getElementById('algFontSizeValue').textContent = value;
     algorithmFontSize = parseInt(value);
     localStorage.setItem('algorithmFontSize', value);
@@ -12303,7 +12302,7 @@ function openNewParityAnalysis(scramble) {
 }
 
 // Homepage Info Modal
-function showHomepageInfoModal() {
+window.showHomepageInfoModal = function() {
     pushModalState('homepageInfoModal', closeHomepageInfoModal);
 
     let infoModal = document.getElementById('homepageInfoModal');
@@ -12577,34 +12576,33 @@ function updateInputColorLive(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
     if (typeof window.algToShapeIndex === 'undefined' || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
-    try {
-        const modal = document.getElementById('editCaseModal');
-        if (!modal) return;
-        const caseName = _getEditModalCaseName(modal);
-        const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
-        const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
-        const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
-        const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
-        const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
-        const result = window.algToShapeIndex(normalized);
-        const idx = result.shapeIndex;
-        const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
-        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
-        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
-        if (isDirectMatch || isInOrg) {
-            const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
-            input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
-            input.style.fontWeight = '600';
-        } else if (isInMir) {
-            const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
-            input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
-            input.style.fontWeight = '600';
-        } else {
-            input.style.color = 'var(--parity-invalid)';
-            input.style.fontWeight = '600';
-        }
+    const modal = document.getElementById('editCaseModal');
+    if (!modal) return;
+    const caseName = _getEditModalCaseName(modal);
+    const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
+    const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(canonicalIdxStr) : null;
+    const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
+    const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
+    const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
+    const result = window.algToShapeIndex(normalized);
+    const idx = result.shapeIndex;
+    const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
+    const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
+    const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
+    if (isDirectMatch || isInOrg) {
+        const setup = invertScramble(normalized);
+        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+        input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
+        input.style.fontWeight = '600';
+    } else if (isInMir) {
+        const setup = invertScramble(normalized);
+        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+        input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
+        input.style.fontWeight = '600';
+    } else {
+        input.style.color = 'var(--parity-invalid)';
+        input.style.fontWeight = '600';
+    }
 }
 
 // Helper to get case name from the edit case modal
@@ -13184,7 +13182,7 @@ function saveNotes(caseName) {
 }
 
 // General Notes Modal Functions
-function openGeneralNotesModal() {
+window.openGeneralNotesModal = function() {
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
 
@@ -13296,7 +13294,7 @@ function renderGeneralNotes() {
     }
 }
 
-function toggleEditGeneralNotes() {
+window.toggleEditGeneralNotes = function() {
     const viewDiv = document.getElementById('generalNotesView');
     const editDiv = document.getElementById('generalNotesEdit');
     const textarea = document.getElementById('generalNotesTextarea');
@@ -13314,7 +13312,7 @@ function toggleEditGeneralNotes() {
     if (infoBtn) infoBtn.style.display = 'flex';
 }
 
-function attemptSwitchToViewMode() {
+window.attemptSwitchToViewMode = function() {
     const textarea = document.getElementById('generalNotesTextarea');
     const currentContent = textarea ? textarea.value : '';
     const originalContent = window.originalGeneralNotes || '';
@@ -13955,7 +13953,7 @@ function updateProfileStats() {
 }
 
 // About Modal Functions
-function openAboutModal() {
+window.openAboutModal = function() {
     const modal = document.getElementById('aboutModal');
 
     window.modalScrollY = window.scrollY;
@@ -16858,7 +16856,7 @@ function openShapeIndexSelector() {
     selectorModal.classList.add('active');
 }
 
-function toggleShapeIndex(index) {
+window.toggleShapeIndex = function(index) {
     const selectedKey = `training_selected_${currentTrainingCase}`;
     if (!window.trainingSelections) window.trainingSelections = {};
     if (!window.trainingSelections[selectedKey]) {
@@ -17273,8 +17271,7 @@ function quizGetParityFromHex(hexCode) {
 window.openEvilnessQuiz = function () {
     const key = 'sq1-selector-evilness';
     window._selectorStorageKey = key;
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) { }
+    let saved = JSON.parse(localStorage.getItem(key));
     const chosen = (saved && saved.length > 0) ? saved.filter(n => data.some(d => d.name === n)) : data.map(d => d.name);
     startEvilnessQuiz(chosen);
 };
@@ -17581,8 +17578,7 @@ function startEvilnessQuiz(chosenCaseNames) {
 window.openParityQuiz = function () {
     const key = 'sq1-selector-parity';
     window._selectorStorageKey = key;
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) { }
+    let saved = JSON.parse(localStorage.getItem(key));
     const chosen = (saved && saved.length > 0) ? saved.filter(n => data.some(d => d.name === n)) : data.map(d => d.name);
     startParityQuiz(chosen);
 };
@@ -18138,8 +18134,7 @@ window.trainerPickerLaunch = function (type) {
     const key = KEYS[type];
     window._selectorStorageKey = key;
 
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem(key)); } catch (e) { }
+    let saved = JSON.parse(localStorage.getItem(key));
     const chosen = (saved && saved.length > 0) ? saved.filter(n => data.some(d => d.name === n)) : data.map(d => d.name);
 
     if (type === 'timer') {
