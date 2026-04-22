@@ -1,3 +1,7 @@
+/* ==== FILE: js/utils.js ==== */
+
+// functions and variables that are used repeatedly with different names over the codebase will be consolidated here to it will help to reduce duplicates.
+
 
 
 /* ==== FILE: js/tools/scrambleNormalizer.js ==== */
@@ -537,9 +541,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
     initShapes();
 
-    // ========================================
-    // INVERT FUNCTION (from hexify.js)
-    // ========================================
     function AInvertScramble(scrambleString) {
       if (!scrambleString) return scrambleString;
       let str = String(scrambleString).trim();
@@ -577,9 +578,6 @@ if (typeof module !== 'undefined' && module.exports) {
       return inverted.join('/');
     }
 
-    // ========================================
-    // PARSE SCRAMBLE (from hexify.js)
-    // ========================================
     function parseScramble(scramble) {
       const moves = [];
 
@@ -631,9 +629,6 @@ if (typeof module !== 'undefined' && module.exports) {
       return moves;
     }
 
-    // ========================================
-    // TWIST (from hexify.js)
-    // ========================================
     function twist(tlHex, blHex) {
       const tlFirst6 = tlHex.slice(0, 6);
       const tlLast6 = tlHex.slice(6);
@@ -646,17 +641,11 @@ if (typeof module !== 'undefined' && module.exports) {
       };
     }
 
-    // ========================================
-    // CYCLE LEFT (from hexify.js)
-    // ========================================
     function cycleLeft(hex, places) {
       const normalized = ((places % 12) + 12) % 12;
       return hex.slice(normalized) + hex.slice(0, normalized);
     }
 
-    // ========================================
-    // SQ1 ALG TO HEX (from hexify.js)
-    // ========================================
     function sq1AlgToHex(scramble) {
       let tlHex = '011233455677';
       let blHex = '998bbaddcffe';
@@ -678,9 +667,6 @@ if (typeof module !== 'undefined' && module.exports) {
       return { tlHex, blHex };
     }
 
-    // ========================================
-    // GET SHAPE INDEX FROM HEX (from draw-scramble.js + getSpecificHex.js)
-    // ========================================
     function getShapeIndexFromHex(tlHex, blHex) {
       const hexScrambleCode = tlHex + '|' + blHex;
 
@@ -721,10 +707,7 @@ if (typeof module !== 'undefined' && module.exports) {
       return shapeIndex;
     }
 
-    // ========================================
     // MAIN PIPELINE
-    // ========================================
-
     // Step 1: Invert the scramble
     const invertedScramble = AInvertScramble(scrambleText);
 
@@ -831,9 +814,9 @@ if (typeof module !== 'undefined' && module.exports) {
         pieceNameHTMLMap_w[k] = createColorLabelHTML_w(pieceLabelMap[k]);
     }
 
-    const edgePiecesSetWithVeryToAvoidConflicts = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+    const edgePiecesSet_w = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
 
-    const cornerPartnerMappingWithExtremely = {
+    const cornerPartnerMapping_w = {
         A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
         N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
     };
@@ -853,7 +836,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Default shape patterns with long name
-    const defaultShapePatterns_w_w = {
+    const defaultShapePatterns_w = {
         'ECECECEC': 'Square',
         'EECECCEC': 'Kite',
         'EECCEECC': 'Barrel',
@@ -892,10 +875,10 @@ if (typeof module !== 'undefined' && module.exports) {
             try {
                 return JSON.parse(stored);
             } catch {
-                return { ...defaultShapePatterns_w_w };
+                return { ...defaultShapePatterns_w };
             }
         }
-        return { ...defaultShapePatterns_w_w };
+        return { ...defaultShapePatterns_w };
     }
 
     function saveShapesToStorage_w(shapes) {
@@ -966,11 +949,11 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Scramble engine functions with long names
-    function createSolvedStateArray_w_w() {
+    function createSolvedStateArray_w() {
         return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
     }
 
-    function rotateSectionOfArrayWithForNoConflicts(arr, start, len, k) {
+    function rotateSectionOfArray(arr, start, len, k) {
         const n = ((k % len) + len) % len;
         if (n === 0) return;
         const seg = arr.slice(start, start + len);
@@ -983,13 +966,13 @@ if (typeof module !== 'undefined' && module.exports) {
         }
     }
 
-    function performSliceSwapOperationWithVery(arr) {
+    function performSliceSwapOperation_w(arr) {
         for (let i = 0; i < 6; i++) {
             [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
         }
     }
 
-    function* tokenizeScrambleStringGeneratorWithExtremely(s) {
+    function* tokenizeScrambleStringGenerator_w(s) {
         let i = 0;
         const L = s.length;
         const ws = /\s/;
@@ -1143,20 +1126,20 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     function applyScrambleToStateArray_w(scr) {
-        const a = createSolvedStateArray_w_w();
-        for (const tok of tokenizeScrambleStringGeneratorWithExtremely(scr)) {
+        const a = createSolvedStateArray_w();
+        for (const tok of tokenizeScrambleStringGenerator_w(scr)) {
             if (tok.k === 'tb') {
-                rotateSectionOfArrayWithForNoConflicts(a, 0, 12, tok.t);
-                rotateSectionOfArrayWithForNoConflicts(a, 12, 12, tok.b);
-                if (tok.slash) performSliceSwapOperationWithVery(a);
+                rotateSectionOfArray(a, 0, 12, tok.t);
+                rotateSectionOfArray(a, 12, 12, tok.b);
+                if (tok.slash) performSliceSwapOperation_w(a);
             } else {
-                performSliceSwapOperationWithVery(a);
+                performSliceSwapOperation_w(a);
             }
         }
         return a;
     }
 
-    function validateCornersTogetherSameLayer_w(state) {
+    function validateCorners(state) {
         const pairs = [['A', 'B'], ['D', 'E'], ['G', 'H'], ['J', 'K'], ['N', 'O'], ['Q', 'R'], ['T', 'U'], ['W', 'X']];
         for (const [x, y] of pairs) {
             const ix = state.indexOf(x), iy = state.indexOf(y);
@@ -1186,13 +1169,13 @@ if (typeof module !== 'undefined' && module.exports) {
         let i = 0;
         while (i < 12) {
             const ch = state[start + i];
-            if (edgePiecesSetWithVeryToAvoidConflicts.has(ch)) {
+            if (edgePiecesSet_w.has(ch)) {
                 units.push({ type: 'E', edge: ch });
                 i += 1;
                 continue;
             }
             const nextCh = state[start + ((i + 1) % 12)];
-            if (cornerPartnerMappingWithExtremely[ch] === nextCh) {
+            if (cornerPartnerMapping_w[ch] === nextCh) {
                 units.push({ type: 'C', pair: cornerIdentifierMappingWith[ch], rep: ch });
                 i += 2;
             } else {
@@ -1204,7 +1187,7 @@ if (typeof module !== 'undefined' && module.exports) {
         return { types, units };
     }
 
-    function matchPatternWithRotationChecking_w(typeStr) {
+    function matchPattern(typeStr) {
         // Ensure we're using current shapes, not stale cache
         if (!currentShapePatternsStorage_w || Object.keys(currentShapePatternsStorage_w).length === 0) {
             currentShapePatternsStorage_w = loadShapesFromStorage_w();
@@ -1255,7 +1238,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Six-step parity calculation
-    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
+    function calculateSixStepParity_w(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
         const steps = [];
 
         function getEdgeCodename_w(letter) {
@@ -1441,12 +1424,12 @@ if (typeof module !== 'undefined' && module.exports) {
         let i = 0;
         while (i < 12) {
             const ch = state[i];
-            if (edgePiecesSetWithVeryToAvoidConflicts.has(ch)) {
+            if (edgePiecesSet_w.has(ch)) {
                 topPieces.push(pieceLabelMap[ch]);
                 i++;
             } else {
                 const nextCh = state[(i + 1) % 12];
-                if (cornerPartnerMappingWithExtremely[ch] === nextCh) {
+                if (cornerPartnerMapping_w[ch] === nextCh) {
                     topPieces.push(pieceLabelMap[ch]);
                     i += 2;
                 } else {
@@ -1458,12 +1441,12 @@ if (typeof module !== 'undefined' && module.exports) {
         i = 12;
         while (i < 24) {
             const ch = state[i];
-            if (edgePiecesSetWithVeryToAvoidConflicts.has(ch)) {
+            if (edgePiecesSet_w.has(ch)) {
                 bottomPieces.push(pieceLabelMap[ch]);
                 i++;
             } else {
                 const nextCh = state[12 + ((i - 12 + 1) % 12)];
-                if (cornerPartnerMappingWithExtremely[ch] === nextCh) {
+                if (cornerPartnerMapping_w[ch] === nextCh) {
                     bottomPieces.push(pieceLabelMap[ch]);
                     i += 2;
                 } else {
@@ -1691,7 +1674,7 @@ if (typeof module !== 'undefined' && module.exports) {
     `;
     }
 
-    function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
+    function displayResultsInModal_w(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
             const g = parseInt(hexColor.substr(3, 2), 16);
@@ -1921,7 +1904,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">Please just don't trace counterclockwise.</div>
+                        <div class="training-info-text" style="color: ${textColor};"> just don't trace counterclockwise.</div>
                     </div>
                 </div>
             </div>
@@ -2425,7 +2408,7 @@ if (typeof module !== 'undefined' && module.exports) {
         };
 
         resetBtn.onclick = () => {
-            currentShapePatternsStorage_w = { ...defaultShapePatterns_w_w };
+            currentShapePatternsStorage_w = { ...defaultShapePatterns_w };
             saveShapesToStorage_w(currentShapePatternsStorage_w);
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
@@ -2846,7 +2829,7 @@ if (typeof module !== 'undefined' && module.exports) {
     }
 
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
-    function createSquareOneParityTracerModalWithAllParametersIncluded(options = {}) {
+    function createParityTracerModal(options = {}) {
         // CRITICAL: Always reload shapes from storage when modal opens
         currentShapePatternsStorage_w = loadShapesFromStorage_w();
 
@@ -2903,8 +2886,8 @@ if (typeof module !== 'undefined' && module.exports) {
                     window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                 }
 
-                const topMatch = matchPatternWithRotationChecking_w(topRaw.types);
-                const botMatch = matchPatternWithRotationChecking_w(botRaw.types);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
 
                 // Apply symmetry offsets if they exist
                 const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -2967,7 +2950,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
+                const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
@@ -3342,7 +3325,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     const state = applyScrambleToStateArray_w(transformedScramble);
 
                     // Validation - RESTORED
-                    validateCornersTogetherSameLayer_w(state);
+                    validateCorners(state);
 
                     // Build units - COMPLETE
                     const topRaw = buildUnitsFromStateLayer_w(state, 0);
@@ -3358,8 +3341,8 @@ if (typeof module !== 'undefined' && module.exports) {
                         window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                     }
 
-                    const topMatch = matchPatternWithRotationChecking_w(topRaw.types);
-                    const botMatch = matchPatternWithRotationChecking_w(botRaw.types);
+                    const topMatch = matchPattern(topRaw.types);
+                    const botMatch = matchPattern(botRaw.types);
 
                     // Apply symmetry offsets if they exist
                     const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -3438,7 +3421,7 @@ if (typeof module !== 'undefined' && module.exports) {
                     }
 
                     const useClockwise = (cornerStickerMode === 'clockwise');
-                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                    const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
 
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && Cglobal.Square1VisualizerLibraryWithSillyNames) {
@@ -3447,7 +3430,7 @@ if (typeof module !== 'undefined' && module.exports) {
                             try {
 
                                 const imageSize = parityTracerImageSize;
-                                const svgContent = Cglobal.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                const svgContent = Cglobal.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
                                     encodedScramble,
                                     imageSize,
                                     {
@@ -3550,11 +3533,11 @@ if (typeof module !== 'undefined' && module.exports) {
                     }
 
                     // Display results
-                    displayResultsInModalWithVeryLongFunctionName(resultsContainer, sixStepParity, config);
+                    displayResultsInModal_w(resultsContainer, sixStepParity, config);
 
                 } catch (err) {
                     console.error(err);
-                    resultsContainer.innerHTML = '<div style="color: #e53e3e; padding: 1rem;">Error parsing scramble. Please check the format.</div>';
+                    resultsContainer.innerHTML = '<div style="color: #e53e3e; padding: 1rem;">Error parsing scramble.  check the format.</div>';
                 }
             }
 
@@ -3670,7 +3653,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
     // Export the single function
     Cglobal.ParityTracerLibrary = {
-        createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
+        createModal: createParityTracerModal,
         openConfigModal: showTracingSchemeSettingsModal,
         openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
@@ -3681,8 +3664,8 @@ if (typeof module !== 'undefined' && module.exports) {
     };
 
     // Export parity analysis function for use by other parts of the app
-    Cglobal.Square1ParityAnalyzerLibraryWithSillyNames = {
-        getParityTextFromScramblePlease: function (scrambleText, cornerMode) {
+    Cglobal.caleTracer = {
+        getParityTextFromScramble: function (scrambleText, cornerMode) {
             // Always use fresh shapes from storage
             currentShapePatternsStorage_w = loadShapesFromStorage_w();
 
@@ -3690,8 +3673,8 @@ if (typeof module !== 'undefined' && module.exports) {
                 const state = applyScrambleToStateArray_w(scrambleText);
                 const topRaw = buildUnitsFromStateLayer_w(state, 0);
                 const botRaw = buildUnitsFromStateLayer_w(state, 12);
-                const topMatch = matchPatternWithRotationChecking_w(topRaw.types);
-                const botMatch = matchPatternWithRotationChecking_w(botRaw.types);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
                 const topUnits = rotateArrayCircularly_w(topRaw.units, topMatch.rot);
                 const botUnits = rotateArrayCircularly_w(botRaw.units, botMatch.rot);
                 const topCounts = countEdgesAndCorners_w(topUnits);
@@ -3732,7 +3715,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
@@ -5536,15 +5519,14 @@ function parseHexFormat(input) {
 
 // ========================================
 // Square-1 Scramble Visualizer Library
-// With  funny names to avoid conflicts!
 // ========================================
 
 // === SCRAMBLED STATE GENERATOR FUNCTIONS ===
-function gimmeMeARandomNumberBelowThisPlease(n) {
+function randomNum(n) {
   return Math.floor(Math.random() * n);
 }
 
-function ThisIsMySquare1CubieObjectWithFancyHexNumbers() {
+function sq1Cubie() {
   this.ul = 0x011233;
   this.ur = 0x455677;
   this.dl = 0x998bba;
@@ -5552,7 +5534,7 @@ function ThisIsMySquare1CubieObjectWithFancyHexNumbers() {
   this.ml = 0;
 }
 
-ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.toString = function () {
+sq1Cubie.prototype.toString = function () {
   return this.ul.toString(16).padStart(6, '0') +
     this.ur.toString(16).padStart(6, '0') +
     "|/".charAt(this.ml) +
@@ -5560,7 +5542,7 @@ ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.toString = function () {
     this.dr.toString(16).padStart(6, '0');
 }
 
-ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.setPiece = function (idx, value) {
+sq1Cubie.prototype.setPiece = function (idx, value) {
   if (idx < 6) {
     this.ul &= ~(0xf << ((5 - idx) << 2));
     this.ul |= value << ((5 - idx) << 2);
@@ -5576,16 +5558,16 @@ ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.setPiece = function (idx
   }
 }
 
-const theseAreAllThePossibleHalfLayerShapesISwear = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-const pleaseSaveAllValidShapeIndicesHereThankYou = [];
+const D_halfLayer = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
+const shapeIndices = [];
 
-function pleaseInitializeAllTheShapesForMeRightNow() {
+function initializeShapes() {
   let count = 0;
   for (let i = 0; i < 28561; i++) {
-    const dr = theseAreAllThePossibleHalfLayerShapesISwear[i % 13];
-    const dl = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(i / 13) % 13];
-    const ur = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(Math.floor(i / 13) / 13) % 13];
-    const ul = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
+    const dr = D_halfLayer[i % 13];
+    const dl = D_halfLayer[Math.floor(i / 13) % 13];
+    const ur = D_halfLayer[Math.floor(Math.floor(i / 13) / 13) % 13];
+    const ul = D_halfLayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
     const value = ul << 18 | ur << 12 | dl << 6 | dr;
 
     let bitCount = 0;
@@ -5596,27 +5578,27 @@ function pleaseInitializeAllTheShapesForMeRightNow() {
     }
 
     if (bitCount === 16) {
-      pleaseSaveAllValidShapeIndicesHereThankYou[count++] = value;
+      shapeIndices[count++] = value;
     }
   }
 }
 
-function pleaseGenerateACubeFromThisShapeIndexForMe(shapeIndex) {
-  const f = new ThisIsMySquare1CubieObjectWithFancyHexNumbers();
-  const shape = pleaseSaveAllValidShapeIndicesHereThankYou[shapeIndex];
+function D_shapeIndexToPreHex(shapeIndex) {
+  const f = new sq1Cubie();
+  const shape = shapeIndices[shapeIndex];
   let corner = 0x01234567 << 1 | 0x11111111;
   let edge = 0x01234567 << 1;
   let n_corner = 8, n_edge = 8;
 
   for (let i = 0; i < 24; i++) {
     if (((shape >> i) & 1) === 0) {
-      const rnd = gimmeMeARandomNumberBelowThisPlease(n_edge) << 2;
+      const rnd = randomNum(n_edge) << 2;
       f.setPiece(23 - i, (edge >> rnd) & 0xf);
       const m = (1 << rnd) - 1;
       edge = (edge & m) + ((edge >> 4) & ~m);
       n_edge--;
     } else {
-      const rnd = gimmeMeARandomNumberBelowThisPlease(n_corner) << 2;
+      const rnd = randomNum(n_corner) << 2;
       f.setPiece(23 - i, (corner >> rnd) & 0xf);
       f.setPiece(22 - i, (corner >> rnd) & 0xf);
       const m = (1 << rnd) - 1;
@@ -5625,22 +5607,22 @@ function pleaseGenerateACubeFromThisShapeIndexForMe(shapeIndex) {
       i++;
     }
   }
-  f.ml = gimmeMeARandomNumberBelowThisPlease(2);
+  f.ml = randomNum(2);
   return f;
 }
 
-function convertThisShapeIndexIntoHexNotationPlease(shapeIndex) {
-  const cube = pleaseGenerateACubeFromThisShapeIndexForMe(shapeIndex);
+function D_shapeIndexToHex(shapeIndex) {
+  const cube = D_shapeIndexToPreHex(shapeIndex);
   const hexString = cube.toString();
   // Normalize separator to always use | instead of /
   return hexString.replace('/', '|');
 }
 
 // Initialize shapes
-pleaseInitializeAllTheShapesForMeRightNow();
+initializeShapes();
 
 // === CONSTANTS WITH SILLY NAMES ===
-const pleaseGiveMePieceLabelsThankYou = {
+const GiveMePieceLabelsThankYou = {
   A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
   G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
   M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
@@ -5649,7 +5631,7 @@ const pleaseGiveMePieceLabelsThankYou = {
 
 const theseAreEdgePiecesIPromise = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
 
-const findMyPartnerPleaseAndThankYou = {
+const findMyPartnerAndThankYou = {
   A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
   N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
 };
@@ -5666,7 +5648,7 @@ function gimmeASolvedCubeRightNow() {
   return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 }
 
-function rotateThisSectionOfArrayPlease(arr, startIdx, length, rotAmount) {
+function rotateThisSectionOfArray(arr, startIdx, length, rotAmount) {
   const normalizedRot = ((rotAmount % length) + length) % length;
   if (normalizedRot === 0) return;
 
@@ -5680,14 +5662,14 @@ function rotateThisSectionOfArrayPlease(arr, startIdx, length, rotAmount) {
   }
 }
 
-function doTheSliceSwapDancePlease(arr) {
+function doTheSliceSwapDance(arr) {
   for (let i = 0; i < 6; i++) {
     [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
   }
 }
 
 // === SCRAMBLE PARSING ===
-function* pleaseTokenizeThisScrambleForMe(scrambleString) {
+function* TokenizeThisScrambleForMe(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;
   const whitespaceRegex = /\s/;
@@ -5742,16 +5724,16 @@ function* pleaseTokenizeThisScrambleForMe(scrambleString) {
   }
 }
 
-function applyScrambleToCubePlease(scrambleString) {
+function applyScrambleToCube(scrambleString) {
   const cubeState = gimmeASolvedCubeRightNow();
 
-  for (const token of pleaseTokenizeThisScrambleForMe(scrambleString)) {
+  for (const token of TokenizeThisScrambleForMe(scrambleString)) {
     if (token.moveType === 'turn') {
-      rotateThisSectionOfArrayPlease(cubeState, 0, 12, token.top);
-      rotateThisSectionOfArrayPlease(cubeState, 12, 12, token.bottom);
-      if (token.hasSlash) doTheSliceSwapDancePlease(cubeState);
+      rotateThisSectionOfArray(cubeState, 0, 12, token.top);
+      rotateThisSectionOfArray(cubeState, 12, 12, token.bottom);
+      if (token.hasSlash) doTheSliceSwapDance(cubeState);
     } else {
-      doTheSliceSwapDancePlease(cubeState);
+      doTheSliceSwapDance(cubeState);
     }
   }
 
@@ -5759,7 +5741,7 @@ function applyScrambleToCubePlease(scrambleString) {
 }
 
 // === STATE ENCODING ===
-function pleaseEncodeMyCubeStateToHexNotation(cubeStateArray) {
+function EncodeMyCubeStateToHexNotation(cubeStateArray) {
   const topLayerPieces = [];
   const bottomLayerPieces = [];
 
@@ -5768,12 +5750,12 @@ function pleaseEncodeMyCubeStateToHexNotation(cubeStateArray) {
   while (idx < 12) {
     const piece = cubeStateArray[idx];
     if (theseAreEdgePiecesIPromise.has(piece)) {
-      topLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
+      topLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
       idx++;
     } else {
       const nextPiece = cubeStateArray[(idx + 1) % 12];
-      if (findMyPartnerPleaseAndThankYou[piece] === nextPiece) {
-        topLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
+      if (findMyPartnerAndThankYou[piece] === nextPiece) {
+        topLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
         idx += 2;
       } else {
         return 'Error: Invalid corner pairing in top layer';
@@ -5786,12 +5768,12 @@ function pleaseEncodeMyCubeStateToHexNotation(cubeStateArray) {
   while (idx < 24) {
     const piece = cubeStateArray[idx];
     if (theseAreEdgePiecesIPromise.has(piece)) {
-      bottomLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
+      bottomLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
       idx++;
     } else {
       const nextPiece = cubeStateArray[12 + ((idx - 12 + 1) % 12)];
-      if (findMyPartnerPleaseAndThankYou[piece] === nextPiece) {
-        bottomLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
+      if (findMyPartnerAndThankYou[piece] === nextPiece) {
+        bottomLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
         idx += 2;
       } else {
         return 'Error: Invalid corner pairing in bottom layer';
@@ -5858,11 +5840,11 @@ function AInvertScramble(scrambleString) {
 }
 
 // === SHAPE BUILDING ===
-function pleaseBuildClustersFromThisShapeArray(shapeArray) {
+function BuildClustersFromThisShapeArray(shapeArray) {
   const slots = [];
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
-  function processOneLayerPlease(startIdx, endIdx) {
+  function processOneLayer(startIdx, endIdx) {
     let i = startIdx;
     while (i < endIdx) {
       const isThisACorner = shapeArray[i] === 1;
@@ -5898,13 +5880,13 @@ function pleaseBuildClustersFromThisShapeArray(shapeArray) {
     }
   }
 
-  processOneLayerPlease(0, 12);
-  processOneLayerPlease(12, 24);
+  processOneLayer(0, 12);
+  processOneLayer(12, 24);
 
   return slots;
 }
 
-function pleaseParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
+function ParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
   const assignments = {};
   for (let i = 0; i < slotsList.length; i++) {
     const slot = slotsList[i];
@@ -5929,18 +5911,18 @@ function polarToCartesianButWithFunnyName(centerX, centerY, radius, angleDegrees
   };
 }
 
-function pointArrayToSVGStringPlease(pointsArray) {
+function pointArrayToSVGString(pointsArray) {
   return pointsArray.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 }
 
-function lerpBetweenTwoPointsPlease(pointA, pointB, interpolationAmount) {
+function lerpBetweenTwoPoints(pointA, pointB, interpolationAmount) {
   return {
     x: pointA.x + (pointB.x - pointA.x) * interpolationAmount,
     y: pointA.y + (pointB.y - pointA.y) * interpolationAmount
   };
 }
 
-function gimmeTheAngleForThisSlotPlease(slot, angleArray) {
+function gimmeTheAngleForThisSlot(slot, angleArray) {
   const angles = [];
   for (let k = 0; k < slot.lettersCount; k++) {
     const globalIdx = slot.startLetter + k;
@@ -5951,7 +5933,7 @@ function gimmeTheAngleForThisSlotPlease(slot, angleArray) {
 }
 
 // === COLOR MAPPING ===
-function whatColorIsThisEdgePiecePlease(hexChar, colorScheme) {
+function whatColorIsThisEdgePiece(hexChar, colorScheme) {
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
   switch (hexChar.toLowerCase()) {
@@ -5969,7 +5951,7 @@ function whatColorIsThisEdgePiecePlease(hexChar, colorScheme) {
   }
 }
 
-function whatAreTheCornerColorLettersPlease(hexChar) {
+function whatAreTheCornerColorLetters(hexChar) {
   switch ((hexChar || '').toLowerCase()) {
     case '1': return { top: 'y', left: 'b', right: 'o' };
     case '3': return { top: 'y', left: 'r', right: 'b' };
@@ -5984,7 +5966,7 @@ function whatAreTheCornerColorLettersPlease(hexChar) {
   }
 }
 
-function convertColorLetterToHexCodePlease(colorLetter, colorScheme) {
+function convertColorLetterToHexCode(colorLetter, colorScheme) {
   if (!colorLetter) return '#cccccc';
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
@@ -5999,11 +5981,11 @@ function convertColorLetterToHexCodePlease(colorLetter, colorScheme) {
   }
 }
 
-function gimmeCornerColorsAsHexCodesPlease(hexChar, isThisBottomLayer, colorScheme) {
-  const colorTriplet = whatAreTheCornerColorLettersPlease(hexChar);
-  let leftColor = convertColorLetterToHexCodePlease(colorTriplet.left, colorScheme);
-  let rightColor = convertColorLetterToHexCodePlease(colorTriplet.right, colorScheme);
-  const topColor = convertColorLetterToHexCodePlease(colorTriplet.top, colorScheme);
+function gimmeCornerColorsAsHexCodes(hexChar, isThisBottomLayer, colorScheme) {
+  const colorTriplet = whatAreTheCornerColorLetters(hexChar);
+  let leftColor = convertColorLetterToHexCode(colorTriplet.left, colorScheme);
+  let rightColor = convertColorLetterToHexCode(colorTriplet.right, colorScheme);
+  const topColor = convertColorLetterToHexCode(colorTriplet.top, colorScheme);
 
   if (isThisBottomLayer) {
     [leftColor, rightColor] = [leftColor, rightColor];
@@ -6012,12 +5994,12 @@ function gimmeCornerColorsAsHexCodesPlease(hexChar, isThisBottomLayer, colorSche
   return { top: topColor, left: leftColor, right: rightColor };
 }
 
-function whatColorIsThisHalfCornerPlease() {
+function whatColorIsThisHalfCorner() {
   return 'fill="#ff9999"';
 }
 
 // === SVG GENERATION FOR INDIVIDUAL PIECES ===
-function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
+function CreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
   isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
 
   let svgMarkup = '';
@@ -6032,10 +6014,10 @@ function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAn
     const pointMidA = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle - halfAngle);
     const pointMidB = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle + halfAngle);
 
-    const edgeColors = whatColorIsThisEdgePiecePlease(pieceHex, colorScheme);
+    const edgeColors = whatColorIsThisEdgePiece(pieceHex, colorScheme);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointMidA, pointA, pointB, pointMidB])}" fill="${edgeColors.outer}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointMidA, pointA, pointB, pointMidB])}" fill="${edgeColors.outer}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
 
   } else if (slot.type === 'corner') {
     const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
@@ -6044,16 +6026,16 @@ function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAn
     const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     const scaleFactor = 0.80;
-    const pointSmallLeft = lerpBetweenTwoPointsPlease(pointInner, pointOuterLeft, scaleFactor);
-    const pointSmallRight = lerpBetweenTwoPointsPlease(pointInner, pointOuterRight, scaleFactor);
-    const pointSmallBottom = lerpBetweenTwoPointsPlease(pointInner, pointApex, scaleFactor);
+    const pointSmallLeft = lerpBetweenTwoPoints(pointInner, pointOuterLeft, scaleFactor);
+    const pointSmallRight = lerpBetweenTwoPoints(pointInner, pointOuterRight, scaleFactor);
+    const pointSmallBottom = lerpBetweenTwoPoints(pointInner, pointApex, scaleFactor);
 
-    const colors = gimmeCornerColorsAsHexCodesPlease(pieceHex, isBottomLayer, colorScheme);
+    const colors = gimmeCornerColorsAsHexCodes(pieceHex, isBottomLayer, colorScheme);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointSmallBottom, pointSmallLeft])}" fill="${colors.left}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointSmallBottom, pointSmallLeft])}" fill="${colors.left}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
     svgMarkup += `<line x1="${pointApex.x.toFixed(2)}" y1="${pointApex.y.toFixed(2)}" x2="${pointSmallBottom.x.toFixed(2)}" y2="${pointSmallBottom.y.toFixed(2)}" stroke="#333" stroke-width="${strokeMedium}" stroke-linecap="round" class="corner-detail"/>`;
 
   } else if (slot.type === 'half-corner') {
@@ -6063,15 +6045,15 @@ function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAn
     const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
     const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
-    const fillAttribute = whatColorIsThisHalfCornerPlease(pieceHex);
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
+    const fillAttribute = whatColorIsThisHalfCorner(pieceHex);
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
   }
 
   return svgMarkup;
 }
 
 // === MAIN SVG GENERATION ===
-function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
+function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -6097,8 +6079,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, c
     scrambleIdx++;
   }
 
-  const slots = pleaseBuildClustersFromThisShapeArray(shapeArray);
-  const pieceAssignments = pleaseParseScrambleAssignmentsFromHexCode(hexScrambleCode, slots);
+  const slots = BuildClustersFromThisShapeArray(shapeArray);
+  const pieceAssignments = ParseScrambleAssignmentsFromHexCode(hexScrambleCode, slots);
 
   // Calculate dimensions
   const svgSize = desiredSize;
@@ -6136,8 +6118,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, c
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
       const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlotPlease(slot, leftLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
+      const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
+      htmlOutput += CreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6157,8 +6139,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, c
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
       const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlotPlease(slot, rightLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
+      const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
+      htmlOutput += CreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6171,8 +6153,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, c
 // === SHAPE INDEX TO HEX CONVERSION ===
 // ========================================
 
-function convertShapeIndexToHexPlease(shapeIndex) {
-  const hexString = convertThisShapeIndexIntoHexNotationPlease(shapeIndex);
+function convertShapeIndexToHex(shapeIndex) {
+  const hexString = D_shapeIndexToHex(shapeIndex);
   // Ensure we always use | separator
   return hexString.replace('/', '|');
 }
@@ -6181,7 +6163,7 @@ function convertShapeIndexToHexPlease(shapeIndex) {
 // === CUBE SHAPE VISUALIZER ===
 // ========================================
 
-function pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
+function CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
@@ -6190,7 +6172,7 @@ function pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle
     const pointA = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
     const pointB = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'corner') {
     const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
@@ -6198,7 +6180,7 @@ function pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle
     const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
     const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;
@@ -6207,13 +6189,13 @@ function pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle
     const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
     const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
   }
 
   return svgMarkup;
 }
 
-function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
+function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -6239,7 +6221,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
     scrambleIdx++;
   }
 
-  const slots = pleaseBuildClustersFromThisShapeArray(shapeArray);
+  const slots = BuildClustersFromThisShapeArray(shapeArray);
 
   // Calculate dimensions
   const svgSize = size;
@@ -6274,8 +6256,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
-      const angle = gimmeTheAngleForThisSlotPlease(slot, leftLayerAngles);
-      htmlOutput += pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
+      htmlOutput += CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -6294,8 +6276,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
-      const angle = gimmeTheAngleForThisSlotPlease(slot, rightLayerAngles);
-      htmlOutput += pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
+      htmlOutput += CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -6313,12 +6295,12 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
  * @param {number} strokeWidth - Base stroke width (default: 2, scales with size)
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
+function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
   let hexCode;
 
   // Check if input is a shape index (number)
   if (typeof input === 'number') {
-    hexCode = convertShapeIndexToHexPlease(input);
+    hexCode = convertShapeIndexToHex(input);
   }
   // Check if input looks like hex code (contains |)
   else if (typeof input === 'string' && input.includes('|')) {
@@ -6326,8 +6308,8 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
   }
   // Otherwise treat as scramble notation
   else if (typeof input === 'string') {
-    const cubeState = applyScrambleToCubePlease(input);
-    hexCode = pleaseEncodeMyCubeStateToHexNotation(cubeState);
+    const cubeState = applyScrambleToCube(input);
+    hexCode = EncodeMyCubeStateToHexNotation(cubeState);
 
     if (hexCode.startsWith('Error:')) {
       return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
@@ -6337,7 +6319,7 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">Error: Invalid input type</div>`;
   }
 
-  return pleaseGenerateShapeVisualizationSVG(hexCode, size, edgeFill, cornerFill, strokeWidth, ringDistance);
+  return GenerateShapeVisualizationSVG(hexCode, size, edgeFill, cornerFill, strokeWidth, ringDistance);
 }
 
 // ========================================
@@ -6351,7 +6333,7 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
  * @param {object} colors - Color customization object with defaults
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistance = 5) {
+function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -6363,7 +6345,7 @@ function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistan
     circleColor: colors.circleColor || 'transparent'
   };
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
+  return GenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
 }
 
 /**
@@ -6373,7 +6355,7 @@ function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistan
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, ringDistance = 5) {
+function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -6385,14 +6367,14 @@ function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, 
     circleColor: colors.circleColor || 'transparent'
   };
 
-  const cubeState = applyScrambleToCubePlease(scramble);
-  const hexCode = pleaseEncodeMyCubeStateToHexNotation(cubeState);
+  const cubeState = applyScrambleToCube(scramble);
+  const hexCode = EncodeMyCubeStateToHexNotation(cubeState);
 
   if (hexCode.startsWith('Error:')) {
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
   }
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
+  return GenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
 }
 
 /**
@@ -6402,9 +6384,9 @@ function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, 
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromSolutionNotationPlease(solution, size = 200, colors = {}, ringDistance = 5) {
+function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 5) {
   const invertedScramble = AInvertScramble(solution);
-  return visualizeFromScrambleNotationPlease(invertedScramble, size, colors, ringDistance);
+  return visualizeFromScrambleNotation(invertedScramble, size, colors, ringDistance);
 }
 
 // ========================================
@@ -6414,20 +6396,20 @@ function visualizeFromSolutionNotationPlease(solution, size = 200, colors = {}, 
 // For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
   window.Square1VisualizerLibraryWithSillyNames = {
-    visualizeFromHexCodePlease,
-    visualizeFromScrambleNotationPlease,
-    visualizeFromSolutionNotationPlease,
-    visualizeCubeShapeOutlinesPlease  // <-- This line should be here!
+    visualizeFromHexCode,
+    visualizeFromScrambleNotation,
+    visualizeFromSolutionNotation,
+    visualizeCubeShapeOutlines  // <-- This line should be here!
   };
 }
 
 // For module systems (Node.js, bundlers, etc.)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    visualizeFromHexCodePlease,
-    visualizeFromScrambleNotationPlease,
-    visualizeFromSolutionNotationPlease,
-    visualizeCubeShapeOutlinesPlease
+    visualizeFromHexCode,
+    visualizeFromScrambleNotation,
+    visualizeFromSolutionNotation,
+    visualizeCubeShapeOutlines
   };
 }
 
@@ -7046,7 +7028,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
         try {
             const hexCode = hex.tlHex + '|' + hex.blHex;
-            const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+            const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
                 hexCode,
                 imageSize,
                 {
@@ -8443,7 +8425,7 @@ const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 // Function to calculate and cache parity for all cases
 function calculateAndCacheAllParity() {
 
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+    if (typeof window.caleTracer === 'undefined') {
         console.warn('Parity analyzer not available, skipping parity calculation');
         return;
     }
@@ -8475,7 +8457,7 @@ function calculateAndCacheAllParity() {
 
             try {
                 const setup = invertScramble(alg);
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
@@ -9088,17 +9070,9 @@ function initializeDOMReferences() {
     sortSelect = document.getElementById('sort');
     learnFilterSelect = document.getElementById('learnFilter');
     grid = document.getElementById('grid');
-
-    const refsFound = {
-        searchInput: !!searchInput,
-        sortSelect: !!sortSelect,
-        learnFilterSelect: !!learnFilterSelect,
-        grid: !!grid
-    };
 }
 
 // Dynamic SVG scaling based on viewport width
-let resizeTimer;
 function updateSVGScaling() {
     // No longer needed - CSS handles scaling with aspect-ratio
 }
@@ -9155,7 +9129,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
     if (!parity && algorithm && algorithm !== 'Done!') {
         try {
             const setup = invertScramble(algorithm);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,
@@ -9251,11 +9225,11 @@ const defaultShapePatternsForTracing = {
 };
 
 // === BASIC HELPER FUNCTIONS ===
-function gimmeASolvedSquareOneCubePlease() {
+function gimmeASolvedSquareOneCube() {
   return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 }
 
-function pleaseRotateSectionForShapeTracing(arr, startIdx, length, rotAmount) {
+function RotateSectionForShapeTracing(arr, startIdx, length, rotAmount) {
   const normalizedRot = ((rotAmount % length) + length) % length;
   if (normalizedRot === 0) return;
 
@@ -9282,7 +9256,7 @@ function rotateStringForPatternSearch(str, rotAmount) {
 }
 
 // === SCRAMBLE STANDARDIZATION ===
-function pleaseStandardizeThisScrambleForMe(scrambleString) {
+function StandardizeThisScrambleForMe(scrambleString) {
   if (!scrambleString) return '';
 
   let str = scrambleString.trim();
@@ -9301,7 +9275,7 @@ function pleaseStandardizeThisScrambleForMe(scrambleString) {
 }
 
 // === SCRAMBLE INVERSION ===
-function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
+function InvertThisScrambleForShapeTracing(scrambleString) {
   if (!scrambleString) return scrambleString;
   let str = String(scrambleString).trim();
 
@@ -9339,7 +9313,7 @@ function pleaseInvertThisScrambleForShapeTracing(scrambleString) {
 }
 
 // === TOKENIZER ===
-function* pleaseTokenizeThisScrambleForShapeTracing(scrambleString) {
+function* TokenizeThisScrambleForShapeTracing(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;
   const whitespaceRegex = /\s/;
@@ -9437,16 +9411,16 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
 // === SHAPE PATH TRACING ===
 function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
   const shapePath = [];
-  const cubeState = gimmeASolvedSquareOneCubePlease();
+  const cubeState = gimmeASolvedSquareOneCube();
 
   let currentStep = null;
 
   // Apply moves and capture shapes after each slash
-  for (const token of pleaseTokenizeThisScrambleForShapeTracing(scrambleString)) {
+  for (const token of TokenizeThisScrambleForShapeTracing(scrambleString)) {
     if (token.moveType === 'turn') {
       // Apply rotations
-      pleaseRotateSectionForShapeTracing(cubeState, 0, 12, token.top);
-      pleaseRotateSectionForShapeTracing(cubeState, 12, 12, token.bottom);
+      RotateSectionForShapeTracing(cubeState, 0, 12, token.top);
+      RotateSectionForShapeTracing(cubeState, 12, 12, token.bottom);
 
       // If this turn has a slash, capture the state BEFORE the slash
       if (token.hasSlash) {
@@ -9501,11 +9475,11 @@ function formatShapePathAsString(shapePath) {
 /**
  * Option 1: Scramble input → Scramble shape path output
  */
-function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
+function traceScrambleToScrambleShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(scramble);
+  const standardized = StandardizeThisScrambleForMe(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9517,11 +9491,11 @@ function traceScrambleToScrambleShapePathPlease(scramble, options = {}) {
 /**
  * Option 2: Scramble input → Solution shape path output (reversed)
  */
-function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
+function traceScrambleToSolutionShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(scramble);
+  const standardized = StandardizeThisScrambleForMe(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9536,14 +9510,14 @@ function traceScrambleToSolutionShapePathPlease(scramble, options = {}) {
 /**
  * Option 3: Solution input → Scramble shape path output (invert then trace)
  */
-function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
+function traceSolutionToScrambleShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = InvertThisScrambleForShapeTracing(solution);
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
+  const standardized = StandardizeThisScrambleForMe(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9555,14 +9529,14 @@ function traceSolutionToScrambleShapePathPlease(solution, options = {}) {
 /**
  * Option 4: Solution input → Solution shape path output (invert, trace, reverse)
  */
-function traceSolutionToSolutionShapePathPlease(solution, options = {}) {
+function traceSolutionToSolutionShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = pleaseInvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = InvertThisScrambleForShapeTracing(solution);
 
   // Standardize
-  const standardized = pleaseStandardizeThisScrambleForMe(invertedScramble);
+  const standardized = StandardizeThisScrambleForMe(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9581,10 +9555,10 @@ function traceSolutionToSolutionShapePathPlease(solution, options = {}) {
 // For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
   window.Square1ShapePathTracerLibraryWithSillyNames = {
-    traceScrambleToScrambleShapePathPlease,
-    traceScrambleToSolutionShapePathPlease,
-    traceSolutionToScrambleShapePathPlease,
-    traceSolutionToSolutionShapePathPlease,
+    traceScrambleToScrambleShapePath,
+    traceScrambleToSolutionShapePath,
+    traceSolutionToScrambleShapePath,
+    traceSolutionToSolutionShapePath,
     // Expose default shape patterns for reference
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
@@ -9593,10 +9567,10 @@ if (typeof window !== 'undefined') {
 // For module systems (Node.js, bundlers, etc.)
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
-    traceScrambleToScrambleShapePathPlease,
-    traceScrambleToSolutionShapePathPlease,
-    traceSolutionToScrambleShapePathPlease,
-    traceSolutionToSolutionShapePathPlease,
+    traceScrambleToScrambleShapePath,
+    traceScrambleToSolutionShapePath,
+    traceSolutionToScrambleShapePath,
+    traceSolutionToSolutionShapePath,
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
 }
@@ -9851,7 +9825,7 @@ function getShapePath(scramble) {
 
     try {
         if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
-            const shapePathString = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePathPlease(scramble);
+            const shapePathString = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePath(scramble);
             if (shapePathString) {
                 // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
                 const steps = shapePathString.split(' → ').map(s => s.trim());
@@ -11558,7 +11532,7 @@ window._trSaveImgSize = function(val) {
         if (imgEl && typeof window._evilCurrentHexCode !== 'undefined' && window._evilCurrentHexCode) {
             const state = parseHexFormat(window._evilCurrentHexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
-            imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgEl.innerHTML = visualizeFromScrambleNotation(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
         }
     }
 };
@@ -12603,7 +12577,7 @@ function modalStripBeforeFirstSlash(alg) {
 function updateInputColorLive(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
-    if (typeof window.algToShapeIndex === 'undefined' || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
+    if (typeof window.algToShapeIndex === 'undefined' || typeof window.caleTracer === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
     const modal = document.getElementById('editCaseModal');
     if (!modal) return;
     const caseName = _getEditModalCaseName(modal);
@@ -12619,12 +12593,12 @@ function updateInputColorLive(input) {
     const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
     if (isDirectMatch || isInOrg) {
         const setup = invertScramble(normalized);
-        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+        const parityText = window.caleTracer.getParityTextFromScramble(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
         input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
         input.style.fontWeight = '600';
     } else if (isInMir) {
         const setup = invertScramble(normalized);
-        const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
+        const parityText = window.caleTracer.getParityTextFromScramble(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
         input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
         input.style.fontWeight = '600';
     } else {
@@ -12663,7 +12637,7 @@ function updateParityLabel(input) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        typeof window.caleTracer === 'undefined') {
         parityLabel.textContent = '';
         parityLabel.style.color = '';
         parityLabel.style.fontWeight = '';
@@ -12706,7 +12680,7 @@ function updateParityLabel(input) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -12727,7 +12701,7 @@ function updateParityLabel(input) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -14958,7 +14932,7 @@ function updateAlgorithmCellParity(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        typeof window.caleTracer === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
         return;
@@ -14980,7 +14954,7 @@ function updateAlgorithmCellParity(cell) {
         if (isDirectMatch || isInOrg) {
             // Correct case - check parity
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -15004,7 +14978,7 @@ function updateAlgorithmCellParity(cell) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -15039,7 +15013,7 @@ function updateAlgorithmCellParityLive(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' ||
+        typeof window.caleTracer === 'undefined' ||
         typeof window.ScrambleNormalizer === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
@@ -15062,7 +15036,7 @@ function updateAlgorithmCellParityLive(cell) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -15071,7 +15045,7 @@ function updateAlgorithmCellParityLive(cell) {
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -16259,12 +16233,12 @@ function generateNextScrambleData() {
     let scrambleImage = '<div style="color: var(--text-muted)">Image unavailable</div>';
     try {
         // Use training-specific image size
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScrambleNotation !== 'undefined') {
             const scrambleNotation = hexCode;
             try {
                 const state = parseHexFormat(hexCode);
                 const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-                scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+                scrambleImage = visualizeFromScrambleNotation(notation, trainingScrambleImageSize, colorScheme);
             } catch (e) {
                 console.error('Error with new visualizer:', e);
                 scrambleImage = generateScrambleSVGFromHex(hexCode);
@@ -16616,8 +16590,8 @@ function startParityQuizInspection() {
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
     let parity = null;
     try {
-        if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-            parity = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (typeof window.caleTracer !== 'undefined') {
+            parity = window.caleTracer.getParityTextFromScramble(
                 cleanScramble,
                 typeof colorScheme !== 'undefined' ? colorScheme : {},
                 typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -16827,8 +16801,8 @@ function openShapeIndexSelector() {
 
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = convertShapeIndexToHex(idx);
+        const shapeHTML = visualizeCubeShapeOutlines(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -16841,8 +16815,8 @@ function openShapeIndexSelector() {
     }).join('');
 
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = convertShapeIndexToHex(idx);
+        const shapeHTML = visualizeCubeShapeOutlines(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -17281,8 +17255,8 @@ function quizGetParityFromHex(hexCode) {
     try {
         const state = parseHexFormat(hexCode);
         const notation = window.sq1Tools.scrambleFromState(state);
-        if (!notation || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') return null;
-        return window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (!notation || typeof window.caleTracer === 'undefined') return null;
+        return window.caleTracer.getParityTextFromScramble(
             notation,
             typeof colorScheme !== 'undefined' ? colorScheme : {},
             typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -17407,7 +17381,7 @@ function startEvilnessQuiz(chosenCaseNames) {
                 const state = parseHexFormat(currentHexCode);
                 const notation = window.sq1Tools.scrambleFromState(state);
                 const imgEl = document.getElementById('evilQuizImage');
-                if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
+                if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotation(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
             }
         });
     }, 100);
@@ -17450,7 +17424,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         try {
             const state = parseHexFormat(currentHexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgHTML = visualizeFromScrambleNotation(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
         } catch (e) { imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>'; }
 
         document.getElementById('evilQuizImage').innerHTML = imgHTML;
@@ -17677,7 +17651,7 @@ function startParityQuiz(chosenCaseNames) {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
             scrambleText = notation || hexCode;
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgHTML = visualizeFromScrambleNotation(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
             currentParity = quizGetParityFromHex(hexCode);
         } catch (e) {
             currentParity = null;
@@ -18638,10 +18612,10 @@ function generateMultiCaseScrambleData() {
     } catch (e) { console.error('Multi scramble gen error:', e); }
 
     try {
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScrambleNotation !== 'undefined') {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-            scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+            scrambleImage = visualizeFromScrambleNotation(notation, trainingScrambleImageSize, colorScheme);
         } else {
             scrambleImage = generateScrambleSVGFromHex(hexCode);
         }
