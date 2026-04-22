@@ -9884,7 +9884,7 @@ function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFamily) {
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      data-parity="${parityType}"
                      onmouseenter="showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', false)"
-                     onmouseleave="hideAlgPopup(this, false)"
+                     onmouseleave="hideAlgPopup(false)"
                      onclick="event.stopPropagation(); showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', true)"
                      style="${wrapStyle} ${colorStyle} ${fontStyle}">${prefix}${styleAlgorithmWithGrayMoves(alg)}</div>`;
     }).join('');
@@ -9903,7 +9903,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
 
     // If clicking on already active popup element, close it
     if (isPermanent && activePopupElement === element) {
-        hideAlgPopup(element, true);
+        window.hideAlgPopup(true);
         return;
     }
 
@@ -9959,7 +9959,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
     if (setupElement) {
         setupElement.onclick = (e) => {
             e.stopPropagation();
-            hideAlgPopup(element, isPermanent);
+            window.hideAlgPopup(isPermanent);
             openNewParityAnalysis(setup);
         };
         setupElement.onmouseenter = () => {
@@ -9975,7 +9975,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
     if (shapePathElement) {
         shapePathElement.onclick = (e) => {
             e.stopPropagation();
-            hideAlgPopup(element, isPermanent);
+            window.hideAlgPopup(isPermanent);
 
             // Get case name and parity from the element
             const caseName = element.getAttribute('data-case') || '';
@@ -10041,11 +10041,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
 
     // Add scroll handler - immediate close for all popups
     const scrollHandler = () => {
-        if (isPermanent) {
-            hideAlgPopup(element, true);
-        } else {
-            hideAlgPopup(element, false);
-        }
+        window.hideAlgPopup(isPermanent);
         window.removeEventListener('scroll', scrollHandler, true);
         if (clickHandler) document.removeEventListener('mousedown', clickHandler);
     };
@@ -10060,13 +10056,45 @@ window.showAlgPopup = function(element, alg, isPermanent) {
         setTimeout(() => {
             clickHandler = (e) => {
                 if (!popup.contains(e.target) && e.target !== element) {
-                    hideAlgPopup(element, true);
+                    window.hideAlgPopup(true);
                     document.removeEventListener('mousedown', clickHandler);
                     window.removeEventListener('scroll', scrollHandler, true);
                 }
             };
             document.addEventListener('mousedown', clickHandler);
         }, 100);
+    } else {
+        // For hover popups, hide when mouse leaves the popup or element
+        popup.onmouseleave = () => {
+            popupHoverTimeout = setTimeout(() => {
+                window.hideAlgPopup(false);
+                popupHoverTimeout = null;
+            }, 100);
+        };
+        
+        popup.onmouseenter = () => {
+            if (popupHoverTimeout) {
+                clearTimeout(popupHoverTimeout);
+                popupHoverTimeout = null;
+            }
+        };
+        
+        // Also add handlers to the element to keep popup alive
+        if (element && !element._popupHandlersSet) {
+            element._popupHandlersSet = true;
+            element.addEventListener('mouseleave', () => {
+                popupHoverTimeout = setTimeout(() => {
+                    window.hideAlgPopup(false);
+                    popupHoverTimeout = null;
+                }, 100);
+            });
+            element.addEventListener('mouseenter', () => {
+                if (popupHoverTimeout) {
+                    clearTimeout(popupHoverTimeout);
+                    popupHoverTimeout = null;
+                }
+            });
+        }
     }
 }
 
