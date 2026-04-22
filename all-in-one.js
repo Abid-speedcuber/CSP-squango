@@ -7005,7 +7005,7 @@ if (typeof module !== 'undefined' && module.exports) {
     // ========================================
     // RENDERING FUNCTIONS
     // ========================================
-    function renderAlgorithm(step, originalAlg, steps, currentStepIndex, animateBothLayers) {
+    function renderAlgorithm(originalAlg, steps, currentStepIndex, animateBothLayers) {
         // Build clickable tokens
         let html = '';
         let position = 0;
@@ -7070,7 +7070,7 @@ if (typeof module !== 'undefined' && module.exports) {
     // ========================================
     // MAIN VIEWER CREATION FUNCTION
     // ========================================
-    function createViewer(algorithm, colors = {}, imageSize = 200, caseName = '', parity = '') {
+    function createViewer(algorithm, colors = {}, caseName = '', parity = '') {
         const modalId = 'sq1-viewer-modal-' + Date.now();
 
         const colorScheme = {
@@ -7545,7 +7545,7 @@ if (typeof module !== 'undefined' && module.exports) {
                 }
                 visualization = wrapper.innerHTML;
             }
-            const highlightedAlg = renderAlgorithm(step, state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
+            const highlightedAlg = renderAlgorithm(state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
 
             const bodyHtml = `
             <div class="visualization-area">
@@ -9176,7 +9176,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
         rightColor: colorScheme.rightColor,
         backColor: colorScheme.backColor,
         leftColor: colorScheme.leftColor
-    }, scrambleImageSize, caseName, parity);
+    }, caseName, parity);
 
     document.body.insertAdjacentHTML('beforeend', html);
 };
@@ -12186,7 +12186,7 @@ function applyHintVisibility() {
     }
 }
 
-window.toggleShowPaths = function(isChecked) {
+window.toggleShowPaths = function() {
     // Shape paths always shown now
     return;
 }
@@ -12469,7 +12469,7 @@ function openEditCaseModal(caseName) {
                 </div>
                 ` : ''}
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--surface-border);">
-                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}', '${item.name.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
+                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
                     <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
@@ -12967,7 +12967,7 @@ window.attemptCloseEditCaseModal = function () {
     if (algsChanged || nameChanged) {
         showSaveDiscardConfirmation(
             'You have unsaved changes. Do you want to save them?',
-            () => saveEditedCase(item.name, item.name),
+            () => saveEditedCase(item.name),
             () => {
                 window.tempCaseRename = null;
                 closeEditCaseModal();
@@ -13024,7 +13024,7 @@ window.closeEditCaseInfoModal = function () {
     });
 };
 
-function saveEditedCase(caseName, originalName) {
+function saveEditedCase(caseName) {
     // Save name and subtitle from temp rename
     saveCaseRename(caseName);
 
@@ -16918,7 +16918,7 @@ window.toggleShapeIndex = function(index) {
     }
 }
 
-function selectAllIndices(type) {
+window.selectAllIndices = function(type) {
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
 
@@ -16945,7 +16945,7 @@ function selectAllIndices(type) {
     regenerateScrambleLookahead();
 }
 
-function deselectAllIndices(type) {
+window.deselectAllIndices = function(type) {
     const shapeIndexItem = shapeIndex.find(s => s.name === currentTrainingCase);
     if (!shapeIndexItem) return;
 
