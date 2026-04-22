@@ -11521,7 +11521,7 @@ window._trSaveImgSize = function(val) {
         if (typeof window._multiCaseMode !== 'undefined' && window._multiCaseMode) {
             if (typeof regenerateMultiScrambleLookahead === 'function') regenerateMultiScrambleLookahead();
         } else {
-            if (typeof regenerateScrambleLookaheadLegacy === 'function') regenerateScrambleLookaheadLegacy();
+            if (typeof regenerateScrambleLookahead === 'function') regenerateScrambleLookahead();
         }
     }
     // Live update evilness quiz if open
@@ -11529,11 +11529,9 @@ window._trSaveImgSize = function(val) {
     if (evilModal) {
         const imgEl = document.getElementById('evilQuizImage');
         if (imgEl && typeof window._evilCurrentHexCode !== 'undefined' && window._evilCurrentHexCode) {
-            try {
-                const state = parseHexFormat(window._evilCurrentHexCode);
-                const notation = window.sq1Tools.scrambleFromState(state);
-                imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
-            } catch(e) {}
+            const state = parseHexFormat(window._evilCurrentHexCode);
+            const notation = window.sq1Tools.scrambleFromState(state);
+            imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
         }
     }
 };
@@ -12044,43 +12042,6 @@ function generateModalHTML() {
     });
 }
 
-// Render loading screen
-function showRenderLoader() {
-    let loader = document.getElementById('renderLoader');
-    if (loader) return;
-    loader = document.createElement('div');
-    loader.id = 'renderLoader';
-    loader.className = 'render-loader';
-    loader.innerHTML = `
-        <h1 class="render-loader__title">SquanGo CSP</h1>
-        <p class="render-loader__subtitle">by Abid Ibn Ashraf</p>
-        <div class="render-loader__bar-wrap">
-            <div id="renderLoaderBar" class="render-loader__bar"></div>
-        </div>
-    `;
-    document.body.appendChild(loader);
-    let p = 0;
-    loader._interval = setInterval(() => {
-        p += Math.random() * 25;
-        if (p > 85) p = 85;
-        const bar = document.getElementById('renderLoaderBar');
-        if (bar) bar.style.width = p + '%';
-    }, 120);
-}
-
-function hideRenderLoader() {
-    const loader = document.getElementById('renderLoader');
-    if (!loader) return;
-    clearInterval(loader._interval);
-    const bar = document.getElementById('renderLoaderBar');
-    if (bar) bar.style.width = '100%';
-    setTimeout(() => {
-        loader.style.opacity = '0';
-        loader.style.transition = 'opacity 0.25s ease';
-        setTimeout(() => loader.remove(), 260);
-    }, 150);
-}
-
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                               SETTINGS MODAL                               ║
@@ -12214,11 +12175,6 @@ function applyInstructionVisibility() {
     instructionBtns.forEach(btn => {
         btn.style.display = hideInstructions ? 'none' : 'flex';
     });
-}
-
-function togglePriorityLearning(isChecked) {
-    // Priority learning is always enabled now
-    return;
 }
 
 function toggleHideParenthesis(isChecked) {
@@ -12593,10 +12549,8 @@ function modalTryFixAngle(algBody, canonicalShapeIdx) {
     for (const t of MODAL_LEGAL_TOPS) {
         for (const b of MODAL_LEGAL_BOTTOMS) {
             const candidate = `(${t},${b})` + algBody;
-            try {
-                const result = window.algToShapeIndex(candidate);
-                if (result.shapeIndex === canonicalShapeIdx) return candidate;
-            } catch(e) {}
+            const result = window.algToShapeIndex(candidate);
+            if (result.shapeIndex === canonicalShapeIdx) return candidate;
         }
     }
     return null;
@@ -12606,10 +12560,8 @@ function modalTryFixMirroredAngle(algBody, canonicalShapeIdx) {
     for (const t of MODAL_LEGAL_TOPS) {
         for (const b of MODAL_LEGAL_BOTTOMS) {
             const candidate = `/(6,6)/(${t},${b})` + algBody;
-            try {
-                const result = window.algToShapeIndex(candidate);
-                if (result.shapeIndex === canonicalShapeIdx) return `(${t},${b})` + algBody;
-            } catch(e) {}
+            const result = window.algToShapeIndex(candidate);
+            if (result.shapeIndex === canonicalShapeIdx) return `(${t},${b})` + algBody;
         }
     }
     return null;
@@ -12653,7 +12605,6 @@ function updateInputColorLive(input) {
             input.style.color = 'var(--parity-invalid)';
             input.style.fontWeight = '600';
         }
-    } catch(e) { input.style.color = 'var(--parity-invalid)'; input.style.fontWeight = '600'; }
 }
 
 // Helper to get case name from the edit case modal
@@ -14943,12 +14894,10 @@ function tryFixAngle(algBody, canonicalShapeIdx) {
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
             const candidate = `(${t},${b})` + algBody;
-            try {
-                const result = window.algToShapeIndex(candidate);
-                if (result.shapeIndex === canonicalShapeIdx) {
-                    return candidate;
-                }
-            } catch(e) {}
+            const result = window.algToShapeIndex(candidate);
+            if (result.shapeIndex === canonicalShapeIdx) {
+                return candidate;
+            }
         }
     }
     return null;
@@ -14958,12 +14907,10 @@ function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
             const candidate = `/(6,6)/(${t},${b})` + algBody;
-            try {
-                const result = window.algToShapeIndex(candidate);
-                if (result.shapeIndex === canonicalShapeIdx) {
-                    return `(${t},${b})` + algBody;
-                }
-            } catch(e) {}
+            const result = window.algToShapeIndex(candidate);
+            if (result.shapeIndex === canonicalShapeIdx) {
+                return `(${t},${b})` + algBody;
+            }
         }
     }
     return null;
@@ -16398,7 +16345,7 @@ function applyPrevScrambleBar() {
     }
 }
 
-function regenerateScrambleLookaheadLegacy() {
+function regenerateScrambleLookahead() {
     preGeneratedScrambles = [];
     for (let i = 0; i < 3; i++) {
         preGeneratedScrambles.push(generateNextScrambleData());
@@ -16406,12 +16353,6 @@ function regenerateScrambleLookaheadLegacy() {
     if (currentHistoryIndex === scrambleHistory.length - 1 || scrambleHistory.length === 0) {
         displayNextScramble();
     }
-}
-
-function copyScrambleToClipboard() {
-    navigator.clipboard.writeText(currentScrambleText).catch(err => {
-        console.error('Failed to copy scramble:', err);
-    });
 }
 
 function openParityAnalysisFromTraining() {
@@ -16943,7 +16884,7 @@ function toggleShapeIndex(index) {
 
     // Update training scrambles and regenerate lookahead
     trainingScrambles = currentSelection;
-    regenerateScrambleLookaheadLegacy();
+    regenerateScrambleLookahead();
 
     // If no indices selected, show warning but don't prevent
     if (currentSelection.length === 0) {
@@ -16975,7 +16916,7 @@ function selectAllIndices(type) {
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
-    regenerateScrambleLookaheadLegacy();
+    regenerateScrambleLookahead();
 }
 
 function deselectAllIndices(type) {
@@ -16998,7 +16939,7 @@ function deselectAllIndices(type) {
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
-    regenerateScrambleLookaheadLegacy();
+    regenerateScrambleLookahead();
 }
 
 function closeShapeIndexSelector() {
@@ -17222,141 +17163,8 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-function regenerateScrambleLookahead() {
-    regenerateScrambleLookaheadLegacy();
-}
-
 function openTrainingSettingsModal() {
     window.openUnifiedSettings('trainer');
-}
-function _legacyOpenTrainingSettingsModal_unused() {
-    pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
-    let settingsModal = document.getElementById('trainingSettingsModal');
-    if (!settingsModal) {
-        settingsModal = document.createElement('div');
-        settingsModal.id = 'trainingSettingsModal';
-        settingsModal.className = 'training-info-modal';
-        settingsModal.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Training Settings</span>
-                    <button class="training-info-close" onclick="closeTrainingSettingsModal()">&times;</button>
-                </div>
-                <div class="training-info-body" style="overflow-y:auto;flex:1;">
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
-                        <input type="range" id="trainingImageSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
-                        <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
-                        <input type="range" id="trainingTimerSizeSlider" min="30" max="120" step="2" value="${parseInt(localStorage.getItem('trainingTimerSize') || 80)}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: var(--text-ui);">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
-                        <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
-                    </div>
-                <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
-                            <input type="checkbox" id="trainingShowPrevScramble" style="transform:scale(1.3); cursor:pointer;">
-                            Show previous scramble at bottom
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:var(--text-ui); cursor:pointer;">
-                            <input type="checkbox" id="trainingEnableInspection" style="transform:scale(1.3); cursor:pointer;">
-                            Enable inspection
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;" id="parityQuizSettingRow">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; cursor:pointer;" id="parityQuizSettingLabel">
-                            <input type="checkbox" id="trainingEnableParityQuiz" style="transform:scale(1.3); cursor:pointer;">
-                            Enable parity quiz during inspection
-                        </label>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(settingsModal);
-
-        // Restore checkbox state
-        const showPrevSaved = localStorage.getItem('trainingShowPrevScramble');
-        const showPrevCheckbox = document.getElementById('trainingShowPrevScramble');
-        if (showPrevCheckbox) {
-            showPrevCheckbox.checked = showPrevSaved === 'true';
-            showPrevCheckbox.addEventListener('change', (e) => {
-                localStorage.setItem('trainingShowPrevScramble', e.target.checked);
-                applyPrevScrambleBar();
-            });
-        }
-
-        // Add event listeners
-        const inspectionCheckbox = document.getElementById('trainingEnableInspection');
-        const parityQuizCheckbox = document.getElementById('trainingEnableParityQuiz');
-        const parityQuizLabel = document.getElementById('parityQuizSettingLabel');
-
-        function applyParityQuizRowState() {
-            const enabled = inspectionCheckbox.checked;
-            parityQuizCheckbox.disabled = !enabled;
-            parityQuizLabel.style.color = enabled ? 'var(--text-primary)' : '#aaa';
-            parityQuizLabel.style.cursor = enabled ? 'pointer' : 'not-allowed';
-        }
-
-        inspectionCheckbox.checked = localStorage.getItem('trainingEnableInspection') === 'true';
-        parityQuizCheckbox.checked = localStorage.getItem('trainingEnableParityQuiz') === 'true';
-        applyParityQuizRowState();
-
-        inspectionCheckbox.addEventListener('change', (e) => {
-            trainingEnableInspection = e.target.checked;
-            localStorage.setItem('trainingEnableInspection', trainingEnableInspection);
-            if (!trainingEnableInspection) {
-                trainingEnableParityQuiz = false;
-                parityQuizCheckbox.checked = false;
-                localStorage.setItem('trainingEnableParityQuiz', 'false');
-            }
-            applyParityQuizRowState();
-        });
-
-        parityQuizCheckbox.addEventListener('change', (e) => {
-            if (!trainingEnableInspection) { e.target.checked = false; return; }
-            trainingEnableParityQuiz = e.target.checked;
-            localStorage.setItem('trainingEnableParityQuiz', trainingEnableParityQuiz);
-        });
-
-        document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleImageSize = parseInt(e.target.value);
-            document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px';
-            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            if (window._multiCaseMode) regenerateMultiScrambleLookahead();
-            else regenerateScrambleLookaheadLegacy();
-        });
-
-        document.getElementById('trainingTextSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleTextSize = parseInt(e.target.value);
-            document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
-            localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
-            document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
-            applyPrevScrambleBar();
-        });
-
-        document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
-            trainingHoldToStart = parseFloat(e.target.value);
-            document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
-            localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
-        });
-
-        document.getElementById('trainingTimerSizeSlider').addEventListener('input', (e) => {
-            const size = parseInt(e.target.value);
-            document.getElementById('trainingTimerSizeValue').textContent = size + 'px';
-            localStorage.setItem('trainingTimerSize', size);
-            applyTimerSize();
-        });
-    }
-
-    settingsModal.classList.add('active');
 }
 
 function closeTrainingSettingsModal() {
@@ -17441,22 +17249,6 @@ function closeTrainingInfoModal() {
 // ============================================================
 // QUIZ SHARED UTILITIES
 // ============================================================
-
-function quizGetCaseNameFromScramble(hexCode) {
-    // Get the scramble notation from hex, then use algToShapeIndex
-    try {
-        const state = parseHexFormat(hexCode);
-        const notation = window.sq1Tools.scrambleFromState(state);
-        if (!notation) return null;
-        // algToShapeIndex inverts internally — pass notation directly to get scrambled shape
-        const result = window.algToShapeIndex(notation);
-        const map = typeof getShapeIndexToCaseMap === 'function' ? getShapeIndexToCaseMap() : null;
-        if (!map) return null;
-        return map[result.shapeIndex] || null;
-    } catch (e) {
-        return null;
-    }
-}
 
 function quizGetParityFromHex(hexCode) {
     // Returns 'Odd' or 'Even' or null
@@ -17587,12 +17379,10 @@ function startEvilnessQuiz(chosenCaseNames) {
         const orig = slider.oninput;
         slider.addEventListener('input', () => {
             if (currentHexCode) {
-                try {
-                    const state = parseHexFormat(currentHexCode);
-                    const notation = window.sq1Tools.scrambleFromState(state);
-                    const imgEl = document.getElementById('evilQuizImage');
-                    if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
-                } catch (e) {}
+                const state = parseHexFormat(currentHexCode);
+                const notation = window.sq1Tools.scrambleFromState(state);
+                const imgEl = document.getElementById('evilQuizImage');
+                if (imgEl) imgEl.innerHTML = visualizeFromScrambleNotationPlease(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
             }
         });
     }, 100);
@@ -18378,10 +18168,8 @@ let selectorFilteredData = [];
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
 function saveSelectorSelection(key) {
-    try {
-        const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
-        localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
-    } catch (e) { }
+    const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
+    localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
 }
 
 function loadSelectorSelection(key) {
