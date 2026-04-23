@@ -1,103 +1,281 @@
 /* ==== FILE: js/utils.js ==== */
 
-// functions and variables that are used repeatedly with different names over the codebase will be consolidated here to it will help to reduce duplicates.
+// ============================================================
+// CANONICAL SHARED UTILITIES
+// All duplicate logic across the codebase is unified here.
+// ============================================================
+
+function parseScramble(scramble) {
+    const moves = [];
+    let i = 0;
+    while (i < scramble.length) {
+        const char = scramble[i];
+        if (char === '/' || char === '\\') {
+            moves.push({ type: 'twist' });
+            i++;
+        } else if (char === '(' || char === '-' || /\d/.test(char)) {
+            let moveStr = '';
+            let parenDepth = 0;
+            while (i < scramble.length) {
+                const c = scramble[i];
+                if (c === '(') parenDepth++;
+                if (c === ')') parenDepth--;
+                if (c === '/' || c === '\\') break;
+                if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
+                    moveStr += c;
+                }
+                i++;
+                if (parenDepth === 0 && moveStr.includes(',')) break;
+            }
+            const cleaned = moveStr.replace(/[()]/g, '').trim();
+            if (cleaned.includes(',')) {
+                const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
+                moves.push({ type: 'turn', top, bottom });
+            }
+        } else if (/\s/.test(char)) {
+            i++;
+        } else {
+            i++;
+        }
+    }
+    return moves;
+}
 
 
+// ── SCRAMBLE TO HEX ───────────────────────────────────────
+
+function hexTwist(tlHex, blHex) {
+    return {
+        tlHex: tlHex.slice(0, 6) + blHex.slice(0, 6),
+        blHex: tlHex.slice(6)    + blHex.slice(6)
+    };
+}
+
+function hexCycleLeft(hex, places) {
+    const n = ((places % 12) + 12) % 12;
+    return hex.slice(n) + hex.slice(0, n);
+}
+
+function sq1AlgToHex(scramble) {
+    let tlHex = '011233455677';
+    let blHex = '998bbaddcffe';
+    for (const move of parseScramble(scramble)) {
+        if (move.type === 'twist') {
+            ({ tlHex, blHex } = hexTwist(tlHex, blHex));
+        } else if (move.type === 'turn') {
+            tlHex = hexCycleLeft(tlHex, move.top);
+            blHex = hexCycleLeft(blHex, move.bottom);
+        }
+    }
+    return { tlHex, blHex };
+}
+
+
+// ── 3. INVERT SCRAMBLE ───────────────────────────────────────
+function invertScramble(s) {
+    if (!s) return s;
+    let str = String(s).trim();
+
+    const invertNum = (v) => {
+        const num = parseInt(v);
+        if (isNaN(num)) return v;
+        const inv = ((-num) % 12 + 12) % 12;
+        return String(inv > 6 ? inv - 12 : inv);
+    };
+
+    return str.split('/').reverse().map(part => {
+        part = part.trim();
+        const turnMatch = part.match(/\(([^)]+)\)/);
+        if (turnMatch) {
+            const vals = turnMatch[1].split(',').map(v => v.trim());
+            return '(' + vals.map(invertNum).join(',') + ')';
+        }
+        if (part.includes(',')) {
+            return part.split(',').map(v => invertNum(v.trim())).join(',');
+        }
+        return part;
+    }).join('/');
+}
+
+
+// ── 4. CUBE STATE HELPERS & HEX ENCODING ─────────────────────
+function getSolvedState() {
+    return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
+}
+
+function rotateLayer(arr, start, len, k) {
+    const n = ((k % len) + len) % len;
+    if (n === 0) return;
+    const seg = arr.slice(start, start + len);
+    const out = [];
+    for (let i = 0; i < len; i++) out[(i + n) % len] = seg[i];
+    for (let i = 0; i < len; i++) arr[start + i] = out[i];
+}
+
+function doSlice(arr) {
+    for (let i = 0; i < 6; i++) [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
+}
+
+const EDGE_PIECES = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+
+const CORNER_PARTNER = {
+    A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
+    N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
+};
+
+const PIECE_LABELS = {
+    A: 'YOG', B: 'YOG', C: 'YG',  D: 'YGR', E: 'YGR', F: 'YR',
+    G: 'YRB', H: 'YRB', I: 'YB',  J: 'YBO', K: 'YBO', L: 'YO',
+    M: 'WR',  N: 'WRG', O: 'WRG', P: 'WG',  Q: 'WGO', R: 'WGO',
+    S: 'WO',  T: 'WOB', U: 'WOB', V: 'WB',  W: 'WBR', X: 'WBR'
+};
+
+const PIECE_TO_HEX = {
+    'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
+    'YB': '2', 'YBO': '11', 'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99',
+    'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
+};
+
+function applyScrambleToCubeState(scramble) {
+    const state = getSolvedState();
+    for (const move of parseScramble(scramble)) {
+        if (move.type === 'turn') {
+            rotateLayer(state, 0,  12, move.top);
+            rotateLayer(state, 12, 12, move.bottom);
+            if (move.hasSlash) doSlice(state);
+        } else {
+            doSlice(state);
+        }
+    }
+    return state;
+}
+
+function encodeCubeStateToHex(state) {
+    function processLayer(startIdx) {
+        const pieces = [];
+        let i = 0;
+        while (i < 12) {
+            const ch = state[startIdx + i];
+            if (EDGE_PIECES.has(ch)) {
+                pieces.push(PIECE_LABELS[ch]);
+                i++;
+            } else {
+                const nextCh = state[startIdx + ((i + 1) % 12)];
+                if (CORNER_PARTNER[ch] === nextCh) {
+                    pieces.push(PIECE_LABELS[ch]);
+                    i += 2;
+                } else {
+                    return null; // invalid
+                }
+            }
+        }
+        return pieces;
+    }
+
+    const topPieces = processLayer(0);
+    const botPieces  = processLayer(12);
+    if (!topPieces || !botPieces) return 'Error: Invalid corner pairing';
+
+    const topHex = topPieces.map(p => PIECE_TO_HEX[p] || '?').join('');
+    const botHex  = botPieces.map(p => PIECE_TO_HEX[p] || '?').join('');
+    if (topHex.includes('?') || botHex.includes('?')) return 'Error: Unknown piece mapping';
+    if (topHex.length !== 12 || botHex.length !== 12)  return 'Error: Invalid hex length';
+
+    const left  = topHex.split('').reverse().join('');
+    const right1 = botHex.slice(0, 6).split('').reverse().join('');
+    const right2 = botHex.slice(6, 12).split('').reverse().join('');
+    return `${left}|${right1}${right2}`;
+}
+
+const HALF_LAYER = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
+const SHAPE_INDEX_ARRAY = [];
+(function buildShapeIndexArray() {
+    let count = 0;
+    for (let i = 0; i < 28561; i++) {
+        const dr = HALF_LAYER[i % 13];
+        const dl = HALF_LAYER[Math.floor(i / 13) % 13];
+        const ur = HALF_LAYER[Math.floor(Math.floor(i / 13) / 13) % 13];
+        const ul = HALF_LAYER[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
+        const value = ul << 18 | ur << 12 | dl << 6 | dr;
+        let bits = 0, tmp = value;
+        while (tmp) { bits += tmp & 1; tmp >>= 1; }
+        if (bits === 16) SHAPE_INDEX_ARRAY[count++] = value;
+    }
+})();
+
+function getShapeIndexFromHex(tlHex, blHex) {
+    const code = tlHex + '|' + blHex;
+    if (code.length !== 25) throw new Error('Invalid hex format — needs 25 characters');
+
+    const shapeArray = new Array(24);
+    const CORNERS = new Set(['1','3','5','7','9','b','d','f']);
+    let ci = 0;
+    for (let i = 0; i < 12; i++) {
+        if (ci === 12) ci++;
+        shapeArray[i] = CORNERS.has(code[ci].toLowerCase()) ? 1 : 0;
+        ci++;
+    }
+    ci = 13;
+    for (let i = 12; i < 24; i++) {
+        shapeArray[i] = CORNERS.has(code[ci].toLowerCase()) ? 1 : 0;
+        ci++;
+    }
+
+    let shapeValue = 0;
+    for (let i = 0; i < 24; i++) shapeValue |= shapeArray[23 - i] << i;
+
+    const idx = SHAPE_INDEX_ARRAY.indexOf(shapeValue);
+    if (idx === -1) throw new Error('Invalid shape — not found in shape index array');
+    return idx;
+}
+
+function shapeIndexToHex(shapeIndex) {
+    const shape = SHAPE_INDEX_ARRAY[shapeIndex];
+    const f = { ul: 0x011233, ur: 0x455677, dl: 0x998bba, dr: 0xddcffe, ml: 0 };
+
+    function setPiece(idx, value) {
+        if (idx < 6)       { f.ul &= ~(0xf << ((5  - idx) << 2)); f.ul |= value << ((5  - idx) << 2); }
+        else if (idx < 12) { f.ur &= ~(0xf << ((11 - idx) << 2)); f.ur |= value << ((11 - idx) << 2); }
+        else if (idx < 18) { f.dl &= ~(0xf << ((17 - idx) << 2)); f.dl |= value << ((17 - idx) << 2); }
+        else               { f.dr &= ~(0xf << ((23 - idx) << 2)); f.dr |= value << ((23 - idx) << 2); }
+    }
+
+    const rnd = (n) => Math.floor(Math.random() * n);
+    let corner = 0x01234567 << 1 | 0x11111111;
+    let edge   = 0x01234567 << 1;
+    let n_corner = 8, n_edge = 8;
+
+    for (let i = 0; i < 24; i++) {
+        if (((shape >> i) & 1) === 0) {
+            const r = rnd(n_edge) << 2;
+            setPiece(23 - i, (edge >> r) & 0xf);
+            const m = (1 << r) - 1;
+            edge = (edge & m) + ((edge >> 4) & ~m);
+            n_edge--;
+        } else {
+            const r = rnd(n_corner) << 2;
+            setPiece(23 - i, (corner >> r) & 0xf);
+            setPiece(22 - i, (corner >> r) & 0xf);
+            const m = (1 << r) - 1;
+            corner = (corner & m) + ((corner >> 4) & ~m);
+            n_corner--;
+            i++;
+        }
+    }
+    f.ml = rnd(2);
+
+    const hex = f.ul.toString(16).padStart(6,'0') +
+                f.ur.toString(16).padStart(6,'0') + '|' +
+                f.dl.toString(16).padStart(6,'0') +
+                f.dr.toString(16).padStart(6,'0');
+    return hex;
+}
 
 /* ==== FILE: js/tools/scrambleNormalizer.js ==== */
 
-// ========================================
-// Square-1 Scramble Normalizer Module
-// Handles all normalization logic in one place
-// ========================================
-
-/**
- * Main executive function - normalizes any scramble input
- * @param {string} input - Raw scramble input
- * @returns {string} Normalized scramble
- */
 function normalizeScramble(input) {
     if (!input) return '';
-
-    // First, check if input has variables
-    const hasVars = checkForVariables(input);
-
-    if (hasVars) {
-        // Expand variables recursively
-        const expanded = expandVariablesRecursive(input);
-        // Then normalize the expanded result
-        return normalizeScrambleFormat(expanded);
-    } else {
-        // No variables, just normalize the format
-        return normalizeScrambleFormat(input);
-    }
-}
-
-/**
- * Check if input contains variable syntax
- * @param {string} input - Input string to check
- * @returns {boolean} True if variables exist
- */
-function checkForVariables(input) {
-    if (!input) return false;
-
-    // Check for *varName* or <varName> patterns
-    const asteriskPattern = /\*\w+\*/;
-    const anglePattern = /<\w+>/;
-
-    return asteriskPattern.test(input) || anglePattern.test(input);
-}
-
-/**
- * Recursively expand variables until none remain
- * @param {string} input - Input with variables
- * @param {number} depth - Recursion depth (safety limit)
- * @returns {string} Fully expanded string
- */
-function expandVariablesRecursive(input, variableTable = null, depth = 0) {
-    // Safety limit to prevent infinite loops
-    if (depth > 10) {
-        console.warn('Variable expansion depth limit reached');
-        return input;
-    }
-
-    // Expand one level
-    const expanded = expandVariablesOneLevel(input, variableTable);
-
-    // Check if result still has variables
-    if (checkForVariables(expanded)) {
-        // Recursively expand again
-        return expandVariablesRecursive(expanded, variableTable, depth + 1);
-    }
-
-    return expanded;
-}
-
-/**
- * Expand variables by ONE level only (dumb replacement)
- * @param {string} input - Input with variables
- * @returns {string} String with variables replaced by their raw values
- */
-function expandVariablesOneLevel(input, variableTable = null) {
-    if (!input) return input;
-
-    // Use provided table, or try to get from global STATE, or use empty object
-    const variables = variableTable ||
-        (typeof STATE !== 'undefined' && STATE.variables) ||
-        {};
-
-    let result = input;
-    const varRegex = /[*<](\w+)[*>]/g;
-
-    result = result.replace(varRegex, (match, varName) => {
-        if (variables[varName] !== undefined) {
-            return variables[varName];
-        }
-        // If variable not found, keep the original syntax
-        return match;
-    });
-
-    return result;
+    return normalizeScrambleFormat(input);
 }
 
 /**
@@ -439,8 +617,6 @@ function simplifyScramble(tokens, steps) {
 if (typeof window !== 'undefined') {
     window.ScrambleNormalizer = {
         normalizeScramble,
-        checkForVariables,
-        expandVariablesRecursive,
         normalizeScrambleFormat
     };
 }
@@ -448,320 +624,39 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         normalizeScramble,
-        checkForVariables,
-        expandVariablesRecursive,
         normalizeScrambleFormat
     };
 }
 
-/**
- * Generate x2 algorithm from normalized scramble
- * @param {string} normalizedScramble - Normalized scramble string
- * @returns {string} x2 algorithm
- */
-function generateX2Algorithm(normalizedScramble) {
-    if (!normalizedScramble) return '';
-
-    // Split BUT keep slashes
-    let tokens = normalizedScramble
-        .split(/(\/)/)
-        .map(t => t.trim())
-        .filter(t => t);
-
-    // Flip each move (a,b) → (b,a), keep slashes untouched
-    tokens = tokens.map(token => {
-        const m = token.match(/\((-?\d+),(-?\d+)\)/);
-        if (!m) return token;
-        return `(${m[2]},${m[1]})`;
-    });
-
-    // Append (-1,1) WITHOUT inserting a slash
-    tokens.push("(-1,1)");
-
-    // Simplify only (no normalization, no re-parsing)
-    let steps = [];
-    tokens = simplifyScramble(tokens, steps);
-
-    return tokens.join(' ');
-}
-
-// Add to exports
-if (typeof window !== 'undefined') {
-    window.ScrambleNormalizer.generateX2Algorithm = generateX2Algorithm;
-}
-
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports.generateX2Algorithm = generateX2Algorithm;
-}
-
 /* ==== FILE: js/tools/alg_to_index.js ==== */
-
-/**
- * Square-1 Algorithm to Shape Index Converter
- * Pipeline: Parse → Invert → Hexify → Shape Index
- * 
- * Usage:
- *   CLI: node algToShapeIndex.js "/(4,2)/(-2,2)/..."
- *   Module: const result = require('./algToShapeIndex')("/(4,2)/...");
- *   Browser: const result = algToShapeIndex("/(4,2)/...");
- */
 
 (function () {
   'use strict';
 
   function algToShapeIndex(scrambleText) {
 
-    // ========================================
-    // SHAPE INITIALIZATION (from getSpecificHex.js)
-    // ========================================
-    const Shape_halflayer = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-    const Shape_ShapeIdx = [];
-
-    function initShapes() {
-      let count = 0;
-      for (let i = 0; i < 28561; i++) {
-        const dr = Shape_halflayer[i % 13];
-        const dl = Shape_halflayer[Math.floor(i / 13) % 13];
-        const ur = Shape_halflayer[Math.floor(Math.floor(i / 13) / 13) % 13];
-        const ul = Shape_halflayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-        const value = ul << 18 | ur << 12 | dl << 6 | dr;
-
-        let bitCount = 0;
-        let temp = value;
-        while (temp) {
-          bitCount += temp & 1;
-          temp >>= 1;
-        }
-
-        if (bitCount === 16) {
-          Shape_ShapeIdx[count++] = value;
-        }
-      }
-    }
-
-    initShapes();
-
-    function AInvertScramble(scrambleString) {
-      if (!scrambleString) return scrambleString;
-      let str = String(scrambleString).trim();
-
-      const parts = str.split('/');
-      const reversed = parts.slice().reverse();
-
-      const inverted = reversed.map(part => {
-        part = part.trim();
-
-        const turnMatch = part.match(/\(([^)]+)\)/);
-        if (turnMatch) {
-          const values = turnMatch[1].split(',').map(v => v.trim());
-          const invertedValues = values.map(v => {
-            const num = parseInt(v);
-            if (isNaN(num)) return v;
-            return String(-num);
-          });
-          return '(' + invertedValues.join(',') + ')';
-        }
-
-        if (part.includes(',')) {
-          const values = part.split(',').map(v => v.trim());
-          const invertedValues = values.map(v => {
-            const num = parseInt(v);
-            if (isNaN(num)) return v;
-            return String(-num);
-          });
-          return invertedValues.join(',');
-        }
-
-        return part;
-      });
-
-      return inverted.join('/');
-    }
-
-    function parseScramble(scramble) {
-      const moves = [];
-
-      let i = 0;
-      while (i < scramble.length) {
-        const char = scramble[i];
-
-        if (char === '/' || char === '\\') {
-          moves.push({ type: 'twist' });
-          i++;
-        }
-        else if (char === '(' || char === '-' || /\d/.test(char)) {
-          let moveStr = '';
-          let parenDepth = 0;
-
-          while (i < scramble.length) {
-            const c = scramble[i];
-            if (c === '(') parenDepth++;
-            if (c === ')') parenDepth--;
-
-            if (c === '/' || c === '\\') {
-              break;
-            }
-
-            if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-              moveStr += c;
-            }
-
-            i++;
-
-            if (parenDepth === 0 && moveStr.includes(',')) {
-              break;
-            }
-          }
-
-          const cleaned = moveStr.replace(/[()]/g, '').trim();
-          if (cleaned.includes(',')) {
-            const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
-            moves.push({ type: 'turn', top, bottom });
-          }
-        }
-        else if (/\s/.test(char)) {
-          i++;
-        }
-        else {
-          i++;
-        }
-      }
-      return moves;
-    }
-
-    function twist(tlHex, blHex) {
-      const tlFirst6 = tlHex.slice(0, 6);
-      const tlLast6 = tlHex.slice(6);
-      const blFirst6 = blHex.slice(0, 6);
-      const blLast6 = blHex.slice(6);
-
-      return {
-        tlHex: tlFirst6 + blFirst6,
-        blHex: tlLast6 + blLast6
-      };
-    }
-
-    function cycleLeft(hex, places) {
-      const normalized = ((places % 12) + 12) % 12;
-      return hex.slice(normalized) + hex.slice(0, normalized);
-    }
-
-    function sq1AlgToHex(scramble) {
-      let tlHex = '011233455677';
-      let blHex = '998bbaddcffe';
-
-      const moves = parseScramble(scramble);
-
-      for (let i = 0; i < moves.length; i++) {
-        const move = moves[i];
-
-        if (move.type === 'twist') {
-          const result = twist(tlHex, blHex);
-          tlHex = result.tlHex;
-          blHex = result.blHex;
-        } else if (move.type === 'turn') {
-          tlHex = cycleLeft(tlHex, move.top);
-          blHex = cycleLeft(blHex, move.bottom);
-        }
-      }
-      return { tlHex, blHex };
-    }
-
-    function getShapeIndexFromHex(tlHex, blHex) {
-      const hexScrambleCode = tlHex + '|' + blHex;
-
-      if (hexScrambleCode.length !== 25) {
-        throw new Error('Invalid hex format - needs 25 characters!');
-      }
-
-      const shapeArray = new Array(24);
-      let scrambleIdx = 0;
-
-      for (let i = 0; i < 12; i++) {
-        if (scrambleIdx === 12) scrambleIdx++;
-        const piece = hexScrambleCode[scrambleIdx];
-        const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-        shapeArray[i] = isCorner ? 1 : 0;
-        scrambleIdx++;
-      }
-
-      scrambleIdx = 13;
-      for (let i = 12; i < 24; i++) {
-        const piece = hexScrambleCode[scrambleIdx];
-        const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-        shapeArray[i] = isCorner ? 1 : 0;
-        scrambleIdx++;
-      }
-
-      let shapeValue = 0;
-      for (let i = 0; i < 24; i++) {
-        shapeValue |= shapeArray[23 - i] << i;
-      }
-
-      const shapeIndex = Shape_ShapeIdx.indexOf(shapeValue);
-
-      if (shapeIndex === -1) {
-        throw new Error('Invalid shape - not found in shape index array');
-      }
-
-      return shapeIndex;
-    }
-
-    // MAIN PIPELINE
-    // Step 1: Invert the scramble
-    const invertedScramble = AInvertScramble(scrambleText);
-
-    // Step 2: Hexify the inverted scramble
+    // MAIN PIPELINE: Invert -> hexify -> get shape index
+    const invertedScramble = invertScramble(scrambleText);
     const { tlHex, blHex } = sq1AlgToHex(invertedScramble);
-
-    // Step 3: Get shape index from hex
     const shapeIndex = getShapeIndexFromHex(tlHex, blHex);
 
     return {
       original: scrambleText,
       inverted: invertedScramble,
-      tlHex: tlHex,
-      blHex: blHex,
-      shapeIndex: shapeIndex
+      tlHex,
+      blHex,
+      shapeIndex
     };
   }
 
-  // ========================================
-  // EXPORTS
-  // ========================================
+  // Export to browser global
+  window.algToShapeIndex = algToShapeIndex;
 
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = algToShapeIndex;
-  }
+})();
 
-  if (typeof window !== 'undefined') {
-    window.algToShapeIndex = algToShapeIndex;
-  }
-
-  if (typeof define === 'function' && define.amd) {
-    define([], function () {
-      return algToShapeIndex;
-    });
-  }
-
-  // ========================================
-  // CLI USAGE
-  // ========================================
-
-  if (typeof require !== 'undefined' && require.main === module) {
-    const args = process.argv.slice(2);
-
-    if (args.length === 0) {
-      process.exit(1);
-    }
-  }
-
-})(typeof window !== 'undefined' ? window : global);
 
 /* ==== FILE: js/tools/cales-parity-tracer.js ==== */
 
-// Square-1 Parity Tracer Library - Complete Refactored Edition
-// With  long variable names to avoid conflicts with parent apps
 (function (Cglobal) {
     'use strict';
 
@@ -797,29 +692,16 @@ if (typeof module !== 'undefined' && module.exports) {
         leftCol: '#0066CC'
     };
 
-    // Piece labels mapping -  long name
-    const pieceLabelMap = {
-        A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
-        G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
-        M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
-        T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
-    };
+    // PIECE_LABELS, EDGE_PIECES, CORNER_PARTNER → defined in utils.js
 
     function createColorLabelHTML_w(str) {
         return str.replace(/[WYGBRO]/g, m => `<span class="color-dot ${m}"></span>`);
     }
 
     const pieceNameHTMLMap_w = {};
-    for (const k in pieceLabelMap) {
-        pieceNameHTMLMap_w[k] = createColorLabelHTML_w(pieceLabelMap[k]);
+    for (const k in PIECE_LABELS) {
+        pieceNameHTMLMap_w[k] = createColorLabelHTML_w(PIECE_LABELS[k]);
     }
-
-    const edgePiecesSet_w = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-
-    const cornerPartnerMapping_w = {
-        A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-        N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-    };
 
     const cornerIdentifierMappingWith = {
         A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
@@ -1169,13 +1051,13 @@ if (typeof module !== 'undefined' && module.exports) {
         let i = 0;
         while (i < 12) {
             const ch = state[start + i];
-            if (edgePiecesSet_w.has(ch)) {
+            if (EDGE_PIECES.has(ch)) {
                 units.push({ type: 'E', edge: ch });
                 i += 1;
                 continue;
             }
             const nextCh = state[start + ((i + 1) % 12)];
-            if (cornerPartnerMapping_w[ch] === nextCh) {
+            if (CORNER_PARTNER[ch] === nextCh) {
                 units.push({ type: 'C', pair: cornerIdentifierMappingWith[ch], rep: ch });
                 i += 2;
             } else {
@@ -1411,67 +1293,7 @@ if (typeof module !== 'undefined' && module.exports) {
         return { steps, total, isOdd, evilStep, isOddWithEvil };
     }
 
-    // Encoding functions - RESTORED
-    const pieceToHexMapping_w = {
-        'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33', 'YB': '2', 'YBO': '11',
-        'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99', 'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
-    };
-
-    function encodeStateToHexString_w(state) {
-        const topPieces = [];
-        const bottomPieces = [];
-
-        let i = 0;
-        while (i < 12) {
-            const ch = state[i];
-            if (edgePiecesSet_w.has(ch)) {
-                topPieces.push(pieceLabelMap[ch]);
-                i++;
-            } else {
-                const nextCh = state[(i + 1) % 12];
-                if (cornerPartnerMapping_w[ch] === nextCh) {
-                    topPieces.push(pieceLabelMap[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in top layer';
-                }
-            }
-        }
-
-        i = 12;
-        while (i < 24) {
-            const ch = state[i];
-            if (edgePiecesSet_w.has(ch)) {
-                bottomPieces.push(pieceLabelMap[ch]);
-                i++;
-            } else {
-                const nextCh = state[12 + ((i - 12 + 1) % 12)];
-                if (cornerPartnerMapping_w[ch] === nextCh) {
-                    bottomPieces.push(pieceLabelMap[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in bottom layer';
-                }
-            }
-        }
-
-        const topHex = topPieces.map(p => pieceToHexMapping_w[p] || '?').join('');
-        const bottomHex = bottomPieces.map(p => pieceToHexMapping_w[p] || '?').join('');
-
-        if (topHex.includes('?') || bottomHex.includes('?')) {
-            return `Error: Unknown piece mapping`;
-        }
-
-        if (topHex.length !== 12 || bottomHex.length !== 12) {
-            return `Error: Invalid hex length`;
-        }
-
-        const leftTop = topHex.split('').reverse().join('');
-        const rightBottom1 = bottomHex.slice(0, 6).split('').reverse().join('');
-        const rightBottom2 = bottomHex.slice(6, 12).split('').reverse().join('');
-
-        return `${leftTop}|${rightBottom1}${rightBottom2}`;
-    }
+    // PIECE_TO_HEX, encodeCubeStateToHex → defined in utils.js
 
     // Shape visualization for config modal - RESTORED
     function generateSimpleShapeVisualizationSVG_w(pattern, size, idPrefix) {
@@ -3425,7 +3247,7 @@ if (typeof module !== 'undefined' && module.exports) {
 
                     // Visualize scramble if enabled - COMPLETE
                     if (config.shouldGenerateImage && Cglobal.Square1VisualizerLibraryWithSillyNames) {
-                        const encodedScramble = encodeStateToHexString_w(state);
+                        const encodedScramble = encodeCubeStateToHex(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
 
@@ -5521,326 +5343,8 @@ function parseHexFormat(input) {
 // Square-1 Scramble Visualizer Library
 // ========================================
 
-// === SCRAMBLED STATE GENERATOR FUNCTIONS ===
-function randomNum(n) {
-  return Math.floor(Math.random() * n);
-}
-
-function sq1Cubie() {
-  this.ul = 0x011233;
-  this.ur = 0x455677;
-  this.dl = 0x998bba;
-  this.dr = 0xddcffe;
-  this.ml = 0;
-}
-
-sq1Cubie.prototype.toString = function () {
-  return this.ul.toString(16).padStart(6, '0') +
-    this.ur.toString(16).padStart(6, '0') +
-    "|/".charAt(this.ml) +
-    this.dl.toString(16).padStart(6, '0') +
-    this.dr.toString(16).padStart(6, '0');
-}
-
-sq1Cubie.prototype.setPiece = function (idx, value) {
-  if (idx < 6) {
-    this.ul &= ~(0xf << ((5 - idx) << 2));
-    this.ul |= value << ((5 - idx) << 2);
-  } else if (idx < 12) {
-    this.ur &= ~(0xf << ((11 - idx) << 2));
-    this.ur |= value << ((11 - idx) << 2);
-  } else if (idx < 18) {
-    this.dl &= ~(0xf << ((17 - idx) << 2));
-    this.dl |= value << ((17 - idx) << 2);
-  } else {
-    this.dr &= ~(0xf << ((23 - idx) << 2));
-    this.dr |= value << ((23 - idx) << 2);
-  }
-}
-
-const D_halfLayer = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-const shapeIndices = [];
-
-function initializeShapes() {
-  let count = 0;
-  for (let i = 0; i < 28561; i++) {
-    const dr = D_halfLayer[i % 13];
-    const dl = D_halfLayer[Math.floor(i / 13) % 13];
-    const ur = D_halfLayer[Math.floor(Math.floor(i / 13) / 13) % 13];
-    const ul = D_halfLayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-    const value = ul << 18 | ur << 12 | dl << 6 | dr;
-
-    let bitCount = 0;
-    let temp = value;
-    while (temp) {
-      bitCount += temp & 1;
-      temp >>= 1;
-    }
-
-    if (bitCount === 16) {
-      shapeIndices[count++] = value;
-    }
-  }
-}
-
-function D_shapeIndexToPreHex(shapeIndex) {
-  const f = new sq1Cubie();
-  const shape = shapeIndices[shapeIndex];
-  let corner = 0x01234567 << 1 | 0x11111111;
-  let edge = 0x01234567 << 1;
-  let n_corner = 8, n_edge = 8;
-
-  for (let i = 0; i < 24; i++) {
-    if (((shape >> i) & 1) === 0) {
-      const rnd = randomNum(n_edge) << 2;
-      f.setPiece(23 - i, (edge >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      edge = (edge & m) + ((edge >> 4) & ~m);
-      n_edge--;
-    } else {
-      const rnd = randomNum(n_corner) << 2;
-      f.setPiece(23 - i, (corner >> rnd) & 0xf);
-      f.setPiece(22 - i, (corner >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      corner = (corner & m) + ((corner >> 4) & ~m);
-      n_corner--;
-      i++;
-    }
-  }
-  f.ml = randomNum(2);
-  return f;
-}
-
-function D_shapeIndexToHex(shapeIndex) {
-  const cube = D_shapeIndexToPreHex(shapeIndex);
-  const hexString = cube.toString();
-  // Normalize separator to always use | instead of /
-  return hexString.replace('/', '|');
-}
-
-// Initialize shapes
-initializeShapes();
-
-// === CONSTANTS WITH SILLY NAMES ===
-const GiveMePieceLabelsThankYou = {
-  A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
-  G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
-  M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
-  T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
-};
-
-const theseAreEdgePiecesIPromise = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-
-const findMyPartnerAndThankYou = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-
-const hexToPieceMapButBackwards = {
-  'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
-  'YB': '2', 'YBO': '11', 'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99',
-  'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
-};
-
-// === BASIC HELPER FUNCTIONS ===
-function gimmeASolvedCubeRightNow() {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
-
-function rotateThisSectionOfArray(arr, startIdx, length, rotAmount) {
-  const normalizedRot = ((rotAmount % length) + length) % length;
-  if (normalizedRot === 0) return;
-
-  const segment = arr.slice(startIdx, startIdx + length);
-  const rotated = [];
-  for (let i = 0; i < length; i++) {
-    rotated[(i + normalizedRot) % length] = segment[i];
-  }
-  for (let i = 0; i < length; i++) {
-    arr[startIdx + i] = rotated[i];
-  }
-}
-
-function doTheSliceSwapDance(arr) {
-  for (let i = 0; i < 6; i++) {
-    [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-}
-
-// === SCRAMBLE PARSING ===
-function* TokenizeThisScrambleForMe(scrambleString) {
-  let idx = 0;
-  const totalLen = scrambleString.length;
-  const whitespaceRegex = /\s/;
-  const integerRegex = /^([+-]?\d+)/;
-
-  const skipWhitespace = () => {
-    while (idx < totalLen && whitespaceRegex.test(scrambleString[idx])) idx++;
-  };
-
-  while (true) {
-    skipWhitespace();
-    if (idx >= totalLen) return;
-
-    const currentChar = scrambleString[idx];
-
-    if (currentChar === '(') {
-      idx++;
-      skipWhitespace();
-
-      let match = scrambleString.slice(idx).match(integerRegex);
-      if (!match) { idx++; continue; }
-      const topValue = +match[1];
-      idx += match[1].length;
-
-      skipWhitespace();
-      if (scrambleString[idx] === ',') idx++;
-      skipWhitespace();
-
-      match = scrambleString.slice(idx).match(integerRegex);
-      if (!match) { idx++; continue; }
-      const bottomValue = +match[1];
-      idx += match[1].length;
-
-      skipWhitespace();
-      if (scrambleString[idx] === ')') idx++;
-      skipWhitespace();
-
-      const hasSlashAfter = (scrambleString[idx] === '/');
-      if (hasSlashAfter) idx++;
-
-      yield { moveType: 'turn', top: topValue, bottom: bottomValue, hasSlash: hasSlashAfter };
-      continue;
-    }
-
-    if (currentChar === '/') {
-      idx++;
-      yield { moveType: 'slash' };
-      continue;
-    }
-
-    idx++;
-  }
-}
-
-function applyScrambleToCube(scrambleString) {
-  const cubeState = gimmeASolvedCubeRightNow();
-
-  for (const token of TokenizeThisScrambleForMe(scrambleString)) {
-    if (token.moveType === 'turn') {
-      rotateThisSectionOfArray(cubeState, 0, 12, token.top);
-      rotateThisSectionOfArray(cubeState, 12, 12, token.bottom);
-      if (token.hasSlash) doTheSliceSwapDance(cubeState);
-    } else {
-      doTheSliceSwapDance(cubeState);
-    }
-  }
-
-  return cubeState;
-}
-
-// === STATE ENCODING ===
-function EncodeMyCubeStateToHexNotation(cubeStateArray) {
-  const topLayerPieces = [];
-  const bottomLayerPieces = [];
-
-  // Process top layer (0-11)
-  let idx = 0;
-  while (idx < 12) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      topLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[(idx + 1) % 12];
-      if (findMyPartnerAndThankYou[piece] === nextPiece) {
-        topLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in top layer';
-      }
-    }
-  }
-
-  // Process bottom layer (12-23)
-  idx = 12;
-  while (idx < 24) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      bottomLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[12 + ((idx - 12 + 1) % 12)];
-      if (findMyPartnerAndThankYou[piece] === nextPiece) {
-        bottomLayerPieces.push(GiveMePieceLabelsThankYou[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in bottom layer';
-      }
-    }
-  }
-
-  // Convert to hex
-  const topHexString = topLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-  const bottomHexString = bottomLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-
-  if (topHexString.includes('?') || bottomHexString.includes('?')) {
-    return 'Error: Unknown piece mapping';
-  }
-
-  if (topHexString.length !== 12 || bottomHexString.length !== 12) {
-    return 'Error: Invalid hex length';
-  }
-
-  // Format: reverse(L-A) | reverse(M-R) + reverse(S-X)
-  const leftTopReversed = topHexString.split('').reverse().join('');
-  const rightBottom1Reversed = bottomHexString.slice(0, 6).split('').reverse().join('');
-  const rightBottom2Reversed = bottomHexString.slice(6, 12).split('').reverse().join('');
-
-  return `${leftTopReversed}|${rightBottom1Reversed}${rightBottom2Reversed}`;
-}
-
-// === INVERT SCRAMBLE (for solution visualization) ===
-function AInvertScramble(scrambleString) {
-  if (!scrambleString) return scrambleString;
-  let str = String(scrambleString).trim();
-
-  const parts = str.split('/');
-  const reversed = parts.slice().reverse();
-
-  const inverted = reversed.map(part => {
-    part = part.trim();
-
-    const turnMatch = part.match(/\(([^)]+)\)/);
-    if (turnMatch) {
-      const values = turnMatch[1].split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return '(' + invertedValues.join(',') + ')';
-    }
-
-    if (part.includes(',')) {
-      const values = part.split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return invertedValues.join(',');
-    }
-
-    return part;
-  });
-
-  return inverted.join('/');
-}
-
 // === SHAPE BUILDING ===
-function BuildClustersFromThisShapeArray(shapeArray) {
+function clusterify(shapeArray) {
   const slots = [];
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
@@ -5903,7 +5407,7 @@ function ParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
 }
 
 // === GEOMETRY HELPERS ===
-function polarToCartesianButWithFunnyName(centerX, centerY, radius, angleDegrees) {
+function polarToCartesian(centerX, centerY, radius, angleDegrees) {
   const angleRadians = angleDegrees * Math.PI / 180;
   return {
     x: centerX + radius * Math.cos(angleRadians),
@@ -5999,20 +5503,20 @@ function whatColorIsThisHalfCorner() {
 }
 
 // === SVG GENERATION FOR INDIVIDUAL PIECES ===
-function CreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
+function CreateOnePieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
   isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
 
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
   if (slot.type === 'edge') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     const midRadius = radiusInner + (radiusOuter - radiusInner) * 0.8;
-    const pointMidA = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle - halfAngle);
-    const pointMidB = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle + halfAngle);
+    const pointMidA = polarToCartesian(centerX, centerY, midRadius, centerAngle - halfAngle);
+    const pointMidB = polarToCartesian(centerX, centerY, midRadius, centerAngle + halfAngle);
 
     const edgeColors = whatColorIsThisEdgePiece(pieceHex, colorScheme);
 
@@ -6020,10 +5524,10 @@ function CreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, r
     svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
 
   } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     const scaleFactor = 0.80;
     const pointSmallLeft = lerpBetweenTwoPoints(pointInner, pointOuterLeft, scaleFactor);
@@ -6040,10 +5544,10 @@ function CreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, r
 
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
     const fillAttribute = whatColorIsThisHalfCorner(pieceHex);
     svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
@@ -6079,7 +5583,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
     scrambleIdx++;
   }
 
-  const slots = BuildClustersFromThisShapeArray(shapeArray);
+  const slots = clusterify(shapeArray);
   const pieceAssignments = ParseScrambleAssignmentsFromHexCode(hexScrambleCode, slots);
 
   // Calculate dimensions
@@ -6095,7 +5599,6 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
 
   const strokeThin = desiredSize * 0.003;
   const strokeMedium = desiredSize * 0.004;
-  const strokeThick = desiredSize * 0.005;
   const strokeRing = 0;
   const strokeLine = desiredSize * 0.008;
   const sliceTrim = 0.70;
@@ -6108,8 +5611,8 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
+  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -6119,7 +5622,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
     if (slot.startLetter < 12) {
       const piece = pieceAssignments[slot.label];
       const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
-      htmlOutput += CreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
+      htmlOutput += CreateOnePieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6129,8 +5632,8 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
+  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -6140,7 +5643,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
     if (slot.startLetter >= 12) {
       const piece = pieceAssignments[slot.label];
       const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
-      htmlOutput += CreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
+      htmlOutput += CreateOnePieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
     }
   });
 
@@ -6150,44 +5653,34 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
 }
 
 // ========================================
-// === SHAPE INDEX TO HEX CONVERSION ===
-// ========================================
-
-function convertShapeIndexToHex(shapeIndex) {
-  const hexString = D_shapeIndexToHex(shapeIndex);
-  // Ensure we always use | separator
-  return hexString.replace('/', '|');
-}
-
-// ========================================
 // === CUBE SHAPE VISUALIZER ===
 // ========================================
 
-function CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
+function CreateOneShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
   if (slot.type === 'edge') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
     svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
   }
@@ -6221,7 +5714,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
     scrambleIdx++;
   }
 
-  const slots = BuildClustersFromThisShapeArray(shapeArray);
+  const slots = clusterify(shapeArray);
 
   // Calculate dimensions
   const svgSize = size;
@@ -6247,8 +5740,8 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
+  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -6257,7 +5750,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
       const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
-      htmlOutput += CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      htmlOutput += CreateOneShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -6267,8 +5760,8 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
+  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -6277,7 +5770,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
       const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
-      htmlOutput += CreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      htmlOutput += CreateOneShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -6295,12 +5788,13 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
  * @param {number} strokeWidth - Base stroke width (default: 2, scales with size)
  * @returns {string} HTML string containing the SVG visualization
  */
+
 function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
   let hexCode;
 
   // Check if input is a shape index (number)
   if (typeof input === 'number') {
-    hexCode = convertShapeIndexToHex(input);
+    hexCode = shapeIndexToHex(input);
   }
   // Check if input looks like hex code (contains |)
   else if (typeof input === 'string' && input.includes('|')) {
@@ -6308,8 +5802,8 @@ function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent',
   }
   // Otherwise treat as scramble notation
   else if (typeof input === 'string') {
-    const cubeState = applyScrambleToCube(input);
-    hexCode = EncodeMyCubeStateToHexNotation(cubeState);
+    const cubeState = applyScrambleToCubeState(input);
+    hexCode = encodeCubeStateToHex(cubeState);
 
     if (hexCode.startsWith('Error:')) {
       return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
@@ -6367,8 +5861,8 @@ function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDi
     circleColor: colors.circleColor || 'transparent'
   };
 
-  const cubeState = applyScrambleToCube(scramble);
-  const hexCode = EncodeMyCubeStateToHexNotation(cubeState);
+  const cubeState = applyScrambleToCubeState(scramble);
+  const hexCode = encodeCubeStateToHex(cubeState);
 
   if (hexCode.startsWith('Error:')) {
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
@@ -6385,7 +5879,7 @@ function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDi
  * @returns {string} HTML string containing the SVG visualization
  */
 function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 5) {
-  const invertedScramble = AInvertScramble(solution);
+  const invertedScramble = invertScramble(solution);
   return visualizeFromScrambleNotation(invertedScramble, size, colors, ringDistance);
 }
 
@@ -6403,113 +5897,24 @@ if (typeof window !== 'undefined') {
   };
 }
 
-// For module systems (Node.js, bundlers, etc.)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    visualizeFromHexCode,
-    visualizeFromScrambleNotation,
-    visualizeFromSolutionNotation,
-    visualizeCubeShapeOutlines
-  };
-}
-
 /* ==== FILE: js/tools/scrambleFormatting.js ==== */
 
 // sq1ColorizerLib.js
 (function (global) {
   'use strict';
 
-  const solvedEdgePieces = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-  const solvedCornerPieces = {
-    A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-    N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-  };
-
-  function getSolvedState() {
-    return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-  }
-
-  function rotateSolvedArray(arr, start, len, k) {
-    const n = ((k % len) + len) % len;
-    if (n === 0) return;
-    const seg = arr.slice(start, start + len);
-    const out = [];
-    for (let i = 0; i < len; i++) out[(i + n) % len] = seg[i];
-    for (let i = 0; i < len; i++) arr[start + i] = out[i];
-  }
-
-  function C_DoSlice(arr) {
-    for (let i = 0; i < 6; i++) [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-
-  function* tokenifyScramble(s) {
-    let i = 0;
-    const L = s.length;
-    const ws = /\s/;
-    const int = /^([+-]?\d+)/;
-
-    const skip = () => { while (i < L && ws.test(s[i])) i++; };
-
-    while (true) {
-      skip();
-      if (i >= L) return;
-
-      const ch = s[i];
-      if (ch === '(') {
-        i++;
-        skip();
-        let m = s.slice(i).match(int);
-        if (!m) { i++; continue; }
-        const t = +m[1];
-        i += m[1].length;
-        skip();
-        if (s[i] === ',') i++;
-        skip();
-        m = s.slice(i).match(int);
-        if (!m) { i++; continue; }
-        const b = +m[1];
-        i += m[1].length;
-        skip();
-        if (s[i] === ')') i++;
-        skip();
-        const hadSlash = (s[i] === '/');
-        if (hadSlash) i++;
-        yield { k: 'tb', t, b, slash: hadSlash };
-        continue;
-      }
-      if (ch === '/') {
-        i++;
-        yield { k: '/' };
-        continue;
-      }
-      i++;
-    }
-  }
-
-  function C_ApplyScramble(scr) {
-    const a = getSolvedState();
-    for (const tok of tokenifyScramble(scr)) {
-      if (tok.k === 'tb') {
-        rotateSolvedArray(a, 0, 12, tok.t);
-        rotateSolvedArray(a, 12, 12, tok.b);
-        if (tok.slash) C_DoSlice(a);
-      } else {
-        C_DoSlice(a);
-      }
-    }
-    return a;
-  }
+  // EDGE_PIECES, CORNER_PARTNER, getSolvedState, rotateLayer, doSlice, parseScramble → utils.js
 
   function buildUnitString(state, start) {
     const units = [];
     let i = 0;
     while (i < 12) {
       const ch = state[start + i];
-      if (solvedEdgePieces.has(ch)) {
+      if (EDGE_PIECES.has(ch)) {
         units.push('E'); i += 1; continue;
       }
       const nextCh = state[start + ((i + 1) % 12)];
-      if (solvedCornerPieces[ch] === nextCh) {
+      if (CORNER_PARTNER[ch] === nextCh) {
         units.push('C'); i += 2;
       } else {
         units.push('C'); i += 1;
@@ -6522,6 +5927,20 @@ if (typeof module !== 'undefined' && module.exports) {
     const topPattern = buildUnitString(state, 0);
     const botPattern = buildUnitString(state, 12);
     return { top: topPattern, bot: botPattern };
+  }
+
+  function C_ApplyScramble(scr) {
+    const a = getSolvedState();
+    for (const move of parseScramble(scr)) {
+      if (move.type === 'turn') {
+        rotateLayer(a, 0, 12, move.top);
+        rotateLayer(a, 12, 12, move.bottom);
+        if (move.hasSlash) doSlice(a);
+      } else {
+        doSlice(a);
+      }
+    }
+    return a;
   }
 
   function detectSpecialSlash(scramble) {
@@ -6564,46 +5983,31 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /* ==== FILE: js/tools/animate-alg.js ==== */
 
-// ========================================
-// Square-1 Algorithm Viewer Library
-// ========================================
-
 (function () {
     'use strict';
 
-    // ========================================
-    // SHAPE INITIALIZATION
-    // ========================================
-    const Shape_halflayer = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-    const Shape_ShapeIdx = [];
+    // SHAPE_INDEX_ARRAY, hexTwist, hexCycleLeft, invertScramble → utils.js
 
-    function initShapes() {
-        let count = 0;
-        for (let i = 0; i < 28561; i++) {
-            const dr = Shape_halflayer[i % 13];
-            const dl = Shape_halflayer[Math.floor(i / 13) % 13];
-            const ur = Shape_halflayer[Math.floor(Math.floor(i / 13) / 13) % 13];
-            const ul = Shape_halflayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-            const value = ul << 18 | ur << 12 | dl << 6 | dr;
+    function sq1AlgToHex(scramble, animateBothLayers = false) {
+        let tlHex = '011233455677';
+        let blHex = '998bbaddcffe';
 
-            let bitCount = 0;
-            let temp = value;
-            while (temp) {
-                bitCount += temp & 1;
-                temp >>= 1;
-            }
+        const moves = parseScramble(scramble, animateBothLayers);
 
-            if (bitCount === 16) {
-                Shape_ShapeIdx[count++] = value;
+        for (let i = 0; i < moves.length; i++) {
+            const move = moves[i];
+
+            if (move.type === 'twist') {
+                ({ tlHex, blHex } = hexTwist(tlHex, blHex));
+            } else if (move.type === 'turn') {
+                tlHex = hexCycleLeft(tlHex, move.top);
+                blHex = hexCycleLeft(blHex, move.bottom);
             }
         }
+        return { tlHex, blHex };
     }
 
-    initShapes();
 
-    // ========================================
-    // SCRAMBLE FUNCTIONS
-    // ========================================
     function parseScramble(scramble, animateBothLayers = false) {
         const moves = [];
         let i = 0;
@@ -6728,81 +6132,6 @@ if (typeof module !== 'undefined' && module.exports) {
         return moves;
     }
 
-    function twist(tlHex, blHex) {
-        const tlFirst6 = tlHex.slice(0, 6);
-        const tlLast6 = tlHex.slice(6);
-        const blFirst6 = blHex.slice(0, 6);
-        const blLast6 = blHex.slice(6);
-
-        return {
-            tlHex: tlFirst6 + blFirst6,
-            blHex: tlLast6 + blLast6
-        };
-    }
-
-    function cycleLeft(hex, places) {
-        const normalized = ((places % 12) + 12) % 12;
-        return hex.slice(normalized) + hex.slice(0, normalized);
-    }
-
-    function invertScramble(scrambleString) {
-        if (!scrambleString) return scrambleString;
-        let str = String(scrambleString).trim();
-
-        const parts = str.split('/');
-        const reversed = parts.slice().reverse();
-
-        const inverted = reversed.map(part => {
-            part = part.trim();
-
-            const turnMatch = part.match(/\(([^)]+)\)/);
-            if (turnMatch) {
-                const values = turnMatch[1].split(',').map(v => v.trim());
-                const invertedValues = values.map(v => {
-                    const num = parseInt(v);
-                    if (isNaN(num)) return v;
-                    return String(-num);
-                });
-                return '(' + invertedValues.join(',') + ')';
-            }
-
-            if (part.includes(',')) {
-                const values = part.split(',').map(v => v.trim());
-                const invertedValues = values.map(v => {
-                    const num = parseInt(v);
-                    if (isNaN(num)) return v;
-                    return String(-num);
-                });
-                return invertedValues.join(',');
-            }
-
-            return part;
-        });
-
-        return inverted.join('/');
-    }
-
-    function sq1AlgToHex(scramble, animateBothLayers = false) {
-        let tlHex = '011233455677';
-        let blHex = '998bbaddcffe';
-
-        const moves = parseScramble(scramble, animateBothLayers);
-
-        for (let i = 0; i < moves.length; i++) {
-            const move = moves[i];
-
-            if (move.type === 'twist') {
-                const result = twist(tlHex, blHex);
-                tlHex = result.tlHex;
-                blHex = result.blHex;
-            } else if (move.type === 'turn') {
-                tlHex = cycleLeft(tlHex, move.top);
-                blHex = cycleLeft(blHex, move.bottom);
-            }
-        }
-        return { tlHex, blHex };
-    }
-
     // ========================================
     // STEP GENERATION
     // ========================================
@@ -6811,8 +6140,8 @@ if (typeof module !== 'undefined' && module.exports) {
         const chars = alg.split('');
         let position = 0;
 
+        // Animate both layers together mode
         if (animateBothLayers) {
-            // NEW MODE: Group both layers together
             while (position < chars.length) {
                 const char = chars[position];
 
@@ -8515,11 +7844,6 @@ function getShapeIndexToCaseMap() {
 function getCaseNameFromScramble(scramble) {
     if (!scramble || typeof window.algToShapeIndex === 'undefined') return null;
     try {
-        // For shape detection we do NOT invert - we apply directly
-        // algToShapeIndex already inverts internally, so pass the scramble as-is
-        // but we want the shape of the *position*, not the *solution*
-        // algToShapeIndex inverts then hexifies, so passing the scramble gives us the solved shape
-        // We need to pass the setup (inverted scramble) to get the scrambled shape
         const setup = invertScramble(scramble);
         const result = window.algToShapeIndex(setup);
         const map = getShapeIndexToCaseMap();
@@ -9111,11 +8435,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-window.openInvertScrambleModal = function () {
-    // TODO: Implement invert scramble modal
-    showToast('Invert scramble - to be implemented', 2000, 'info');
-};
-
 window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedParity = '') {
     if (typeof window.Square1AlgorithmViewer === 'undefined') {
         showToast('Algorithm viewer library not loaded', 2000, 'error');
@@ -9178,15 +8497,10 @@ document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);
 // Traces the shape journey through every slash!
 // ========================================
 
-// === CONSTANTS WITH SILLY NAMES ===
-const theseAreTotallyEdgePiecesForShapeTracing = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+// EDGE_PIECES, CORNER_PARTNER, getSolvedState, rotateLayer, doSlice → defined in utils.js
 
-const whoIsMyPartnerForShapeTracing = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-const whatIsMyCornerIDForShapeTracing = {
+// cornerID map (shapeTracer-specific — not duplicated elsewhere)
+const CORNER_ID = {
   A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
   N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
 };
@@ -9224,148 +8538,19 @@ const defaultShapePatternsForTracing = {
   'CCCCCC': 'Star'
 };
 
-// === BASIC HELPER FUNCTIONS ===
-function gimmeASolvedSquareOneCube() {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
-
-function RotateSectionForShapeTracing(arr, startIdx, length, rotAmount) {
-  const normalizedRot = ((rotAmount % length) + length) % length;
-  if (normalizedRot === 0) return;
-
-  const segment = arr.slice(startIdx, startIdx + length);
-  const rotated = [];
-  for (let i = 0; i < length; i++) {
-    rotated[(i + normalizedRot) % length] = segment[i];
-  }
-  for (let i = 0; i < length; i++) {
-    arr[startIdx + i] = rotated[i];
-  }
-}
-
-function doTheSliceSwapForShapeTracing(arr) {
-  for (let i = 0; i < 6; i++) {
-    [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-}
-
 function rotateStringForPatternSearch(str, rotAmount) {
   const len = str.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return str.slice(normalizedRot) + str.slice(0, normalizedRot);
+  const n = ((rotAmount % len) + len) % len;
+  return str.slice(n) + str.slice(0, n);
 }
 
 // === SCRAMBLE STANDARDIZATION ===
-function StandardizeThisScrambleForMe(scrambleString) {
+function StandardizeThisScramble(scrambleString) {
   if (!scrambleString) return '';
-
   let str = scrambleString.trim();
-
-  // Check if starts with /
-  if (str.startsWith('/')) {
-    str = '(0,0)' + str;
-  }
-
-  // Check if ends with /
-  if (str.endsWith('/')) {
-    str = str + '(0,0)';
-  }
-
+  if (str.startsWith('/')) str = '(0,0)' + str;
+  if (str.endsWith('/'))   str = str + '(0,0)';
   return str;
-}
-
-// === SCRAMBLE INVERSION ===
-function InvertThisScrambleForShapeTracing(scrambleString) {
-  if (!scrambleString) return scrambleString;
-  let str = String(scrambleString).trim();
-
-  const parts = str.split('/');
-  const reversed = parts.slice().reverse();
-
-  const inverted = reversed.map(part => {
-    part = part.trim();
-
-    const turnMatch = part.match(/\(([^)]+)\)/);
-    if (turnMatch) {
-      const values = turnMatch[1].split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return '(' + invertedValues.join(',') + ')';
-    }
-
-    if (part.includes(',')) {
-      const values = part.split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return invertedValues.join(',');
-    }
-
-    return part;
-  });
-
-  return inverted.join('/');
-}
-
-// === TOKENIZER ===
-function* TokenizeThisScrambleForShapeTracing(scrambleString) {
-  let idx = 0;
-  const totalLen = scrambleString.length;
-  const whitespaceRegex = /\s/;
-  const integerRegex = /^([+-]?\d+)/;
-
-  const skipWhitespace = () => {
-    while (idx < totalLen && whitespaceRegex.test(scrambleString[idx])) idx++;
-  };
-
-  while (true) {
-    skipWhitespace();
-    if (idx >= totalLen) return;
-
-    const currentChar = scrambleString[idx];
-
-    if (currentChar === '(') {
-      idx++;
-      skipWhitespace();
-
-      let match = scrambleString.slice(idx).match(integerRegex);
-      if (!match) { idx++; continue; }
-      const topValue = +match[1];
-      idx += match[1].length;
-
-      skipWhitespace();
-      if (scrambleString[idx] === ',') idx++;
-      skipWhitespace();
-
-      match = scrambleString.slice(idx).match(integerRegex);
-      if (!match) { idx++; continue; }
-      const bottomValue = +match[1];
-      idx += match[1].length;
-
-      skipWhitespace();
-      if (scrambleString[idx] === ')') idx++;
-      skipWhitespace();
-
-      const hasSlashAfter = (scrambleString[idx] === '/');
-      if (hasSlashAfter) idx++;
-
-      yield { moveType: 'turn', top: topValue, bottom: bottomValue, hasSlash: hasSlashAfter };
-      continue;
-    }
-
-    if (currentChar === '/') {
-      idx++;
-      yield { moveType: 'slash' };
-      continue;
-    }
-
-    idx++;
-  }
 }
 
 // === BUILD UNITS FROM CUBE STATE ===
@@ -9375,18 +8560,18 @@ function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
 
   while (i < 12) {
     const piece = cubeState[startIdx + i];
-    if (theseAreTotallyEdgePiecesForShapeTracing.has(piece)) {
+    if (EDGE_PIECES.has(piece)) {
       units.push({ type: 'E', edge: piece });
       i += 1;
       continue;
     }
 
     const nextPiece = cubeState[startIdx + ((i + 1) % 12)];
-    if (whoIsMyPartnerForShapeTracing[piece] === nextPiece) {
-      units.push({ type: 'C', pair: whatIsMyCornerIDForShapeTracing[piece], rep: piece });
+    if (CORNER_PARTNER[piece] === nextPiece) {
+      units.push({ type: 'C', pair: CORNER_ID[piece], rep: piece });
       i += 2;
     } else {
-      units.push({ type: 'C', pair: whatIsMyCornerIDForShapeTracing[piece] || '??', rep: piece });
+      units.push({ type: 'C', pair: CORNER_ID[piece] || '??', rep: piece });
       i += 1;
     }
   }
@@ -9411,16 +8596,16 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
 // === SHAPE PATH TRACING ===
 function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
   const shapePath = [];
-  const cubeState = gimmeASolvedSquareOneCube();
+  const cubeState = getSolvedState();
 
   let currentStep = null;
 
   // Apply moves and capture shapes after each slash
-  for (const token of TokenizeThisScrambleForShapeTracing(scrambleString)) {
-    if (token.moveType === 'turn') {
+  for (const token of parseScramble(scrambleString)) {
+    if (token.type === 'turn') {
       // Apply rotations
-      RotateSectionForShapeTracing(cubeState, 0, 12, token.top);
-      RotateSectionForShapeTracing(cubeState, 12, 12, token.bottom);
+      rotateLayer(cubeState, 0, 12, token.top);
+      rotateLayer(cubeState, 12, 12, token.bottom);
 
       // If this turn has a slash, capture the state BEFORE the slash
       if (token.hasSlash) {
@@ -9439,11 +8624,11 @@ function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
         shapePath.push(currentStep);
 
         // Now do the slash
-        doTheSliceSwapForShapeTracing(cubeState);
+        doSlice(cubeState);
       }
     } else {
       // Standalone slash
-      doTheSliceSwapForShapeTracing(cubeState);
+      doSlice(cubeState);
     }
   }
 
@@ -9479,7 +8664,7 @@ function traceScrambleToScrambleShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = StandardizeThisScrambleForMe(scramble);
+  const standardized = StandardizeThisScramble(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9495,7 +8680,7 @@ function traceScrambleToSolutionShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
-  const standardized = StandardizeThisScrambleForMe(scramble);
+  const standardized = StandardizeThisScramble(scramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9514,10 +8699,10 @@ function traceSolutionToScrambleShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = InvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = invertScramble(solution);
 
   // Standardize
-  const standardized = StandardizeThisScrambleForMe(invertedScramble);
+  const standardized = StandardizeThisScramble(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9533,10 +8718,10 @@ function traceSolutionToSolutionShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
-  const invertedScramble = InvertThisScrambleForShapeTracing(solution);
+  const invertedScramble = invertScramble(solution);
 
   // Standardize
-  const standardized = StandardizeThisScrambleForMe(invertedScramble);
+  const standardized = StandardizeThisScramble(invertedScramble);
 
   // Trace
   const shapePath = traceTheShapePathThroughThisScramble(standardized, shapePatterns);
@@ -9753,39 +8938,7 @@ function getDisplayName(caseName) {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-function invertScramble(s) {
-    if (!s) return s;
-    let str = String(s).trim();
-
-    const parts = str.split('/');
-    const reversed = parts.slice().reverse();
-
-    const invertNum = (v) => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        const inv = ((-num) % 12 + 12) % 12;
-        return String(inv > 6 ? inv - 12 : inv);
-    };
-
-    const inverted = reversed.map(part => {
-        part = part.trim();
-
-        const turnMatch = part.match(/\(([^)]+)\)/);
-        if (turnMatch) {
-            const values = turnMatch[1].split(',').map(v => v.trim());
-            return '(' + values.map(invertNum).join(',') + ')';
-        }
-
-        if (part.includes(',')) {
-            const values = part.split(',').map(v => v.trim());
-            return values.map(invertNum).join(',');
-        }
-
-        return part;
-    });
-
-    return inverted.join('/');
-}
+// invertScramble → defined in utils.js
 
 function getAlgDisplayMeta(alg, caseName) {
     if (!alg || alg === 'Done!' || typeof window.algToShapeIndex === 'undefined') {
@@ -10881,108 +10034,6 @@ if (document.readyState === 'loading') {
 
 updateSelectLabels();
 window.addEventListener('resize', updateSelectLabels);
-
-
-/* ==== FILE: js/tools/scrambled-state-generator.js ==== */
-
-// Hex generation functions from random generator
-function rn(n) {
-    return Math.floor(Math.random() * n);
-}
-
-function SqCubie() {
-    this.ul = 0x011233;
-    this.ur = 0x455677;
-    this.dl = 0x998bba;
-    this.dr = 0xddcffe;
-    this.ml = 0;
-}
-
-SqCubie.prototype.toString = function () {
-    return this.ul.toString(16).padStart(6, '0') +
-        this.ur.toString(16).padStart(6, '0') +
-        "|/".charAt(this.ml) +
-        this.dl.toString(16).padStart(6, '0') +
-        this.dr.toString(16).padStart(6, '0');
-}
-
-SqCubie.prototype.setPiece = function (idx, value) {
-    if (idx < 6) {
-        this.ul &= ~(0xf << ((5 - idx) << 2));
-        this.ul |= value << ((5 - idx) << 2);
-    } else if (idx < 12) {
-        this.ur &= ~(0xf << ((11 - idx) << 2));
-        this.ur |= value << ((11 - idx) << 2);
-    } else if (idx < 18) {
-        this.dl &= ~(0xf << ((17 - idx) << 2));
-        this.dl |= value << ((17 - idx) << 2);
-    } else {
-        this.dr &= ~(0xf << ((23 - idx) << 2));
-        this.dr |= value << ((23 - idx) << 2);
-    }
-}
-
-const Shape_halflayer = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-const Shape_ShapeIdx = [];
-
-function initShapes() {
-    let count = 0;
-    for (let i = 0; i < 28561; i++) {
-        const dr = Shape_halflayer[i % 13];
-        const dl = Shape_halflayer[Math.floor(i / 13) % 13];
-        const ur = Shape_halflayer[Math.floor(Math.floor(i / 13) / 13) % 13];
-        const ul = Shape_halflayer[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-        const value = ul << 18 | ur << 12 | dl << 6 | dr;
-
-        let bitCount = 0;
-        let temp = value;
-        while (temp) {
-            bitCount += temp & 1;
-            temp >>= 1;
-        }
-
-        if (bitCount === 16) {
-            Shape_ShapeIdx[count++] = value;
-        }
-    }
-}
-
-function generateCubeFromShapeIndex(shapeIndex) {
-    const f = new SqCubie();
-    const shape = Shape_ShapeIdx[shapeIndex];
-    let corner = 0x01234567 << 1 | 0x11111111;
-    let edge = 0x01234567 << 1;
-    let n_corner = 8, n_edge = 8;
-
-    for (let i = 0; i < 24; i++) {
-        if (((shape >> i) & 1) === 0) {
-            const rnd = rn(n_edge) << 2;
-            f.setPiece(23 - i, (edge >> rnd) & 0xf);
-            const m = (1 << rnd) - 1;
-            edge = (edge & m) + ((edge >> 4) & ~m);
-            n_edge--;
-        } else {
-            const rnd = rn(n_corner) << 2;
-            f.setPiece(23 - i, (corner >> rnd) & 0xf);
-            f.setPiece(22 - i, (corner >> rnd) & 0xf);
-            const m = (1 << rnd) - 1;
-            corner = (corner & m) + ((corner >> 4) & ~m);
-            n_corner--;
-            i++;
-        }
-    }
-    f.ml = rn(2);
-    return f;
-}
-
-function generateHexFromShapeIndex(shapeIndex) {
-    const cube = generateCubeFromShapeIndex(shapeIndex);
-    return cube.toString();
-}
-
-// Initialize shapes on load
-initShapes();
-
 
 /* ==== FILE: js/settings.js ==== */
 
@@ -16214,7 +15265,7 @@ function generateNextScrambleData() {
 
     const randomIndex = Math.floor(Math.random() * trainingScrambles.length);
     const scramble = trainingScrambles[randomIndex];
-    const hexCode = generateHexFromShapeIndex(scramble);
+    const hexCode = shapeIndexToHex(scramble);
 
     let scrambleText = hexCode;
     try {
@@ -16801,7 +15852,7 @@ function openShapeIndexSelector() {
 
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
-        const hexCode = convertShapeIndexToHex(idx);
+        const hexCode = shapeIndexToHex(idx);
         const shapeHTML = visualizeCubeShapeOutlines(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
@@ -16815,7 +15866,7 @@ function openShapeIndexSelector() {
     }).join('');
 
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
-        const hexCode = convertShapeIndexToHex(idx);
+        const hexCode = shapeIndexToHex(idx);
         const shapeHTML = visualizeCubeShapeOutlines(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
@@ -17418,7 +16469,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
         questionCount++;
 
-        currentHexCode = generateHexFromShapeIndex(currentItem.idx);
+        currentHexCode = shapeIndexToHex(currentItem.idx);
         window._evilCurrentHexCode = currentHexCode;
         let imgHTML = '';
         try {
@@ -17643,7 +16694,7 @@ function startParityQuiz(chosenCaseNames) {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
         questionCount++;
 
-        const hexCode = generateHexFromShapeIndex(currentItem.idx);
+        const hexCode = shapeIndexToHex(currentItem.idx);
         let scrambleText = '';
         let imgHTML = '';
 
@@ -18598,7 +17649,7 @@ function generateMultiCaseScrambleData() {
     if (!indices || indices.length === 0) return null;
 
     const scramble = indices[Math.floor(Math.random() * indices.length)];
-    const hexCode = generateHexFromShapeIndex(scramble);
+    const hexCode = shapeIndexToHex(scramble);
 
     let scrambleText = hexCode;
     let scrambleImage = '<div style="color:var(--text-muted);">Image unavailable</div>';
@@ -18630,7 +17681,6 @@ const _origGenerateNextScrambleData = generateNextScrambleData;
 window.generateNextScrambleData = function () {
     if (window._multiCaseMode) {
         const d = generateMultiCaseScrambleData();
-        // Update subtitle with case name after display
         return d;
     }
     return _origGenerateNextScrambleData();
@@ -18662,8 +17712,6 @@ window.closeTrainingModal = function () {
 };
 
 // ─── Export / Import hooks ────────────────────────────────────────────────────
-// These are called from exportData() / importData() in restoftheapp.js via
-// window.selectorExportHook / window.selectorImportHook
 
 window.selectorExportHook = function (stateObj) {
     stateObj.selectorSelectedCases = [...selectorSelectedCases];
@@ -18691,7 +17739,6 @@ window.pushModalState = function (modalId, closeFn, ...args) {
     try {
         window.history.pushState({ sqgModal: true, modalId }, '');
     } catch (e) {
-        // Some browsers may reject pushState in unusual contexts; ignore silently.
     }
 };
 
