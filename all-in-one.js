@@ -56,7 +56,7 @@ function hexCycleLeft(hex, places) {
     return hex.slice(n) + hex.slice(0, n);
 }
 
-function sq1AlgToHex(scramble) {
+function scrambleToHex(scramble) {
     let tlHex = '011233455677';
     let blHex = '998bbaddcffe';
     for (const move of parseScramble(scramble)) {
@@ -203,7 +203,7 @@ const SHAPE_INDEX_ARRAY = [];
     }
 })();
 
-function getShapeIndexFromHex(tlHex, blHex) {
+function hexToShapeIndex(tlHex, blHex) {
     const code = tlHex + '|' + blHex;
     if (code.length !== 25) throw new Error('Invalid hex format — needs 25 characters');
 
@@ -621,13 +621,6 @@ if (typeof window !== 'undefined') {
     };
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = {
-        normalizeScramble,
-        normalizeScrambleFormat
-    };
-}
-
 /* ==== FILE: js/tools/alg_to_index.js ==== */
 
 (function () {
@@ -637,8 +630,8 @@ if (typeof module !== 'undefined' && module.exports) {
 
     // MAIN PIPELINE: Invert -> hexify -> get shape index
     const invertedScramble = invertScramble(scrambleText);
-    const { tlHex, blHex } = sq1AlgToHex(invertedScramble);
-    const shapeIndex = getShapeIndexFromHex(tlHex, blHex);
+    const { tlHex, blHex } = scrambleToHex(invertedScramble);
+    const shapeIndex = hexToShapeIndex(tlHex, blHex);
 
     return {
       original: scrambleText,
@@ -5988,149 +5981,46 @@ if (typeof window !== 'undefined') {
 
     // SHAPE_INDEX_ARRAY, hexTwist, hexCycleLeft, invertScramble → utils.js
 
-    function sq1AlgToHex(scramble, animateBothLayers = false) {
-        let tlHex = '011233455677';
-        let blHex = '998bbaddcffe';
+    function scrambleToHex(scramble, animateBothLayers = false) {
+    const moves = animateBothLayers
+        ? parseScramble(scramble)
+        : parseScrambleLegacy(scramble);
 
-        const moves = parseScramble(scramble, animateBothLayers);
+    let tlHex = '011233455677';
+    let blHex = '998bbaddcffe';
 
-        for (let i = 0; i < moves.length; i++) {
-            const move = moves[i];
-
-            if (move.type === 'twist') {
-                ({ tlHex, blHex } = hexTwist(tlHex, blHex));
-            } else if (move.type === 'turn') {
-                tlHex = hexCycleLeft(tlHex, move.top);
-                blHex = hexCycleLeft(blHex, move.bottom);
-            }
+    for (const move of moves) {
+        if (move.type === 'twist') {
+            ({ tlHex, blHex } = hexTwist(tlHex, blHex));
+        } else if (move.type === 'turn') {
+            tlHex = hexCycleLeft(tlHex, move.top);
+            blHex = hexCycleLeft(blHex, move.bottom);
         }
-        return { tlHex, blHex };
     }
+    return { tlHex, blHex };
+}
 
 
-    function parseScramble(scramble, animateBothLayers = false) {
-        const moves = [];
-        let i = 0;
-
-        if (animateBothLayers) {
-            // NEW MODE: Group tokens as "a,b", "/", "c,d"
-            while (i < scramble.length) {
-                const char = scramble[i];
-
-                if (char === '/' || char === '\\') {
-                    moves.push({ type: 'twist' });
-                    i++;
-                }
-                else if (char === '(' || char === '-' || /\d/.test(char)) {
-                    let moveStr = '';
-                    let parenDepth = 0;
-
-                    while (i < scramble.length) {
-                        const c = scramble[i];
-                        if (c === '(') parenDepth++;
-                        if (c === ')') parenDepth--;
-
-                        if (c === '/' || c === '\\') {
-                            break;
-                        }
-
-                        if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-                            moveStr += c;
-                        }
-
-                        i++;
-
-                        if (parenDepth === 0 && moveStr.includes(',')) {
-                            break;
-                        }
-                    }
-
-                    const cleaned = moveStr.replace(/[()]/g, '').trim();
-                    if (cleaned.includes(',')) {
-                        const [top, bottom] = cleaned.split(',').map(n => parseInt(n.trim()));
-                        moves.push({ type: 'turn', top, bottom });
-                    }
-                }
-                else if (/\s/.test(char)) {
-                    i++;
-                }
-                else {
-                    i++;
-                }
-            }
+    function parseScrambleLegacy(scramble) {
+    const paired = window.parseScramble(scramble);
+    const moves = [];
+    for (const move of paired) {
+        if (move.type === 'twist') {
+            moves.push(move);
         } else {
-            // LEGACY MODE: Separate tokens for each layer
-            while (i < scramble.length) {
-                const char = scramble[i];
-
-                if (char === '/' || char === '\\') {
-                    moves.push({ type: 'twist' });
-                    i++;
-                }
-                else if (char === '(' || char === '-' || /\d/.test(char)) {
-                    let moveStr = '';
-                    let parenDepth = 0;
-                    let foundComma = false;
-
-                    while (i < scramble.length) {
-                        const c = scramble[i];
-                        if (c === '(') parenDepth++;
-                        if (c === ')') parenDepth--;
-
-                        if (c === '/' || c === '\\') {
-                            break;
-                        }
-
-                        if (c === ',') foundComma = true;
-
-                        if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-                            moveStr += c;
-                        }
-
-                        i++;
-
-                        if (parenDepth === 0 && foundComma) {
-                            break;
-                        }
-                    }
-
-                    const cleaned = moveStr.replace(/[()]/g, '').trim();
-                    if (cleaned.includes(',')) {
-                        const parts = cleaned.split(',').map(n => parseInt(n.trim()));
-                        const top = parts[0];
-                        const bottom = parts.length > 1 ? parts[1] : 0;
-
-                        // Emit top layer move only
-                        if (top !== 0) {
-                            moves.push({ type: 'turn', top, bottom: 0 });
-                        }
-
-                        // Emit bottom layer move only
-                        if (bottom !== 0) {
-                            moves.push({ type: 'turn', top: 0, bottom });
-                        }
-
-                        // If both are zero, still emit one move to maintain step count
-                        if (top === 0 && bottom === 0) {
-                            moves.push({ type: 'turn', top: 0, bottom: 0 });
-                        }
-                    } else if (cleaned) {
-                        const num = parseInt(cleaned);
-                        if (!isNaN(num)) {
-                            moves.push({ type: 'turn', top: num, bottom: 0 });
-                        }
-                    }
-                }
-                else if (/\s/.test(char)) {
-                    i++;
-                }
-                else {
-                    i++;
-                }
-            }
+            const { top, bottom } = move;
+            if (top !== 0) moves.push({ type: 'turn', top, bottom: 0 });
+            if (bottom !== 0) moves.push({ type: 'turn', top: 0, bottom });
+            if (top === 0 && bottom === 0) moves.push({ type: 'turn', top: 0, bottom: 0 });
         }
-        return moves;
     }
+    return moves;
+}
+
+function parseScramble(scramble, animateBothLayers = false) {
+    if (animateBothLayers) return window.parseScramble(scramble);
+    return parseScrambleLegacy(scramble);
+}
 
     // ========================================
     // STEP GENERATION
@@ -6279,7 +6169,7 @@ if (typeof window !== 'undefined') {
                 return { tlHex: '011233455677', blHex: '998bbaddcffe' };
             }
             const inverted = invertScramble(step.currentAlg);
-            return sq1AlgToHex(inverted, animateBothLayers);
+            return scrambleToHex(inverted, animateBothLayers);
         } catch (e) {
             return { tlHex: '011233455677', blHex: '998bbaddcffe' };
         }
@@ -8745,17 +8635,6 @@ if (typeof window !== 'undefined') {
     traceSolutionToScrambleShapePath,
     traceSolutionToSolutionShapePath,
     // Expose default shape patterns for reference
-    defaultShapePatternsForTracing: defaultShapePatternsForTracing
-  };
-}
-
-// For module systems (Node.js, bundlers, etc.)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    traceScrambleToScrambleShapePath,
-    traceScrambleToSolutionShapePath,
-    traceSolutionToScrambleShapePath,
-    traceSolutionToSolutionShapePath,
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
 }
