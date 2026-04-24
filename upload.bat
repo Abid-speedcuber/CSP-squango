@@ -2,7 +2,7 @@
 setlocal
 
 :: Source (current folder)
-set "SOURCE=%cd%"
+set "SOURCE=D:\GitHub\CSP-squango\public"
 
 :: Destination
 set "DEST=D:\GitHub\squanGo\public\csp"

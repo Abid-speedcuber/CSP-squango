@@ -1,10 +1,5 @@
 /* ==== FILE: js/utils.js ==== */
 
-// ============================================================
-// CANONICAL SHARED UTILITIES
-// All duplicate logic across the codebase is unified here.
-// ============================================================
-
 function parseScramble(scramble) {
     const moves = [];
     let i = 0;
@@ -999,21 +994,7 @@ if (typeof window !== 'undefined') {
 
         return tokens;
     }
-
-    function applyScrambleToStateArray_w(scr) {
-        const a = createSolvedStateArray_w();
-        for (const tok of tokenizeScrambleStringGenerator_w(scr)) {
-            if (tok.k === 'tb') {
-                rotateSectionOfArray(a, 0, 12, tok.t);
-                rotateSectionOfArray(a, 12, 12, tok.b);
-                if (tok.slash) performSliceSwapOperation_w(a);
-            } else {
-                performSliceSwapOperation_w(a);
-            }
-        }
-        return a;
-    }
-
+    
     function validateCorners(state) {
         const pairs = [['A', 'B'], ['D', 'E'], ['G', 'H'], ['J', 'K'], ['N', 'O'], ['Q', 'R'], ['T', 'U'], ['W', 'X']];
         for (const [x, y] of pairs) {
