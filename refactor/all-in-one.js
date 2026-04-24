@@ -649,6 +649,9 @@ if (typeof window !== 'undefined') {
 (function (Cglobal) {
     'use strict';
 
+    // Parity Tracer Core
+    // Scramble to hex -> utils.js
+
     // ── Dark-mode brightness offsets (tweak these to restyle the modal) ──────
     // All values are % brightness adjustments relative to config.backgroundColor.
     // Positive = lighter, negative = darker.
@@ -685,28 +688,20 @@ if (typeof window !== 'undefined') {
 
     // hex digit → parity color code (CCW sticker mode)
     const HEX_TO_PARITY_CODE_CCW = {
-        '0':'O','2':'G','4':'R','6':'B',          // top edges
-        '8':'R','a':'G','c':'O','e':'B',          // bottom edges
-        '1':'O','3':'G','5':'R','7':'B',          // top corners CCW
-        '9':'R','b':'G','d':'O','f':'B'           // bottom corners CCW
+        '0':'O','2':'B','4':'R','6':'G',          // top edges
+        '8':'G','a':'R','c':'B','e':'O',          // bottom edges
+        '1':'B','3':'R','5':'G','7':'O',          // top corners CCW
+        '9':'G','b':'R','d':'B','f':'O'           // bottom corners CCW
     };
     // CW sticker mode
     const HEX_TO_PARITY_CODE_CW = {
-        '0':'O','2':'G','4':'R','6':'B',
-        '8':'R','a':'G','c':'O','e':'B',
-        '1':'G','3':'R','5':'B','7':'O',          // top corners CW
-        '9':'G','b':'O','d':'B','f':'R'           // bottom corners CW
+        '0':'O','2':'B','4':'R','6':'G',          // top edges
+        '8':'G','a':'R','c':'B','e':'O',          // bottom edges
+        '1':'O','3':'B','5':'R','7':'G',          // top corners CW
+        '9':'O','b':'G','d':'R','f':'B'            // bottom corners CW
     };
     const TOP_HEX = new Set(['0','1','2','3','4','5','6','7']);
     const CORNER_HEX = new Set(['1','3','5','7','9','b','d','f']);
-
-    // hex digit → color squares HTML for UI (always uses piece identity, not sticker mode)
-    const HEX_TO_COLOR_SQUARES = {
-        '0':'O','2':'G','4':'R','6':'B',
-        '8':'R','a':'G','c':'O','e':'B',
-        '1':'O','3':'G','5':'R','7':'B',
-        '9':'R','b':'G','d':'O','f':'B'
-    };
 
     // Helper functions used across multiple modals
     function getContrastColor(hexColor) {
@@ -939,43 +934,22 @@ if (typeof window !== 'undefined') {
         return { name: 'Unknown', pat: bitStr, rot: 0, originalPat: bitStr, symmetryDegree: 1 };
     }
 
-    // ── PARITY CALCULATION ───────────────────────────────────────────────────
-    // Placeholder lookup tables — replace values with correct 0/1 when computed
+    // Lookup Tables for speed
     const blackEdgeParityMap = {
-        '0246':0,'0264':0,'0426':0,'0462':0,'0624':0,'0642':0,
-        '2046':0,'2064':0,'2406':0,'2460':0,'2604':0,'2640':0,
-        '4026':0,'4062':0,'4206':0,'4260':0,'4602':0,'4620':0,
-        '6024':0,'6042':0,'6204':0,'6240':0,'6402':0,'6420':0
-    };
-    const whiteEdgeParityMap = {
-        '8ace':0,'8aec':0,'8cae':0,'8cea':0,'8eac':0,'8eca':0,
-        'a8ce':0,'a8ec':0,'ac8e':0,'ace8':0,'ae8c':0,'aec8':0,
-        'c8ae':0,'c8ea':0,'ca8e':0,'cae8':0,'ce8a':0,'cea8':0,
-        'e8ac':0,'e8ca':0,'ea8c':0,'eac8':0,'ec8a':0,'eca8':0
-    };
-    const blackCornerParityMap = {
-        '1357':0,'1375':0,'1537':0,'1573':0,'1735':0,'1753':0,
-        '3157':0,'3175':0,'3517':0,'3571':0,'3715':0,'3751':0,
-        '5137':0,'5173':0,'5317':0,'5371':0,'5713':0,'5731':0,
-        '7135':0,'7153':0,'7315':0,'7351':0,'7513':0,'7531':0
-    };
-    const whiteCornerParityMap = {
-        '9bdf':0,'9bfd':0,'9dbf':0,'9dfb':0,'9fbd':0,'9fdb':0,
-        'b9df':0,'b9fd':0,'bd9f':0,'bdf9':0,'bf9d':0,'bfd9':0,
-        'd9bf':0,'d9fb':0,'db9f':0,'dbf9':0,'df9b':0,'dfb9':0,
-        'f9bd':0,'f9db':0,'fb9d':0,'fbd9':0,'fd9b':0,'fdb9':0
+        '0246':0, '0264':1, '0426':1, '0462':0, '0624':0, '0642':1, '2046':1, '2064':0, '2406':0, '2460':1, '2604':1, '2640':0, '4026':0, '4062':1, '4206':1, '4260':0, '4602':0, '4620':1, '6024':1, '6042':0, '6204':0, '6240':1, '6402':1, '6420':0
     };
 
-    function trioParity(a, b, c) {
-        // finds alone piece (no opposite in trio), checks pair adjacency
-        const opp = {R:'O',O:'R',B:'G',G:'B'};
-        let alone, p1, p2;
-        if (a !== opp[b] && a !== opp[c]) { alone=a; p1=b; p2=c; }
-        else if (b !== opp[a] && b !== opp[c]) { alone=b; p1=a; p2=c; }
-        else { alone=c; p1=a; p2=b; }
-        const pair = p1+p2;
-        return (pair==='RG'||pair==='GR'||pair==='OB'||pair==='BO') ? 1 : 0;
-    }
+    const whiteEdgeParityMap = {
+        '8ace':1, '8aec':0, '8cae':0, '8cea':1, '8eac':1, '8eca':0, 'a8ce':0, 'a8ec':1, 'ac8e':1, 'ace8':0, 'ae8c':0, 'aec8':1, 'c8ae':1, 'c8ea':0, 'ca8e':0, 'cae8':1, 'ce8a':1, 'cea8':0, 'e8ac':0, 'e8ca':1, 'ea8c':1, 'eac8':0, 'ec8a':0, 'eca8':1
+    };
+
+    const blackCornerParityMap = {
+        '1357':0, '1375':1, '1537':1, '1573':0, '1735':0, '1753':1, '3157':1, '3175':0, '3517':0, '3571':1, '3715':1, '3751':0, '5137':0, '5173':1, '5317':1, '5371':0, '5713':0, '5731':1, '7135':1, '7153':0, '7315':0, '7351':1, '7513':1, '7531':0
+    };
+
+    const whiteCornerParityMap = {
+        '9bdf':1, '9bfd':0, '9dbf':0, '9dfb':1, '9fbd':1, '9fdb':0, 'b9df':0, 'b9fd':1, 'bd9f':1, 'bdf9':0, 'bf9d':0, 'bfd9':1, 'd9bf':1, 'd9fb':0, 'db9f':0, 'dbf9':1, 'df9b':1, 'dfb9':0, 'f9bd':0, 'f9db':1, 'fb9d':1, 'fbd9':0, 'fd9b':0, 'fdb9':1
+    };
 
     function calculateParityFromHex(tlHex, blHex, z2Mode, useClockwise, scrambleForEvil) {
         const { topUnits, topBits, botUnits, botBits } = hexToUnits(tlHex, blHex);
@@ -1030,10 +1004,10 @@ if (typeof window !== 'undefined') {
         const topCorners = allCorners.filter(c => TOP_HEX.has(c));
         const botCorners = allCorners.filter(c => !TOP_HEX.has(c));
 
-        const l1 = blackEdgeParityMap[topEdges.join('')] ?? trioParity(codeMap[topEdges[0]], codeMap[topEdges[1]], codeMap[topEdges[2]]);
-        const l2 = whiteEdgeParityMap[botEdges.join('')] ?? trioParity(codeMap[botEdges[0]], codeMap[botEdges[1]], codeMap[botEdges[2]]);
-        const l3 = blackCornerParityMap[topCorners.join('')] ?? trioParity(codeMap[topCorners[0]], codeMap[topCorners[1]], codeMap[topCorners[2]]);
-        const l4 = whiteCornerParityMap[botCorners.join('')] ?? trioParity(codeMap[botCorners[0]], codeMap[botCorners[1]], codeMap[botCorners[2]]);
+        const l1 = blackEdgeParityMap[topEdges.join('')];
+        const l2 = whiteEdgeParityMap[botEdges.join('')];
+        const l3 = blackCornerParityMap[topCorners.join('')];
+        const l4 = whiteCornerParityMap[botCorners.join('')];
 
         // lines 5-6: alternating parity (positions 0,2,4,6 of full ordered arrays)
         const edgeOdd = [allEdges[0],allEdges[2],allEdges[4],allEdges[6]].filter(Boolean);
