@@ -612,7 +612,8 @@ function simplifyScramble(tokens, steps) {
 if (typeof window !== 'undefined') {
     window.ScrambleNormalizer = {
         normalizeScramble,
-        normalizeScrambleFormat
+        normalizeScrambleFormat,
+        simplifyScramble
     };
 }
 
@@ -680,20 +681,31 @@ if (typeof window !== 'undefined') {
         leftCol: '#0066CC'
     };
 
-    // PIECE_LABELS, EDGE_PIECES, CORNER_PARTNER → defined in utils.js
+    // scrambleToHex → defined in utils.js
 
-    function createColorLabelHTML_w(str) {
-        return str.replace(/[WYGBRO]/g, m => `<span class="color-dot ${m}"></span>`);
-    }
+    // hex digit → parity color code (CCW sticker mode)
+    const HEX_TO_PARITY_CODE_CCW = {
+        '0':'O','2':'G','4':'R','6':'B',          // top edges
+        '8':'R','a':'G','c':'O','e':'B',          // bottom edges
+        '1':'O','3':'G','5':'R','7':'B',          // top corners CCW
+        '9':'R','b':'G','d':'O','f':'B'           // bottom corners CCW
+    };
+    // CW sticker mode
+    const HEX_TO_PARITY_CODE_CW = {
+        '0':'O','2':'G','4':'R','6':'B',
+        '8':'R','a':'G','c':'O','e':'B',
+        '1':'G','3':'R','5':'B','7':'O',          // top corners CW
+        '9':'G','b':'O','d':'B','f':'R'           // bottom corners CW
+    };
+    const TOP_HEX = new Set(['0','1','2','3','4','5','6','7']);
+    const CORNER_HEX = new Set(['1','3','5','7','9','b','d','f']);
 
-    const pieceNameHTMLMap_w = {};
-    for (const k in PIECE_LABELS) {
-        pieceNameHTMLMap_w[k] = createColorLabelHTML_w(PIECE_LABELS[k]);
-    }
-
-    const cornerIdentifierMappingWith = {
-        A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-        N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
+    // hex digit → color squares HTML for UI (always uses piece identity, not sticker mode)
+    const HEX_TO_COLOR_SQUARES = {
+        '0':'O','2':'G','4':'R','6':'B',
+        '8':'R','a':'G','c':'O','e':'B',
+        '1':'O','3':'G','5':'R','7':'B',
+        '9':'R','b':'G','d':'O','f':'B'
     };
 
     // Helper functions used across multiple modals
@@ -705,37 +717,37 @@ if (typeof window !== 'undefined') {
         return luminance > 0.5 ? '#000000' : '#FFFFFF';
     }
 
-    // Default shape patterns with long name
+    // Default shape patterns — keys are bitstrings: 0=Edge, 1=Corner
     const defaultShapePatterns_w = {
-        'ECECECEC': 'Square',
-        'EECECCEC': 'Kite',
-        'EECCEECC': 'Barrel',
-        'EECCECEC': 'Left Fist',
-        'EECECECC': 'Right Fist',
-        'EECEECCC': 'Shield',
-        'EEECCECC': 'Muffin',
-        'EEECECCC': 'Left Pawn',
-        'ECEEECCC': 'Right Pawn',
-        'EEEECCCC': 'Scallop',
-        'EECCCCC': 'Pair',
-        'ECECCCC': 'L-Shape',
-        'ECCCECC': 'Line',
-        'EEEEEECCC': '6-0',
-        'ECEEEEECC': 'Right 5-1',
-        'EEEEECECC': 'Left 5-1',
-        'EECEEEECC': 'Right 4-2',
-        'EEEECEECC': 'Left 4-2',
-        'EEEECECEC': '4-1-1',
-        'EEECEEECC': '3-3',
-        'ECEECEEEC': '3-1-2',
-        'ECEEECEEC': '3-2-1',
-        'EECEECEEC': '2-2-2',
-        'EEEEEEEECC': '8-0',
-        'EEEEEECEEC': '6-2',
-        'EEEECEEEEC': '4-4',
-        'EEEEEEECEC': '7-1',
-        'EEEEECEEEC': '5-3',
-        'CCCCCC': 'Star'
+        '01010101': 'Square',
+        '00101001': 'Kite',
+        '00110011': 'Barrel',
+        '00110101': 'Left Fist',
+        '00100110': 'Right Fist',
+        '00100111': 'Shield',
+        '00011011': 'Muffin',
+        '00010111': 'Left Pawn',
+        '01000111': 'Right Pawn',
+        '00001111': 'Scallop',
+        '0011111': 'Pair',
+        '0101111': 'L-Shape',
+        '0110111': 'Line',
+        '000000111': '6-0',
+        '010000011': 'Right 5-1',
+        '000001011': 'Left 5-1',
+        '001000011': 'Right 4-2',
+        '000010011': 'Left 4-2',
+        '000010101': '4-1-1',
+        '000100011': '3-3',
+        '010010001': '3-1-2',
+        '010001001': '3-2-1',
+        '001001001': '2-2-2',
+        '0000000011': '8-0',
+        '0000001001': '6-2',
+        '0000100001': '4-4',
+        '0000000101': '7-1',
+        '0000010001': '5-3',
+        '111111': 'Star'
     };
 
     // Load custom shapes from localStorage or use defaults
@@ -818,76 +830,6 @@ if (typeof window !== 'undefined') {
         return false;
     }
 
-    // Scramble engine functions with long names
-    function createSolvedStateArray_w() {
-        return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-    }
-
-    function rotateSectionOfArray(arr, start, len, k) {
-        const n = ((k % len) + len) % len;
-        if (n === 0) return;
-        const seg = arr.slice(start, start + len);
-        const out = [];
-        for (let i = 0; i < len; i++) {
-            out[(i + n) % len] = seg[i];
-        }
-        for (let i = 0; i < len; i++) {
-            arr[start + i] = out[i];
-        }
-    }
-
-    function performSliceSwapOperation_w(arr) {
-        for (let i = 0; i < 6; i++) {
-            [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-        }
-    }
-
-    function* tokenizeScrambleStringGenerator_w(s) {
-        let i = 0;
-        const L = s.length;
-        const ws = /\s/;
-        const int = /^([+-]?\d+)/;
-
-        const skip = () => {
-            while (i < L && ws.test(s[i])) i++;
-        };
-
-        while (true) {
-            skip();
-            if (i >= L) return;
-
-            const ch = s[i];
-            if (ch === '(') {
-                i++;
-                skip();
-                let m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const t = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ',') i++;
-                skip();
-                m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const b = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ')') i++;
-                skip();
-                const hadSlash = (s[i] === '/');
-                if (hadSlash) i++;
-                yield { k: 'tb', t, b, slash: hadSlash };
-                continue;
-            }
-            if (ch === '/') {
-                i++;
-                yield { k: '/' };
-                continue;
-            }
-            i++;
-        }
-    }
-
     function applyUtilityTransformationsToScramble(scramble) {
         // First normalize the base scramble
         let normalized = scramble;
@@ -921,7 +863,7 @@ if (typeof window !== 'undefined') {
         // Simplify using the normalizer's simplification logic
         if (typeof window.ScrambleNormalizer !== 'undefined') {
             // Access internal functions if available
-            const simplifyFunc = window.ScrambleNormalizer.simplifyScramble || simplifyScrambleLocal;
+            const simplifyFunc = window.ScrambleNormalizer.simplifyScramble;
             const steps = [];
             tokens = simplifyFunc(tokens, steps);
         }
@@ -936,352 +878,194 @@ if (typeof window !== 'undefined') {
         return result;
     }
 
-    // Local fallback simplification if normalizer not available
-    function simplifyScrambleLocal(tokens) {
-        function addSets(a, b) {
-            let m = /\((-?\d+),(-?\d+)\)/.exec(a);
-            let n = /\((-?\d+),(-?\d+)\)/.exec(b);
-            let x1 = parseInt(m[1]), y1 = parseInt(m[2]);
-            let x2 = parseInt(n[1]), y2 = parseInt(n[2]);
-            let x = x1 + x2, y = y1 + y2;
-
-            function norm(v) {
-                if (v > 6) v -= 12;
-                if (v < -6) v += 12;
-                return v;
-            }
-
-            x = norm(x);
-            y = norm(y);
-            return `(${x},${y})`;
-        }
-
-        let changed = true;
-
-        while (changed) {
-            changed = false;
-
-            // Remove double slashes
-            for (let i = 0; i < tokens.length - 1; i++) {
-                if (tokens[i] === "/" && tokens[i + 1] === "/") {
-                    tokens.splice(i, 2);
-                    changed = true;
-                    break;
-                }
-            }
-            if (changed) continue;
-
-            // Combine adjacent moves
-            for (let i = 0; i < tokens.length - 1; i++) {
-                if (tokens[i].startsWith("(") && tokens[i + 1].startsWith("(")) {
-                    let merged = addSets(tokens[i], tokens[i + 1]);
-                    tokens.splice(i, 2, merged);
-                    changed = true;
-                    break;
-                }
-            }
-            if (changed) continue;
-
-            // Remove (0,0) moves
-            for (let i = 0; i < tokens.length; i++) {
-                if (tokens[i] === "(0,0)") {
-                    tokens.splice(i, 1);
-                    changed = true;
-                    break;
-                }
-            }
-        }
-
-        return tokens;
-    }
-
-    function applyScrambleToStateArray_w(scr) {
-        const a = createSolvedStateArray_w();
-        for (const tok of tokenizeScrambleStringGenerator_w(scr)) {
-            if (tok.k === 'tb') {
-                rotateSectionOfArray(a, 0, 12, tok.t);
-                rotateSectionOfArray(a, 12, 12, tok.b);
-                if (tok.slash) performSliceSwapOperation_w(a);
-            } else {
-                performSliceSwapOperation_w(a);
-            }
-        }
-        return a;
-    }
-
-    function validateCorners(state) {
-        const pairs = [['A', 'B'], ['D', 'E'], ['G', 'H'], ['J', 'K'], ['N', 'O'], ['Q', 'R'], ['T', 'U'], ['W', 'X']];
-        for (const [x, y] of pairs) {
-            const ix = state.indexOf(x), iy = state.indexOf(y);
-            const layerX = Math.floor(ix / 12), layerY = Math.floor(iy / 12);
-            if (layerX !== layerY) return { ok: false, pair: [x, y], reason: 'split across layers' };
-            const a = ix % 12, b = iy % 12;
-            const adj = ((a + 1) % 12 === b) || ((b + 1) % 12 === a);
-            if (!adj) return { ok: false, pair: [x, y], reason: 'separated by other pieces' };
-        }
-        return { ok: true };
-    }
-
     const rotateStringCircularly_w = (s, k) => {
         const n = s.length;
         k = ((k % n) + n) % n;
         return s.slice(k) + s.slice(0, k);
     };
 
-    const rotateArrayCircularly_w = (a, k) => {
-        const n = a.length;
-        k = ((k % n) + n) % n;
-        return a.slice(k).concat(a.slice(0, k));
-    };
-
-    function buildUnitsFromStateLayer_w(state, start) {
-        const units = [];
-        let i = 0;
-        while (i < 12) {
-            const ch = state[start + i];
-            if (EDGE_PIECES.has(ch)) {
-                units.push({ type: 'E', edge: ch });
-                i += 1;
-                continue;
+    // ── HEX → UNITS ──────────────────────────────────────────────────────────
+    // Takes raw scrambleToHex output {tlHex, blHex} (each 12 chars, corners doubled)
+    // Returns {topUnits, botUnits} as arrays of hex chars (unexpanded, variable length)
+    // and {topBits, botBits} as bitstrings for shape matching
+    function hexToUnits(tlHex, blHex) {
+        function walkLayer(raw) {
+            // raw is 12 chars from scrambleToHex, read right-to-left (undo reversal)
+            const units = [];
+            let bits = '';
+            let i = raw.length - 1;
+            while (i >= 0) {
+                const c = raw[i];
+                if (CORNER_HEX.has(c)) {
+                    units.push(c);
+                    bits += '1';
+                    i -= 2; // skip the doubled char
+                } else {
+                    units.push(c);
+                    bits += '0';
+                    i -= 1;
+                }
             }
-            const nextCh = state[start + ((i + 1) % 12)];
-            if (CORNER_PARTNER[ch] === nextCh) {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWith[ch], rep: ch });
-                i += 2;
-            } else {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWith[ch] || '??', rep: ch });
-                i += 1;
-            }
+            return { units, bits };
         }
-        const types = units.map(u => u.type).join('');
-        return { types, units };
+        // bottom layer: blHex is stored as first6reversed + last6reversed
+        // undo: reverse each half back, then read right-to-left as normal
+        const blRaw = blHex.slice(0,6).split('').reverse().join('') +
+                      blHex.slice(6).split('').reverse().join('');
+        const top = walkLayer(tlHex);
+        const bot = walkLayer(blRaw);
+        return { topUnits: top.units, topBits: top.bits,
+                 botUnits: bot.units, botBits: bot.bits };
     }
 
-    function matchPattern(typeStr) {
-        // Ensure we're using current shapes, not stale cache
+    // ── SHAPE MATCHING ───────────────────────────────────────────────────────
+    function matchPattern(bitStr) {
         if (!currentShapePatternsStorage_w || Object.keys(currentShapePatternsStorage_w).length === 0) {
             currentShapePatternsStorage_w = loadShapesFromStorage_w();
         }
-
-        // Define symmetric shapes and their symmetry degrees
-        const symmetricShapes = {
-            'Square': 4,
-            'Barrel': 2,
-            '2-2-2': 3,
-            '4-4': 2,
-            'Star': 6
-        };
-
+        const symmetricShapes = { 'Square':4, 'Barrel':2, '2-2-2':3, '4-4':2, 'Star':6 };
         for (const [pat, name] of Object.entries(currentShapePatternsStorage_w)) {
-            if (pat.length !== typeStr.length) continue;
-
-            // Try natural rotation order: CCW first, then CW with increasing distance
-            // Order: 0 (no rotation), -1 (1 CCW), +1 (1 CW), -2 (2 CCW), +2 (2 CW), etc.
-            const maxRotations = typeStr.length;
-            const rotationOrder = [0];
-            for (let distance = 1; distance < maxRotations; distance++) {
-                rotationOrder.push(-distance); // Counter-clockwise
-                rotationOrder.push(distance);  // Clockwise
-            }
-
-            for (const rotationAmount of rotationOrder) {
-                // Normalize rotation to positive value for rotateStringCircularly_w
-                const normalizedRotation = ((rotationAmount % typeStr.length) + typeStr.length) % typeStr.length;
-                if (rotateStringCircularly_w(typeStr, normalizedRotation) === pat) {
-                    return {
-                        name,
-                        pat,
-                        rot: normalizedRotation,
-                        originalPat: pat,
-                        symmetryDegree: symmetricShapes[name] || 1
-                    };
+            if (pat.length !== bitStr.length) continue;
+            const maxR = bitStr.length;
+            const order = [0];
+            for (let d = 1; d < maxR; d++) { order.push(-d); order.push(d); }
+            for (const ra of order) {
+                const nr = ((ra % maxR) + maxR) % maxR;
+                if (rotateStringCircularly_w(bitStr, nr) === pat) {
+                    return { name, pat, rot: nr, originalPat: pat, symmetryDegree: symmetricShapes[name] || 1 };
                 }
             }
         }
-        return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr, symmetryDegree: 1 };
+        return { name: 'Unknown', pat: bitStr, rot: 0, originalPat: bitStr, symmetryDegree: 1 };
     }
 
-    function countEdgesAndCorners_w(units) {
-        const e = units.filter(u => u.type === 'E').length;
-        const c = units.length - e;
-        return { e, c, label: `${e}E${c}C` };
+    // ── PARITY CALCULATION ───────────────────────────────────────────────────
+    // Placeholder lookup tables — replace values with correct 0/1 when computed
+    const blackEdgeParityMap = {
+        '0246':0,'0264':0,'0426':0,'0462':0,'0624':0,'0642':0,
+        '2046':0,'2064':0,'2406':0,'2460':0,'2604':0,'2640':0,
+        '4026':0,'4062':0,'4206':0,'4260':0,'4602':0,'4620':0,
+        '6024':0,'6042':0,'6204':0,'6240':0,'6402':0,'6420':0
+    };
+    const whiteEdgeParityMap = {
+        '8ace':0,'8aec':0,'8cae':0,'8cea':0,'8eac':0,'8eca':0,
+        'a8ce':0,'a8ec':0,'ac8e':0,'ace8':0,'ae8c':0,'aec8':0,
+        'c8ae':0,'c8ea':0,'ca8e':0,'cae8':0,'ce8a':0,'cea8':0,
+        'e8ac':0,'e8ca':0,'ea8c':0,'eac8':0,'ec8a':0,'eca8':0
+    };
+    const blackCornerParityMap = {
+        '1357':0,'1375':0,'1537':0,'1573':0,'1735':0,'1753':0,
+        '3157':0,'3175':0,'3517':0,'3571':0,'3715':0,'3751':0,
+        '5137':0,'5173':0,'5317':0,'5371':0,'5713':0,'5731':0,
+        '7135':0,'7153':0,'7315':0,'7351':0,'7513':0,'7531':0
+    };
+    const whiteCornerParityMap = {
+        '9bdf':0,'9bfd':0,'9dbf':0,'9dfb':0,'9fbd':0,'9fdb':0,
+        'b9df':0,'b9fd':0,'bd9f':0,'bdf9':0,'bf9d':0,'bfd9':0,
+        'd9bf':0,'d9fb':0,'db9f':0,'dbf9':0,'df9b':0,'dfb9':0,
+        'f9bd':0,'f9db':0,'fb9d':0,'fbd9':0,'fd9b':0,'fdb9':0
+    };
+
+    function trioParity(a, b, c) {
+        // finds alone piece (no opposite in trio), checks pair adjacency
+        const opp = {R:'O',O:'R',B:'G',G:'B'};
+        let alone, p1, p2;
+        if (a !== opp[b] && a !== opp[c]) { alone=a; p1=b; p2=c; }
+        else if (b !== opp[a] && b !== opp[c]) { alone=b; p1=a; p2=c; }
+        else { alone=c; p1=a; p2=b; }
+        const pair = p1+p2;
+        return (pair==='RG'||pair==='GR'||pair==='OB'||pair==='BO') ? 1 : 0;
     }
 
-    // Six-step parity calculation
-    function calculateSixStepParity_w(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
-        const steps = [];
+    function calculateParityFromHex(tlHex, blHex, z2Mode, useClockwise, scrambleForEvil) {
+        const { topUnits, topBits, botUnits, botBits } = hexToUnits(tlHex, blHex);
 
-        function getEdgeCodename_w(letter) {
-            const colorMap = {
-                'L': 'O', 'C': 'G', 'F': 'R', 'I': 'B',
-                'M': 'R', 'P': 'G', 'S': 'O', 'V': 'B'
-            };
-            return colorMap[letter] || '?';
+        const scrambleKey = (tlHex + blHex);
+        if (!window.parityTracerSymmetryOffsets) window.parityTracerSymmetryOffsets = {};
+        if (!window.parityTracerSymmetryOffsets[scrambleKey])
+            window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
+
+        const topMatch = matchPattern(topBits);
+        const botMatch = matchPattern(botBits);
+
+        const topSymOff = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
+        const botSymOff = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
+
+        function symRotation(match, offset, unitLen) {
+            if (offset === 0) return 0;
+            const pps = match.name === 'Star' ? 3 : Math.floor(unitLen / match.symmetryDegree);
+            return pps * offset;
         }
 
-        function getCornerCodename_w(id) {
-            // Default map is for counter-clockwise (most counter-clockwise sticker)
-            const counterClockwiseMap = {
-                'AB': 'O', 'DE': 'G', 'GH': 'R', 'JK': 'B',
-                'NO': 'R', 'QR': 'G', 'TU': 'O', 'WX': 'B'
-            };
+        const topRot = (topMatch.rot + symRotation(topMatch, topSymOff, topUnits.length)) % topUnits.length;
+        const botRot = (botMatch.rot + symRotation(botMatch, botSymOff, botUnits.length)) % botUnits.length;
 
-            // Clockwise map (most clockwise sticker)
-            const clockwiseMap = {
-                'AB': 'G', 'DE': 'R', 'GH': 'B', 'JK': 'O',
-                'NO': 'G', 'QR': 'O', 'TU': 'B', 'WX': 'R'
-            };
+        // rotate units arrays
+        const tU = topUnits.slice(topRot).concat(topUnits.slice(0, topRot));
+        const bU = botUnits.slice(botRot).concat(botUnits.slice(0, botRot));
 
-            const colorMap = useClockwiseCorner ? clockwiseMap : counterClockwiseMap;
-            return colorMap[id] || '?';
-        }
+        // count edges per layer for z2 swap check
+        const topE = tU.filter(c => !CORNER_HEX.has(c)).length;
+        const botE = bU.filter(c => !CORNER_HEX.has(c)).length;
+        const topC = tU.length - topE;
+        const botC = bU.length - botE;
 
-        function isTopLayerEdge_w(letter) {
-            return ['L', 'C', 'F', 'I'].includes(letter);
-        }
+        const shouldSwap = z2Mode &&
+            ((topE===2 && topC===5 && botE===6 && botC===3) ||
+             (topE===0 && topC===6 && botE===8 && botC===2));
 
-        function isTopLayerCorner_w(id) {
-            return ['AB', 'DE', 'GH', 'JK'].includes(id);
-        }
+        const orderedTop = shouldSwap ? bU : tU;
+        const orderedBot = shouldSwap ? tU : bU;
 
-        function calculateTrioParity_w(codenames) {
-            if (codenames.length < 3) return { result: 0, detail: 'Not enough pieces' };
+        // separate edges and corners in order
+        const allEdges = [], allCorners = [];
+        for (const u of orderedTop) { if (CORNER_HEX.has(u)) allCorners.push(u); else allEdges.push(u); }
+        for (const u of orderedBot) { if (CORNER_HEX.has(u)) allCorners.push(u); else allEdges.push(u); }
 
-            const trio = codenames.slice(0, 3);
-            const opposites = { 'R': 'O', 'O': 'R', 'B': 'G', 'G': 'B' };
+        const codeMap = useClockwise ? HEX_TO_PARITY_CODE_CW : HEX_TO_PARITY_CODE_CCW;
 
-            let aloneIdx = -1;
-            for (let i = 0; i < 3; i++) {
-                const current = trio[i];
-                const opp = opposites[current];
-                const hasOpposite = trio.some((c, idx) => idx !== i && c === opp);
-                if (!hasOpposite) {
-                    aloneIdx = i;
-                    break;
-                }
-            }
+        // lines 1-4: trio parity via lookup tables
+        const topEdges = allEdges.filter(c => TOP_HEX.has(c));
+        const botEdges = allEdges.filter(c => !TOP_HEX.has(c));
+        const topCorners = allCorners.filter(c => TOP_HEX.has(c));
+        const botCorners = allCorners.filter(c => !TOP_HEX.has(c));
 
-            if (aloneIdx === -1) {
-                return { result: 0, detail: `Trio ${trio.join('')}: No alone element found` };
-            }
+        const l1 = blackEdgeParityMap[topEdges.join('')] ?? trioParity(codeMap[topEdges[0]], codeMap[topEdges[1]], codeMap[topEdges[2]]);
+        const l2 = whiteEdgeParityMap[botEdges.join('')] ?? trioParity(codeMap[botEdges[0]], codeMap[botEdges[1]], codeMap[botEdges[2]]);
+        const l3 = blackCornerParityMap[topCorners.join('')] ?? trioParity(codeMap[topCorners[0]], codeMap[topCorners[1]], codeMap[topCorners[2]]);
+        const l4 = whiteCornerParityMap[botCorners.join('')] ?? trioParity(codeMap[botCorners[0]], codeMap[botCorners[1]], codeMap[botCorners[2]]);
 
-            let pair = '';
-            let pairValue = 0;
+        // lines 5-6: alternating parity (positions 0,2,4,6 of full ordered arrays)
+        const edgeOdd = [allEdges[0],allEdges[2],allEdges[4],allEdges[6]].filter(Boolean);
+        const cornerOdd = [allCorners[0],allCorners[2],allCorners[4],allCorners[6]].filter(Boolean);
+        const l5tc = edgeOdd.filter(c => TOP_HEX.has(c)).length;
+        const l6tc = cornerOdd.filter(c => TOP_HEX.has(c)).length;
+        const l5 = (l5tc===1||l5tc===3) ? 1 : 0;
+        const l6 = (l6tc===1||l6tc===3) ? 1 : 0;
 
-            if (aloneIdx === 0) {
-                pair = trio[0] + trio[1];
-            } else if (aloneIdx === 2) {
-                pair = trio[0] + trio[2];
-            } else {
-                pair = trio[1] + trio[2];
-            }
+        const evilStep = getEvilnessFactor() ? (isScrambleEvilInternal(scrambleForEvil||'') ? 1 : 0) : null;
+        const total = l1+l2+l3+l4+l5+l6;
+        const totalWithEvil = total + (evilStep ?? 0);
 
-            if (pair === 'RG' || pair === 'GR' || pair === 'OB' || pair === 'BO') {
-                pairValue = 1;
-            } else if (pair === 'RB' || pair === 'BR' || pair === 'OG' || pair === 'GO') {
-                pairValue = 0;
-            }
-
-            return {
-                result: pairValue,
-                detail: `Trio ${trio.join('')}: Alone at pos ${aloneIdx + 1}, pair ${pair} = ${pairValue}`
-            };
-        }
-
-        function calculateAlternatingParity_w(pieces, isEdge) {
-            const positions = [0, 2, 4, 6];
-            const selected = positions.map(i => pieces[i]).filter(p => p !== undefined);
-
-            let topLayerCount = 0;
-            if (isEdge) {
-                topLayerCount = selected.filter(p => isTopLayerEdge_w(p)).length;
-            } else {
-                topLayerCount = selected.filter(p => isTopLayerCorner_w(p)).length;
-            }
-
-            const result = (topLayerCount === 1 || topLayerCount === 3) ? 1 : 0;
-            const selectedStr = selected.join(' ');
-
-            return {
-                result,
-                detail: `Positions 1,3,5,7: [${selectedStr}], ${topLayerCount} ${C_Colors.tlColName.toLowerCase()} = ${result}`
-            };
-        }
-
-        const topEdges = edgesOrderLetters.filter(e => isTopLayerEdge_w(e));
-        const topEdgesCodes = topEdges.map(e => getEdgeCodename_w(e));
-        const line1 = calculateTrioParity_w(topEdgesCodes);
-        steps.push({
-            name: `Line 1: ${C_Colors.tlColName} Edges`,
-            pieces: topEdges.join(' '),
-            codenames: topEdgesCodes.join(' '),
-            detail: line1.detail,
-            result: line1.result
-        });
-
-        const bottomEdges = edgesOrderLetters.filter(e => !isTopLayerEdge_w(e));
-        const bottomEdgesCodes = bottomEdges.map(e => getEdgeCodename_w(e));
-        const line2 = calculateTrioParity_w(bottomEdgesCodes);
-        steps.push({
-            name: `Line 2: ${C_Colors.blColName} Edges`,
-            pieces: bottomEdges.join(' '),
-            codenames: bottomEdgesCodes.join(' '),
-            detail: line2.detail,
-            result: line2.result
-        });
-
-        const topCorners = cornersOrderIDs.filter(c => isTopLayerCorner_w(c));
-        const topCornersCodes = topCorners.map(c => getCornerCodename_w(c));
-        const line3 = calculateTrioParity_w(topCornersCodes);
-        steps.push({
-            name: `Line 3: ${C_Colors.tlColName} Corners`,
-            pieces: topCorners.join(' '),
-            codenames: topCornersCodes.join(' '),
-            detail: line3.detail,
-            result: line3.result
-        });
-
-        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCorner_w(c));
-        const bottomCornersCodes = bottomCorners.map(c => getCornerCodename_w(c));
-        const line4 = calculateTrioParity_w(bottomCornersCodes);
-        steps.push({
-            name: `Line 4: ${C_Colors.blColName} Corners`,
-            pieces: bottomCorners.join(' '),
-            codenames: bottomCornersCodes.join(' '),
-            detail: line4.detail,
-            result: line4.result
-        });
-
-        const line5 = calculateAlternatingParity_w(edgesOrderLetters, true);
-        steps.push({
-            name: 'Line 5: Odd Edges',
-            pieces: line5.detail.split(': [')[1].split(']')[0],
-            codenames: '-',
-            detail: line5.detail,
-            result: line5.result
-        });
-
-        const line6 = calculateAlternatingParity_w(cornersOrderIDs, false);
-        steps.push({
-            name: 'Line 6: Odd Corners',
-            pieces: line6.detail.split(': [')[1].split(']')[0],
-            codenames: '-',
-            detail: line6.detail,
-            result: line6.result
-        });
-
-        const evilStep = getEvilnessFactor() ? isScrambleEvilInternal(scrambleForEvil || '') ? 1 : 0 : null;
-        const evilness = evilStep !== null ? evilStep : 0;
-
-        const total = steps.reduce((sum, step) => sum + step.result, 0);
-        const totalWithEvil = total + evilness;
-        const isOdd = (total % 2) === 1;
-        const isOddWithEvil = (totalWithEvil % 2) === 1;
-
-        return { steps, total, isOdd, evilStep, isOddWithEvil };
+        return {
+            isOdd: (total%2)===1,
+            isOddWithEvil: (totalWithEvil%2)===1,
+            evilStep,
+            total,
+            steps: [
+                { name: `Line 1: ${C_Colors.tlColName} Edges`,   result: l1, hexPerm: topEdges,   codenames: topEdges.map(c=>codeMap[c]) },
+                { name: `Line 2: ${C_Colors.blColName} Edges`,   result: l2, hexPerm: botEdges,   codenames: botEdges.map(c=>codeMap[c]) },
+                { name: `Line 3: ${C_Colors.tlColName} Corners`, result: l3, hexPerm: topCorners, codenames: topCorners.map(c=>codeMap[c]) },
+                { name: `Line 4: ${C_Colors.blColName} Corners`, result: l4, hexPerm: botCorners, codenames: botCorners.map(c=>codeMap[c]) },
+                { name: 'Line 5: Odd Edges',   result: l5, hexPerm: edgeOdd,   isLayer: true, topCount: l5tc },
+                { name: 'Line 6: Odd Corners', result: l6, hexPerm: cornerOdd, isLayer: true, topCount: l6tc }
+            ],
+            topUnits: tU, botUnits: bU,
+            topMatch, botMatch,
+            topBits, botBits,
+            wasSwapped: shouldSwap
+        };
     }
-
-    // PIECE_TO_HEX, encodeCubeStateToHex → defined in utils.js
 
     // Shape visualization for config modal - RESTORED
     function generateSimpleShapeVisualizationSVG_w(pattern, size, idPrefix) {
@@ -1322,12 +1106,10 @@ if (typeof window !== 'undefined') {
         let currentAngle = 90; // Start at top
 
         pieces.forEach(piece => {
-            if (piece === 'E') {
-                // Edge: 30 degrees
+            if (piece === '0') {
                 letterAngles.push(currentAngle);
                 currentAngle -= 30;
             } else {
-                // Corner: 60 degrees (two positions)
                 letterAngles.push(currentAngle);
                 letterAngles.push(currentAngle - 30);
                 currentAngle -= 60;
@@ -1337,7 +1119,7 @@ if (typeof window !== 'undefined') {
         // Now draw each piece using proper angles
         let angleIndex = 0;
         pieces.forEach((piece, index) => {
-            const isEdge = piece === 'E';
+            const isEdge = piece === '0';
             const isFirst = index === 0;
             const fillColor = isFirst ? '#add8e6' : '#ffffff';
 
@@ -1394,20 +1176,17 @@ if (typeof window !== 'undefined') {
     }
 
     // Display results in modal
-    function calculateArrowStartAngle_w(rotationAmount, unitsArray, layerType, patternTypes) {
+    function calculateArrowStartAngle_w(rotationAmount, unitsArray, layerType, patternBits) {
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
-        // Check if tracing scheme ends with corner or edge
-        const endsWithCorner = patternTypes.endsWith('C');
+        const endsWithCorner = patternBits.endsWith('1');
         const arcDegrees = endsWithCorner ? 300 : 330;
 
-        // Calculate total degrees to rotate based on pieces we're skipping
         let totalRotationDegrees = 0;
 
         for (let i = 0; i < rotationAmount; i++) {
-            const pieceType = unitsArray[i].type;
-            const pieceDegrees = pieceType === 'E' ? 30 : 60;
+            const pieceDegrees = CORNER_HEX.has(unitsArray[i]) ? 60 : 30;
             totalRotationDegrees += pieceDegrees;
         }
         // We rotate clockwise (subtract) from the initial position
@@ -1503,23 +1282,23 @@ if (typeof window !== 'undefined') {
         }
 
         function createColorSquares_w(codenames) {
-            if (codenames === '-') return '';
+            if (!codenames || !codenames.length) return '';
             const colorMap = {
                 'O': `<span class="color-dot" style="background: ${config.backCol};"></span>`,
                 'G': `<span class="color-dot" style="background: ${config.rightCol};"></span>`,
                 'R': `<span class="color-dot" style="background: ${config.frontCol};"></span>`,
                 'B': `<span class="color-dot" style="background: ${config.leftCol};"></span>`
             };
-            return codenames.split(' ').slice(0, 3).map(c => colorMap[c] || '').join('');
+            return codenames.slice(0,3).map(c => colorMap[c] || '').join('');
         }
 
-        function createPositionIndicators_w(pieces) {
-            return pieces.split(' ').map(p => {
-                const isTopLayer = ['L', 'C', 'F', 'I', 'AB', 'DE', 'GH', 'JK'].includes(p);
-                const letter = isTopLayer ? config.tlColAbb : config.blColAbb;
-                const bgColor = isTopLayer ? config.tlMainCol : config.blMainCol;
-                const textColor = isTopLayer ? (config.tlMainCol === '#FFD700' ? '#000000' : '#FFFFFF') : (config.blMainCol === '#FFFFFF' ? '#000000' : '#FFFFFF');
-                return `<span style="display: inline-block; width: 18px; height: 18px; border-radius: 3px; margin: 0 1px; background: ${bgColor}; color: ${textColor}; text-align: center; line-height: 18px; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${letter}</span>`;
+        function createPositionIndicators_w(hexPerm) {
+            return hexPerm.map(h => {
+                const isTop = TOP_HEX.has(h);
+                const letter = isTop ? config.tlColAbb : config.blColAbb;
+                const bg = isTop ? config.tlMainCol : config.blMainCol;
+                const tc = isTop ? (config.tlMainCol === '#FFD700' ? '#000000' : '#FFFFFF') : (config.blMainCol === '#FFFFFF' ? '#000000' : '#FFFFFF');
+                return `<span style="display:inline-block;width:18px;height:18px;border-radius:3px;margin:0 1px;background:${bg};color:${tc};text-align:center;line-height:18px;font-size:11px;font-weight:bold;box-shadow:0 1px 3px rgba(0,0,0,0.2);">${letter}</span>`;
             }).join('');
         }
 
@@ -1549,13 +1328,12 @@ if (typeof window !== 'undefined') {
             const lineName = step.name.split(':')[1].trim();
 
             if (idx === 6) {
-                // Evilness line
                 const evilLabel = step.result === 1 ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>' : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
                 displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
-            } else if (idx < 2 || (idx >= 2 && idx < 4)) {
-                displayContent = `${lineName}: ${createColorSquares_w(step.codenames)} = <strong>${step.result}</strong>`;
+            } else if (step.isLayer) {
+                displayContent = `${lineName}: ${createPositionIndicators_w(step.hexPerm)} = <strong>${step.result}</strong>`;
             } else {
-                displayContent = `${lineName}: ${createPositionIndicators_w(step.pieces)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createColorSquares_w(step.codenames)} = <strong>${step.result}</strong>`;
             }
 
             return `
@@ -1577,16 +1355,7 @@ if (typeof window !== 'undefined') {
 
     // Function to set shape orientation - RESTORED
     function setShapeOrientation_w(pattern, clickedIndex) {
-        // Calculate rotation amount based on piece type
-        // We need to count how many pattern positions (E or C) come before the clicked piece
-        const pieces = pattern.split('');
-        let rotationAmount = 0;
-
-        for (let i = 0; i < clickedIndex && i < pieces.length; i++) {
-            rotationAmount++;
-        }
-
-        const rotated = rotateStringCircularly_w(pattern, rotationAmount);
+        const rotated = rotateStringCircularly_w(pattern, clickedIndex);
 
         let shapeName = '';
         for (const [pat, name] of Object.entries(currentShapePatternsStorage_w)) {
@@ -2683,86 +2452,11 @@ if (typeof window !== 'undefined') {
         // If returnOnlyValue, calculate and return only the parity result - COMPLETE LOGIC
         if (config.returnOnlyParityValue && config.scrambleTextInput) {
             try {
-                const state = applyScrambleToStateArray_w(config.scrambleTextInput);
-                const topRaw = buildUnitsFromStateLayer_w(state, 0);
-                const botRaw = buildUnitsFromStateLayer_w(state, 12);
-                // Check if we have stored symmetry offsets for this scramble
-                // Use original scramble for key, not transformed
-                const scrambleKey = scrambleText.replace(/\s+/g, '');
-                if (!window.parityTracerSymmetryOffsets) {
-                    window.parityTracerSymmetryOffsets = {};
-                }
-                if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-                    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-                }
-
-                const topMatch = matchPattern(topRaw.types);
-                const botMatch = matchPattern(botRaw.types);
-
-                // Apply symmetry offsets if they exist
-                const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
-                const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
-
-                // Calculate how many pieces to rotate based on symmetry offset and pattern
-                function calculateSymmetryRotation(match, offset, rawUnits) {
-                    if (offset === 0) return 0;
-
-                    // For Star, we jump 2 pieces per symmetry (corners only)
-                    // For others, divide total pieces by symmetry degree
-                    const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
-                    const piecesToSkip = piecesPerSymmetry * offset;
-
-                    return piecesToSkip;
-                }
-
-                const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-                const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
-
-                // Apply the extra rotation
-                topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-                botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
-
-                const topUnits = rotateArrayCircularly_w(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularly_w(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCorners_w(topUnits);
-                const botCounts = countEdgesAndCorners_w(botUnits);
-
-                const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
-
-                let parityEdgesOrder = [];
-                let parityCornersOrder = [];
-
-                if (shouldSwapForParity) {
-                    const parityBlocks = [
-                        { side: 'B', units: botUnits },
-                        { side: 'T', units: topUnits }
-                    ];
-                    for (const b of parityBlocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
-                        }
-                    }
-                } else {
-                    const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
-                    for (const b of blocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
-                        }
-                    }
-                }
-
-                const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
-                const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
-                return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
+                const { tlHex, blHex } = scrambleToHex(config.scrambleTextInput);
+                const useClockwise = (typeof cornerMode !== 'undefined' && cornerMode === 'clockwise');
+                const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, config.scrambleTextInput);
+                const useEvil = getEvilnessStringReturn() && p.evilStep !== null;
+                return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity calculation error:', err);
                 return 'error';
@@ -3132,222 +2826,77 @@ if (typeof window !== 'undefined') {
                 const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
 
                 try {
-                    const state = applyScrambleToStateArray_w(transformedScramble);
+                    const { tlHex, blHex } = scrambleToHex(transformedScramble);
+                    const useClockwise = (typeof cornerStickerMode !== 'undefined' && cornerStickerMode === 'clockwise');
+                    const parity = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, scrambleText);
 
-                    // Validation - RESTORED
-                    validateCorners(state);
-
-                    // Build units - COMPLETE
-                    const topRaw = buildUnitsFromStateLayer_w(state, 0);
-                    const botRaw = buildUnitsFromStateLayer_w(state, 12);
-
-                    // Check if we have stored symmetry offsets for this scramble
-                    // Use original scramble for key, not transformed
-                    const scrambleKey = scrambleText.replace(/\s+/g, '');
-                    if (!window.parityTracerSymmetryOffsets) {
-                        window.parityTracerSymmetryOffsets = {};
-                    }
-                    if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-                        window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-                    }
-
-                    const topMatch = matchPattern(topRaw.types);
-                    const botMatch = matchPattern(botRaw.types);
-
-                    // Apply symmetry offsets if they exist
-                    const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
-                    const botSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].bottom || 0;
-
-                    // Calculate how many pieces to rotate based on symmetry offset and pattern
-                    function calculateSymmetryRotation(match, offset, rawUnits) {
-                        if (offset === 0) return 0;
-
-                        // For Star, we jump 2 pieces per symmetry (corners only)
-                        // For others, divide total pieces by symmetry degree
-                        const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
-                        const piecesToSkip = piecesPerSymmetry * offset;
-
-                        return piecesToSkip;
-                    }
-
-                    const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-                    const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
-
-                    // Apply the extra rotation
-                    topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-                    botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
-
-                    const topUnits = rotateArrayCircularly_w(topRaw.units, topMatch.rot);
-                    const botUnits = rotateArrayCircularly_w(botRaw.units, botMatch.rot);
-                    const topCounts = countEdgesAndCorners_w(topUnits);
-                    const botCounts = countEdgesAndCorners_w(botUnits);
-
-                    // Determine order - always Top → Bottom
-                    const orderMode = 'TB';
-                    const blocks = (orderMode === 'BT')
-                        ? [{ side: 'B', units: botUnits }, { side: 'T', units: topUnits }]
-                        : [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
-
-                    // Build orders - COMPLETE
-                    const edgesOrderLetters = [];
-                    const cornersOrderIDs = [];
-
-                    for (const b of blocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                edgesOrderLetters.push(u.edge);
-                            } else {
-                                cornersOrderIDs.push(u.pair);
-                            }
-                        }
-                    }
-
-                    // Determine if we need to swap order for parity calculation - RESTORED
-                    const shouldSwapForParity = z2TracingModeEnabled &&
-                        (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
-                            topCounts.label === '0E6C' && botCounts.label === '8E2C');
-
-                    // Build orders for parity (swap if needed) - COMPLETE LOGIC
-                    let parityEdgesOrder = [];
-                    let parityCornersOrder = [];
-
-                    if (shouldSwapForParity) {
-                        const parityBlocks = [
-                            { side: 'B', units: botUnits },
-                            { side: 'T', units: topUnits }
-                        ];
-                        for (const b of parityBlocks) {
-                            for (const u of b.units) {
-                                if (u.type === 'E') {
-                                    parityEdgesOrder.push(u.edge);
-                                } else {
-                                    parityCornersOrder.push(u.pair);
-                                }
-                            }
-                        }
-                    } else {
-                        parityEdgesOrder = edgesOrderLetters;
-                        parityCornersOrder = cornersOrderIDs;
-                    }
-
-                    const useClockwise = (cornerStickerMode === 'clockwise');
-                    const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
-
-                    // Visualize scramble if enabled - COMPLETE
+                    // Visualize
                     if (config.shouldGenerateImage && Cglobal.Square1VisualizerLibraryWithSillyNames) {
-                        const encodedScramble = encodeCubeStateToHex(state);
-                        if (!encodedScramble.startsWith('Error:')) {
-                            try {
+                        const hexCode = tlHex + '|' + blHex.slice(0,6) + blHex.slice(6);
+                        try {
+                            const imageSize = parityTracerImageSize;
+                            const svgContent = Cglobal.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
+                                hexCode, imageSize,
+                                { topColor: config.tlMainCol, bottomColor: config.blMainCol,
+                                  frontColor: config.frontCol, rightColor: config.rightCol,
+                                  backColor: config.backCol, leftColor: config.leftCol }
+                            );
 
-                                const imageSize = parityTracerImageSize;
-                                const svgContent = Cglobal.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
-                                    encodedScramble,
-                                    imageSize,
-                                    {
-                                        topColor: config.tlMainCol,
-                                        bottomColor: config.blMainCol,
-                                        frontColor: config.frontCol,
-                                        rightColor: config.rightCol,
-                                        backColor: config.backCol,
-                                        leftColor: config.leftCol
-                                    }
-                                );
+                            const { topMatch, botMatch, topUnits, botUnits, topBits, botBits } = parity;
+                            // unrotated units for arrow calculation
+                            const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
 
-                                // Calculate arrow positions
-                                // Note: We need to calculate based on the UNROTATED units to find the physical position
-                                const topArrowData = calculateArrowStartAngle_w(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
-                                const botArrowData = calculateArrowStartAngle_w(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+                            const unit10vh = imageSize * 0.4;
+                            const radiusOuter = unit10vh * 0.7;
+                            const ringRadius = radiusOuter + (unit10vh * 0.4);
+                            const centerX = imageSize / 2, centerY = imageSize / 2;
 
-                                // Calculate circle dimensions (matching draw-scramble logic)
-                                const unit10vh = imageSize * 0.4;
-                                const radiusOuter = unit10vh * 0.7;
-                                const ringRadius = radiusOuter + (unit10vh * 0.4);
-                                const centerX = imageSize / 2;
-                                const centerY = imageSize / 2;
+                            const topArrowData = calculateArrowStartAngle_w(topMatch.rot, topRawU, 'TOP', topBits);
+                            const botArrowData = calculateArrowStartAngle_w(botMatch.rot, botRawU, 'BOTTOM', botBits);
 
-                                // Parse SVG and inject arrows
-                                const tempDiv = document.createElement('div');
-                                tempDiv.innerHTML = svgContent;
-
-                                const svgs = tempDiv.querySelectorAll('svg');
-                                if (svgs.length >= 2) {
-                                    // Add arrow to first SVG (top layer)
-                                    const firstSvg = svgs[0];
-                                    const arrowSvg1 = generateArrowSVGOverlay_w(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
-                                    firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
-
-                                    // Add arrow to second SVG (bottom layer)
-                                    const secondSvg = svgs[1];
-                                    const arrowSvg2 = generateArrowSVGOverlay_w(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
-                                    secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
-                                }
-
-                                vizContainer.innerHTML = tempDiv.innerHTML;
-
-                                // Add invisible symmetry switch buttons
-                                const svgsInContainer = vizContainer.querySelectorAll('svg');
-                                if (svgsInContainer.length >= 2) {
-                                    // Helper function to add symmetry button
-                                    const addSymmetryButton = (svg, layerType, match) => {
-                                        const canCycleSymmetry = match.symmetryDegree > 1;
-
-                                        // Create invisible circle button in the center
-                                        const svgNS = "http://www.w3.org/2000/svg";
-                                        const buttonCircle = document.createElementNS(svgNS, 'circle');
-
-                                        buttonCircle.setAttribute('cx', centerX);
-                                        buttonCircle.setAttribute('cy', centerY);
-                                        buttonCircle.setAttribute('r', ringRadius * 0.3);
-                                        buttonCircle.setAttribute('fill', 'transparent');
-                                        buttonCircle.setAttribute('style', `cursor: ${canCycleSymmetry ? 'pointer' : 'default'};`);
-
-                                        if (canCycleSymmetry) {
-                                            buttonCircle.addEventListener('click', () => {
-                                                const currentScramble = window.currentParityTracerScramble || scrambleInput.value.trim();
-                                                const scrambleKey = currentScramble.replace(/\s+/g, '');
-                                                if (!window.parityTracerSymmetryOffsets) {
-                                                    console.warn('⚠️ symmetryOffsets was undefined, initializing...');
-                                                    window.parityTracerSymmetryOffsets = {};
-                                                }
-
-                                                if (!window.parityTracerSymmetryOffsets[scrambleKey]) {
-                                                    window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-                                                }
-
-                                                const currentOffset = window.parityTracerSymmetryOffsets[scrambleKey][layerType] || 0;
-                                                const maxSymmetries = match.name === 'Star' ? 2 : match.symmetryDegree;
-                                                const newOffset = (currentOffset + 1) % maxSymmetries;
-
-                                                window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
-
-                                                // Re-run analysis
-                                                performAnalysis_w();
-                                            });
-                                        }
-
-                                        svg.appendChild(buttonCircle);
-                                    };
-
-                                    // Add button to top layer (first SVG)
-                                    addSymmetryButton(svgsInContainer[0], 'top', topMatch);
-
-                                    // Add button to bottom layer (second SVG)
-                                    addSymmetryButton(svgsInContainer[1], 'bottom', botMatch);
-                                }
-                            } catch (err) {
-                                vizContainer.innerHTML = `<div style="color: #e53e3e;">Visualization error: ${err.message}</div>`;
+                            const tempDiv = document.createElement('div');
+                            tempDiv.innerHTML = svgContent;
+                            const svgs = tempDiv.querySelectorAll('svg');
+                            if (svgs.length >= 2) {
+                                svgs[0].insertAdjacentHTML('beforeend', generateArrowSVGOverlay_w(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize));
+                                svgs[1].insertAdjacentHTML('beforeend', generateArrowSVGOverlay_w(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize));
                             }
-                        } else {
-                            vizContainer.innerHTML = `<div style="color: #e53e3e; font-family: monospace;">${encodedScramble}</div>`;
+                            vizContainer.innerHTML = tempDiv.innerHTML;
+
+                            const svgsInContainer = vizContainer.querySelectorAll('svg');
+                            if (svgsInContainer.length >= 2) {
+                                const addSymBtn = (svg, layerType, match) => {
+                                    if (match.symmetryDegree <= 1) return;
+                                    const svgNS = "http://www.w3.org/2000/svg";
+                                    const btn = document.createElementNS(svgNS, 'circle');
+                                    btn.setAttribute('cx', centerX); btn.setAttribute('cy', centerY);
+                                    btn.setAttribute('r', ringRadius * 0.3);
+                                    btn.setAttribute('fill', 'transparent');
+                                    btn.setAttribute('style', 'cursor:pointer;');
+                                    btn.addEventListener('click', () => {
+                                        const sk = (window.currentParityTracerScramble||scrambleInput.value.trim()).replace(/\s+/g,'');
+                                        if (!window.parityTracerSymmetryOffsets) window.parityTracerSymmetryOffsets = {};
+                                        if (!window.parityTracerSymmetryOffsets[sk]) window.parityTracerSymmetryOffsets[sk] = {top:0,bottom:0};
+                                        const cur = window.parityTracerSymmetryOffsets[sk][layerType] || 0;
+                                        const max = match.name==='Star' ? 2 : match.symmetryDegree;
+                                        window.parityTracerSymmetryOffsets[sk][layerType] = (cur+1)%max;
+                                        performAnalysis_w();
+                                    });
+                                    svg.appendChild(btn);
+                                };
+                                addSymBtn(svgsInContainer[0], 'top', parity.topMatch);
+                                addSymBtn(svgsInContainer[1], 'bottom', parity.botMatch);
+                            }
+                        } catch (err) {
+                            vizContainer.innerHTML = `<div style="color:#e53e3e;">Visualization error: ${err.message}</div>`;
                         }
                     }
 
-                    // Display results
-                    displayResultsInModal_w(resultsContainer, sixStepParity, config);
+                    displayResultsInModal_w(resultsContainer, parity, config);
 
                 } catch (err) {
                     console.error(err);
-                    resultsContainer.innerHTML = '<div style="color: #e53e3e; padding: 1rem;">Error parsing scramble.  check the format.</div>';
+                    resultsContainer.innerHTML = '<div style="color:#e53e3e;padding:1rem;">Error parsing scramble. Check the format.</div>';
                 }
             }
 
@@ -3476,58 +3025,13 @@ if (typeof window !== 'undefined') {
     // Export parity analysis function for use by other parts of the app
     Cglobal.caleTracer = {
         getParityTextFromScramble: function (scrambleText, cornerMode) {
-            // Always use fresh shapes from storage
             currentShapePatternsStorage_w = loadShapesFromStorage_w();
-
             try {
-                const state = applyScrambleToStateArray_w(scrambleText);
-                const topRaw = buildUnitsFromStateLayer_w(state, 0);
-                const botRaw = buildUnitsFromStateLayer_w(state, 12);
-                const topMatch = matchPattern(topRaw.types);
-                const botMatch = matchPattern(botRaw.types);
-                const topUnits = rotateArrayCircularly_w(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularly_w(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCorners_w(topUnits);
-                const botCounts = countEdgesAndCorners_w(botUnits);
-
-                const shouldSwapForParity = z2TracingModeEnabled &&
-                    (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
-                        topCounts.label === '0E6C' && botCounts.label === '8E2C');
-
-                let parityEdgesOrder = [];
-                let parityCornersOrder = [];
-
-                if (shouldSwapForParity) {
-                    const parityBlocks = [
-                        { side: 'B', units: botUnits },
-                        { side: 'T', units: topUnits }
-                    ];
-                    for (const b of parityBlocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
-                        }
-                    }
-                } else {
-                    const blocks = [{ side: 'T', units: topUnits }, { side: 'B', units: botUnits }];
-                    for (const b of blocks) {
-                        for (const u of b.units) {
-                            if (u.type === 'E') {
-                                parityEdgesOrder.push(u.edge);
-                            } else {
-                                parityCornersOrder.push(u.pair);
-                            }
-                        }
-                    }
-                }
-
+                const { tlHex, blHex } = scrambleToHex(scrambleText);
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParity_w(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
-                const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
-                return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
+                const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, scrambleText);
+                const useEvil = getEvilnessStringReturn() && p.evilStep !== null;
+                return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity analysis error:', err);
                 return 'Error';
