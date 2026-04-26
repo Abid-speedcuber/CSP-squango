@@ -687,14 +687,14 @@ if (typeof window !== 'undefined') {
     // scrambleToHex → defined in utils.js
 
     // hex digit → parity color code (CCW sticker mode)
-    const HEX_TO_PARITY_CODE_CCW = {
+    const hexToColors_ccw = {
         '0':'O','2':'B','4':'R','6':'G',          // top edges
         '8':'G','a':'R','c':'B','e':'O',          // bottom edges
         '1':'B','3':'R','5':'G','7':'O',          // top corners CCW
         '9':'G','b':'R','d':'B','f':'O'           // bottom corners CCW
     };
     // CW sticker mode
-    const HEX_TO_PARITY_CODE_CW = {
+    const hexToColors_cw = {
         '0':'O','2':'B','4':'R','6':'G',          // top edges
         '8':'G','a':'R','c':'B','e':'O',          // bottom edges
         '1':'O','3':'B','5':'R','7':'G',          // top corners CW
@@ -713,7 +713,7 @@ if (typeof window !== 'undefined') {
     }
 
     // Default shape patterns — keys are bitstrings: 0=Edge, 1=Corner
-    const defaultShapePatterns_w = {
+    const defaultShapePatterns = {
         '01010101': 'Square',
         '00101001': 'Kite',
         '00110011': 'Barrel',
@@ -746,23 +746,23 @@ if (typeof window !== 'undefined') {
     };
 
     // Load custom shapes from localStorage or use defaults
-    function loadShapesFromStorage_w() {
+    function loadShapesFromStorage() {
         const stored = localStorage.getItem('customShapesForParityTracerLibrary');
         if (stored) {
             try {
                 return JSON.parse(stored);
             } catch {
-                return { ...defaultShapePatterns_w };
+                return { ...defaultShapePatterns };
             }
         }
-        return { ...defaultShapePatterns_w };
+        return { ...defaultShapePatterns };
     }
 
-    function saveShapesToStorage_w(shapes) {
+    function saveShapesToStorage(shapes) {
         localStorage.setItem('customShapesForParityTracerLibrary', JSON.stringify(shapes));
     }
 
-    let currentShapePatternsStorage_w = loadShapesFromStorage_w();
+    let currentShapePatterns = loadShapesFromStorage();
 
     // Utility button states (always start as false when modal opens)
     let utilityZ2Enabled = false;
@@ -771,7 +771,7 @@ if (typeof window !== 'undefined') {
 
     // Load z2 tracing mode from localStorage
     let z2TracingModeEnabled = true; // default to true
-    const storedZ2Mode = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+    const storedZ2Mode = localStorage.getItem('z2TracingMode');
     if (storedZ2Mode !== null) {
         z2TracingModeEnabled = storedZ2Mode === 'true';
     }
@@ -785,7 +785,7 @@ if (typeof window !== 'undefined') {
     
     // Arrow settings
     let showCircularArrow = true;
-    const storedShowArrow = localStorage.getItem('parityTracerShowArrow');
+    const storedShowArrow = localStorage.getItem('parityTracerArrow');
     if (storedShowArrow !== null) {
         showCircularArrow = storedShowArrow === 'true';
     }
@@ -809,13 +809,13 @@ if (typeof window !== 'undefined') {
     function getEvilnessFactor() {
         return typeof evilnessFactor !== 'undefined' ? evilnessFactor : false;
     }
-    function getEvilnessStringReturn() {
+    function getEvilnessValue() {
         return typeof evilnessStringReturn !== 'undefined' ? evilnessStringReturn : false;
     }
     function getEvilnessMap() {
         return typeof evilnessMap !== 'undefined' ? evilnessMap : {};
     }
-    function isScrambleEvilInternal(scramble) {
+    function getScrambleEvilness(scramble) {
         if (!getEvilnessFactor()) return false;
         if (typeof getCaseNameFromScramble === 'function') {
             const cn = getCaseNameFromScramble(scramble);
@@ -825,7 +825,7 @@ if (typeof window !== 'undefined') {
         return false;
     }
 
-    function applyUtilityTransformationsToScramble(scramble) {
+    function applyTransformation(scramble) {
         // First normalize the base scramble
         let normalized = scramble;
         if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
@@ -873,7 +873,7 @@ if (typeof window !== 'undefined') {
         return result;
     }
 
-    const rotateStringCircularly_w = (s, k) => {
+    const rotateToMatchPattern = (s, k) => {
         const n = s.length;
         k = ((k % n) + n) % n;
         return s.slice(k) + s.slice(0, k);
@@ -915,18 +915,18 @@ if (typeof window !== 'undefined') {
 
     // ── SHAPE MATCHING ───────────────────────────────────────────────────────
     function matchPattern(bitStr) {
-        if (!currentShapePatternsStorage_w || Object.keys(currentShapePatternsStorage_w).length === 0) {
-            currentShapePatternsStorage_w = loadShapesFromStorage_w();
+        if (!currentShapePatterns || Object.keys(currentShapePatterns).length === 0) {
+            currentShapePatterns = loadShapesFromStorage();
         }
         const symmetricShapes = { 'Square':4, 'Barrel':2, '2-2-2':3, '4-4':2, 'Star':6 };
-        for (const [pat, name] of Object.entries(currentShapePatternsStorage_w)) {
+        for (const [pat, name] of Object.entries(currentShapePatterns)) {
             if (pat.length !== bitStr.length) continue;
             const maxR = bitStr.length;
             const order = [0];
             for (let d = 1; d < maxR; d++) { order.push(-d); order.push(d); }
             for (const ra of order) {
                 const nr = ((ra % maxR) + maxR) % maxR;
-                if (rotateStringCircularly_w(bitStr, nr) === pat) {
+                if (rotateToMatchPattern(bitStr, nr) === pat) {
                     return { name, pat, rot: nr, originalPat: pat, symmetryDegree: symmetricShapes[name] || 1 };
                 }
             }
@@ -934,7 +934,7 @@ if (typeof window !== 'undefined') {
         return { name: 'Unknown', pat: bitStr, rot: 0, originalPat: bitStr, symmetryDegree: 1 };
     }
 
-    // Lookup Tables for speed
+    // Lookup Tables instead of algorithmic analysis for speed
     const blackEdgeParityMap = {
         '0246':0, '0264':1, '0426':1, '0462':0, '0624':0, '0642':1, '2046':1, '2064':0, '2406':0, '2460':1, '2604':1, '2640':0, '4026':0, '4062':1, '4206':1, '4260':0, '4602':0, '4620':1, '6024':1, '6042':0, '6204':0, '6240':1, '6402':1, '6420':0
     };
@@ -996,7 +996,7 @@ if (typeof window !== 'undefined') {
         for (const u of orderedTop) { if (CORNER_HEX.has(u)) allCorners.push(u); else allEdges.push(u); }
         for (const u of orderedBot) { if (CORNER_HEX.has(u)) allCorners.push(u); else allEdges.push(u); }
 
-        const codeMap = useClockwise ? HEX_TO_PARITY_CODE_CW : HEX_TO_PARITY_CODE_CCW;
+        const codeMap = useClockwise ? hexToColors_cw : hexToColors_ccw;
 
         // lines 1-4: trio parity via lookup tables
         const topEdges = allEdges.filter(c => TOP_HEX.has(c));
@@ -1017,7 +1017,7 @@ if (typeof window !== 'undefined') {
         const l5 = (l5tc===1||l5tc===3) ? 1 : 0;
         const l6 = (l6tc===1||l6tc===3) ? 1 : 0;
 
-        const evilStep = getEvilnessFactor() ? (isScrambleEvilInternal(scrambleForEvil||'') ? 1 : 0) : null;
+        const evilStep = getEvilnessFactor() ? (getScrambleEvilness(scrambleForEvil||'') ? 1 : 0) : null;
         const total = l1+l2+l3+l4+l5+l6;
         const totalWithEvil = total + (evilStep ?? 0);
 
@@ -1042,7 +1042,7 @@ if (typeof window !== 'undefined') {
     }
 
     // Shape visualization for config modal - RESTORED
-    function generateSimpleShapeVisualizationSVG_w(pattern, size, idPrefix) {
+    function drawSchemeSettingsImage(pattern, size, idPrefix) {
         const cx = size / 2;
         const cy = size / 2;
 
@@ -1150,7 +1150,7 @@ if (typeof window !== 'undefined') {
     }
 
     // Display results in modal
-    function calculateArrowStartAngle_w(rotationAmount, unitsArray, layerType, patternBits) {
+    function getArrowStartAngle(rotationAmount, unitsArray, layerType, patternBits) {
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
@@ -1170,7 +1170,7 @@ if (typeof window !== 'undefined') {
         return { startAngle: finalAngle, arcDegrees: arcDegrees };
     }
 
-    function generateArrowSVGOverlay_w(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
+    function generateArrow(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
         if (!showCircularArrow) {
             return '';
         }
@@ -1237,7 +1237,7 @@ if (typeof window !== 'undefined') {
     `;
     }
 
-    function displayResultsInModal_w(container, sixStepParity, config) {
+    function displayResults(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
             const g = parseInt(hexColor.substr(3, 2), 16);
@@ -1255,7 +1255,7 @@ if (typeof window !== 'undefined') {
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
 
-        function createColorSquares_w(codenames) {
+        function colorSqHTML(codenames) {
             if (!codenames || !codenames.length) return '';
             const colorMap = {
                 'O': `<span class="color-dot" style="background: ${config.backCol};"></span>`,
@@ -1266,7 +1266,7 @@ if (typeof window !== 'undefined') {
             return codenames.slice(0,3).map(c => colorMap[c] || '').join('');
         }
 
-        function createPositionIndicators_w(hexPerm) {
+        function createPositionIndicator(hexPerm) {
             return hexPerm.map(h => {
                 const isTop = TOP_HEX.has(h);
                 const letter = isTop ? config.tlColAbb : config.blColAbb;
@@ -1305,9 +1305,9 @@ if (typeof window !== 'undefined') {
                 const evilLabel = step.result === 1 ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>' : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
                 displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
             } else if (step.isLayer) {
-                displayContent = `${lineName}: ${createPositionIndicators_w(step.hexPerm)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createPositionIndicator(step.hexPerm)} = <strong>${step.result}</strong>`;
             } else {
-                displayContent = `${lineName}: ${createColorSquares_w(step.codenames)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${colorSqHTML(step.codenames)} = <strong>${step.result}</strong>`;
             }
 
             return `
@@ -1328,11 +1328,11 @@ if (typeof window !== 'undefined') {
     }
 
     // Function to set shape orientation - RESTORED
-    function setShapeOrientation_w(pattern, clickedIndex) {
-        const rotated = rotateStringCircularly_w(pattern, clickedIndex);
+    function setShapeOrientation(pattern, clickedIndex) {
+        const rotated = rotateToMatchPattern(pattern, clickedIndex);
 
         let shapeName = '';
-        for (const [pat, name] of Object.entries(currentShapePatternsStorage_w)) {
+        for (const [pat, name] of Object.entries(currentShapePatterns)) {
             if (pat === pattern) {
                 shapeName = name;
                 break;
@@ -1340,15 +1340,15 @@ if (typeof window !== 'undefined') {
         }
 
         if (shapeName) {
-            delete currentShapePatternsStorage_w[pattern];
-            currentShapePatternsStorage_w[rotated] = shapeName;
-            saveShapesToStorage_w(currentShapePatternsStorage_w);
+            delete currentShapePatterns[pattern];
+            currentShapePatterns[rotated] = shapeName;
+            saveShapesToStorage(currentShapePatterns);
         }
     }
 
 
     // Parity Tracer Instruction Modal
-    function showParityTracerInstructionModal(config) {
+    function showTracerInstModal(config) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
 
@@ -1426,7 +1426,7 @@ if (typeof window !== 'undefined') {
     }
 
     // Configuration Orientation Instruction Modal
-    function showConfigOrientationInstructionModal(config) {
+    function showConfigInstModal(config) {
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
 
@@ -1712,7 +1712,7 @@ if (typeof window !== 'undefined') {
         renderEvilGrid();
     }
 
-    function showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+    function showTracingSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
         // Calculate contrasting colors based on background
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
@@ -1801,7 +1801,7 @@ if (typeof window !== 'undefined') {
         casesListDiv.style.cssText = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;';
 
         // Sort entries alphabetically by name
-        const sortedEntries = Object.entries(currentShapePatternsStorage_w).sort((a, b) => a[1].localeCompare(b[1]));
+        const sortedEntries = Object.entries(currentShapePatterns).sort((a, b) => a[1].localeCompare(b[1]));
 
         sortedEntries.forEach(([pattern, name], idx) => {
             const caseDiv = document.createElement('div');
@@ -1848,7 +1848,7 @@ if (typeof window !== 'undefined') {
             nameSpan.textContent = name;
 
             const vizDiv = document.createElement('div');
-            vizDiv.innerHTML = generateSimpleShapeVisualizationSVG_w(pattern, 112, 'config-' + pattern);
+            vizDiv.innerHTML = drawSchemeSettingsImage(pattern, 112, 'config-' + pattern);
             vizDiv.style.cssText = 'margin-bottom: 0.5rem;';
 
             caseDiv.appendChild(nameSpan);
@@ -1886,7 +1886,7 @@ if (typeof window !== 'undefined') {
 
         const performSave = () => {
             // Save shape patterns and corner sticker mode
-            saveShapesToStorage_w(currentShapePatternsStorage_w);
+            saveShapesToStorage(currentShapePatterns);
             if (typeof saveState === 'function') {
                 saveState();
             }
@@ -1961,12 +1961,12 @@ if (typeof window !== 'undefined') {
         };
 
         resetBtn.onclick = () => {
-            currentShapePatternsStorage_w = { ...defaultShapePatterns_w };
-            saveShapesToStorage_w(currentShapePatternsStorage_w);
+            currentShapePatterns = { ...defaultShapePatterns };
+            saveShapesToStorage(currentShapePatterns);
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
-            showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+            showTracingSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
 
         buttonsDiv.appendChild(saveBtn);
@@ -2066,7 +2066,7 @@ if (typeof window !== 'undefined') {
             const configInfoBtn = configContent.querySelector('.config-info-btn');
             if (configInfoBtn) {
                 configInfoBtn.onclick = () => {
-                    showConfigOrientationInstructionModal(config);
+                    showConfigInstModal(config);
                 };
             }
         }, 100);
@@ -2335,7 +2335,7 @@ if (typeof window !== 'undefined') {
                             // Save scroll position before update
                             const scrollPos = configModalDiv.scrollTop;
 
-                            setShapeOrientation_w(pattern, clickedIndex, 'config');
+                            setShapeOrientation(pattern, clickedIndex, 'config');
                             dataChanged = true;
                             updateFloatingSaveBtn();
 
@@ -2349,7 +2349,7 @@ if (typeof window !== 'undefined') {
 
                                 // Find the new pattern for this shape
                                 let newPattern = '';
-                                for (const [pat, name] of Object.entries(currentShapePatternsStorage_w)) {
+                                for (const [pat, name] of Object.entries(currentShapePatterns)) {
                                     if (name.toLowerCase() === shapeName) {
                                         newPattern = pat;
                                         break;
@@ -2357,7 +2357,7 @@ if (typeof window !== 'undefined') {
                                 }
 
                                 if (newPattern) {
-                                    vizDiv.innerHTML = generateSimpleShapeVisualizationSVG_w(newPattern, 112, 'config-' + newPattern);
+                                    vizDiv.innerHTML = drawSchemeSettingsImage(newPattern, 112, 'config-' + newPattern);
 
                                     // Re-attach click handlers to new pieces
                                     vizDiv.querySelectorAll('[class*="shape-piece-config-"]').forEach(newPiece => {
@@ -2384,7 +2384,7 @@ if (typeof window !== 'undefined') {
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
     function createParityTracerModal(options = {}) {
         // CRITICAL: Always reload shapes from storage when modal opens
-        currentShapePatternsStorage_w = loadShapesFromStorage_w();
+        currentShapePatterns = loadShapesFromStorage();
 
         const config = {
             backgroundColor: options.backgroundColor || '#ffffff',
@@ -2429,7 +2429,7 @@ if (typeof window !== 'undefined') {
                 const { tlHex, blHex } = scrambleToHex(config.scrambleTextInput);
                 const useClockwise = (typeof cornerMode !== 'undefined' && cornerMode === 'clockwise');
                 const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, config.scrambleTextInput);
-                const useEvil = getEvilnessStringReturn() && p.evilStep !== null;
+                const useEvil = getEvilnessValue() && p.evilStep !== null;
                 return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity calculation error:', err);
@@ -2775,16 +2775,16 @@ if (typeof window !== 'undefined') {
             window.addEventListener('resize', updateButtonPositions);
             backdrop.addEventListener('scroll', updateButtonPositions);
 
-            function performAnalysis_w() {
+            function performAnalysis() {
                 // Ensure we have the latest shapes before analysis
-                currentShapePatternsStorage_w = loadShapesFromStorage_w();
+                currentShapePatterns = loadShapesFromStorage();
 
                 // Re-read all live settings from localStorage on every analysis
-                const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+                const storedZ2 = localStorage.getItem('z2TracingMode');
                 z2TracingModeEnabled = storedZ2 !== null ? storedZ2 === 'true' : true;
                 const storedImgSize = localStorage.getItem('parityTracerImageSize');
                 parityTracerImageSize = storedImgSize !== null ? parseInt(storedImgSize) : 200;
-                const storedArrow = localStorage.getItem('parityTracerShowArrow');
+                const storedArrow = localStorage.getItem('parityTracerArrow');
                 showCircularArrow = storedArrow !== null ? storedArrow === 'true' : true;
                 const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
                 if (storedArrowSettings) arrowSettings = JSON.parse(storedArrowSettings);
@@ -2797,7 +2797,7 @@ if (typeof window !== 'undefined') {
                 window.currentParityTracerScramble = scrambleText;
 
                 // Apply utility transformations (z2, y2, flip color)
-                const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
+                const transformedScramble = applyTransformation(scrambleText);
 
                 try {
                     const { tlHex, blHex } = scrambleToHex(transformedScramble);
@@ -2825,15 +2825,15 @@ if (typeof window !== 'undefined') {
                             const ringRadius = radiusOuter + (unit10vh * 0.4);
                             const centerX = imageSize / 2, centerY = imageSize / 2;
 
-                            const topArrowData = calculateArrowStartAngle_w(topMatch.rot, topRawU, 'TOP', topBits);
-                            const botArrowData = calculateArrowStartAngle_w(botMatch.rot, botRawU, 'BOTTOM', botBits);
+                            const topArrowData = getArrowStartAngle(topMatch.rot, topRawU, 'TOP', topBits);
+                            const botArrowData = getArrowStartAngle(botMatch.rot, botRawU, 'BOTTOM', botBits);
 
                             const tempDiv = document.createElement('div');
                             tempDiv.innerHTML = svgContent;
                             const svgs = tempDiv.querySelectorAll('svg');
                             if (svgs.length >= 2) {
-                                svgs[0].insertAdjacentHTML('beforeend', generateArrowSVGOverlay_w(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize));
-                                svgs[1].insertAdjacentHTML('beforeend', generateArrowSVGOverlay_w(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize));
+                                svgs[0].insertAdjacentHTML('beforeend', generateArrow(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize));
+                                svgs[1].insertAdjacentHTML('beforeend', generateArrow(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize));
                             }
                             vizContainer.innerHTML = tempDiv.innerHTML;
 
@@ -2854,7 +2854,7 @@ if (typeof window !== 'undefined') {
                                         const cur = window.parityTracerSymmetryOffsets[sk][layerType] || 0;
                                         const max = match.name==='Star' ? 2 : match.symmetryDegree;
                                         window.parityTracerSymmetryOffsets[sk][layerType] = (cur+1)%max;
-                                        performAnalysis_w();
+                                        performAnalysis();
                                     });
                                     svg.appendChild(btn);
                                 };
@@ -2866,7 +2866,7 @@ if (typeof window !== 'undefined') {
                         }
                     }
 
-                    displayResultsInModal_w(resultsContainer, parity, config);
+                    displayResults(resultsContainer, parity, config);
 
                 } catch (err) {
                     console.error(err);
@@ -2875,7 +2875,7 @@ if (typeof window !== 'undefined') {
             }
 
             scrambleInput.addEventListener('input', () => {
-                performAnalysis_w();
+                performAnalysis();
             });
 
             scrambleInput.addEventListener('keydown', (e) => {
@@ -2892,19 +2892,19 @@ if (typeof window !== 'undefined') {
             z2Btn.addEventListener('click', () => {
                 utilityZ2Enabled = !utilityZ2Enabled;
                 z2Btn.classList.toggle('active', utilityZ2Enabled);
-                performAnalysis_w();
+                performAnalysis();
             });
 
             y2Btn.addEventListener('click', () => {
                 utilityY2Enabled = !utilityY2Enabled;
                 y2Btn.classList.toggle('active', utilityY2Enabled);
-                performAnalysis_w();
+                performAnalysis();
             });
 
             flipBtn.addEventListener('click', () => {
                 utilityFlipColorEnabled = !utilityFlipColorEnabled;
                 flipBtn.classList.toggle('active', utilityFlipColorEnabled);
-                performAnalysis_w();
+                performAnalysis();
             });
 
             const closeMainModal = () => {
@@ -2935,7 +2935,7 @@ if (typeof window !== 'undefined') {
             const headerInfoBtn = modal.querySelector(`#${uniqueId}-header-info`);
             if (headerInfoBtn) {
                 headerInfoBtn.addEventListener('click', () => {
-                    showParityTracerInstructionModal(config);
+                    showTracerInstModal(config);
                 });
             }
 
@@ -2952,9 +2952,9 @@ if (typeof window !== 'undefined') {
 
             // Auto-analyze if scramble is provided, otherwise use (0,0)
             if (config.scrambleTextInput) {
-                performAnalysis_w();
+                performAnalysis();
             } else {
-                performAnalysis_w();
+                performAnalysis();
             }
         }, 0);
         // Create close button
@@ -2987,11 +2987,11 @@ if (typeof window !== 'undefined') {
     // Export the single function
     Cglobal.ParityTracerLibrary = {
         createModal: createParityTracerModal,
-        openConfigModal: showTracingSchemeSettingsModal,
+        openConfigModal: showTracingSettingsModal,
         openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage
-            currentShapePatternsStorage_w = loadShapesFromStorage_w();
+            currentShapePatterns = loadShapesFromStorage();
         },
         version: '2.0.0'
     };
@@ -2999,12 +2999,12 @@ if (typeof window !== 'undefined') {
     // Export parity analysis function for use by other parts of the app
     Cglobal.caleTracer = {
         getParityTextFromScramble: function (scrambleText, cornerMode) {
-            currentShapePatternsStorage_w = loadShapesFromStorage_w();
+            currentShapePatterns = loadShapesFromStorage();
             try {
                 const { tlHex, blHex } = scrambleToHex(scrambleText);
                 const useClockwise = (cornerMode === 'clockwise');
                 const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, scrambleText);
-                const useEvil = getEvilnessStringReturn() && p.evilStep !== null;
+                const useEvil = getEvilnessValue() && p.evilStep !== null;
                 return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
                 console.error('Parity analysis error:', err);
@@ -4856,7 +4856,7 @@ function clusterify(shapeArray) {
   return slots;
 }
 
-function ParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
+function parseHexToDraw(hexScramble, slotsList) {
   const assignments = {};
   for (let i = 0; i < slotsList.length; i++) {
     const slot = slotsList[i];
@@ -5050,7 +5050,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
   }
 
   const slots = clusterify(shapeArray);
-  const pieceAssignments = ParseScrambleAssignmentsFromHexCode(hexScrambleCode, slots);
+  const pieceAssignments = parseHexToDraw(hexScrambleCode, slots);
 
   // Calculate dimensions
   const svgSize = desiredSize;
@@ -7575,7 +7575,7 @@ window.exportData = function() {
         evilnessStringReturn: evilnessStringReturn,
         evilnessMap: evilnessMap,
         parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
-        parityTracerShowArrow: localStorage.getItem('parityTracerShowArrow'),
+        parityTracerArrow: localStorage.getItem('parityTracerArrow'),
         parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
         trainingScrambleImageSize: localStorage.getItem('trainingScrambleImageSize'),
         trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
@@ -7688,8 +7688,8 @@ function importData(jsonStr) {
         if (state.parityTracerImageSize) {
             localStorage.setItem('parityTracerImageSize', state.parityTracerImageSize);
         }
-        if (state.parityTracerShowArrow !== undefined) {
-            localStorage.setItem('parityTracerShowArrow', state.parityTracerShowArrow);
+        if (state.parityTracerArrow !== undefined) {
+            localStorage.setItem('parityTracerArrow', state.parityTracerArrow);
         }
         if (state.parityTracerArrowSettings) {
             localStorage.setItem('parityTracerArrowSettings', state.parityTracerArrowSettings);
@@ -9665,10 +9665,10 @@ function _buildParityConfig() {
 }
 
 function _renderParityTab(panel) {
-    const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+    const storedZ2 = localStorage.getItem('z2TracingMode');
     const z2On = storedZ2 !== null ? storedZ2 === 'true' : true;
     const ptSize = parseInt(localStorage.getItem('parityTracerImageSize') || '200');
-    const showArrow = localStorage.getItem('parityTracerShowArrow') !== 'false';
+    const showArrow = localStorage.getItem('parityTracerArrow') !== 'false';
 
     // Arrow appearance (from stored settings)
     let arrowSettings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
@@ -9758,7 +9758,7 @@ window._ptSaveCornerSticker = function(val) {
     _triggerParityLiveUpdate();
 };
 window._ptSaveZ2 = function(val) {
-    localStorage.setItem('z2TracingModeForParityTracerLibrary', val.toString());
+    localStorage.setItem('z2TracingMode', val.toString());
     _triggerParityLiveUpdate();
 };
 window._ptSaveImgSize = function(val) {
@@ -9767,7 +9767,7 @@ window._ptSaveImgSize = function(val) {
     _triggerParityLiveUpdate();
 };
 window._ptSaveArrow = function(val) {
-    localStorage.setItem('parityTracerShowArrow', val.toString());
+    localStorage.setItem('parityTracerArrow', val.toString());
     const container = document.getElementById('pt_arrowSettings');
     if (container) { container.style.opacity = val ? '1' : '0.4'; container.style.pointerEvents = val ? 'auto' : 'none'; }
     _triggerParityLiveUpdate();
