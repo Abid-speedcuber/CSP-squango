@@ -474,7 +474,7 @@
 
             // Make token clickable unless it's a zero move
             if (!isZero) {
-                html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: #f9dfb8ff; color: #000;' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+                html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: var(--hover-bg); color: var(--text-primary);' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
             } else {
                 // Zero moves are not clickable
                 html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
@@ -492,13 +492,13 @@
     }
 
     function renderVisualization(hex, colorScheme, imageSize) {
-        if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
-            return '<div style="color: #ff6b6b; font-style: italic;">draw-scramble.js not found</div>';
+        if (typeof window.Square1Visualizer === 'undefined') {
+            return '<div style="color: var(--algo-invalid-color); font-style: italic;">draw-scramble.js not found</div>';
         }
 
         try {
             const hexCode = hex.tlHex + '|' + hex.blHex;
-            const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+            const svgHtml = window.Square1Visualizer.visualizeFromHex(
                 hexCode,
                 imageSize,
                 {
@@ -515,7 +515,7 @@
             );
             return svgHtml;
         } catch (e) {
-            return '<div style="color: #ff6b6b; font-style: italic;">Error rendering: ' + e.message + '</div>';
+            return '<div style="color: var(--algo-invalid-color); font-style: italic;">Error rendering: ' + e.message + '</div>';
         }
     }
 
@@ -558,7 +558,7 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: rgba(0, 0, 0, 0.5);
+                background: var(--modal-overlay);
                 z-index: 10005;
                 display: flex;
                 justify-content: center;
@@ -569,7 +569,7 @@
                 box-sizing: border-box;
             }
             #${modalId} .modal-content {
-                background: white;
+                background: var(--surface);
                 border-radius: 18px;
                 max-width: min(800px, 90vw);
                 width: 100%;
@@ -585,7 +585,7 @@
                 padding: 0px 20px;
                 overflow-y: auto;
                 flex: 1;
-                background: white;
+                background: var(--surface);
                 border-radius: 0 0 18px 18px;
             }
             #${modalId} .modal-body::-webkit-scrollbar {
@@ -597,13 +597,13 @@
             }
             #${modalId} .modal-header {
                 padding: 20px;
-                border-bottom: 1px solid #e0e0e0;
+                border-bottom: 1px solid var(--surface-border);
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
             }
             #${modalId} .close-btn {
-                background: #f0f0f0;
+                background: var(--surface2);
                 border: none;
                 border-radius: 50%;
                 width: 32px;
@@ -618,10 +618,10 @@
                 line-height: 1;
             }
             #${modalId} .close-btn:hover {
-                background: #e0e0e0;
+                background: var(--surface-border);
             }
             #${modalId} .menu-btn {
-                background: #f0f0f0;
+                background: var(--surface2);
                 border: none;
                 border-radius: 6px;
                 width: 36px;
@@ -635,7 +635,7 @@
                 padding: 0;
             }
             #${modalId} .menu-btn:hover {
-                background: #e0e0e0;
+                background: var(--surface-border);
             }
             #${modalId} .sidebar {
                 position: absolute;
@@ -643,7 +643,7 @@
                 top: 0;
                 width: 280px;
                 height: 100%;
-                background: #f8f9fa;
+                background: var(--surface2);
                 box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
                 z-index: 100;
                 border-radius: 18px 0 0 18px;
@@ -656,10 +656,10 @@
                 width: 6px;
             }
             #${modalId} .sidebar::-webkit-scrollbar-track {
-                background: #f1f1f1;
+                background: var(--surface-border);
             }
             #${modalId} .sidebar::-webkit-scrollbar-thumb {
-                background: #888;
+                background: var(--scrollbar-thumb-hover);
                 border-radius: 3px;
             }
             #${modalId} .sidebar.open {
@@ -685,10 +685,10 @@
             #${modalId} .sidebar-title {
                 font-size: 18px;
                 font-weight: bold;
-                color: #000000 !important;
+                color: var(--text-primary) !important;
                 margin-bottom: 20px;
                 padding-bottom: 10px;
-                border-bottom: 2px solid #e0e0e0;
+                border-bottom: 2px solid var(--surface-border);
             }
             #${modalId} .sidebar-section {
                 margin-bottom: 25px;
@@ -696,7 +696,7 @@
             #${modalId} .sidebar-section label {
                 display: block;
                 font-size: 14px;
-                color: #000000 !important;
+                color: var(--text-primary) !important;
                 margin-bottom: 8px;
                 font-weight: 600;
             }
@@ -704,7 +704,7 @@
                 width: 100%;
                 height: 6px;
                 border-radius: 3px;
-                background: #e0e0e0;
+                background: var(--surface-border);
                 outline: none;
                 -webkit-appearance: none;
             }
@@ -713,14 +713,14 @@
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
             }
             #${modalId} .sidebar-section input[type="range"]::-moz-range-thumb {
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
                 border: none;
             }
@@ -728,7 +728,7 @@
                 display: block;
                 text-align: right;
                 font-size: 14px;
-                color: #000000 !important;
+                color: var(--text-primary) !important;
                 margin-top: 4px;
                 font-weight: 500;
             }
@@ -738,21 +738,21 @@
                 gap: 10px;
             }
             #${modalId} .toggle-container span {
-                color: #000000 !important;
+                color: var(--text-primary) !important;
                 font-weight: 500;
             }
             #${modalId} .toggle-switch {
                 position: relative;
                 width: 48px;
                 height: 24px;
-                background: #ccc;
+                background: var(--border-color);
                 border-radius: 12px;
                 cursor: pointer;
                 transition: background 0.3s;
                 flex-shrink: 0;
             }
             #${modalId} .toggle-switch.active {
-                background: #2196F3;
+                background: var(--accent);
             }
             #${modalId} .toggle-slider {
                 position: absolute;
@@ -760,7 +760,7 @@
                 left: 2px;
                 width: 20px;
                 height: 20px;
-                background: white;
+                background: var(--surface);
                 border-radius: 50%;
                 transition: left 0.3s;
             }
@@ -774,11 +774,11 @@
                 font-family: 'Courier New', monospace;
                 font-size: 18px;
                 padding: 12px;
-                background: #f5f5f5;
+                background: var(--surface2);
                 border-radius: 6px;
                 margin: 15px 0;
                 text-align: center;
-                color: #333;
+                color: var(--text-primary);
             }
             #${modalId} .slider-group {
                 margin: 15px 0;
@@ -789,27 +789,27 @@
             #${modalId} .slider-group label {
                 min-width: 140px;
                 font-size: 14px;
-                color: #555;
+                color: var(--text-secondary);
             }
             #${modalId} .slider-group input[type="range"] {
                 flex: 1;
                 height: 6px;
                 border-radius: 3px;
-                background: #e0e0e0;
+                background: var(--surface-border);
                 outline: none;
             }
             #${modalId} .slider-group input[type="range"]::-webkit-slider-thumb {
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
             }
             #${modalId} .slider-group input[type="range"]::-moz-range-thumb {
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
                 border: none;
             }
@@ -817,7 +817,7 @@
                 min-width: 60px;
                 text-align: right;
                 font-size: 14px;
-                color: #555;
+                color: var(--text-secondary);
             }
             #${modalId} .visualization-area {
                 margin: 7px 0;
@@ -834,7 +834,7 @@
                 font-family: 'Courier New', monospace;
                 font-size: 16px;
                 padding: 10px;
-                background: #fafafa;
+                background: var(--surface2);
                 border-radius: 6px;
                 margin: 15px 0;
                 text-align: center;
@@ -847,7 +847,7 @@
                 margin: 15px 0;
             }
             #${modalId} .control-btn {
-                background: #f0f0f0;
+                background: var(--surface2);
                 border: none;
                 border-radius: 4px;
                 padding: 4px 6px;
@@ -859,7 +859,7 @@
                 justify-content: center;
             }
             #${modalId} .control-btn:hover:not(:disabled) {
-                background: #e0e0e0;
+                background: var(--surface-border);
             }
             #${modalId} .control-btn:disabled {
                 opacity: 0.3;
@@ -872,33 +872,33 @@
                 width: 100%;
                 height: 6px;
                 border-radius: 3px;
-                background: #e0e0e0;
+                background: var(--surface-border);
                 outline: none;
             }
             #${modalId} .step-slider-container input[type="range"]::-webkit-slider-thumb {
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
             }
             #${modalId} .step-slider-container input[type="range"]::-moz-range-thumb {
                 width: 18px;
                 height: 18px;
                 border-radius: 50%;
-                background: #2196F3;
+                background: var(--accent);
                 cursor: pointer;
                 border: none;
             }
             #${modalId} .step-counter {
-    text-align: center;
-    font-size: 14px;
-    color: #666;
-    margin: 10px 0;
-}
-#${modalId} .clickable-token:not(.current-token):hover {
-    text-decoration: underline;
-}
+                text-align: center;
+                font-size: 14px;
+                color: var(--text-secondary);
+                margin: 10px 0;
+            }
+            #${modalId} .clickable-token:not(.current-token):hover {
+                text-decoration: underline;
+            }
         </style>
     `;
 
@@ -911,10 +911,10 @@
         <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
         <div style="display: flex; flex-direction: column; gap: 2px;">
             ${caseName && parity ? `
-                <div style="font-size: 16px; font-weight: bold; color: #333;">${caseName} (${parity})</div>
-                <div style="font-size: 11px; color: #999; font-family: monospace;">${algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm}</div>
+                <div style="font-size: 16px; font-weight: bold; color: var(--text-primary);">${caseName} (${parity})</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm}</div>
             ` : `
-                <div style="font-size: 18px; font-weight: bold; color: #333;">Algorithm Viewer</div>
+                <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">Algorithm Viewer</div>
             `}
         </div>
     </div>
@@ -926,42 +926,42 @@
                 <div class="sidebar" id="${modalId}-sidebar">
                     <div class="sidebar-content">
                         <div class="sidebar-title">Settings</div>
-                        
+
                         <div class="sidebar-section">
                             <label>Animation Speed</label>
                             <input type="range" id="${modalId}-sidebar-speed" min="0.2" max="2" step="0.1" value="${state.animationSpeed}">
                             <span class="sidebar-value" id="${modalId}-sidebar-speed-val">${state.animationSpeed.toFixed(1)}x</span>
                         </div>
-                        
+
                         <div class="sidebar-section">
                             <label>Auto Delay</label>
                             <input type="range" id="${modalId}-sidebar-delay" min="0" max="1000" step="50" value="${state.autoRunDelay}">
                             <span class="sidebar-value" id="${modalId}-sidebar-delay-val">${state.autoRunDelay}ms</span>
                         </div>
-                        
+
                         <div class="sidebar-section">
                             <label>Image Size</label>
                             <input type="range" id="${modalId}-sidebar-image-size" min="100" max="400" step="10" value="${state.imageSize}">
                             <span class="sidebar-value" id="${modalId}-sidebar-image-size-val">${state.imageSize}px</span>
                         </div>
-                        
+
                         <div class="sidebar-section">
                             <label>Animate Both Layers Together</label>
                             <div class="toggle-container">
                                 <div class="toggle-switch ${state.animateBothLayers ? 'active' : ''}" id="${modalId}-both-layers-toggle">
                                     <div class="toggle-slider"></div>
                                 </div>
-                                <span style="font-size: 14px; color: #666;" id="${modalId}-toggle-label">${state.animateBothLayers ? 'On' : 'Off'}</span>
+                                <span style="font-size: 14px; color: var(--text-secondary);" id="${modalId}-toggle-label">${state.animateBothLayers ? 'On' : 'Off'}</span>
                             </div>
                         </div>
-                        
+
                         <div class="sidebar-section">
                             <label>Enable Vertical Display</label>
                             <div class="toggle-container">
                                 <div class="toggle-switch ${state.verticalDisplay ? 'active' : ''}" id="${modalId}-vertical-display-toggle">
                                     <div class="toggle-slider"></div>
                                 </div>
-                                <span style="font-size: 14px; color: #666;" id="${modalId}-vertical-toggle-label">${state.verticalDisplay ? 'On' : 'Off'}</span>
+                                <span style="font-size: 14px; color: var(--text-secondary);" id="${modalId}-vertical-toggle-label">${state.verticalDisplay ? 'On' : 'Off'}</span>
                             </div>
                         </div>
                     </div>
@@ -990,7 +990,7 @@
                     svgs.forEach((svg, index) => {
                         if (index === 1) {
                             const svgStyle = svg.getAttribute('style') || '';
-                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
+                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
                             svg.setAttribute('style', newStyle);
                         }
                     });
@@ -1044,7 +1044,7 @@
             svgs.forEach((svg, index) => {
                 if (index === 1) {
                     const svgStyle = svg.getAttribute('style') || '';
-                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: 0px;');
+                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
                     svg.setAttribute('style', newStyle);
                 }
             });
@@ -1121,12 +1121,16 @@
 
             // Close button
             const closeBtn = document.getElementById(`${modalId}-close-btn`);
-            closeBtn.onclick = () => {
-                document.getElementById(modalId).remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.top = '';
-                window.scrollTo(0, window.modalScrollY || 0);
+            const close = () => {
+                closeModalWithHistory(() => {
+                    document.getElementById(modalId).remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.top = '';
+                    window.scrollTo(0, window.modalScrollY || 0);
+                });
             };
+            closeBtn.onclick = close;
+            pushModalState(modalId, close);
 
             // Sidebar speed slider
             const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);

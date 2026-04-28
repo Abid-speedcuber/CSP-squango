@@ -68,10 +68,12 @@ function openSelectorModal(storageKey, onCloseCallback) {
 }
 
 window.closeSelectorModal = function () {
-    const modal = document.getElementById('trainingSelectorModal');
-    if (!modal) return;
-    modal.style.display = 'none';
-    document.body.classList.remove('modal-open');
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingSelectorModal');
+        if (!modal) return;
+        modal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    });
 };
 
 // ─── Modal Creation ───────────────────────────────────────────────────────────
@@ -84,7 +86,7 @@ function createSelectorModal() {
     modal.style.cssText = `
         display: none;
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.55);
+        background: var(--modal-overlay);
         z-index: 10001;
         align-items: center;
         justify-content: center;
@@ -94,7 +96,7 @@ function createSelectorModal() {
 
     modal.innerHTML = `
         <div style="
-            background: #fff;
+            background: var(--surface);
             border-radius: 14px;
             width: min(560px, 100%);
             max-height: 80vh;
@@ -104,21 +106,21 @@ function createSelectorModal() {
             overflow: hidden;
         ">
             <!-- Header -->
-            <div style="flex-shrink:0; padding: 16px 20px; background: #f8f9fa; border-bottom: 1px solid #e9ecef; display:flex; align-items:center; justify-content:space-between;">
+            <div style="flex-shrink:0; padding: 16px 20px; background: var(--modal-header-bg); border-bottom: 1px solid var(--surface-border); display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:1.15rem; font-weight:700; color:#2d3748;">Select Cases</span>
-                    <span id="selectorCountBar" style="font-size:0.8rem; color:#888; font-weight:400;"></span>
+                    <span style="font-size:1.15rem; font-weight:700; color: var(--text-primary);">Select Cases</span>
+                    <span id="selectorCountBar" style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;"></span>
                 </div>
-                <button onclick="closeSelectorModal()" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:#666; line-height:1; padding:0;">&times;</button>
+                <button onclick="closeSelectorModal()" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
             </div>
 
             <!-- Search + Custom Select bar -->
-            <div style="flex-shrink:0; padding: 10px 14px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; gap:8px; align-items:center;">
+            <div style="flex-shrink:0; padding: 10px 14px; background:var(--surface2); border-bottom:1px solid var(--surface-border); display:flex; gap:8px; align-items:center;">
                 <div style="position:relative; flex:1; min-width:0;">
                     <input type="text" id="selectorSearchInput"
                         placeholder="Search cases..."
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid #dee2e6; border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;"
+                        style="width:100%; padding:7px 10px 7px 32px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;"
                         oninput="onSelectorSearch(this.value)">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         style="position:absolute; left:9px; top:50%; transform:translateY(-50%); width:15px; height:15px; pointer-events:none;">
@@ -126,7 +128,7 @@ function createSelectorModal() {
                     </svg>
                 </div>
                 <select id="selectorBulkAction"
-                    style="padding:7px 8px; border:1px solid #dee2e6; border-radius:7px; font-size:0.82rem; background:white; cursor:pointer; color:#495057; flex-shrink:0;"
+                    style="padding:7px 8px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-secondary); flex-shrink:0;"
                     onchange="applySelectorBulkAction(this.value); this.value='';">
                     <option value="" disabled selected>Select…</option>
                     <option value="select_all">Select All</option>
@@ -220,22 +222,28 @@ function renderSelectorCases() {
 
         let bgColor, borderColor, textColor, checkColor;
         if (isLearned) {
-            bgColor = isSelected ? '#c3e6cb' : '#f0fff4';
-            borderColor = isSelected ? '#28a745' : '#a8d5b5';
-            textColor = '#155724';
-            checkColor = '#28a745';
+            bgColor = isSelected ? 'var(--card-learned-header)' : 'var(--card-learned-bg)';
+            borderColor = isSelected ? 'var(--card-learned-border)' : 'var(--card-learned-border)';
+            textColor = 'var(--text-primary)';
+            checkColor = 'var(--card-learned-border)';
         } else if (isLearning) {
-            bgColor = isSelected ? '#ffeeba' : '#fffdf0';
-            borderColor = isSelected ? '#ffc107' : '#ffe082';
-            textColor = '#856404';
-            checkColor = '#e0a800';
+            bgColor = isSelected ? 'var(--card-learning-header)' : 'var(--card-learning-bg)';
+            borderColor = isSelected ? 'var(--card-learning-border)' : 'var(--card-learning-border)';
+            textColor = 'var(--text-primary)';
+            checkColor = 'var(--card-learning-border)';
         } else {
-            const priorityBgs = ['#e3f0ff', '#e8f4ff', '#eef7ff', '#f8f9fa', '#fff8ee', '#fff3e0', '#fdecea'];
-            const priorityBords = ['#90b8f0', '#a0c4f8', '#b0d0fc', '#dee2e6', '#ffd699', '#ffb74d', '#ef9a9a'];
-            bgColor = isSelected ? priorityBgs[priorityLevel - 1] : '#ffffff';
-            borderColor = isSelected ? priorityBords[priorityLevel - 1] : '#dee2e6';
-            textColor = '#2d3748';
-            checkColor = '#007bff';
+            const priorityBgs = [
+                'var(--p1-bg)', 'var(--p2-bg)', 'var(--p3-bg)', 'var(--p4-bg)',
+                'var(--p5-bg)', 'var(--p6-bg)', 'var(--p7-bg)'
+            ];
+            const priorityBords = [
+                'var(--p1-border)', 'var(--p2-border)', 'var(--p3-border)', 'var(--p4-border)',
+                'var(--p5-border)', 'var(--p6-border)', 'var(--p7-border)'
+            ];
+            bgColor = isSelected ? priorityBgs[priorityLevel - 1] : 'var(--surface)';
+            borderColor = isSelected ? priorityBords[priorityLevel - 1] : 'var(--border-color)';
+            textColor = 'var(--text-primary)';
+            checkColor = 'var(--accent)';
         }
 
         return `
@@ -255,8 +263,8 @@ function renderSelectorCases() {
                 ">
                 <div style="
                     width:16px; height:16px; border-radius:3px; flex-shrink:0; margin-top:1px;
-                    border:2px solid ${isSelected ? checkColor : '#ccc'};
-                    background:${isSelected ? checkColor : 'white'};
+                    border:2px solid ${isSelected ? checkColor : 'var(--border-color)'};
+                    background:${isSelected ? checkColor : 'var(--surface)'};
                     display:flex; align-items:center; justify-content:center;
                 ">
                     ${isSelected ? `<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:9px;height:9px;"><polyline points="2 6 5 9 10 3"/></svg>` : ''}
@@ -439,7 +447,7 @@ function generateMultiCaseScrambleData() {
     const hexCode = generateHexFromShapeIndex(scramble);
 
     let scrambleText = hexCode;
-    let scrambleImage = '<div style="color:#999;">Image unavailable</div>';
+    let scrambleImage = '<div style="color:var(--text-muted);">Image unavailable</div>';
 
     try {
         const state = parseHexFormat(hexCode);
@@ -450,10 +458,10 @@ function generateMultiCaseScrambleData() {
     } catch (e) { console.error('Multi scramble gen error:', e); }
 
     try {
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScramble !== 'undefined') {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-            scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+            scrambleImage = visualizeFromScramble(notation, trainingScrambleImageSize, colorScheme);
         } else {
             scrambleImage = generateScrambleSVGFromHex(hexCode);
         }

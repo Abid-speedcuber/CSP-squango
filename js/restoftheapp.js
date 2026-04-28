@@ -132,6 +132,7 @@ let hideInstructions = false; // Toggle for hiding instruction buttons
 let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
 let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
 let generalNotes = ''; // HTML content for general notes
+let algVariables = new Map();
 window.enhancedAccess = localStorage.getItem('enhancedAccess') === 'true'; // Toggle for enhanced access (not exported)
 let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
 let currentSortMode = localStorage.getItem('sortMode') || 'probability';
@@ -161,7 +162,7 @@ const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 // Function to calculate and cache parity for all cases
 function calculateAndCacheAllParity() {
 
-    if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+    if (typeof window.ParityAnalyzerLib === 'undefined') {
         console.warn('Parity analyzer not available, skipping parity calculation');
         return;
     }
@@ -193,7 +194,7 @@ function calculateAndCacheAllParity() {
 
             try {
                 const setup = invertScramble(alg);
-                const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+                const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
@@ -330,6 +331,7 @@ try {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
+        algVariables = new Map(Object.entries(state.algVariables || {}));
 
         // Load display names
         if (state.displayNames) {
@@ -438,6 +440,7 @@ function saveState() {
             cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
             lastParityCalculationSettings: lastParityCalculationSettings,
             generalNotes: generalNotes,
+            algVariables: Object.fromEntries(algVariables),
             evilnessFactor: evilnessFactor,
             evilnessStringReturn: evilnessStringReturn,
             evilnessMap: evilnessMap,
@@ -558,7 +561,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     lastParityCalculationSettings = null;
 
     saveState();
-    updateProgress();
+    if (typeof updateProgress === 'function') updateProgress();
 
     // Recalculate parity with new settings
     if (needsParityRecalculation()) {
@@ -625,6 +628,7 @@ function exportData() {
         customAlgorithms: Object.fromEntries(customAlgorithms),
         svgData: window.svgData,
         generalNotes: generalNotes,
+        algVariables: Object.fromEntries(algVariables),
         evilnessFactor: evilnessFactor,
         evilnessStringReturn: evilnessStringReturn,
         evilnessMap: evilnessMap,
@@ -697,6 +701,7 @@ function importData(jsonStr) {
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
         customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
         generalNotes = state.generalNotes || '';
+        algVariables = new Map(Object.entries(state.algVariables || {}));
 
         // Load evilness settings
         if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
@@ -717,7 +722,8 @@ function importData(jsonStr) {
         }
 
         generalNotes = state.generalNotes || '';
-
+        algVariables = new Map(Object.entries(state.algVariables || {}));
+        
         // Import evilness settings
         if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
         if (state.evilnessStringReturn !== undefined) evilnessStringReturn = state.evilnessStringReturn;
@@ -770,7 +776,7 @@ function importData(jsonStr) {
             localStorage.setItem('trainingShowPrevScramble', state.trainingShowPrevScramble);
         }
         saveState();
-        updateProgress();
+        if (typeof updateProgress === 'function') updateProgress();
 
         // Force recalculate all parity with new settings
         if (needsParityRecalculation()) {
@@ -818,37 +824,6 @@ function initializeDOMReferences() {
     };
 }
 
-// Dynamic SVG scaling based on viewport width
-let resizeTimer;
-function updateSVGScaling() {
-    // No longer needed - CSS handles scaling with aspect-ratio
-}
-
-// Debounced resize handler for better performance
-function handleResize() {
-    // Reserved for future resize logic if needed
-}
-
-// Update on load and resize
-window.addEventListener('load', updateSVGScaling);
-window.addEventListener('resize', handleResize);
-
-// Also call after rendering cards
-const originalRender = window.render;
-if (typeof originalRender === 'function') {
-    window.render = function () {
-        const modalOpen = document.getElementById('generalNotesModal');
-        if (typeof showRenderLoader === 'function') showRenderLoader();
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                originalRender();
-                setTimeout(updateSVGScaling, 10);
-                if (typeof hideRenderLoader === 'function') hideRenderLoader();
-            });
-        });
-    };
-}
-
 // Initialize preset system when DOM is ready
 document.addEventListener('DOMContentLoaded', async () => {
     // Initialize preset on app load
@@ -865,11 +840,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-window.openInvertScrambleModal = function () {
-    // TODO: Implement invert scramble modal
-    showToast('Invert scramble - to be implemented', 2000, 'info');
-};
-
 window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedParity = '') {
     if (typeof window.Square1AlgorithmViewer === 'undefined') {
         showToast('Algorithm viewer library not loaded', 2000, 'error');
@@ -883,7 +853,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
     if (!parity && algorithm && algorithm !== 'Done!') {
         try {
             const setup = invertScramble(algorithm);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,
@@ -910,7 +880,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
 };
 
 // Apply VW-based sizing to topbar on mobile
-function applyTopbarVWScaling() {
+function applyTopbarScaling() {
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
 
@@ -921,5 +891,5 @@ function applyTopbarVWScaling() {
     }
 }
 
-window.addEventListener('resize', applyTopbarVWScaling);
-document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);
+window.addEventListener('resize', applyTopbarScaling);
+document.addEventListener('DOMContentLoaded', applyTopbarScaling);

@@ -1,173 +1,33 @@
 // ========================================
 // Square-1 Scramble Visualizer Library
-// With ridiculously funny names to avoid conflicts!
+// Uses consolidated functions from utils.js
 // ========================================
 
-// === SCRAMBLED STATE GENERATOR FUNCTIONS ===
-function gimmeMeARandomNumberBelowThisPlease(n) {
-  return Math.floor(Math.random() * n);
-}
+// === USE CONSOLIDATED FUNCTIONS FROM utils.js ===
+const pieceLabels = window.pieceLabels;
+const edgePieces = window.edgePieces;
+const cornerPartners = window.cornerPartner;
+const cornerIdentifier = window.cornerIdentifier;
+const pieceToHex = window.pieceToHex;
 
-function ThisIsMySquare1CubieObjectWithFancyHexNumbers() {
-  this.ul = 0x011233;
-  this.ur = 0x455677;
-  this.dl = 0x998bba;
-  this.dr = 0xddcffe;
-  this.ml = 0;
-}
+// === ALIASES TO CONSOLIDATED FUNCTIONS ===
+const rotateString = window.rotateString;
+const rotateArray = window.rotateArray;
+const solvedCube = window.createSolvedState;
+const rotateSection = window.rotateSection;
+const sliceSwap = window.sliceSwap;
+const applyScramble = window.applyScramble;
+const encodeToHex = window.stateToHex;
+const invertScramble = window.invertScramble;
 
-ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.toString = function () {
-  return this.ul.toString(16).padStart(6, '0') +
-    this.ur.toString(16).padStart(6, '0') +
-    "|/".charAt(this.ml) +
-    this.dl.toString(16).padStart(6, '0') +
-    this.dr.toString(16).padStart(6, '0');
-}
+// === RE-EXPORT FROM utils.js ===
+const initShapes = window.initShapes;
+const Square1Cubie = window.Square1Cubie;
+const cubeFromShape = window.cubeFromShape;
+const shapeIndexToHex = window.shapeIndexToHex;
 
-ThisIsMySquare1CubieObjectWithFancyHexNumbers.prototype.setPiece = function (idx, value) {
-  if (idx < 6) {
-    this.ul &= ~(0xf << ((5 - idx) << 2));
-    this.ul |= value << ((5 - idx) << 2);
-  } else if (idx < 12) {
-    this.ur &= ~(0xf << ((11 - idx) << 2));
-    this.ur |= value << ((11 - idx) << 2);
-  } else if (idx < 18) {
-    this.dl &= ~(0xf << ((17 - idx) << 2));
-    this.dl |= value << ((17 - idx) << 2);
-  } else {
-    this.dr &= ~(0xf << ((23 - idx) << 2));
-    this.dr |= value << ((23 - idx) << 2);
-  }
-}
-
-const theseAreAllThePossibleHalfLayerShapesISwear = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
-const pleaseSaveAllValidShapeIndicesHereThankYou = [];
-
-function pleaseInitializeAllTheShapesForMeRightNow() {
-  let count = 0;
-  for (let i = 0; i < 28561; i++) {
-    const dr = theseAreAllThePossibleHalfLayerShapesISwear[i % 13];
-    const dl = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(i / 13) % 13];
-    const ur = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(Math.floor(i / 13) / 13) % 13];
-    const ul = theseAreAllThePossibleHalfLayerShapesISwear[Math.floor(Math.floor(Math.floor(i / 13) / 13) / 13)];
-    const value = ul << 18 | ur << 12 | dl << 6 | dr;
-
-    let bitCount = 0;
-    let temp = value;
-    while (temp) {
-      bitCount += temp & 1;
-      temp >>= 1;
-    }
-
-    if (bitCount === 16) {
-      pleaseSaveAllValidShapeIndicesHereThankYou[count++] = value;
-    }
-  }
-}
-
-function pleaseGenerateACubeFromThisShapeIndexForMe(shapeIndex) {
-  const f = new ThisIsMySquare1CubieObjectWithFancyHexNumbers();
-  const shape = pleaseSaveAllValidShapeIndicesHereThankYou[shapeIndex];
-  let corner = 0x01234567 << 1 | 0x11111111;
-  let edge = 0x01234567 << 1;
-  let n_corner = 8, n_edge = 8;
-
-  for (let i = 0; i < 24; i++) {
-    if (((shape >> i) & 1) === 0) {
-      const rnd = gimmeMeARandomNumberBelowThisPlease(n_edge) << 2;
-      f.setPiece(23 - i, (edge >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      edge = (edge & m) + ((edge >> 4) & ~m);
-      n_edge--;
-    } else {
-      const rnd = gimmeMeARandomNumberBelowThisPlease(n_corner) << 2;
-      f.setPiece(23 - i, (corner >> rnd) & 0xf);
-      f.setPiece(22 - i, (corner >> rnd) & 0xf);
-      const m = (1 << rnd) - 1;
-      corner = (corner & m) + ((corner >> 4) & ~m);
-      n_corner--;
-      i++;
-    }
-  }
-  f.ml = gimmeMeARandomNumberBelowThisPlease(2);
-  return f;
-}
-
-function convertThisShapeIndexIntoHexNotationPlease(shapeIndex) {
-  const cube = pleaseGenerateACubeFromThisShapeIndexForMe(shapeIndex);
-  const hexString = cube.toString();
-  // Normalize separator to always use | instead of /
-  return hexString.replace('/', '|');
-}
-
-// Initialize shapes
-pleaseInitializeAllTheShapesForMeRightNow();
-
-// === CONSTANTS WITH SILLY NAMES ===
-const pleaseGiveMePieceLabelsThankYou = {
-  A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
-  G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
-  M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
-  T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
-};
-
-const theseAreEdgePiecesIPromise = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-
-const findMyPartnerPleaseAndThankYou = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-const whatIsMyCornerIDAgain = {
-  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
-};
-
-const hexToPieceMapButBackwards = {
-  'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
-  'YB': '2', 'YBO': '11', 'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99',
-  'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
-};
-
-// === BASIC HELPER FUNCTIONS ===
-function canYouRotateThisStringPlease(str, rotAmount) {
-  const len = str.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return str.slice(normalizedRot) + str.slice(0, normalizedRot);
-}
-
-function pleaseRotateThisArrayForMe(arr, rotAmount) {
-  const len = arr.length;
-  const normalizedRot = ((rotAmount % len) + len) % len;
-  return arr.slice(normalizedRot).concat(arr.slice(0, normalizedRot));
-}
-
-function gimmeASolvedCubeRightNow() {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
-
-function rotateThisSectionOfArrayPlease(arr, startIdx, length, rotAmount) {
-  const normalizedRot = ((rotAmount % length) + length) % length;
-  if (normalizedRot === 0) return;
-
-  const segment = arr.slice(startIdx, startIdx + length);
-  const rotated = [];
-  for (let i = 0; i < length; i++) {
-    rotated[(i + normalizedRot) % length] = segment[i];
-  }
-  for (let i = 0; i < length; i++) {
-    arr[startIdx + i] = rotated[i];
-  }
-}
-
-function doTheSliceSwapDancePlease(arr) {
-  for (let i = 0; i < 6; i++) {
-    [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-  }
-}
-
-// === SCRAMBLE PARSING ===
-function* pleaseTokenizeThisScrambleForMe(scrambleString) {
+// === SCRAMBLE PARSING (local override needed for different token format) ===
+function* tokenizeScramble(scrambleString) {
   let idx = 0;
   const totalLen = scrambleString.length;
   const whitespaceRegex = /\s/;
@@ -222,127 +82,12 @@ function* pleaseTokenizeThisScrambleForMe(scrambleString) {
   }
 }
 
-function applyScrambleToCubePlease(scrambleString) {
-  const cubeState = gimmeASolvedCubeRightNow();
-
-  for (const token of pleaseTokenizeThisScrambleForMe(scrambleString)) {
-    if (token.moveType === 'turn') {
-      rotateThisSectionOfArrayPlease(cubeState, 0, 12, token.top);
-      rotateThisSectionOfArrayPlease(cubeState, 12, 12, token.bottom);
-      if (token.hasSlash) doTheSliceSwapDancePlease(cubeState);
-    } else {
-      doTheSliceSwapDancePlease(cubeState);
-    }
-  }
-
-  return cubeState;
-}
-
-// === STATE ENCODING ===
-function pleaseEncodeMyCubeStateToHexNotation(cubeStateArray) {
-  const topLayerPieces = [];
-  const bottomLayerPieces = [];
-
-  // Process top layer (0-11)
-  let idx = 0;
-  while (idx < 12) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      topLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[(idx + 1) % 12];
-      if (findMyPartnerPleaseAndThankYou[piece] === nextPiece) {
-        topLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in top layer';
-      }
-    }
-  }
-
-  // Process bottom layer (12-23)
-  idx = 12;
-  while (idx < 24) {
-    const piece = cubeStateArray[idx];
-    if (theseAreEdgePiecesIPromise.has(piece)) {
-      bottomLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
-      idx++;
-    } else {
-      const nextPiece = cubeStateArray[12 + ((idx - 12 + 1) % 12)];
-      if (findMyPartnerPleaseAndThankYou[piece] === nextPiece) {
-        bottomLayerPieces.push(pleaseGiveMePieceLabelsThankYou[piece]);
-        idx += 2;
-      } else {
-        return 'Error: Invalid corner pairing in bottom layer';
-      }
-    }
-  }
-
-  // Convert to hex
-  const topHexString = topLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-  const bottomHexString = bottomLayerPieces.map(p => hexToPieceMapButBackwards[p] || '?').join('');
-
-  if (topHexString.includes('?') || bottomHexString.includes('?')) {
-    return 'Error: Unknown piece mapping';
-  }
-
-  if (topHexString.length !== 12 || bottomHexString.length !== 12) {
-    return 'Error: Invalid hex length';
-  }
-
-  // Format: reverse(L-A) | reverse(M-R) + reverse(S-X)
-  const leftTopReversed = topHexString.split('').reverse().join('');
-  const rightBottom1Reversed = bottomHexString.slice(0, 6).split('').reverse().join('');
-  const rightBottom2Reversed = bottomHexString.slice(6, 12).split('').reverse().join('');
-
-  return `${leftTopReversed}|${rightBottom1Reversed}${rightBottom2Reversed}`;
-}
-
-// === INVERT SCRAMBLE (for solution visualization) ===
-function pleaseInvertThisScrambleForSolutionVisualization(scrambleString) {
-  if (!scrambleString) return scrambleString;
-  let str = String(scrambleString).trim();
-
-  const parts = str.split('/');
-  const reversed = parts.slice().reverse();
-
-  const inverted = reversed.map(part => {
-    part = part.trim();
-
-    const turnMatch = part.match(/\(([^)]+)\)/);
-    if (turnMatch) {
-      const values = turnMatch[1].split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return '(' + invertedValues.join(',') + ')';
-    }
-
-    if (part.includes(',')) {
-      const values = part.split(',').map(v => v.trim());
-      const invertedValues = values.map(v => {
-        const num = parseInt(v);
-        if (isNaN(num)) return v;
-        return String(-num);
-      });
-      return invertedValues.join(',');
-    }
-
-    return part;
-  });
-
-  return inverted.join('/');
-}
-
 // === SHAPE BUILDING ===
-function pleaseBuildClustersFromThisShapeArray(shapeArray) {
+function buildClusters(shapeArray) {
   const slots = [];
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
-  function processOneLayerPlease(startIdx, endIdx) {
+  function processLayer(startIdx, endIdx) {
     let i = startIdx;
     while (i < endIdx) {
       const isThisACorner = shapeArray[i] === 1;
@@ -378,13 +123,13 @@ function pleaseBuildClustersFromThisShapeArray(shapeArray) {
     }
   }
 
-  processOneLayerPlease(0, 12);
-  processOneLayerPlease(12, 24);
+  processLayer(0, 12);
+  processLayer(12, 24);
 
   return slots;
 }
 
-function pleaseParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
+function parseAssignments(hexScramble, slotsList) {
   const assignments = {};
   for (let i = 0; i < slotsList.length; i++) {
     const slot = slotsList[i];
@@ -401,7 +146,7 @@ function pleaseParseScrambleAssignmentsFromHexCode(hexScramble, slotsList) {
 }
 
 // === GEOMETRY HELPERS ===
-function polarToCartesianButWithFunnyName(centerX, centerY, radius, angleDegrees) {
+function polarToCartesian(centerX, centerY, radius, angleDegrees) {
   const angleRadians = angleDegrees * Math.PI / 180;
   return {
     x: centerX + radius * Math.cos(angleRadians),
@@ -409,18 +154,18 @@ function polarToCartesianButWithFunnyName(centerX, centerY, radius, angleDegrees
   };
 }
 
-function pointArrayToSVGStringPlease(pointsArray) {
+function pointsToSVG(pointsArray) {
   return pointsArray.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 }
 
-function lerpBetweenTwoPointsPlease(pointA, pointB, interpolationAmount) {
+function lerpPoints(pointA, pointB, interpolationAmount) {
   return {
     x: pointA.x + (pointB.x - pointA.x) * interpolationAmount,
     y: pointA.y + (pointB.y - pointA.y) * interpolationAmount
   };
 }
 
-function gimmeTheAngleForThisSlotPlease(slot, angleArray) {
+function getSlotAngle(slot, angleArray) {
   const angles = [];
   for (let k = 0; k < slot.lettersCount; k++) {
     const globalIdx = slot.startLetter + k;
@@ -431,7 +176,7 @@ function gimmeTheAngleForThisSlotPlease(slot, angleArray) {
 }
 
 // === COLOR MAPPING ===
-function whatColorIsThisEdgePiecePlease(hexChar, colorScheme) {
+function getEdgeColor(hexChar, colorScheme) {
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
   switch (hexChar.toLowerCase()) {
@@ -449,7 +194,7 @@ function whatColorIsThisEdgePiecePlease(hexChar, colorScheme) {
   }
 }
 
-function whatAreTheCornerColorLettersPlease(hexChar) {
+function getCornerColorLetters(hexChar) {
   switch ((hexChar || '').toLowerCase()) {
     case '1': return { top: 'y', left: 'b', right: 'o' };
     case '3': return { top: 'y', left: 'r', right: 'b' };
@@ -464,7 +209,7 @@ function whatAreTheCornerColorLettersPlease(hexChar) {
   }
 }
 
-function convertColorLetterToHexCodePlease(colorLetter, colorScheme) {
+function colorLetterToHex(colorLetter, colorScheme) {
   if (!colorLetter) return '#cccccc';
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
@@ -479,11 +224,11 @@ function convertColorLetterToHexCodePlease(colorLetter, colorScheme) {
   }
 }
 
-function gimmeCornerColorsAsHexCodesPlease(hexChar, isThisBottomLayer, colorScheme) {
-  const colorTriplet = whatAreTheCornerColorLettersPlease(hexChar);
-  let leftColor = convertColorLetterToHexCodePlease(colorTriplet.left, colorScheme);
-  let rightColor = convertColorLetterToHexCodePlease(colorTriplet.right, colorScheme);
-  const topColor = convertColorLetterToHexCodePlease(colorTriplet.top, colorScheme);
+function getCornerColors(hexChar, isThisBottomLayer, colorScheme) {
+  const colorTriplet = getCornerColorLetters(hexChar);
+  let leftColor = colorLetterToHex(colorTriplet.left, colorScheme);
+  let rightColor = colorLetterToHex(colorTriplet.right, colorScheme);
+  const topColor = colorLetterToHex(colorTriplet.top, colorScheme);
 
   if (isThisBottomLayer) {
     [leftColor, rightColor] = [leftColor, rightColor];
@@ -492,66 +237,66 @@ function gimmeCornerColorsAsHexCodesPlease(hexChar, isThisBottomLayer, colorSche
   return { top: topColor, left: leftColor, right: rightColor };
 }
 
-function whatColorIsThisHalfCornerPlease(hexChar) {
+function getHalfCornerColor(hexChar) {
   return 'fill="#ff9999"';
 }
 
 // === SVG GENERATION FOR INDIVIDUAL PIECES ===
-function pleaseCreateOnePieceSVGForMe(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, unit10vh, isBottomLayer, strokeThin, strokeMedium, strokeThick, colorScheme) {
+function createPieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, unit10vh, isBottomLayer, strokeThin, strokeMedium, strokeThick, colorScheme) {
   isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
 
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
   if (slot.type === 'edge') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     const midRadius = radiusInner + (radiusOuter - radiusInner) * 0.8;
-    const pointMidA = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle - halfAngle);
-    const pointMidB = polarToCartesianButWithFunnyName(centerX, centerY, midRadius, centerAngle + halfAngle);
+    const pointMidA = polarToCartesian(centerX, centerY, midRadius, centerAngle - halfAngle);
+    const pointMidB = polarToCartesian(centerX, centerY, midRadius, centerAngle + halfAngle);
 
-    const edgeColors = whatColorIsThisEdgePiecePlease(pieceHex, colorScheme);
+    const edgeColors = getEdgeColor(pieceHex, colorScheme);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointMidA, pointA, pointB, pointMidB])}" fill="${edgeColors.outer}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointMidA, pointA, pointB, pointMidB])}" fill="${edgeColors.outer}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
 
   } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
     const scaleFactor = 0.80;
-    const pointSmallLeft = lerpBetweenTwoPointsPlease(pointInner, pointOuterLeft, scaleFactor);
-    const pointSmallRight = lerpBetweenTwoPointsPlease(pointInner, pointOuterRight, scaleFactor);
-    const pointSmallBottom = lerpBetweenTwoPointsPlease(pointInner, pointApex, scaleFactor);
+    const pointSmallLeft = lerpPoints(pointInner, pointOuterLeft, scaleFactor);
+    const pointSmallRight = lerpPoints(pointInner, pointOuterRight, scaleFactor);
+    const pointSmallBottom = lerpPoints(pointInner, pointApex, scaleFactor);
 
-    const colors = gimmeCornerColorsAsHexCodesPlease(pieceHex, isBottomLayer, colorScheme);
+    const colors = getCornerColors(pieceHex, isBottomLayer, colorScheme);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointSmallBottom, pointSmallLeft])}" fill="${colors.left}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointOuterLeft, pointApex, pointSmallBottom, pointSmallLeft])}" fill="${colors.left}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
     svgMarkup += `<line x1="${pointApex.x.toFixed(2)}" y1="${pointApex.y.toFixed(2)}" x2="${pointSmallBottom.x.toFixed(2)}" y2="${pointSmallBottom.y.toFixed(2)}" stroke="#333" stroke-width="${strokeMedium}" stroke-linecap="round" class="corner-detail"/>`;
 
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
-    const fillAttribute = whatColorIsThisHalfCornerPlease(pieceHex);
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
+    const fillAttribute = getHalfCornerColor(pieceHex);
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
   }
 
   return svgMarkup;
 }
 
 // === MAIN SVG GENERATION ===
-function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, desiredSize, colorScheme, ringDistance = 5) {
+function generateFullSVG(hexScrambleCode, equatorChar, desiredSize, colorScheme, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -578,8 +323,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
     scrambleIdx++;
   }
 
-  const slots = pleaseBuildClustersFromThisShapeArray(shapeArray);
-  const pieceAssignments = pleaseParseScrambleAssignmentsFromHexCode(hexScrambleCode, slots);
+  const slots = buildClusters(shapeArray);
+  const pieceAssignments = parseAssignments(hexScrambleCode, slots);
 
   // Calculate dimensions
   const svgSize = desiredSize;
@@ -597,6 +342,7 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   const strokeThick = desiredSize * 0.005;
   const strokeRing = 0;
   const strokeLine = desiredSize * 0.008;
+  const sliceTrim = 0.70;
 
   const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
   const marginLeft = centerToCenterDistance - svgSize;
@@ -606,8 +352,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 255);
+  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -616,8 +362,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
       const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlotPlease(slot, leftLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, false, strokeThin, strokeMedium, strokeThick, colorScheme);
+      const angle = getSlotAngle(slot, leftLayerAngles);
+      htmlOutput += createPieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, false, strokeThin, strokeMedium, strokeThick, colorScheme);
     }
   });
 
@@ -627,8 +373,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 285);
+  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -637,8 +383,8 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
       const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlotPlease(slot, rightLayerAngles);
-      htmlOutput += pleaseCreateOnePieceSVGForMe(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, true, strokeThin, strokeMedium, strokeThick, colorScheme);
+      const angle = getSlotAngle(slot, rightLayerAngles);
+      htmlOutput += createPieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, unit10vh, true, strokeThin, strokeMedium, strokeThick, colorScheme);
     }
   });
 
@@ -648,52 +394,42 @@ function pleaseGenerateTheFullSVGFromHexNotation(hexScrambleCode, equatorChar, d
 }
 
 // ========================================
-// === SHAPE INDEX TO HEX CONVERSION ===
-// ========================================
-
-function convertShapeIndexToHexPlease(shapeIndex) {
-  const hexString = convertThisShapeIndexIntoHexNotationPlease(shapeIndex);
-  // Ensure we always use | separator
-  return hexString.replace('/', '|');
-}
-
-// ========================================
 // === CUBE SHAPE VISUALIZER ===
 // ========================================
 
-function pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
+function createShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
   if (slot.type === 'edge') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
 
   } else if (slot.type === 'half-corner') {
     const halfInnerAngle = 15;
-    const pointInner = polarToCartesianButWithFunnyName(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesianButWithFunnyName(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesianButWithFunnyName(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
+    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
+    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
+    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
+    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
 
-    svgMarkup += `<polygon points="${pointArrayToSVGStringPlease([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
+    svgMarkup += `<polygon points="${pointsToSVG([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
   }
 
   return svgMarkup;
 }
 
-function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
+function generateShapeSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -719,7 +455,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
     scrambleIdx++;
   }
 
-  const slots = pleaseBuildClustersFromThisShapeArray(shapeArray);
+  const slots = buildClusters(shapeArray);
 
   // Calculate dimensions
   const svgSize = size;
@@ -735,6 +471,7 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   const strokeWidth = (size / 200) * strokeWidthBase;
   const strokeRing = 0;
   const strokeLine = size * 0.008;
+  const sliceTrim = 0.70;
 
   const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
   const marginLeft = centerToCenterDistance - svgSize;
@@ -744,8 +481,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 75);
-  const linePoint2Left = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 255);
+  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
+  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -753,8 +490,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
-      const angle = gimmeTheAngleForThisSlotPlease(slot, leftLayerAngles);
-      htmlOutput += pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      const angle = getSlotAngle(slot, leftLayerAngles);
+      htmlOutput += createShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -764,8 +501,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
   htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
 
-  const linePoint1Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 105);
-  const linePoint2Right = polarToCartesianButWithFunnyName(centerX, centerY, ringRadius + 6, 285);
+  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
+  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
@@ -773,8 +510,8 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
-      const angle = gimmeTheAngleForThisSlotPlease(slot, rightLayerAngles);
-      htmlOutput += pleaseCreateOneShapeOutlineSVGForMe(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
+      const angle = getSlotAngle(slot, rightLayerAngles);
+      htmlOutput += createShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
     }
   });
 
@@ -792,12 +529,12 @@ function pleaseGenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, co
  * @param {number} strokeWidth - Base stroke width (default: 2, scales with size)
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
+function visualizeShapes(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
   let hexCode;
 
   // Check if input is a shape index (number)
   if (typeof input === 'number') {
-    hexCode = convertShapeIndexToHexPlease(input);
+    hexCode = shapeIndexToHex(input);
   }
   // Check if input looks like hex code (contains |)
   else if (typeof input === 'string' && input.includes('|')) {
@@ -805,8 +542,8 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
   }
   // Otherwise treat as scramble notation
   else if (typeof input === 'string') {
-    const cubeState = applyScrambleToCubePlease(input);
-    hexCode = pleaseEncodeMyCubeStateToHexNotation(cubeState);
+    const cubeState = applyScramble(input);
+    hexCode = encodeToHex(cubeState);
 
     if (hexCode.startsWith('Error:')) {
       return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
@@ -816,7 +553,7 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">Error: Invalid input type</div>`;
   }
 
-  return pleaseGenerateShapeVisualizationSVG(hexCode, size, edgeFill, cornerFill, strokeWidth, ringDistance);
+  return generateShapeSVG(hexCode, size, edgeFill, cornerFill, strokeWidth, ringDistance);
 }
 
 // ========================================
@@ -830,7 +567,7 @@ function visualizeCubeShapeOutlinesPlease(input, size = 200, edgeFill = 'transpa
  * @param {object} colors - Color customization object with defaults
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistance = 5) {
+function visualizeFromHex(hexCode, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -842,7 +579,7 @@ function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistan
     circleColor: colors.circleColor || 'transparent'
   };
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, hexCode[12], size, colorScheme, ringDistance);
+  return generateFullSVG(hexCode, hexCode[12], size, colorScheme, ringDistance);
 }
 
 /**
@@ -852,7 +589,7 @@ function visualizeFromHexCodePlease(hexCode, size = 200, colors = {}, ringDistan
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, ringDistance = 5) {
+function visualizeFromScramble(scramble, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -864,14 +601,14 @@ function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, 
     circleColor: colors.circleColor || 'transparent'
   };
 
-  const cubeState = applyScrambleToCubePlease(scramble);
-  const hexCode = pleaseEncodeMyCubeStateToHexNotation(cubeState);
+  const cubeState = applyScramble(scramble);
+  const hexCode = encodeToHex(cubeState);
 
   if (hexCode.startsWith('Error:')) {
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
   }
 
-  return pleaseGenerateTheFullSVGFromHexNotation(hexCode, hexCode[12], size, colorScheme, ringDistance);
+  return generateFullSVG(hexCode, hexCode[12], size, colorScheme, ringDistance);
 }
 
 /**
@@ -881,9 +618,9 @@ function visualizeFromScrambleNotationPlease(scramble, size = 200, colors = {}, 
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromSolutionNotationPlease(solution, size = 200, colors = {}, ringDistance = 5) {
-  const invertedScramble = pleaseInvertThisScrambleForSolutionVisualization(solution);
-  return visualizeFromScrambleNotationPlease(invertedScramble, size, colors, ringDistance);
+function visualizeFromSolution(solution, size = 200, colors = {}, ringDistance = 5) {
+  const invertedScramble = invertScramble(solution);
+  return visualizeFromScramble(invertedScramble, size, colors, ringDistance);
 }
 
 // ========================================
@@ -892,20 +629,11 @@ function visualizeFromSolutionNotationPlease(solution, size = 200, colors = {}, 
 
 // For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
-  window.Square1VisualizerLibraryWithSillyNames = {
-    visualizeFromHexCodePlease,
-    visualizeFromScrambleNotationPlease,
-    visualizeFromSolutionNotationPlease,
-    visualizeCubeShapeOutlinesPlease  // <-- This line should be here!
+  window.Square1Visualizer = {
+    visualizeFromHex,
+    visualizeFromScramble,
+    visualizeFromSolution,
+    visualizeShapes
   };
 }
 
-// For module systems (Node.js, bundlers, etc.)
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    visualizeFromHexCodePlease,
-    visualizeFromScrambleNotationPlease,
-    visualizeFromSolutionNotationPlease,
-    visualizeCubeShapeOutlinesPlease
-  };
-}

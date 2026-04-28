@@ -26,7 +26,7 @@
 /* Header */
 .svg-editor-header {
     flex-shrink: 0;
-    background: #2d3748;
+    background: var(--header-dark-bg, #2d3748);
     color: white;
     padding: 15px 20px;
     display: flex;
@@ -117,8 +117,8 @@
 /* Sidebar */
 .svg-editor-sidebar {
     width: 280px;
-    background: white;
-    border-right: 1px solid #ddd;
+    background: var(--surface);
+    border-right: 1px solid var(--border-color);
     overflow-y: auto;
     flex-shrink: 0;
     transition: transform 0.3s ease;
@@ -131,7 +131,7 @@
 .svg-editor-item {
     padding: 12px;
     margin-bottom: 8px;
-    background: #f8f9fa;
+    background: var(--surface2);
     border-radius: 5px;
     cursor: pointer;
     transition: all 0.2s;
@@ -139,26 +139,26 @@
 }
 
 .svg-editor-item:hover {
-    background: #e9ecef;
+    background: var(--surface-border);
 }
 
 .svg-editor-item.active {
-    border: 2px solid #4a9eff;
-    background: #bbdefb;
+    border: 2px solid var(--accent);
+    background: var(--hover-bg);
 }
 
 .svg-editor-item.unsaved {
-    background: #e3f2fd;
-    border: 2px solid #2196f3;
+    background: var(--hover-bg);
+    border: 2px solid var(--accent);
 }
 
 .svg-editor-item.unsaved:hover {
-    background: #bbdefb;
+    background: var(--hover-bg);
 }
 
 .svg-editor-item-name {
     font-weight: 600;
-    color: #2d3748;
+    color: var(--text-ui);
     font-size: 0.9rem;
 }
 
@@ -168,16 +168,16 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    background: #f5f5f5;
+    background: var(--background);
     min-width: 0;
     box-sizing: border-box;
 }
 
 /* Toolbar */
 .svg-editor-toolbar {
-    background: white;
+    background: var(--surface);
     padding: 12px 20px;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     gap: 10px;
     align-items: center;
@@ -189,7 +189,7 @@
 .svg-editor-current-case {
     display: none;
     font-size: 0.9rem;
-    color: #495057;
+    color: var(--text-secondary);
     font-weight: 600;
     white-space: nowrap;
     overflow: hidden;
@@ -210,7 +210,7 @@
 
 .svg-editor-zoom-label {
     font-size: 0.9rem;
-    color: #495057;
+    color: var(--text-secondary);
     font-weight: 500;
 }
 
@@ -221,19 +221,19 @@
 
 .svg-editor-zoom-value {
     font-size: 0.9rem;
-    color: #495057;
+    color: var(--text-secondary);
     min-width: 45px;
 }
 
 .svg-editor-toolbar .svg-editor-btn {
-    background: #f8f9fa;
-    color: #495057;
-    border: 1px solid #dee2e6;
+    background: var(--surface2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
 }
 
 .svg-editor-toolbar .svg-editor-btn:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background: var(--surface-border);
+    border-color: var(--border-color);
 }
 
 .svg-editor-toolbar .svg-editor-btn img {
@@ -256,7 +256,7 @@
 
 .svg-editor-canvas-content {
     position: relative;
-    background: white;
+    background: var(--surface);
     border-radius: 8px;
     padding: 40px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
@@ -266,7 +266,7 @@
 
 .svg-editor-empty {
     text-align: center;
-    color: #666;
+    color: var(--text-secondary);
 }
 
 .svg-editor-empty h2 {
@@ -321,7 +321,7 @@
     .svg-editor-sidebar-toggle {
         display: block;
     }
-    
+
     .svg-editor-sidebar {
         position: fixed;
         top: 13vw;
@@ -334,43 +334,43 @@
         transition: transform 0.3s ease;
         box-shadow: 2px 0 8px rgba(0, 0, 0, 0.15);
     }
-    
+
     .svg-editor-sidebar.open {
         transform: translateX(0);
     }
-    
+
     .svg-editor-sidebar.open ~ .svg-editor-overlay {
         display: block;
     }
-    
+
     .svg-editor-header {
         padding: 2.5vw 3vw;
     }
-    
+
     .svg-editor-header-left {
         gap: 2vw;
         min-width: 0;
         flex: 1;
     }
-    
+
     .svg-editor-header-right {
         gap: 1.5vw;
         flex-shrink: 0;
     }
-    
+
     .svg-editor-title {
         font-size: 3.8vw;
         white-space: nowrap;
     }
-    
+
     .svg-editor-title::after {
         content: "Edit Image";
     }
-    
+
     .svg-editor-title-text {
         display: none;
     }
-    
+
     .svg-editor-btn {
         width: 7vw;
         height: 7vw;
@@ -380,15 +380,15 @@
         max-height: 32px;
         padding: 0;
     }
-    
+
     .svg-editor-header .svg-editor-btn {
         background: rgba(255, 255, 255, 0.2);
     }
-    
+
     .svg-editor-header .svg-editor-btn:hover {
         background: rgba(255, 255, 255, 0.3);
     }
-    
+
     .svg-editor-header .svg-editor-btn img {
         width: 3.5vw;
         height: 3.5vw;
@@ -398,7 +398,7 @@
         max-height: 16px;
         filter: brightness(0) invert(1);
     }
-    
+
     .svg-editor-close {
         font-size: 5.5vw;
         width: 7vw;
@@ -408,28 +408,28 @@
         max-width: 32px;
         max-height: 32px;
     }
-    
+
     .svg-editor-sidebar-toggle {
         padding: 1vw 2.5vw;
         font-size: 3.5vw;
         border-radius: 3px;
     }
-    
+
     .svg-editor-toolbar {
         padding: 2vw 3vw;
         gap: 2vw;
         flex-wrap: nowrap;
     }
-    
+
     .svg-editor-toolbar-left {
         display: none;
     }
-    
+
     .svg-editor-toolbar-right {
         gap: 1.5vw;
         flex-shrink: 0;
     }
-    
+
     .svg-editor-toolbar .svg-editor-btn img {
         width: 3.5vw;
         height: 3.5vw;
@@ -438,38 +438,48 @@
         max-width: 16px;
         max-height: 16px;
     }
-    
+
     .svg-editor-canvas-content {
         padding: 4vw;
     }
-    
+
     .svg-editor-item {
         padding: 3vw;
         margin-bottom: 2vw;
     }
-    
+
     .svg-editor-item-name {
         font-size: 3.5vw;
     }
-    
+
     .svg-editor-sidebar-list {
         padding: 3vw;
     }
-    
+
     .svg-editor-empty h2 {
         font-size: 5vw;
     }
-    
+
     .svg-editor-empty p {
         font-size: 3.5vw;
     }
-    
+
     .svg-editor-current-case {
         display: block !important;
         font-size: 3.2vw;
-        color: #495057;
+        color: var(--text-secondary);
         font-weight: 600;
         flex: 1;
         min-width: 0;
     }
+}
+
+/* ── Dark-mode: SVG editor toolbar icons ───────────────────── */
+/* The header buttons already use brightness(0) invert(1) always  */
+/* (they sit on the permanently dark header). Toolbar buttons use  */
+/* filter:none and need inversion only in dark mode.               */
+/* html[data-theme="dark"] gives specificity (0,3,1) which beats   */
+/* the toolbar's .svg-editor-toolbar .svg-editor-btn img (0,2,1).  */
+html[data-theme="dark"] .svg-editor-toolbar .svg-editor-btn img {
+    filter: invert(1);
 }

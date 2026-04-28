@@ -972,27 +972,29 @@ const SVGEditor = {
     },
 
     close() {
-        // Check for unsaved changes
-        if (this.state.unsavedSvgs.size > 0) {
-            showSaveDiscardConfirmation(
-                `You have ${this.state.unsavedSvgs.size} unsaved image(s). What would you like to do?`,
-                () => {
-                    // Save
-                    this.saveAll();
-                    this.forceClose();
-                },
-                () => {
-                    // Discard
-                    this.forceClose();
-                },
-                () => {
-                    // Cancel - do nothing
-                }
-            );
-            return;
-        }
+        closeModalWithHistory(() => {
+            // Check for unsaved changes
+            if (this.state.unsavedSvgs.size > 0) {
+                showSaveDiscardConfirmation(
+                    `You have ${this.state.unsavedSvgs.size} unsaved image(s). What would you like to do?`,
+                    () => {
+                        // Save
+                        this.saveAll();
+                        this.forceClose();
+                    },
+                    () => {
+                        // Discard
+                        this.forceClose();
+                    },
+                    () => {
+                        // Cancel - do nothing
+                    }
+                );
+                return;
+            }
 
-        this.forceClose();
+            this.forceClose();
+        });
     },
 
     forceClose() {

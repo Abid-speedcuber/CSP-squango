@@ -40,7 +40,7 @@ function createTrainingModal() {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display: flex; gap: 10px; align-items: center;">
-                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: #007bff; text-decoration: underline;" title="Click to select angles to train">Training: Case Name</button>
+                <button class="training-modal-title" id="trainingCaseName" style="background: none; border: none; cursor: pointer; padding: 0; font: inherit; text-align: left; color: var(--link-color); text-decoration: underline;" title="Click to select angles to train">Training: Case Name</button>
                 <button class="training-modal-info training-info-btn" id="trainingInfoBtn" title="Training mode help">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -76,11 +76,11 @@ function createTrainingModal() {
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="trainingScrambleImage"></div>
             </div>
-            <div id="trainingTimerSubInfo" style="display:none; font-size:0.78rem;color:#888;font-weight:500;text-align:center;line-height:1.6;width:100%;"></div>
+            <div id="trainingTimerSubInfo" style="display:none; font-size:0.78rem;color:var(--text-muted);font-weight:500;text-align:center;line-height:1.6;width:100%;"></div>
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
-            <div id="trainingInspectionLabel" style="display:none; font-size:0.78rem;color:#007bff;font-weight:600;letter-spacing:0.05em;"></div>
+            <div id="trainingInspectionLabel" style="display:none; font-size:0.78rem;color:var(--accent);font-weight:600;letter-spacing:0.05em;"></div>
         </div>
-    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; background:#f0f0f0; border-top:1px solid #e0e0e0; font-family:Consolas,Monaco,'Courier New',monospace; color:#666; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color:#bbb; font-style:italic;">No previous scramble to show</span></div>
+    <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; font-family:Consolas,Monaco,'Courier New',monospace; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color: var(--prevscramble-empty-color); font-style:italic;">No previous scramble to show</span></div>
     `;
 
     document.body.appendChild(modal);
@@ -209,31 +209,33 @@ function openTrainingModal(caseName) {
 }
 
 function closeTrainingModal() {
-    const modal = document.getElementById('trainingModal');
-    if (!modal) return;
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingModal');
+        if (!modal) return;
 
-    modal.classList.remove('active');
-    document.body.classList.remove('modal-open');
+        modal.classList.remove('active');
+        document.body.classList.remove('modal-open');
 
-    // Stop timer if running
-    if (timerRunning) {
-        stopTimerOnly();
-    }
+        // Stop timer if running
+        if (timerRunning) {
+            stopTimerOnly();
+        }
 
-    // Reset all training state
-    preGeneratedScrambles = [];
-    timerElapsed = 0;
-    scrambleHistory = [];
-    currentHistoryIndex = -1;
-    currentTrainingCase = null;
-    isHoldReady = false;
-    inspectionRunning = false;
-    isInspectionPhase = false;
-    parityQuizPhase = false;
-    clearInterval(inspectionInterval);
+        // Reset all training state
+        preGeneratedScrambles = [];
+        timerElapsed = 0;
+        scrambleHistory = [];
+        currentHistoryIndex = -1;
+        currentTrainingCase = null;
+        isHoldReady = false;
+        inspectionRunning = false;
+        isInspectionPhase = false;
+        parityQuizPhase = false;
+        clearInterval(inspectionInterval);
 
-    // Soft render when coming back from training
-    filterAndSort(true);
+        // Soft render when coming back from training
+        filterAndSort(true);
+    });
 }
 
 window.generateNextScrambleData = generateNextScrambleData;
@@ -259,15 +261,15 @@ function generateNextScrambleData() {
         console.error('Error generating scramble:', error);
     }
 
-    let scrambleImage = '<div style="color: #999;">Image unavailable</div>';
+    let scrambleImage = '<div style="color: var(--text-muted)">Image unavailable</div>';
     try {
         // Use training-specific image size
-        if (typeof visualizeFromScrambleNotationPlease !== 'undefined') {
+        if (typeof visualizeFromScramble !== 'undefined') {
             const scrambleNotation = hexCode;
             try {
                 const state = parseHexFormat(hexCode);
                 const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
-                scrambleImage = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, colorScheme);
+                scrambleImage = visualizeFromScramble(notation, trainingScrambleImageSize, colorScheme);
             } catch (e) {
                 console.error('Error with new visualizer:', e);
                 scrambleImage = generateScrambleSVGFromHex(hexCode);
@@ -368,9 +370,9 @@ function applyPrevScrambleBar() {
     bar.style.display = 'block';
     const prevIdx = currentHistoryIndex - 1;
     if (prevIdx < 0 || !scrambleHistory[prevIdx]) {
-        bar.innerHTML = '<span style="color:#bbb; font-style:italic; font-family:inherit;">No previous scramble to show</span>';
+        bar.innerHTML = '<span style="color:var(--text-muted); font-style:italic; font-family:inherit;">No previous scramble to show</span>';
     } else {
-        bar.innerHTML = `<span style="color:#999; font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
+        bar.innerHTML = `<span style="color: var(--text-secondary); font-family:inherit;">Previous scramble: </span>${scrambleHistory[prevIdx].text}`;
     }
 }
 
@@ -400,7 +402,7 @@ function openParityAnalysisFromTraining() {
     }
 
     window.ParityTracerLibrary.createModal({
-        backgroundColor: '#ffffff',
+        backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
         instructionText2: 'You can change the color scheme from Color Scheme Settings in the main Settings menu.',
@@ -435,13 +437,13 @@ function handleTimerMouseDown() {
         isHolding = true;
         isHoldReady = false;
         holdStartTime = Date.now();
-        document.getElementById('trainingTimer').style.color = '#ffc107';
+        document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
         const holdCheckInterval = setInterval(() => {
             if (!isHolding) { clearInterval(holdCheckInterval); return; }
             const holdDuration = (Date.now() - holdStartTime) / 1000;
             if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                 isHoldReady = true;
-                document.getElementById('trainingTimer').style.color = '#28a745';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                 clearInterval(holdCheckInterval);
             }
         }, 10);
@@ -451,13 +453,13 @@ function handleTimerMouseDown() {
     isHolding = true;
     isHoldReady = false;
     holdStartTime = Date.now();
-    document.getElementById('trainingTimer').style.color = '#ffc107';
+    document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) { clearInterval(holdCheckInterval); return; }
         const holdDuration = (Date.now() - holdStartTime) / 1000;
         if (holdDuration >= trainingHoldToStart && !isHoldReady) {
             isHoldReady = true;
-            document.getElementById('trainingTimer').style.color = '#28a745';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
             clearInterval(holdCheckInterval);
         }
     }, 10);
@@ -473,7 +475,7 @@ function handleTimerMouseUp() {
     if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         stopInspectionAndStartTimer();
         return;
     }
@@ -481,21 +483,21 @@ function handleTimerMouseUp() {
     if (isInspectionPhase && !parityQuizPhase && isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         return;
     }
     // Normal mode: release after hold-ready → start timer
     if (!isInspectionPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         startTimer();
         return;
     }
     if (isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
     }
 }
 
@@ -505,9 +507,9 @@ function handleTimerMouseLeave() {
         isHoldReady = false;
         // If in inspection, go back to blue inspection color
         if (isInspectionPhase && !parityQuizPhase) {
-            document.getElementById('trainingTimer').style.color = '#2d3748';
+            document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         } else {
-            document.getElementById('trainingTimer').style.color = '#2d3748';
+            document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         }
     }
 }
@@ -526,13 +528,13 @@ function handleTimerTouchStart(e) {
         isHolding = true;
         isHoldReady = false;
         holdStartTime = Date.now();
-        document.getElementById('trainingTimer').style.color = '#ffc107';
+        document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
         const holdCheckInterval = setInterval(() => {
             if (!isHolding) { clearInterval(holdCheckInterval); return; }
             const holdDuration = (Date.now() - holdStartTime) / 1000;
             if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                 isHoldReady = true;
-                document.getElementById('trainingTimer').style.color = '#28a745';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                 clearInterval(holdCheckInterval);
             }
         }, 10);
@@ -542,13 +544,13 @@ function handleTimerTouchStart(e) {
     isHolding = true;
     isHoldReady = false;
     holdStartTime = Date.now();
-    document.getElementById('trainingTimer').style.color = '#ffc107';
+    document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
     const holdCheckInterval = setInterval(() => {
         if (!isHolding) { clearInterval(holdCheckInterval); return; }
         const holdDuration = (Date.now() - holdStartTime) / 1000;
         if (holdDuration >= trainingHoldToStart && !isHoldReady) {
             isHoldReady = true;
-            document.getElementById('trainingTimer').style.color = '#28a745';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
             clearInterval(holdCheckInterval);
         }
     }, 10);
@@ -564,27 +566,27 @@ function handleTimerTouchEnd(e) {
     if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         stopInspectionAndStartTimer();
         return;
     }
     if (isInspectionPhase && !parityQuizPhase && isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         return;
     }
     if (!isInspectionPhase && isHolding && isHoldReady) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
         startTimer();
         return;
     }
     if (isHolding) {
         isHolding = false;
         isHoldReady = false;
-        document.getElementById('trainingTimer').style.color = '#2d3748';
+        document.getElementById('trainingTimer').style.color = 'var(--text-primary)';
     }
 }
 
@@ -594,7 +596,7 @@ function startInspection() {
     inspectionElapsed = 0;
     inspectionStartTime = Date.now();
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#007bff';
+    timerEl.style.color = 'var(--accent)';
     timerEl.textContent = '0.000';
     const subInfo = document.getElementById('trainingTimerSubInfo');
     if (subInfo) subInfo.style.display = 'none';
@@ -625,8 +627,8 @@ function startParityQuizInspection() {
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
     let parity = null;
     try {
-        if (typeof window.Square1ParityAnalyzerLibraryWithSillyNames !== 'undefined') {
-            parity = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (typeof window.ParityAnalyzerLib !== 'undefined') {
+            parity = window.ParityAnalyzerLib.getParityText(
                 cleanScramble,
                 typeof colorScheme !== 'undefined' ? colorScheme : {},
                 typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -643,7 +645,7 @@ function startParityQuizInspection() {
     inspectionStartTime = Date.now();
 
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#007bff';
+    timerEl.style.color = 'var(--accent)';
     timerEl.textContent = '0.000';
     const existingSubInfo = document.getElementById('trainingTimerSubInfo');
     if (existingSubInfo) existingSubInfo.style.display = 'none';
@@ -750,7 +752,7 @@ function startTimer() {
     timerStartTime = Date.now();
 
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#2d3748';
+    timerEl.style.color = 'var(--text-primary)';
 
     timerInterval = setInterval(() => {
         timerElapsed = Date.now() - timerStartTime;
@@ -768,7 +770,7 @@ function stopTimerOnly() {
     const wasParityWrong = lastParityQuizWrong;
     lastParityQuizWrong = false;
     const timerEl = document.getElementById('trainingTimer');
-    timerEl.style.color = '#2d3748';
+    timerEl.style.color = 'var(--text-primary)';
     timerEl.textContent = (timerElapsed / 1000).toFixed(3);
 
     const insLabel = document.getElementById('trainingInspectionLabel');
@@ -780,9 +782,9 @@ function stopTimerOnly() {
     if (trainingEnableInspection && lastInspectionElapsed > 0) {
         const insTime = (lastInspectionElapsed / 1000).toFixed(3);
         const solveTime = (timerElapsed / 1000).toFixed(3);
-        let html = `<span style="color:#007bff;font-weight:700;">(${insTime}s inspection)</span>`;
+        let html = `<span style="color:var(--accent);font-weight:700;">(${insTime}s inspection)</span>`;
         if (wasParityWrong) {
-            html += `<br><span style="color:#cc0000;font-weight:600;">✗ wrong parity answer</span>`;
+            html += `<br><span style="color:var(--bad-case);font-weight:600;">✗ wrong parity answer</span>`;
         }
         subInfo.innerHTML = html;
         subInfo.style.display = 'block';
@@ -836,28 +838,28 @@ function openShapeIndexSelector() {
 
     // Generate shape visuals
     const orgShapes = (shapeIndexItem.org || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = shapeIndexToHex(idx);
+        const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                    data-index="${idx}" 
-                    data-type="org" 
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
+                    data-index="${idx}"
+                    data-type="org"
                     onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
         `;
     }).join('');
 
     const mirShapes = (shapeIndexItem.mir || []).map(idx => {
-        const hexCode = convertShapeIndexToHexPlease(idx);
-        const shapeHTML = visualizeCubeShapeOutlinesPlease(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+        const hexCode = shapeIndexToHex(idx);
+        const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
         return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}" 
-                    data-index="${idx}" 
-                    data-type="mir" 
+            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
+                    data-index="${idx}"
+                    data-type="mir"
                     onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s;">
+                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
         `;
@@ -868,8 +870,8 @@ function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Original Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('org')" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button onclick="selectAllIndices('org')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="orgToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -880,8 +882,8 @@ function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Mirror Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('mir')" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button onclick="selectAllIndices('mir')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="mirToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -914,7 +916,7 @@ function toggleShapeIndex(index) {
     const button = document.querySelector(`button.shape-index-toggle[data-index="${index}"]`);
     if (button) {
         button.classList.toggle('active');
-        button.style.background = button.classList.contains('active') ? '#ebebeb' : '#ffffff';
+        button.style.background = button.classList.contains('active') ? 'var(--surface-border)' : 'var(--surface)';
     }
 
     // Update training scrambles and regenerate lookahead
@@ -947,7 +949,7 @@ function selectAllIndices(type) {
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.add('active');
-        btn.style.background = '#ebebeb';
+        btn.style.background = 'var(--surface-border)';
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
@@ -970,7 +972,7 @@ function deselectAllIndices(type) {
     const buttons = document.querySelectorAll(`button.shape-index-toggle[data-type="${type}"]`);
     buttons.forEach(btn => {
         btn.classList.remove('active');
-        btn.style.background = '#ffffff';
+        btn.style.background = 'var(--surface)';
     });
 
     trainingScrambles = window.trainingSelections[selectedKey];
@@ -978,11 +980,13 @@ function deselectAllIndices(type) {
 }
 
 function closeShapeIndexSelector() {
-    const modal = document.getElementById('shapeIndexSelectorModal');
-    if (modal) {
-        modal.classList.remove('active');
-        document.body.classList.remove('modal-open');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('shapeIndexSelectorModal');
+        if (modal) {
+            modal.classList.remove('active');
+            document.body.classList.remove('modal-open');
+        }
+    });
 }
 
 // Keyboard events for timer
@@ -1031,7 +1035,7 @@ document.addEventListener('keydown', (e) => {
             if (insLabel) insLabel.style.display = 'none';
             // Restore previous solve display
             const timerEl = document.getElementById('trainingTimer');
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             if (timerElapsed > 0) {
                 timerEl.textContent = (timerElapsed / 1000).toFixed(3);
             } else {
@@ -1083,20 +1087,20 @@ document.addEventListener('keydown', (e) => {
                 isHolding = true;
                 isHoldReady = false;
                 holdStartTime = Date.now();
-                document.getElementById('trainingTimer').style.color = '#ffc107';
+                document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
                 const holdCheckInterval = setInterval(() => {
                     if (!isHolding) { clearInterval(holdCheckInterval); return; }
                     const holdDuration = (Date.now() - holdStartTime) / 1000;
                     if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                         isHoldReady = true;
-                        document.getElementById('trainingTimer').style.color = '#28a745';
+                        document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                         clearInterval(holdCheckInterval);
                     }
                 }, 10);
                 return;
             }
             // Normal mode: hold to start solve
-            document.getElementById('trainingTimer').style.color = '#ffc107';
+            document.getElementById('trainingTimer').style.color = 'var(--card-learning-border)';
             isHolding = true;
             isHoldReady = false;
             holdStartTime = Date.now();
@@ -1105,7 +1109,7 @@ document.addEventListener('keydown', (e) => {
                 const holdDuration = (Date.now() - holdStartTime) / 1000;
                 if (holdDuration >= trainingHoldToStart && !isHoldReady) {
                     isHoldReady = true;
-                    document.getElementById('trainingTimer').style.color = '#28a745';
+                    document.getElementById('trainingTimer').style.color = 'var(--card-learned-border)';
                     clearInterval(holdCheckInterval);
                 }
             }, 10);
@@ -1169,7 +1173,7 @@ document.addEventListener('keyup', (e) => {
         if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             stopInspectionAndStartTimer();
             return;
         }
@@ -1177,21 +1181,21 @@ document.addEventListener('keyup', (e) => {
         if (isInspectionPhase && !parityQuizPhase && isHolding) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             return;
         }
         // Normal mode: release after hold-ready → start solve
         if (!isInspectionPhase && isHolding && isHoldReady) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
             startTimer();
             return;
         }
         if (isHolding) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = '#2d3748';
+            timerEl.style.color = 'var(--text-primary)';
         }
     }
 });
@@ -1201,141 +1205,14 @@ function regenerateScrambleLookahead() {
 }
 
 function openTrainingSettingsModal() {
-    pushModalState('trainingSettingsModal', closeTrainingSettingsModal);
-
-    let settingsModal = document.getElementById('trainingSettingsModal');
-    if (!settingsModal) {
-        settingsModal = document.createElement('div');
-        settingsModal.id = 'trainingSettingsModal';
-        settingsModal.className = 'training-info-modal';
-        settingsModal.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Training Settings</span>
-                    <button class="training-info-close" onclick="closeTrainingSettingsModal()">&times;</button>
-                </div>
-                <div class="training-info-body" style="overflow-y:auto;flex:1;">
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Image Size: <span id="trainingImageSizeValue">${trainingScrambleImageSize}px</span></label>
-                        <input type="range" id="trainingImageSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Scramble Text Size: <span id="trainingTextSizeValue">${trainingScrambleTextSize}px</span></label>
-                        <input type="range" id="trainingTextSizeSlider" min="10" max="24" step="1" value="${trainingScrambleTextSize}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Timer Text Size: <span id="trainingTimerSizeValue">${parseInt(localStorage.getItem('trainingTimerSize') || 80)}px</span></label>
-                        <input type="range" id="trainingTimerSizeSlider" min="30" max="120" step="2" value="${parseInt(localStorage.getItem('trainingTimerSize') || 80)}" style="width: 100%;">
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #2d3748;">Hold to Start: <span id="trainingHoldToStartValue">${trainingHoldToStart.toFixed(2)}s</span></label>
-                        <input type="range" id="trainingHoldToStartSlider" min="0.1" max="0.7" step="0.01" value="${trainingHoldToStart}" style="width: 100%;">
-                    </div>
-                <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:#2d3748; cursor:pointer;">
-                            <input type="checkbox" id="trainingShowPrevScramble" style="transform:scale(1.3); cursor:pointer;">
-                            Show previous scramble at bottom
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; color:#2d3748; cursor:pointer;">
-                            <input type="checkbox" id="trainingEnableInspection" style="transform:scale(1.3); cursor:pointer;">
-                            Enable inspection
-                        </label>
-                    </div>
-                    <div style="margin-bottom: 20px; padding: 0 5px;" id="parityQuizSettingRow">
-                        <label style="display:flex; align-items:center; gap:10px; font-weight:600; cursor:pointer;" id="parityQuizSettingLabel">
-                            <input type="checkbox" id="trainingEnableParityQuiz" style="transform:scale(1.3); cursor:pointer;">
-                            Enable parity quiz during inspection
-                        </label>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(settingsModal);
-
-        // Restore checkbox state
-        const showPrevSaved = localStorage.getItem('trainingShowPrevScramble');
-        const showPrevCheckbox = document.getElementById('trainingShowPrevScramble');
-        if (showPrevCheckbox) {
-            showPrevCheckbox.checked = showPrevSaved === 'true';
-            showPrevCheckbox.addEventListener('change', (e) => {
-                localStorage.setItem('trainingShowPrevScramble', e.target.checked);
-                applyPrevScrambleBar();
-            });
-        }
-
-        // Add event listeners
-        const inspectionCheckbox = document.getElementById('trainingEnableInspection');
-        const parityQuizCheckbox = document.getElementById('trainingEnableParityQuiz');
-        const parityQuizLabel = document.getElementById('parityQuizSettingLabel');
-
-        function applyParityQuizRowState() {
-            const enabled = inspectionCheckbox.checked;
-            parityQuizCheckbox.disabled = !enabled;
-            parityQuizLabel.style.color = enabled ? '#2d3748' : '#aaa';
-            parityQuizLabel.style.cursor = enabled ? 'pointer' : 'not-allowed';
-        }
-
-        inspectionCheckbox.checked = localStorage.getItem('trainingEnableInspection') === 'true';
-        parityQuizCheckbox.checked = localStorage.getItem('trainingEnableParityQuiz') === 'true';
-        applyParityQuizRowState();
-
-        inspectionCheckbox.addEventListener('change', (e) => {
-            trainingEnableInspection = e.target.checked;
-            localStorage.setItem('trainingEnableInspection', trainingEnableInspection);
-            if (!trainingEnableInspection) {
-                trainingEnableParityQuiz = false;
-                parityQuizCheckbox.checked = false;
-                localStorage.setItem('trainingEnableParityQuiz', 'false');
-            }
-            applyParityQuizRowState();
-        });
-
-        parityQuizCheckbox.addEventListener('change', (e) => {
-            if (!trainingEnableInspection) { e.target.checked = false; return; }
-            trainingEnableParityQuiz = e.target.checked;
-            localStorage.setItem('trainingEnableParityQuiz', trainingEnableParityQuiz);
-        });
-
-        document.getElementById('trainingImageSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleImageSize = parseInt(e.target.value);
-            document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px';
-            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            if (window._multiCaseMode) regenerateMultiScrambleLookahead();
-            else regenerateScrambleLookaheadLegacy();
-        });
-
-        document.getElementById('trainingTextSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleTextSize = parseInt(e.target.value);
-            document.getElementById('trainingTextSizeValue').textContent = trainingScrambleTextSize + 'px';
-            localStorage.setItem('trainingScrambleTextSize', trainingScrambleTextSize);
-            document.getElementById('trainingScramble').style.fontSize = trainingScrambleTextSize + 'px';
-            applyPrevScrambleBar();
-        });
-
-        document.getElementById('trainingHoldToStartSlider').addEventListener('input', (e) => {
-            trainingHoldToStart = parseFloat(e.target.value);
-            document.getElementById('trainingHoldToStartValue').textContent = trainingHoldToStart.toFixed(2) + 's';
-            localStorage.setItem('trainingHoldToStart', trainingHoldToStart);
-        });
-
-        document.getElementById('trainingTimerSizeSlider').addEventListener('input', (e) => {
-            const size = parseInt(e.target.value);
-            document.getElementById('trainingTimerSizeValue').textContent = size + 'px';
-            localStorage.setItem('trainingTimerSize', size);
-            applyTimerSize();
-        });
-    }
-
-    settingsModal.classList.add('active');
+    window.openUnifiedSettings('trainer');
 }
 
 function closeTrainingSettingsModal() {
-    const modal = document.getElementById('trainingSettingsModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingSettingsModal');
+        if (modal) modal.classList.remove('active');
+    });
 }
 
 function openTrainingInfoModal() {
@@ -1349,25 +1226,50 @@ function openTrainingInfoModal() {
         infoModal.innerHTML = `
             <div class="training-info-content">
                 <div class="training-info-header">
-                    <span class="training-info-title">Training Mode Guide</span>
+                    <span class="training-info-title">Training Guides</span>
                     <button class="training-info-close" onclick="closeTrainingInfoModal()">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text">Press on the top left corner to <b></b>>, or to select a particular <b>angle</b> for one case.</div>
+                        <div class="training-info-text">Press on the top left corner to <b>select cases to train</b>, or to select a particular <b>angle</b> for one case <i>(for case-wise training)</i>.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Change the <b>scramble image size</b> from settings.</div>
+                        <div class="training-info-text">Use <b>< button</b> or keyboard <b>left arrow</b> for previous scramble, use the 🔄 <b>button</b> or keyboard <b>right key</b> to regenerate scramble.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text">The out-of-CS part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
+                        <div class="training-info-text">Check settings for a bunch of customizability.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">To use the Parity Tracer, directly click on the scramble.</div>
+                        <div class="training-info-text">The <b>out-of-cubeshape</b> part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text">To use the Parity Tracer for the <b>current scramble</b>, directly <b>click</b> on the scramble.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">6</div>
+                        <div class="training-info-text">Enable <b>inspection</b> and then enable <b>Parity quiz during inspection</b> to activate the <b>parity quiz</b> feature in inspection.</div>
+                    </div>
+                    <h3>Parity Quiz guide:</h3></br>
+                    <div class="training-info-item">
+                        <div class="training-info-number">1</div>
+                        <div class="training-info-text">If your evilness is turned <b>off</b>, the app will ask you if the scramble is <b>even</b> or <b>odd</b> parity.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">2</div>
+                        <div class="training-info-text">If your evilness is turned <b>on</b>, the app will ask you if the scramble requires <b>good alg</b> or <b>bad alg</b> (I believe you already know what those are).</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">3</div>
+                        <div class="training-info-text">Click on the left side of the screen, or <b>any left side key</b> (ie. QWERASDFZXCV1234 etc) on your keyboard to answer <b>Even/ Good Alg</b>. Do the opposite to answer <b>Odd/ Bad alg</b></div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">4</div>
+                        <div class="training-info-text">Time your time to trace parity, and the time to plan the algorithm for better grasp over a case.</div>
                     </div>
                 </div>
             </div>
@@ -1379,10 +1281,10 @@ function openTrainingInfoModal() {
 }
 
 function closeTrainingInfoModal() {
-    const modal = document.getElementById('trainingInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('trainingInfoModal');
+        if (modal) modal.classList.remove('active');
+    });
 }
 
 // ============================================================
@@ -1410,8 +1312,8 @@ function quizGetParityFromHex(hexCode) {
     try {
         const state = parseHexFormat(hexCode);
         const notation = window.sq1Tools.scrambleFromState(state);
-        if (!notation || typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') return null;
-        return window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(
+        if (!notation || typeof window.ParityAnalyzerLib === 'undefined') return null;
+        return window.ParityAnalyzerLib.getParityText(
             notation,
             typeof colorScheme !== 'undefined' ? colorScheme : {},
             typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -1440,6 +1342,15 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
     `;
     document.body.appendChild(selectorModal);
 
+    const closeSelector = () => {
+        closeModalWithHistory(() => {
+            selectorModal.classList.remove('active');
+            selectorModal.remove();
+        });
+    };
+
+    pushModalState(modalId + '_selectorModal', closeSelector);
+
     const stored = (() => { try { return JSON.parse(localStorage.getItem(storageKey)) || null; } catch (e) { return null; } })();
     let selectedCases = new Set(stored ? stored : shapeIndex.map(e => e.name));
 
@@ -1455,7 +1366,7 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
     });
 
     let searchHTML = `<div style="padding: 0 4px 12px 4px;">
-        <input type="text" id="${modalId}_selSearch" placeholder="Search cases..." style="width:100%;padding:8px 12px;border:2px solid #e2e8f0;border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
+        <input type="text" id="${modalId}_selSearch" placeholder="Search cases..." style="width:100%;padding:8px 12px;border:2px solid var(--border-color);border-radius:8px;font-size:0.9rem;box-sizing:border-box;">
     </div>`;
 
     let sectionsHTML = Object.entries(groups).map(([groupName, entries]) => {
@@ -1467,7 +1378,7 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
                         data-name="${entry.name.replace(/"/g, '&quot;')}"
                         data-dispname="${dispName.toLowerCase()}"
                         data-group="${groupName}"
-                        style="padding: 8px; background: ${isSelected ? '#ebebeb' : '#ffffff'}; border: 2px solid #999; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; text-align: center; color: #2d3748;">
+                        style="padding: 8px; background: ${isSelected ? '#ebebeb' : '#ffffff'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s; font-size: 0.82rem; text-align: center; color: var(--text-ui);">
                 ${bottom}
             </button>`;
         }).join('');
@@ -1476,8 +1387,8 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">${groupName}</span>
                 <div>
-                    <button data-group="${groupName}" data-action="all" style="padding: 3px 10px; margin-right: 5px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button data-group="${groupName}" data-action="none" style="padding: 3px 10px; background: #f8f9fa; color: #495057; border: 1px solid #ced4da; border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button data-group="${groupName}" data-action="all" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button data-group="${groupName}" data-action="none" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 10px; margin-top: 10px;">
@@ -1498,11 +1409,11 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
             if (selectedCases.has(name)) {
                 selectedCases.delete(name);
                 btn.classList.remove('active');
-                btn.style.background = '#ffffff';
+                btn.style.background = 'var(--surface)';
             } else {
                 selectedCases.add(name);
                 btn.classList.add('active');
-                btn.style.background = '#ebebeb';
+                btn.style.background = 'var(--surface-border)';
             }
         });
     });
@@ -1517,11 +1428,11 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
                 if (action === 'all') {
                     selectedCases.add(name);
                     tb.classList.add('active');
-                    tb.style.background = '#ebebeb';
+                    tb.style.background = 'var(--surface-border)';
                 } else {
                     selectedCases.delete(name);
                     tb.classList.remove('active');
-                    tb.style.background = '#ffffff';
+                    tb.style.background = 'var(--surface)';
                 }
             });
         });
@@ -1540,12 +1451,9 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
     });
 
     // Close
-    document.getElementById(modalId + '_selClose').addEventListener('click', () => {
-        selectorModal.classList.remove('active');
-        selectorModal.remove();
-    });
+    document.getElementById(modalId + '_selClose').addEventListener('click', closeSelector);
     selectorModal.addEventListener('click', (e) => {
-        if (e.target === selectorModal) { selectorModal.classList.remove('active'); selectorModal.remove(); }
+        if (e.target === selectorModal) closeSelector();
     });
 
     // Confirm
@@ -1603,7 +1511,7 @@ function startEvilnessQuiz(chosenCaseNames) {
     modal.innerHTML = `
         <div class="training-modal-header">
             <div style="display:flex;gap:10px;align-items:center;">
-                <span class="training-modal-title" id="evilQuizCaseCount">${chosenCaseNames.length} cases selected</span>
+                <button class="training-modal-title" id="evilQuizCaseCount" style="background:none;border:none;cursor:pointer;padding:0;font:inherit;text-align:left;color:var(--link-color);text-decoration:underline;" title="Select cases">${chosenCaseNames.length} cases selected</button>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
                 <button class="training-modal-refresh" id="evilQuizPrevBtn" title="Previous" style="display:none;">
@@ -1611,9 +1519,6 @@ function startEvilnessQuiz(chosenCaseNames) {
                 </button>
                 <button class="training-modal-refresh" id="evilQuizNextBtn" title="Next">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
-                </button>
-                <button class="training-modal-refresh" id="evilQuizCasesBtn" title="Select cases">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 </button>
                 <button class="training-modal-refresh" id="evilQuizSettingsBtn" title="Settings">
                     <img src="res/training-settings.svg" height="20px" width="20px">
@@ -1628,108 +1533,80 @@ function startEvilnessQuiz(chosenCaseNames) {
                 <div class="training-modal-image" id="evilQuizImage"></div>
             </div>
             <div class="training-modal-timer" id="evilQuizTimer">0.000</div>
-            <div id="evilQuizStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
+            <div id="evilQuizStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
-                    <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+                    <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
+                    <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll be shown an image of a scramble. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
                     </div>
-                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
-        <div id="evilQuizSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:#fff;border-left:1px solid #e2e8f0;z-index:10001;overflow-y:auto;flex-direction:column;">
-            <div style="padding:14px 16px;font-weight:700;color:#2d3748;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <div id="evilQuizSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:var(--surface);border-left:1px solid var(--border-color);z-index:10001;overflow-y:auto;flex-direction:column;">
+            <div style="padding:14px 16px;font-weight:700;color:var(--text-ui);border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
                 <span>Case Log</span>
-                <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">&times;</button>
+                <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
-            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:#444;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        const sm = document.getElementById('evilQuizSettingsModal');
-        if (sm) sm.remove();
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            const sm = document.getElementById('evilQuizSettingsModal');
+            if (sm) sm.remove();
 
-        const evilIdx = modalStack.findIndex(m => m.id === 'evilnessQuizModal');
-        if (evilIdx !== -1) modalStack.splice(evilIdx, 1);
-        window.history.replaceState(null, '');
-        const obs = new MutationObserver((mutations) => {
+            const obs = new MutationObserver((mutations) => {
+            });
+            obs.observe(document.body, { childList: true, subtree: false });
+            modal.remove();
+            setTimeout(() => obs.disconnect(), 500);
+            document.body.classList.remove('modal-open');
         });
-        obs.observe(document.body, { childList: true, subtree: false });
-        modal.remove();
-        setTimeout(() => obs.disconnect(), 500);
-        document.body.classList.remove('modal-open');
-        return;
     };
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'evilnessQuizModal' }, '');
-    const evilPopHandler = (e) => {
-        if (document.getElementById('evilnessQuizModal')) {
-            const evt = new KeyboardEvent('keydown', { code: 'Escape', bubbles: true });
-            document.dispatchEvent(evt);
-            window.removeEventListener('popstate', evilPopHandler);
-        }
-    };
-    window.addEventListener('popstate', evilPopHandler);
+    pushModalState('evilnessQuizModal', closeQuiz);
 
     // Settings modal
     function openEvilQuizSettings() {
-        let sm = document.getElementById('evilQuizSettingsModal');
-        if (sm) { sm.classList.add('active'); return; }
-        sm = document.createElement('div');
-        sm.id = 'evilQuizSettingsModal';
-        sm.className = 'training-info-modal active';
-        sm.innerHTML = `
-            <div class="training-info-content">
-                <div class="training-info-header">
-                    <span class="training-info-title">Evilness Quiz Settings</span>
-                    <button class="training-info-close" id="evilQuizSettingsClose">&times;</button>
-                </div>
-                <div class="training-info-body" style="overflow-y:auto;flex:1;">
-                    <div style="margin-bottom:20px;">
-                        <label style="display:block;margin-bottom:8px;font-weight:600;color:#2d3748;">Scramble Image Size: <span id="evilQuizImgSizeVal">${trainingScrambleImageSize}px</span></label>
-                        <input type="range" id="evilQuizImgSizeSlider" min="100" max="400" step="10" value="${trainingScrambleImageSize}" style="width:100%;">
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(sm);
-        document.getElementById('evilQuizSettingsClose').addEventListener('click', () => sm.classList.remove('active'));
-        document.getElementById('evilQuizImgSizeSlider').addEventListener('input', (e) => {
-            trainingScrambleImageSize = parseInt(e.target.value);
-            document.getElementById('evilQuizImgSizeVal').textContent = trainingScrambleImageSize + 'px';
-            localStorage.setItem('trainingScrambleImageSize', trainingScrambleImageSize);
-            const mainSlider = document.getElementById('trainingImageSizeSlider');
-            if (mainSlider) { mainSlider.value = trainingScrambleImageSize; document.getElementById('trainingImageSizeValue').textContent = trainingScrambleImageSize + 'px'; }
+    window.openUnifiedSettings('trainer');
+    // Patch: after the settings modal opens, hook the image size slider to update the quiz image
+    setTimeout(() => {
+        const slider = document.getElementById('tr_imgSize');
+        if (!slider) return;
+        const orig = slider.oninput;
+        slider.addEventListener('input', () => {
             if (currentHexCode) {
                 try {
                     const state = parseHexFormat(currentHexCode);
                     const notation = window.sq1Tools.scrambleFromState(state);
-                    document.getElementById('evilQuizImage').innerHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize, typeof colorScheme !== 'undefined' ? colorScheme : {});
-                } catch (e) { }
+                    const imgEl = document.getElementById('evilQuizImage');
+                    if (imgEl) imgEl.innerHTML = visualizeFromScramble(notation, parseInt(slider.value), typeof colorScheme !== 'undefined' ? colorScheme : {});
+                } catch (e) {}
             }
         });
-    }
+    }, 100);
+}
 
     function renderSidebar() {
         const list = document.getElementById('evilQuizLogList');
         if (!list) return;
-        if (quizLog.length === 0) { list.innerHTML = '<span style="color:#aaa;font-style:italic;">No answers yet.</span>'; return; }
+        if (quizLog.length === 0) { list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>'; return; }
         list.innerHTML = [...quizLog].reverse().map((entry, i) => {
             const icon = entry.correct ? '✓' : '✗';
             const color = entry.correct ? '#2d6a2d' : '#cc0000';
             const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
             const evilStr = entry.wasEvil ? 'Evil' : 'Good';
-            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? '#f0fff0' : '#fff0f0'};border:1px solid ${entry.correct ? '#c3e6c3' : '#f5c6c6'};">
+            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
                 <span style="font-weight:600;margin-left:4px;">${entry.caseName}</span>
-                <span style="color:#888;margin-left:4px;">(${evilStr})</span>
-                <span style="float:right;color:#888;">${timeStr}</span>
+                <span style="color:var(--text-muted);margin-left:4px;">(${evilStr})</span>
+                <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
         }).join('');
     }
@@ -1748,12 +1625,13 @@ function startEvilnessQuiz(chosenCaseNames) {
         questionCount++;
 
         currentHexCode = generateHexFromShapeIndex(currentItem.idx);
+        window._evilCurrentHexCode = currentHexCode;
         let imgHTML = '';
         try {
             const state = parseHexFormat(currentHexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
-        } catch (e) { imgHTML = '<div style="color:#999;padding:1rem;">Image unavailable</div>'; }
+            imgHTML = visualizeFromScramble(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+        } catch (e) { imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>'; }
 
         document.getElementById('evilQuizImage').innerHTML = imgHTML;
         document.getElementById('evilQuizTimer').textContent = '0.000';
@@ -1818,7 +1696,7 @@ function startEvilnessQuiz(chosenCaseNames) {
 
     document.getElementById('evilQuizClose').addEventListener('click', closeQuiz);
     document.getElementById('evilQuizNextBtn').addEventListener('click', () => { if (quizRunning) nextQuestion(); });
-    document.getElementById('evilQuizCasesBtn').addEventListener('click', () => {
+    document.getElementById('evilQuizCaseCount').addEventListener('click', () => {
         openSelectorModal('sq1-selector-evilness', (chosen) => {
             rebuildIndices(chosen);
             document.getElementById('evilQuizCaseCount').textContent = `${chosen.length} cases selected`;
@@ -1861,15 +1739,15 @@ function startEvilnessQuiz(chosenCaseNames) {
                 const timerZone = document.getElementById('evilQuizTimerZone');
                 const startOverlay = document.createElement('div');
                 startOverlay.id = 'evilQuizStartOverlay';
-                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
                 startOverlay.innerHTML = `
     <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-        <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Evilness Quiz</div>
-        <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
+        <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
             You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
-            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Bvil.
+            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
         </div>
-        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
     </div>`;
                 timerZone.appendChild(startOverlay);
                 document.getElementById('evilQuizStartBtn').addEventListener('click', () => {
@@ -1941,7 +1819,7 @@ function startParityQuiz(chosenCaseNames) {
                 <span class="training-modal-title">Parity Quiz</span>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
-                <div id="parityQuizProgress" style="font-size:0.85rem;color:#888;">Q1 | 0/0</div>
+                <div id="parityQuizProgress" style="font-size:0.85rem;color:var(--text-muted)">Q1 | 0/0</div>
                 <button class="training-modal-refresh" id="parityQuizSelectCases" title="Select cases" style="width:auto;padding:0 12px;font-size:0.8rem;font-weight:600;">Cases</button>
                 <button class="training-modal-close" id="parityQuizClose">
                 <button class="training-modal-close" id="parityQuizClose">
@@ -1954,26 +1832,19 @@ function startParityQuiz(chosenCaseNames) {
             <div class="training-modal-image-container">
                 <div class="training-modal-image" id="parityQuizImage"></div>
             </div>
-            <div style="font-size:1.1rem;font-weight:600;color:#2d3748;">Which alg do you need?</div>
+            <div style="font-size:1.1rem;font-weight:600;color:var(--text-ui);">Which alg do you need?</div>
             <div style="display:flex;gap:1rem;justify-content:center;width:100%;max-width:320px;">
                 <button id="parityQuizGood" style="flex:1;padding:0.9rem;background:#2d6a2d;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Good Alg</button>
                 <button id="parityQuizBad" style="flex:1;padding:0.9rem;background:#8b0000;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Bad Alg</button>
             </div>
-            <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:#2d3748;"></div>
+            <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:var(--text-ui);"></div>
             <div class="training-modal-timer" id="parityQuizTimer">0.000</div>
         </div>
     `;
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'parityQuizModal' }, '');
-    const parityPopHandler = () => {
-        if (document.getElementById('parityQuizModal')) {
-            closeQuiz();
-            window.removeEventListener('popstate', parityPopHandler);
-        }
-    };
-    window.addEventListener('popstate', parityPopHandler);
+    pushModalState('parityQuizModal', closeQuiz);
 
     function nextQuestion() {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
@@ -1987,11 +1858,11 @@ function startParityQuiz(chosenCaseNames) {
             const state = parseHexFormat(hexCode);
             const notation = window.sq1Tools.scrambleFromState(state);
             scrambleText = notation || hexCode;
-            imgHTML = visualizeFromScrambleNotationPlease(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
+            imgHTML = visualizeFromScramble(notation, trainingScrambleImageSize || 200, typeof colorScheme !== 'undefined' ? colorScheme : {});
             currentParity = quizGetParityFromHex(hexCode);
         } catch (e) {
             currentParity = null;
-            imgHTML = '<div style="color:#999;padding:1rem;">Image unavailable</div>';
+            imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
         }
 
         document.getElementById('parityQuizScramble').textContent = scrambleText;
@@ -2028,9 +1899,11 @@ function startParityQuiz(chosenCaseNames) {
     }
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
     };
 
     document.getElementById('parityQuizGood').addEventListener('click', () => handleAnswer(true));
@@ -2049,7 +1922,7 @@ function startParityQuiz(chosenCaseNames) {
         });
     });
     document.getElementById('parityQuizSelectCases').addEventListener('click', () => {
-        openUniversalCaseSelector(TRAINER_STORAGE_KEYS.parity, (chosen) => {
+        openSelectorModal('sq1-selector-parity', (chosen) => {
             allIndices.length = 0;
             chosen.forEach(cn => {
                 const entry = shapeIndex.find(e => e.name === cn);
@@ -2196,7 +2069,7 @@ function startColorRecognitionPractice() {
                 <span class="training-modal-title">Parity Quiz</span>
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
-                <div id="colorRecogProgress" style="font-size:0.85rem;color:#888;">Q1 | 0/0</div>
+                <div id="colorRecogProgress" style="font-size:0.85rem;color:var(--text-muted)">Q1 | 0/0</div>
                 <button class="training-modal-refresh" id="colorRecogHamburger" title="Answer log">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
                 </button>
@@ -2208,62 +2081,53 @@ function startColorRecognitionPractice() {
         <div class="training-modal-timer-zone" id="colorRecogTimerZone" style="position:relative;flex-direction:column;gap:1rem;justify-content:center;align-items:center;cursor:default;">
             <div id="colorRecogTrio" style="display:flex;justify-content:center;gap:1rem;"></div>
             <div class="training-modal-timer" id="colorRecogTimer">0.000</div>
-            <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
+            <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-                    <div style="font-size:1.1rem;font-weight:700;color:#2d3748;">Parity Quiz</div>
-                    <div style="font-size:0.88rem;color:#555;line-height:1.6;">
+                    <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Parity Quiz</div>
+                    <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
                         You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                     </div>
-                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start</button>
+                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
-        <div id="colorRecogSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:#fff;border-left:1px solid #e2e8f0;z-index:10001;overflow-y:auto;flex-direction:column;">
-            <div style="padding:14px 16px;font-weight:700;color:#2d3748;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;">
+        <div id="colorRecogSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:var(--surface);border-left:1px solid var(--border-color);z-index:10001;overflow-y:auto;flex-direction:column;">
+            <div style="padding:14px 16px;font-weight:700;color:var(--text-ui);border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
                 <span>Answer Log</span>
-                <button id="colorRecogSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;">&times;</button>
+                <button id="colorRecogSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
-            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:#444;display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
-    window.history.pushState({ modalId: 'colorRecogModal' }, '');
-    const colorPopHandler = () => {
-        if (document.getElementById('colorRecogModal')) {
-            const evt = new KeyboardEvent('keydown', { code: 'Escape', bubbles: true });
-            document.dispatchEvent(evt);
-            window.removeEventListener('popstate', colorPopHandler);
-        }
-    };
-    window.addEventListener('popstate', colorPopHandler);
+    pushModalState('colorRecogModal', closeQuiz);
 
     function renderTrio(trio) {
         return trio.map(face => {
             const col = faceColors[face];
             const r2 = parseInt(col.substr(1, 2), 16), g2 = parseInt(col.substr(3, 2), 16), b2 = parseInt(col.substr(5, 2), 16);
             const txtCol = ((0.299 * r2 + 0.587 * g2 + 0.114 * b2) / 255) > 0.5 ? '#000' : '#fff';
-            const label = face === 'F' ? 'Front' : face === 'R' ? 'Right' : face === 'B' ? 'Back' : 'Left';
-            return `<div style="width:90px;height:90px;border-radius:14px;background:${col};display:flex;align-items:center;justify-content:center;color:${txtCol};font-weight:700;font-size:1rem;box-shadow:0 2px 10px rgba(0,0,0,0.2);">${label}</div>`;
+            return `<div style="width:90px;height:90px;border-radius:14px;background:${col};box-shadow:0 2px 10px rgba(0,0,0,0.2);border-radius:14px;"></div>`;
         }).join('');
     }
 
     function renderSidebar() {
         const list = document.getElementById('colorRecogLogList');
         if (!list) return;
-        if (quizLog.length === 0) { list.innerHTML = '<span style="color:#aaa;font-style:italic;">No answers yet.</span>'; return; }
+        if (quizLog.length === 0) { list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>'; return; }
         list.innerHTML = [...quizLog].reverse().map(entry => {
             const icon = entry.correct ? '✓' : '✗';
             const color = entry.correct ? '#2d6a2d' : '#cc0000';
             const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
             const answerStr = entry.correctIsEven ? 'Even' : 'Odd';
-            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? '#f0fff0' : '#fff0f0'};border:1px solid ${entry.correct ? '#c3e6c3' : '#f5c6c6'};">
+            return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
                 <span style="font-size:1.1em;margin-left:4px;">${entry.emoji}</span>
                 <span style="color:#888;font-size:0.78rem;margin-left:4px;">${answerStr}</span>
-                <span style="float:right;color:#888;">${timeStr}</span>
+                <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
         }).join('');
     }
@@ -2346,10 +2210,12 @@ function startColorRecognitionPractice() {
     }
 
     const closeQuiz = () => {
-        clearInterval(timerInt);
-        document.removeEventListener('keydown', handleColorKeyDown);
-        modal.remove();
-        document.body.classList.remove('modal-open');
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            document.removeEventListener('keydown', handleColorKeyDown);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
     };
 
     function handleColorKeyDown(e) {
@@ -2363,17 +2229,7 @@ function startColorRecognitionPractice() {
                 quizRunning = false;
                 clearInterval(timerInt);
                 removeAnswerOverlay();
-                const timerZone = document.getElementById('colorRecogTimerZone');
-                const startOverlay = document.createElement('div');
-                startOverlay.id = 'colorRecogStartOverlay';
-                startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,0.97);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
-                startOverlay.innerHTML = `<button id="colorRecogStartBtn" style="padding:1rem 2.5rem;background:#007bff;color:#fff;border:none;border-radius:12px;font-size:1.2rem;font-weight:700;cursor:pointer;box-shadow:0 4px 16px rgba(0,123,255,0.3);">Start Color Quiz</button>`;
-                timerZone.appendChild(startOverlay);
-                document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
-                    startOverlay.remove();
-                    quizRunning = true;
-                    nextQuestion();
-                });
+                showColorRecogStartOverlay();
                 return;
             }
             closeQuiz();
@@ -2398,11 +2254,31 @@ function startColorRecognitionPractice() {
         }
     });
 
-    document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
-        document.getElementById('colorRecogStartOverlay').remove();
-        quizRunning = true;
-        nextQuestion();
-    });
+    function showColorRecogStartOverlay() {
+        let existing = document.getElementById('colorRecogStartOverlay');
+        if (existing) existing.remove();
+        const timerZone = document.getElementById('colorRecogTimerZone');
+        const startOverlay = document.createElement('div');
+        startOverlay.id = 'colorRecogStartOverlay';
+        startOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+        startOverlay.innerHTML = `
+            <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
+                <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Parity Quiz</div>
+                <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
+                    You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
+                    Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
+                </div>
+                <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+            </div>`;
+        timerZone.appendChild(startOverlay);
+        document.getElementById('colorRecogStartBtn').addEventListener('click', () => {
+            startOverlay.remove();
+            quizRunning = true;
+            nextQuestion();
+        });
+    }
+
+    showColorRecogStartOverlay();
 }
 
 // ============================================================
@@ -2438,13 +2314,21 @@ window.openTrainerPickerModal = function () {
 
     const style = document.getElementById('trainerPickerStyle') || document.createElement('style');
     style.id = 'trainerPickerStyle';
-    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:#f8f9fa;border:2px solid #e2e8f0;border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:#2d3748;text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:#007bff;background:#f0f8ff;}`;
+    style.textContent = `.trainer-pick-btn{padding:14px 18px;background:var(--surface2);border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:var(--accent);background:var(--hover-bg);}`;
     if (!style.parentNode) document.head.appendChild(style);
 
     document.body.appendChild(picker);
-    document.getElementById('trainerPickerClose').addEventListener('click', () => picker.remove());
-    picker.addEventListener('click', e => { if (e.target === picker) picker.remove(); });
+    pushModalState('trainerPickerModal', closeTrainerPickerModal);
+    document.getElementById('trainerPickerClose').addEventListener('click', closeTrainerPickerModal);
+    picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
 };
+
+function closeTrainerPickerModal() {
+    closeModalWithHistory(() => {
+        const picker = document.getElementById('trainerPickerModal');
+        if (picker) picker.remove();
+    });
+}
 
 window.trainerPickerLaunch = function (type) {
     const picker = document.getElementById('trainerPickerModal');

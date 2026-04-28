@@ -1,10 +1,27 @@
 // Square-1 Parity Tracer Library - Complete Refactored Edition
-// With ridiculously long variable names to avoid conflicts with parent apps
-(function (globalThisWindowObjectThingyForParityTracer) {
+(function (lib) {
     'use strict';
 
+    // ── Dark-mode brightness offsets (tweak these to restyle the modal) ──────
+    // All values are % brightness adjustments relative to config.backgroundColor.
+    // Positive = lighter, negative = darker.
+    const DM_INPUT_BG        =  4;   // scramble input field
+    const DM_CARD_BG         =  1;   // outer result card ("Parity Analysis" wrapper)
+    const DM_INNER_CARD_BG   = 2;   // individual step cards inside result card
+    const DM_BUTTON_BG       =  8;   // close / settings floating buttons
+    const DM_HOVER_BG        = 14;   // utility btn (z2/y2/Flip) hover
+    const DM_RESULT_TITLE_COLOR = '#9299b0'; // "Parity Analysis" heading color in dark mode
+
+    // ── Light-mode brightness offsets ────────────────────────────────────────
+    const LM_INPUT_BG        = -3;
+    const LM_CARD_BG         = -2;
+    const LM_INNER_CARD_BG   = -4;
+    const LM_BUTTON_BG       = -5;
+    const LM_HOVER_BG        = -8;
+    const LM_RESULT_TITLE_COLOR = '#2d3748';
+
     // Color configuration with absurdly long name
-    let superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict = {
+    let colorConfig = {
         topLayerMainColor: '#FFD700',
         topLayerColorFullName: 'Yellow',
         topLayerColorAbbreviation: 'Y',
@@ -18,36 +35,36 @@
     };
 
     // Piece labels mapping - ridiculously long name
-    const absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle = {
+    const pieceLabels = {
         A: "YOG", B: "YOG", C: "YG", D: "YGR", E: "YGR", F: "YR",
         G: "YRB", H: "YRB", I: "YB", J: "YBO", K: "YBO", L: "YO",
         M: "WR", N: "WRG", O: "WRG", P: "WG", Q: "WGO", R: "WGO", S: "WO",
         T: "WOB", U: "WOB", V: "WB", W: "WBR", X: "WBR"
     };
 
-    function createColorLabelHTMLWithLongName(str) {
+    function createColorLabelHTML(str) {
         return str.replace(/[WYGBRO]/g, m => `<span class="color-dot ${m}"></span>`);
     }
 
-    const pieceNameHTMLMapWithLongName = {};
-    for (const k in absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle) {
-        pieceNameHTMLMapWithLongName[k] = createColorLabelHTMLWithLongName(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[k]);
+    const pieceLabelHTML = {};
+    for (const k in pieceLabels) {
+        pieceLabelHTML[k] = createColorLabelHTML(pieceLabels[k]);
     }
 
-    const edgePiecesSetWithVeryLongNameToAvoidConflicts = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
+    const edgePieces = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
 
-    const cornerPartnerMappingWithExtremelyLongName = {
+    const cornerPartner = {
         A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
         N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
     };
 
-    const cornerIdentifierMappingWithRidiculouslyLongName = {
+    const cornerIdentifier = {
         A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
         N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
     };
 
-    const solvedEdgesArrayWithLongName = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
-    const solvedCornersArrayWithLongName = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
+    const solvedEdges = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
+    const solvedCorners = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
 
     // Helper functions used across multiple modals
     function getContrastColor(hexColor) {
@@ -68,7 +85,7 @@
     }
 
     // Default shape patterns with long name
-    const defaultShapePatternsForSquareOnePuzzleWithLongName = {
+    const defaultShapePatterns = {
         'ECECECEC': 'Square',
         'EECECCEC': 'Kite',
         'EECCEECC': 'Barrel',
@@ -101,23 +118,23 @@
     };
 
     // Load custom shapes from localStorage or use defaults
-    function loadShapesFromStorageWithLongName() {
+    function loadShapes() {
         const stored = localStorage.getItem('customShapesForParityTracerLibrary');
         if (stored) {
             try {
                 return JSON.parse(stored);
             } catch (e) {
-                return { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
+                return { ...defaultShapePatterns };
             }
         }
-        return { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
+        return { ...defaultShapePatterns };
     }
 
-    function saveShapesToStorageWithLongName(shapes) {
+    function saveShapes(shapes) {
         localStorage.setItem('customShapesForParityTracerLibrary', JSON.stringify(shapes));
     }
 
-    let currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+    let shapePatterns = loadShapes();
 
     // Utility button states (always start as false when modal opens)
     let utilityZ2Enabled = false;
@@ -193,75 +210,11 @@
         return false;
     }
 
-    // Scramble engine functions with long names
-    function createSolvedStateArrayForSquareOnePuzzleWithLongName() {
-        return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-    }
-
-    function rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(arr, start, len, k) {
-        const n = ((k % len) + len) % len;
-        if (n === 0) return;
-        const seg = arr.slice(start, start + len);
-        const out = [];
-        for (let i = 0; i < len; i++) {
-            out[(i + n) % len] = seg[i];
-        }
-        for (let i = 0; i < len; i++) {
-            arr[start + i] = out[i];
-        }
-    }
-
-    function performSliceSwapOperationWithVeryLongName(arr) {
-        for (let i = 0; i < 6; i++) {
-            [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-        }
-    }
-
-    function* tokenizeScrambleStringGeneratorWithExtremelyLongName(s) {
-        let i = 0;
-        const L = s.length;
-        const ws = /\s/;
-        const int = /^([+-]?\d+)/;
-
-        const skip = () => {
-            while (i < L && ws.test(s[i])) i++;
-        };
-
-        while (true) {
-            skip();
-            if (i >= L) return;
-
-            const ch = s[i];
-            if (ch === '(') {
-                i++;
-                skip();
-                let m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const t = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ',') i++;
-                skip();
-                m = s.slice(i).match(int);
-                if (!m) { i++; continue; }
-                const b = +m[1];
-                i += m[1].length;
-                skip();
-                if (s[i] === ')') i++;
-                skip();
-                const hadSlash = (s[i] === '/');
-                if (hadSlash) i++;
-                yield { k: 'tb', t, b, slash: hadSlash };
-                continue;
-            }
-            if (ch === '/') {
-                i++;
-                yield { k: '/' };
-                continue;
-            }
-            i++;
-        }
-    }
+    // Use consolidated functions from utils.js
+    const createSolvedState = window.createSolvedState;
+    const rotateSection = window.rotateSection;
+    const sliceSwap = window.sliceSwap;
+    const tokenizeScramble = window.tokenizeScramble;
 
     function applyUtilityTransformationsToScramble(scramble) {
         // First normalize the base scramble
@@ -370,21 +323,12 @@
         return tokens;
     }
 
-    function applyScrambleToStateArrayWithLongName(scr) {
-        const a = createSolvedStateArrayForSquareOnePuzzleWithLongName();
-        for (const tok of tokenizeScrambleStringGeneratorWithExtremelyLongName(scr)) {
-            if (tok.k === 'tb') {
-                rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(a, 0, 12, tok.t);
-                rotateSectionOfArrayWithRidiculouslyLongNameForNoConflicts(a, 12, 12, tok.b);
-                if (tok.slash) performSliceSwapOperationWithVeryLongName(a);
-            } else {
-                performSliceSwapOperationWithVeryLongName(a);
-            }
-        }
-        return a;
+    function applyScramble(scr) {
+        // Use consolidated function from utils.js
+        return window.applyScramble(scr);
     }
 
-    function validateCornersTogetherSameLayerWithLongName(state) {
+    function validateCorners(state) {
         const pairs = [['A', 'B'], ['D', 'E'], ['G', 'H'], ['J', 'K'], ['N', 'O'], ['Q', 'R'], ['T', 'U'], ['W', 'X']];
         for (const [x, y] of pairs) {
             const ix = state.indexOf(x), iy = state.indexOf(y);
@@ -397,34 +341,34 @@
         return { ok: true };
     }
 
-    const rotateStringCircularlyWithLongName = (s, k) => {
+    const rotateString = (s, k) => {
         const n = s.length;
         k = ((k % n) + n) % n;
         return s.slice(k) + s.slice(0, k);
     };
 
-    const rotateArrayCircularlyWithLongName = (a, k) => {
+    const rotateArray = (a, k) => {
         const n = a.length;
         k = ((k % n) + n) % n;
         return a.slice(k).concat(a.slice(0, k));
     };
 
-    function buildUnitsFromStateLayerWithLongName(state, start) {
+    function buildUnits(state, start) {
         const units = [];
         let i = 0;
         while (i < 12) {
             const ch = state[start + i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
+            if (edgePieces.has(ch)) {
                 units.push({ type: 'E', edge: ch });
                 i += 1;
                 continue;
             }
             const nextCh = state[start + ((i + 1) % 12)];
-            if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWithRidiculouslyLongName[ch], rep: ch });
+            if (cornerPartner[ch] === nextCh) {
+                units.push({ type: 'C', pair: cornerIdentifier[ch], rep: ch });
                 i += 2;
             } else {
-                units.push({ type: 'C', pair: cornerIdentifierMappingWithRidiculouslyLongName[ch] || '??', rep: ch });
+                units.push({ type: 'C', pair: cornerIdentifier[ch] || '??', rep: ch });
                 i += 1;
             }
         }
@@ -432,10 +376,10 @@
         return { types, units };
     }
 
-    function matchPatternWithRotationCheckingWithLongName(typeStr) {
+    function matchPattern(typeStr) {
         // Ensure we're using current shapes, not stale cache
-        if (!currentShapePatternsStorageWithLongName || Object.keys(currentShapePatternsStorageWithLongName).length === 0) {
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        if (!shapePatterns || Object.keys(shapePatterns).length === 0) {
+            shapePatterns = loadShapes();
         }
 
         // Define symmetric shapes and their symmetry degrees
@@ -447,7 +391,7 @@
             'Star': 6
         };
 
-        for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+        for (const [pat, name] of Object.entries(shapePatterns)) {
             if (pat.length !== typeStr.length) continue;
 
             // Try natural rotation order: CCW first, then CW with increasing distance
@@ -460,9 +404,9 @@
             }
 
             for (const rotationAmount of rotationOrder) {
-                // Normalize rotation to positive value for rotateStringCircularlyWithLongName
+                // Normalize rotation to positive value for rotateString
                 const normalizedRotation = ((rotationAmount % typeStr.length) + typeStr.length) % typeStr.length;
-                if (rotateStringCircularlyWithLongName(typeStr, normalizedRotation) === pat) {
+                if (rotateString(typeStr, normalizedRotation) === pat) {
                     return {
                         name,
                         pat,
@@ -476,17 +420,17 @@
         return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr, symmetryDegree: 1 };
     }
 
-    function countEdgesAndCornersWithLongName(units) {
+    function countPieces(units) {
         const e = units.filter(u => u.type === 'E').length;
         const c = units.length - e;
         return { e, c, label: `${e}E${c}C` };
     }
 
     // Six-step parity calculation
-    function calculateSixStepParityWithExtremelyLongFunctionName(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
+    function calculateParity(edgesOrderLetters, cornersOrderIDs, useClockwiseCorner, scrambleForEvil) {
         const steps = [];
 
-        function getEdgeCodenameWithLongName(letter) {
+        function getEdgeCodename(letter) {
             const colorMap = {
                 'L': 'O', 'C': 'G', 'F': 'R', 'I': 'B',
                 'M': 'R', 'P': 'G', 'S': 'O', 'V': 'B'
@@ -494,7 +438,7 @@
             return colorMap[letter] || '?';
         }
 
-        function getCornerCodenameWithLongName(id) {
+        function getCornerCodename(id) {
             // Default map is for counter-clockwise (most counter-clockwise sticker)
             const counterClockwiseMap = {
                 'AB': 'O', 'DE': 'G', 'GH': 'R', 'JK': 'B',
@@ -511,15 +455,15 @@
             return colorMap[id] || '?';
         }
 
-        function isTopLayerEdgeWithLongName(letter) {
+        function isTopLayerEdge(letter) {
             return ['L', 'C', 'F', 'I'].includes(letter);
         }
 
-        function isTopLayerCornerWithLongName(id) {
+        function isTopLayerCorner(id) {
             return ['AB', 'DE', 'GH', 'JK'].includes(id);
         }
 
-        function calculateTrioParityWithLongName(codenames) {
+        function calculateTrioParity(codenames) {
             if (codenames.length < 3) return { result: 0, detail: 'Not enough pieces' };
 
             const trio = codenames.slice(0, 3);
@@ -563,15 +507,15 @@
             };
         }
 
-        function calculateAlternatingParityWithLongName(pieces, isEdge) {
+        function calculateAlternatingParity(pieces, isEdge) {
             const positions = [0, 2, 4, 6];
             const selected = positions.map(i => pieces[i]).filter(p => p !== undefined);
 
             let topLayerCount = 0;
             if (isEdge) {
-                topLayerCount = selected.filter(p => isTopLayerEdgeWithLongName(p)).length;
+                topLayerCount = selected.filter(p => isTopLayerEdge(p)).length;
             } else {
-                topLayerCount = selected.filter(p => isTopLayerCornerWithLongName(p)).length;
+                topLayerCount = selected.filter(p => isTopLayerCorner(p)).length;
             }
 
             const result = (topLayerCount === 1 || topLayerCount === 3) ? 1 : 0;
@@ -579,55 +523,55 @@
 
             return {
                 result,
-                detail: `Positions 1,3,5,7: [${selectedStr}], ${topLayerCount} ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName.toLowerCase()} = ${result}`
+                detail: `Positions 1,3,5,7: [${selectedStr}], ${topLayerCount} ${colorConfig.topLayerColorFullName.toLowerCase()} = ${result}`
             };
         }
 
-        const topEdges = edgesOrderLetters.filter(e => isTopLayerEdgeWithLongName(e));
-        const topEdgesCodes = topEdges.map(e => getEdgeCodenameWithLongName(e));
-        const line1 = calculateTrioParityWithLongName(topEdgesCodes);
+        const topEdges = edgesOrderLetters.filter(e => isTopLayerEdge(e));
+        const topEdgesCodes = topEdges.map(e => getEdgeCodename(e));
+        const line1 = calculateTrioParity(topEdgesCodes);
         steps.push({
-            name: `Line 1: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Edges`,
+            name: `Line 1: ${colorConfig.topLayerColorFullName} Edges`,
             pieces: topEdges.join(' '),
             codenames: topEdgesCodes.join(' '),
             detail: line1.detail,
             result: line1.result
         });
 
-        const bottomEdges = edgesOrderLetters.filter(e => !isTopLayerEdgeWithLongName(e));
-        const bottomEdgesCodes = bottomEdges.map(e => getEdgeCodenameWithLongName(e));
-        const line2 = calculateTrioParityWithLongName(bottomEdgesCodes);
+        const bottomEdges = edgesOrderLetters.filter(e => !isTopLayerEdge(e));
+        const bottomEdgesCodes = bottomEdges.map(e => getEdgeCodename(e));
+        const line2 = calculateTrioParity(bottomEdgesCodes);
         steps.push({
-            name: `Line 2: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Edges`,
+            name: `Line 2: ${colorConfig.bottomLayerColorFullName} Edges`,
             pieces: bottomEdges.join(' '),
             codenames: bottomEdgesCodes.join(' '),
             detail: line2.detail,
             result: line2.result
         });
 
-        const topCorners = cornersOrderIDs.filter(c => isTopLayerCornerWithLongName(c));
-        const topCornersCodes = topCorners.map(c => getCornerCodenameWithLongName(c));
-        const line3 = calculateTrioParityWithLongName(topCornersCodes);
+        const topCorners = cornersOrderIDs.filter(c => isTopLayerCorner(c));
+        const topCornersCodes = topCorners.map(c => getCornerCodename(c));
+        const line3 = calculateTrioParity(topCornersCodes);
         steps.push({
-            name: `Line 3: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.topLayerColorFullName} Corners`,
+            name: `Line 3: ${colorConfig.topLayerColorFullName} Corners`,
             pieces: topCorners.join(' '),
             codenames: topCornersCodes.join(' '),
             detail: line3.detail,
             result: line3.result
         });
 
-        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCornerWithLongName(c));
-        const bottomCornersCodes = bottomCorners.map(c => getCornerCodenameWithLongName(c));
-        const line4 = calculateTrioParityWithLongName(bottomCornersCodes);
+        const bottomCorners = cornersOrderIDs.filter(c => !isTopLayerCorner(c));
+        const bottomCornersCodes = bottomCorners.map(c => getCornerCodename(c));
+        const line4 = calculateTrioParity(bottomCornersCodes);
         steps.push({
-            name: `Line 4: ${superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict.bottomLayerColorFullName} Corners`,
+            name: `Line 4: ${colorConfig.bottomLayerColorFullName} Corners`,
             pieces: bottomCorners.join(' '),
             codenames: bottomCornersCodes.join(' '),
             detail: line4.detail,
             result: line4.result
         });
 
-        const line5 = calculateAlternatingParityWithLongName(edgesOrderLetters, true);
+        const line5 = calculateAlternatingParity(edgesOrderLetters, true);
         steps.push({
             name: 'Line 5: Odd Edges',
             pieces: line5.detail.split(': [')[1].split(']')[0],
@@ -636,7 +580,7 @@
             result: line5.result
         });
 
-        const line6 = calculateAlternatingParityWithLongName(cornersOrderIDs, false);
+        const line6 = calculateAlternatingParity(cornersOrderIDs, false);
         steps.push({
             name: 'Line 6: Odd Corners',
             pieces: line6.detail.split(': [')[1].split(']')[0],
@@ -657,11 +601,11 @@
     }
 
     // Clustering Functions - RESTORED
-    function buildClustersFromShapeArrayWithLongName(shapeArray) {
+    function buildClusters(shapeArray) {
         const slots = [];
         const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
-        function processLayerWithLongName(start, end) {
+        function processLayer(start, end) {
             let i = start;
             while (i < end) {
                 const isCorner = shapeArray[i] === 1;
@@ -697,76 +641,23 @@
             }
         }
 
-        processLayerWithLongName(0, 12);
-        processLayerWithLongName(12, 24);
+        processLayer(0, 12);
+        processLayer(12, 24);
 
         return slots;
     }
 
     // Encoding functions - RESTORED
-    const pieceToHexMappingWithLongName = {
+    const pieceToHex = {
         'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33', 'YB': '2', 'YBO': '11',
         'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99', 'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
     };
 
-    function encodeStateToHexStringWithLongName(state) {
-        const topPieces = [];
-        const bottomPieces = [];
-
-        let i = 0;
-        while (i < 12) {
-            const ch = state[i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
-                topPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
-                i++;
-            } else {
-                const nextCh = state[(i + 1) % 12];
-                if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                    topPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in top layer';
-                }
-            }
-        }
-
-        i = 12;
-        while (i < 24) {
-            const ch = state[i];
-            if (edgePiecesSetWithVeryLongNameToAvoidConflicts.has(ch)) {
-                bottomPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
-                i++;
-            } else {
-                const nextCh = state[12 + ((i - 12 + 1) % 12)];
-                if (cornerPartnerMappingWithExtremelyLongName[ch] === nextCh) {
-                    bottomPieces.push(absolutelyRidiculouslyLongNamedPieceLabelsMapForSquareOnePuzzle[ch]);
-                    i += 2;
-                } else {
-                    return 'Error: Invalid corner pairing in bottom layer';
-                }
-            }
-        }
-
-        const topHex = topPieces.map(p => pieceToHexMappingWithLongName[p] || '?').join('');
-        const bottomHex = bottomPieces.map(p => pieceToHexMappingWithLongName[p] || '?').join('');
-
-        if (topHex.includes('?') || bottomHex.includes('?')) {
-            return `Error: Unknown piece mapping`;
-        }
-
-        if (topHex.length !== 12 || bottomHex.length !== 12) {
-            return `Error: Invalid hex length`;
-        }
-
-        const leftTop = topHex.split('').reverse().join('');
-        const rightBottom1 = bottomHex.slice(0, 6).split('').reverse().join('');
-        const rightBottom2 = bottomHex.slice(6, 12).split('').reverse().join('');
-
-        return `${leftTop}|${rightBottom1}${rightBottom2}`;
-    }
+    // Use consolidated function from utils.js
+    const encodeState = window.stateToHex;
 
     // Shape visualization for config modal - RESTORED
-    function generateSimpleShapeVisualizationSVGWithLongName(pattern, size, idPrefix) {
+    function generateShapeSVG(pattern, size, idPrefix) {
         const cx = size / 2;
         const cy = size / 2;
 
@@ -832,13 +723,13 @@
                 const pA = p2c(cx, cy, scaled_r_outer, centerAngle - half);
                 const pB = p2c(cx, cy, scaled_r_outer, centerAngle + half);
 
-                svgContent += `<polygon 
-            class="shape-piece shape-piece-${idPrefix}" 
+                svgContent += `<polygon
+            class="shape-piece shape-piece-${idPrefix}"
             data-piece-index="${index}"
-            points="${ptsToStr([pInner, pA, pB])}" 
-            fill="${fillColor}" 
-            stroke="#000" 
-            stroke-width="2" 
+            points="${ptsToStr([pInner, pA, pB])}"
+            fill="${fillColor}"
+            stroke="#000"
+            stroke-width="2"
           />`;
 
                 angleIndex += 1;
@@ -854,13 +745,13 @@
                 const pApex = p2c(cx, cy, scaled_r_outer_apex, centerAngle);
                 const pOuterL = p2c(cx, cy, scaled_r_outer, centerAngle + half);
 
-                svgContent += `<polygon 
-            class="shape-piece shape-piece-${idPrefix}" 
+                svgContent += `<polygon
+            class="shape-piece shape-piece-${idPrefix}"
             data-piece-index="${index}"
-            points="${ptsToStr([pInner, pOuterR, pApex, pOuterL])}" 
-            fill="${fillColor}" 
-            stroke="#000" 
-            stroke-width="2" 
+            points="${ptsToStr([pInner, pOuterR, pApex, pOuterL])}"
+            fill="${fillColor}"
+            stroke="#000"
+            stroke-width="2"
           />`;
 
                 angleIndex += 2;
@@ -876,7 +767,7 @@
     }
 
     // Display results in modal
-    function calculateArrowStartAngleWithLongName(rotationAmount, unitsArray, layerType, patternTypes) {
+    function calculateArrowAngle(rotationAmount, unitsArray, layerType, patternTypes) {
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
@@ -899,7 +790,7 @@
         return { startAngle: finalAngle, arcDegrees: arcDegrees };
     }
 
-    function generateArrowSVGOverlayWithLongName(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
+    function generateArrowSVG(centerX, centerY, radius, startAngleDeg, arcDegrees, size) {
         if (!showCircularArrow) {
             return '';
         }
@@ -952,13 +843,13 @@
 
         return `
         <g opacity="${opacity}">
-            <path d="${pathD}" 
-                  fill="none" 
-                  stroke="${arrowColor}" 
-                  stroke-width="${strokeWidth}" 
+            <path d="${pathD}"
+                  fill="none"
+                  stroke="${arrowColor}"
+                  stroke-width="${strokeWidth}"
                   stroke-dasharray="${size * 0.008},${size * 0.004}"
                   stroke-linecap="round"/>
-            <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}" 
+            <circle cx="${startX}" cy="${startY}" r="${startDiskRadius}"
                     fill="${arrowColor}" stroke="none"/>
             <polygon points="${arrowTipX},${arrowTipY} ${arrow1X},${arrow1Y} ${arrow2X},${arrow2Y}"
                      fill="${arrowColor}" stroke="none"/>
@@ -966,7 +857,7 @@
     `;
     }
 
-    function displayResultsInModalWithVeryLongFunctionName(container, sixStepParity, config) {
+    function displayResults(container, sixStepParity, config) {
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
             const g = parseInt(hexColor.substr(3, 2), 16);
@@ -984,7 +875,7 @@
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
 
-        function createColorSquaresWithLongName(codenames) {
+        function createColorSquares(codenames) {
             if (codenames === '-') return '';
             const colorMap = {
                 'O': `<span class="color-dot" style="background: ${config.backFaceColorForVisualization};"></span>`,
@@ -995,7 +886,7 @@
             return codenames.split(' ').slice(0, 3).map(c => colorMap[c] || '').join('');
         }
 
-        function createPositionIndicatorsWithLongName(pieces) {
+        function createPositionIndicators(pieces) {
             return pieces.split(' ').map(p => {
                 const isTopLayer = ['L', 'C', 'F', 'I', 'AB', 'DE', 'GH', 'JK'].includes(p);
                 const letter = isTopLayer ? config.topLayerColorAbbreviation : config.bottomLayerColorAbbreviation;
@@ -1007,8 +898,8 @@
 
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 8) : adjustColorBrightness(config.backgroundColor, -2);
-        const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
+        const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, DM_INNER_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_INNER_CARD_BG);
 
         const allSteps = [...sixStepParity.steps];
         if (getEvilnessFactor() && sixStepParity.evilStep !== null) {
@@ -1021,9 +912,10 @@
             });
         }
 
+        const resultTitleColor = isDark ? DM_RESULT_TITLE_COLOR : LM_RESULT_TITLE_COLOR;
         container.innerHTML = `
       <div style="background: ${cardBgColor}; padding: 0.75rem; border-radius: 8px;">
-        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: #2d3748; font-weight: 600;">Parity Analysis</h3>
+        <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: ${resultTitleColor}; font-weight: 600;">Parity Analysis</h3>
         <div class="parity-grid-tracer-lib">
           ${allSteps.map((step, idx) => {
             let displayContent = '';
@@ -1034,9 +926,9 @@
                 const evilLabel = step.result === 1 ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>' : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
                 displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
             } else if (idx < 2 || (idx >= 2 && idx < 4)) {
-                displayContent = `${lineName}: ${createColorSquaresWithLongName(step.codenames)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createColorSquares(step.codenames)} = <strong>${step.result}</strong>`;
             } else {
-                displayContent = `${lineName}: ${createPositionIndicatorsWithLongName(step.pieces)} = <strong>${step.result}</strong>`;
+                displayContent = `${lineName}: ${createPositionIndicators(step.pieces)} = <strong>${step.result}</strong>`;
             }
 
             return `
@@ -1057,7 +949,7 @@
     }
 
     // Function to set shape orientation - RESTORED
-    function setShapeOrientationWithLongName(pattern, clickedIndex, layerId) {
+    function setShapeOrientation(pattern, clickedIndex, layerId) {
         // Calculate rotation amount based on piece type
         // We need to count how many pattern positions (E or C) come before the clicked piece
         const pieces = pattern.split('');
@@ -1067,10 +959,10 @@
             rotationAmount++;
         }
 
-        const rotated = rotateStringCircularlyWithLongName(pattern, rotationAmount);
+        const rotated = rotateString(pattern, rotationAmount);
 
         let shapeName = '';
-        for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+        for (const [pat, name] of Object.entries(shapePatterns)) {
             if (pat === pattern) {
                 shapeName = name;
                 break;
@@ -1078,9 +970,9 @@
         }
 
         if (shapeName) {
-            delete currentShapePatternsStorageWithLongName[pattern];
-            currentShapePatternsStorageWithLongName[rotated] = shapeName;
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            delete shapePatterns[pattern];
+            shapePatterns[rotated] = shapeName;
+            saveShapes(shapePatterns);
         }
     }
 
@@ -1113,19 +1005,32 @@
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Enter your scramble in the input bar. The parity analysis will update automatically using Cale's method.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Enter your scramble in the input bar to analyze the parity of the scramble using the <span style="font-weight: 550; font-style:italic;">Cale's tracing</span> method.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">Customize the tracing start point and appearance from the settings button at the bottom right.</div>
+                        <div class="training-info-text" style="color: ${textColor};">You can customize your entire parity tracer from the settings button down below. If you need to change the color scheme, go the <b>Color Scheme Settings</b> under personalization tab in settings.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">For symmetric shapes, click the center of the puzzle image to cycle through different symmetry orientations.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Toggle the <b>z2</b> button on if you want to trace parity from the z2 orientation. Similarly toggle the <b>y2</b> button on to trace parity from y2 orientation. If you scrambled you square one with wrong color on front, toggle <b>Flip Color</b> on. </div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Tracing Scheme Settings.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Personalize your tracing methods and tracing positions from the Settings:
+                            <ol>
+                                <li><b>Corner sticker mode</b> determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</li>
+                                <li><b>z2 tracing for 6 and 8 edge cases</b> means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped.</li>
+                                <li><b>Image size</b> determine how big the image of the square 1 appear on the parity tracer screen.</li>
+                                <li><b>Tracing arrow</b> shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</li>
+                                <li><b>Set your tracing scheme</b> for each shape to have fully personalized parity tracing. This affets the parity of the <span style="font-weight:600; font-style:italic;">Algorithms on the Homescreen</span>, <span style="font-weight:600; font-style:italic;">Case in Trainer</span>, basically the <span style="font-weight:650; font-style:italic;">entire app</span>!</li>
+                                <li><span style="font-weight:600; font-style:italic;">Evilness</span> refers to a special tracing technique where you add 1 to your tracing for certain cases to force good alg for even parity all the time. If you are a practitioner of this technique, toggle <b>Evilness Factor</b> on from the settings. If you don't want evilness factor affects the parity of an algorithm on the homescreen, you can toggle <b>Evilness Affects Homescreen</b> off.</li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">5</div>
+                        <div class="training-info-text" style="color: ${textColor};">For <b>symmetric shapes</b> (eg. square, barrel, 2-2-2, 4-4, star), click the center of the image of the shape to trace from <span style="font-weight: 550; font-style:italic;">different symmetry.</span></div>
                     </div>
                 </div>
             </div>
@@ -1135,71 +1040,13 @@
         instructionModal.classList.add('active');
 
         const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
-        };
-
-        instructionModal.onclick = (e) => {
-            if (e.target === instructionModal) {
+        const close = () => {
+            closeModalWithHistory(() => {
                 instructionModal.remove();
-            }
+            });
         };
-    }
-
-
-    // Parity Tracer Settings Instruction Modal
-    function showParityTracerSettingsInstructionModal(config) {
-        const textColor = getContrastColor(config.backgroundColor);
-        const isDark = textColor === '#FFFFFF';
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        const instructionModal = document.createElement('div');
-        instructionModal.className = 'training-info-modal';
-        instructionModal.style.zIndex = '10011';
-        instructionModal.innerHTML = `
-            <div class="training-info-content" style="background: ${config.backgroundColor};">
-                <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
-                    <span class="training-info-title">Parity Tracer Settings Guide</span>
-                    <button class="training-info-close" style="color: ${textColor};">&times;</button>
-                </div>
-                <div class="training-info-body">
-                    <div class="training-info-item">
-                        <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">Image size controls how large the puzzle visualization appears. Adjust this based on your screen size and preference.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        document.body.appendChild(instructionModal);
-        instructionModal.classList.add('active');
-
-        const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
-        };
+        closeBtn.onclick = close;
+        pushModalState('instructionModal', close);
 
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
@@ -1230,38 +1077,18 @@
         instructionModal.innerHTML = `
             <div class="training-info-content" style="background: ${config.backgroundColor};">
                 <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
-                    <span class="training-info-title">Shape Orientation Guide</span>
+                    <span class="training-info-title">Setting Tracing Scheme Guide</span>
                     <button class="training-info-close" style="color: ${textColor};">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
                         <div class="training-info-number">1</div>
-                        <div class="training-info-text" style="color: ${textColor};">This feature is currently limited - it only allows you to select one piece as the starting point: either an edge or a corner.</div>
+                        <div class="training-info-text" style="color: ${textColor};">For each shape, select one piece as your starting point. When you trace CSP, you would start from this piece, and go clockwise.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you select a corner, the first edge in your tracing will be the very first edge that appears clockwise from that corner.</div>
+                        <div class="training-info-text" style="color: ${textColor};">Please just don't trace counterclockwise.</div>
                     </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">3</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you select an edge, the first corner in your tracing will be the very first corner that appears clockwise from that edge.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">4</div>
-                        <div class="training-info-text" style="color: ${textColor};">In your tracing method, if your corner comes before the edge, select the corner. If your edge comes before the corner, select the edge.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you trace your edge from one side of the cube and your corner from another side, or if you trace counter-clockwise, you are gay and nobody loves you.</div>
-                    </div>
-<!--                    <div class="training-info-item">
-                        <div class="training-info-number">6</div>
-                        <div class="training-info-text" style="color: ${textColor};">If you trace using the right most sticker or the more counterclockwise color of a corner, you should set the "Corner Sticker for Tracing" to be "Most Counter-Clockwise sticker" and if you use most clockwise sticker like Matt, then you should select it to be "Most clockwise sticker". This is completely personal choice and it DOES NOT change the parity at all.</div>
-                    </div>
-                    <div class="training-info-item">
-                        <div class="training-info-number">5</div>
-                        <div class="training-info-text" style="color: ${textColor};">z2 tracing for 6 and 8 edge cases means prioritizing the more edge dense face to start your tracing. So no matter if the 6/8 face is on bottom or top, you trace from that face. z2 tracing is the safest mode of tracing. And if you do not do z2 tracing, then for 6 edges cases will flip their parity depending which face they appear.</div>
-                    </div> -->
                 </div>
             </div>
         `;
@@ -1270,512 +1097,17 @@
         instructionModal.classList.add('active');
 
         const closeBtn = instructionModal.querySelector('.training-info-close');
-        closeBtn.onclick = () => {
-            instructionModal.remove();
+        const close = () => {
+            closeModalWithHistory(() => {
+                instructionModal.remove();
+            });
         };
+        closeBtn.onclick = close;
+        pushModalState('configOrientationInstructionModal', close);
 
         instructionModal.onclick = (e) => {
             if (e.target === instructionModal) {
-                instructionModal.remove();
-            }
-        };
-    }
-
-    // Configure modal popup - RESTORED AND COMPLETE
-    function showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
-        // This now opens the Tracing Scheme Settings modal (shape orientations only)
-        showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
-    }
-
-    function showParityTracerSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
-        // Calculate contrasting colors based on background
-        function getContrastColor(hexColor) {
-            const r = parseInt(hexColor.substr(1, 2), 16);
-            const g = parseInt(hexColor.substr(3, 2), 16);
-            const b = parseInt(hexColor.substr(5, 2), 16);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            return luminance > 0.5 ? '#000000' : '#FFFFFF';
-        }
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
-        const textColor = getContrastColor(config.backgroundColor);
-        const isDark = textColor === '#FFFFFF';
-        const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
-        const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
-
-        const settingsModalDiv = document.createElement('div');
-        settingsModalDiv.className = 'parity-tracer-settings-modal';
-        settingsModalDiv.style.cssText = `
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 10008;
-            padding: 2rem;
-            overflow-y: auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        `;
-
-        const settingsContent = document.createElement('div');
-        settingsContent.className = 'parity-tracer-settings-content';
-        settingsContent.style.cssText = `
-            background: ${config.backgroundColor};
-            border-radius: 16px;
-            padding: 2rem;
-            max-width: 600px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            position: relative;
-        `;
-
-        const timestamp = Date.now();
-
-        settingsContent.innerHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Parity Tracer Settings</h2>
-                <button class="settings-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Settings Guide">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; pointer-events: none;">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </button>
-            </div>
-            
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
-                <!-- Corner Sticker Setting -->
-                <div style="margin-bottom: 1rem;">
-                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.5rem; font-size: 0.9rem;">Corner Sticker for Tracing:</div>
-                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
-                            <input type="radio" id="cornerCounterClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="counterclockwise" ${cornerStickerMode === 'counterclockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            More counter-clockwise sticker
-                        </label>
-                        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: ${textColor}; font-size: 0.85rem;">
-                            <input type="radio" id="cornerClockwise-${timestamp}" name="cornerSticker-${timestamp}" value="clockwise" ${cornerStickerMode === 'clockwise' ? 'checked' : ''} style="cursor: pointer;">
-                            More clockwise sticker
-                        </label>
-                    </div>
-                </div>
-
-                <!-- z2 Tracing Setting -->
-                <div style="margin-bottom: 1rem; padding-top: 1rem; border-top: 1px solid ${borderColor};">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="z2TracingCheckbox-${timestamp}" ${z2TracingModeEnabled ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">z2 tracing for 6 and 8 edge cases</span>
-                    </label>
-                </div>
-
-                <!-- Image Size Setting -->
-                <div style="padding-top: 1rem; border-top: 1px solid ${borderColor};">
-                    <label style="font-weight: 600; color: ${textColor}; font-size: 0.9rem; display: block; margin-bottom: 0.5rem;">
-                        Image Size: <span id="imageSizeValue-${timestamp}">${parityTracerImageSize}px</span>
-                    </label>
-                    <input type="range" id="imageSizeSlider-${timestamp}" min="100" max="400" value="${parityTracerImageSize}" style="width: 100%; cursor: pointer;">
-                </div>
-            </div>
-
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-bottom: 1rem;">
-                <!-- Circular Arrow Toggle -->
-                <div style="margin-bottom: 1rem;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="showArrowCheckbox-${timestamp}" ${showCircularArrow ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Show Tracing Indication Arrow</span>
-                    </label>
-                </div>
-
-                <!-- Arrow Settings -->
-                <div id="arrowSettingsContainer-${timestamp}" style="padding-top: 1rem; border-top: 1px solid ${borderColor}; opacity: ${showCircularArrow ? '1' : '0.4'}; pointer-events: ${showCircularArrow ? 'auto' : 'none'};">
-                    <div style="font-weight: 600; color: ${textColor}; margin-bottom: 0.75rem; font-size: 0.9rem;">Arrow Appearance:</div>
-                    
-                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; min-width: 45px;">Color:</label>
-                        <input type="color" id="arrowColor-${timestamp}" value="${arrowSettings.color.startsWith('rgba') ? '#fd2222' : arrowSettings.color}" style="width: 50px; height: 28px; cursor: pointer; border: 1px solid ${borderColor}; border-radius: 4px;">
-                    </div>
-                    
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Opacity: <span id="opacityValue-${timestamp}">${(arrowSettings.opacity * 100).toFixed(0)}%</span></label>
-                        <input type="range" id="arrowOpacity-${timestamp}" min="0" max="100" value="${arrowSettings.opacity * 100}" style="width: 100%; cursor: pointer;">
-                    </div>
-                    
-                    <div style="margin-bottom: 0.75rem;">
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Stroke Width: <span id="strokeWidthValue-${timestamp}">${arrowSettings.strokeWidth.toFixed(1)}</span></label>
-                        <input type="range" id="arrowStrokeWidth-${timestamp}" min="0.5" max="5" step="0.1" value="${arrowSettings.strokeWidth}" style="width: 100%; cursor: pointer;">
-                    </div>
-                    
-                    <div>
-                        <label style="color: ${textColor}; font-size: 0.85rem; display: block; margin-bottom: 0.25rem;">Radius: <span id="radiusValue-${timestamp}">${arrowSettings.radius.toFixed(2)}</span></label>
-                        <input type="range" id="arrowRadius-${timestamp}" min="0.1" max="1.1" step="0.01" value="${arrowSettings.radius}" style="width: 100%; cursor: pointer;">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tracing Scheme Settings Button -->
-            <button id="openTracingScheme-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; margin-bottom: 0.75rem;">
-                Tracing Scheme Settings
-            </button>
-
-            <div style="padding: 1rem; background: ${cardBg}; border-radius: 8px; margin-top: 0.75rem;">
-                <!-- Evilness factor for parity tracing Toggle -->
-                <div style="margin-bottom: 0.75rem;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem;">
-                        <input type="checkbox" id="evilnessFactorCheckbox-${timestamp}" ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Evilness factor for parity tracing</span>
-                    </label>
-                </div>
-                <!-- Evilness String Return Toggle -->
-                <div style="margin-bottom: 0.75rem; padding-top: 0.75rem; border-top: 1px solid ${borderColor}; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'};" id="evilnessStringReturnRow-${timestamp}">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: ${textColor}; font-size: 0.9rem; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
-                        <input type="checkbox" id="evilnessStringReturnCheckbox-${timestamp}" ${typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn ? 'checked' : ''} style="cursor: pointer; width: 16px; height: 16px;">
-                        <span style="font-weight: 600;">Evilness factor affects homescreen?</span>
-                    </label>
-                </div>
-                <!-- Evilness Cases Button -->
-                <button id="openEvilnessCases-${timestamp}" style="width: 100%; padding: 0.75rem; background: ${inputBgColor}; color: ${textColor}; border: 2px solid ${borderColor}; border-radius: 8px; font-weight: 600; font-size: 0.95rem; transition: all 0.2s; opacity: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? '1' : '0.4'}; cursor: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'pointer' : 'not-allowed'}; pointer-events: ${typeof evilnessFactor !== 'undefined' && evilnessFactor ? 'auto' : 'none'};">
-                    Per-case Evilness settings
-                </button>
-            </div>
-        `;
-
-        settingsModalDiv.appendChild(settingsContent);
-
-        // Create floating close button
-        const settingsFloatingCloseBtn = document.createElement('button');
-        settingsFloatingCloseBtn.className = 'settings-floating-close-btn';
-        settingsFloatingCloseBtn.innerHTML = '×';
-        settingsFloatingCloseBtn.style.cssText = `
-            position: fixed;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            z-index: 10009;
-            border: none;
-            background: ${isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5)};
-            color: ${textColor};
-            transition: transform 0.2s;
-        `;
-
-        document.body.appendChild(settingsFloatingCloseBtn);
-        document.body.appendChild(settingsModalDiv);
-
-        // Position the close button
-        function updateSettingsClosePosition() {
-            const rect = settingsContent.getBoundingClientRect();
-            settingsFloatingCloseBtn.style.top = `${rect.top + 8}px`;
-            settingsFloatingCloseBtn.style.right = `${window.innerWidth - rect.right + 4}px`;
-        }
-
-        setTimeout(updateSettingsClosePosition, 10);
-        window.addEventListener('resize', updateSettingsClosePosition);
-        settingsModalDiv.addEventListener('scroll', updateSettingsClosePosition);
-
-        // Function to trigger live update
-        function triggerLiveUpdate() {
-            if (modalElement) {
-                const scrambleInput = modalElement.querySelector('input[type="text"]');
-                if (scrambleInput) {
-                    const event = new Event('input', { bubbles: true });
-                    scrambleInput.dispatchEvent(event);
-                }
-            }
-        }
-
-        // Settings info button - attach AFTER modal is in DOM
-        // Use a small timeout to ensure the DOM is fully rendered
-        setTimeout(() => {
-            const settingsInfoBtn = document.querySelector('.parity-tracer-settings-modal .settings-info-btn');
-            if (settingsInfoBtn) {
-
-                settingsInfoBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (typeof showParityTracerSettingsInstructionModal === 'function') {
-                        showParityTracerSettingsInstructionModal(config);
-                    } else {
-                        console.error('❌ showParityTracerSettingsInstructionModal is not a function!');
-                    }
-                }, true); // Use capture phase
-
-                // Also try mouseup as fallback
-                settingsInfoBtn.addEventListener('mouseup', (e) => {
-                    if (e.button === 0) { // Left click only
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (typeof showParityTracerSettingsInstructionModal === 'function') {
-                            showParityTracerSettingsInstructionModal(config);
-                        }
-                    }
-                });
-
-                settingsInfoBtn.addEventListener('mousedown', (e) => {
-                });
-
-                settingsInfoBtn.addEventListener('mouseup', (e) => {
-                });
-
-                // Check what element is actually at the button's position
-                const rect = settingsInfoBtn.getBoundingClientRect();
-                const centerX = rect.left + rect.width / 2;
-                const centerY = rect.top + rect.height / 2;
-                const elementAtPoint = document.elementFromPoint(centerX, centerY);
-            }
-        }, 50);
-
-        // Event listeners
-        setTimeout(() => {
-            // Corner sticker mode - save and update immediately
-            const radioButtons = settingsContent.querySelectorAll('input[type="radio"]');
-            radioButtons.forEach(radio => {
-                radio.addEventListener('change', (e) => {
-                    cornerStickerMode = e.target.value;
-                    if (typeof window.setCornerStickerMode === 'function') {
-                        window.setCornerStickerMode(cornerStickerMode);
-                    }
-                    triggerLiveUpdate();
-                });
-            });
-
-            // z2 tracing - save and update immediately
-            const z2Checkbox = settingsContent.querySelector(`#z2TracingCheckbox-${timestamp}`);
-            if (z2Checkbox) {
-                z2Checkbox.addEventListener('change', (e) => {
-                    z2TracingModeEnabled = e.target.checked;
-                    saveZ2TracingMode(z2TracingModeEnabled);
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Image size slider
-            const imageSizeSlider = settingsContent.querySelector(`#imageSizeSlider-${timestamp}`);
-            const imageSizeValue = settingsContent.querySelector(`#imageSizeValue-${timestamp}`);
-            if (imageSizeSlider) {
-                imageSizeSlider.addEventListener('input', (e) => {
-                    const size = parseInt(e.target.value);
-                    imageSizeValue.textContent = size + 'px';
-                    parityTracerImageSize = size;
-                    saveParityTracerImageSize(size);
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Show arrow checkbox
-            const showArrowCheckbox = settingsContent.querySelector(`#showArrowCheckbox-${timestamp}`);
-            const arrowSettingsContainer = settingsContent.querySelector(`#arrowSettingsContainer-${timestamp}`);
-            if (showArrowCheckbox) {
-                showArrowCheckbox.addEventListener('change', (e) => {
-                    showCircularArrow = e.target.checked;
-                    arrowSettingsContainer.style.opacity = showCircularArrow ? '1' : '0.4';
-                    arrowSettingsContainer.style.pointerEvents = showCircularArrow ? 'auto' : 'none';
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow color
-            const arrowColorInput = settingsContent.querySelector(`#arrowColor-${timestamp}`);
-            if (arrowColorInput) {
-                arrowColorInput.addEventListener('input', (e) => {
-                    arrowSettings.color = e.target.value;
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow opacity
-            const arrowOpacityInput = settingsContent.querySelector(`#arrowOpacity-${timestamp}`);
-            const opacityValue = settingsContent.querySelector(`#opacityValue-${timestamp}`);
-            if (arrowOpacityInput) {
-                arrowOpacityInput.addEventListener('input', (e) => {
-                    const opacity = parseInt(e.target.value) / 100;
-                    arrowSettings.opacity = opacity;
-                    opacityValue.textContent = e.target.value + '%';
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow stroke width
-            const arrowStrokeWidthInput = settingsContent.querySelector(`#arrowStrokeWidth-${timestamp}`);
-            const strokeWidthValue = settingsContent.querySelector(`#strokeWidthValue-${timestamp}`);
-            if (arrowStrokeWidthInput) {
-                arrowStrokeWidthInput.addEventListener('input', (e) => {
-                    arrowSettings.strokeWidth = parseFloat(e.target.value);
-                    strokeWidthValue.textContent = parseFloat(e.target.value).toFixed(1);
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Arrow radius
-            const arrowRadiusInput = settingsContent.querySelector(`#arrowRadius-${timestamp}`);
-            const radiusValue = settingsContent.querySelector(`#radiusValue-${timestamp}`);
-            if (arrowRadiusInput) {
-                arrowRadiusInput.addEventListener('input', (e) => {
-                    arrowSettings.radius = parseFloat(e.target.value);
-                    radiusValue.textContent = parseFloat(e.target.value).toFixed(2);
-                    saveArrowSettings();
-                    triggerLiveUpdate();
-                });
-            }
-
-            // Tracing scheme button
-            const tracingSchemeBtn = settingsContent.querySelector(`#openTracingScheme-${timestamp}`);
-            if (tracingSchemeBtn) {
-                tracingSchemeBtn.addEventListener('click', () => {
-                    closeSettingsModal();
-                    showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
-                });
-            }
-
-            // Evilness factor for parity tracing checkbox
-            const evilnessFactorCheckbox = settingsContent.querySelector(`#evilnessFactorCheckbox-${timestamp}`);
-            const evilnessStringReturnRow = settingsContent.querySelector(`#evilnessStringReturnRow-${timestamp}`);
-            const openEvilnessCasesBtn = settingsContent.querySelector(`#openEvilnessCases-${timestamp}`);
-            if (evilnessFactorCheckbox) {
-                evilnessFactorCheckbox.addEventListener('change', (e) => {
-                    const newVal = e.target.checked;
-                    e.target.checked = !newVal;
-
-                    const choiceContainer = document.createElement('div');
-                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
-                    choiceContainer.innerHTML = `
-                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness factor for parity tracing?</h3>
-                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
-                        </div>`;
-                    const overlay = document.createElement('div');
-                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
-                    overlay.appendChild(choiceContainer);
-                    document.body.appendChild(overlay);
-
-                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
-                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
-                        overlay.remove();
-                        e.target.checked = newVal;
-                        if (typeof evilnessFactor !== 'undefined') evilnessFactor = newVal;
-                        if (typeof saveState === 'function') saveState();
-                        const isOn = newVal;
-                        if (evilnessStringReturnRow) {
-                            evilnessStringReturnRow.style.opacity = isOn ? '1' : '0.4';
-                            evilnessStringReturnRow.style.pointerEvents = isOn ? 'auto' : 'none';
-                            const lbl = evilnessStringReturnRow.querySelector('label');
-                            if (lbl) lbl.style.pointerEvents = isOn ? 'auto' : 'none';
-                        }
-                        if (openEvilnessCasesBtn) {
-                            openEvilnessCasesBtn.style.opacity = isOn ? '1' : '0.4';
-                            openEvilnessCasesBtn.style.cursor = isOn ? 'pointer' : 'not-allowed';
-                            openEvilnessCasesBtn.style.pointerEvents = isOn ? 'auto' : 'none';
-                        }
-                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
-                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
-                        if (typeof render === 'function') render();
-                        if (typeof filterAndSort === 'function') filterAndSort();
-                        if (modalElement) {
-                            const si = modalElement.querySelector('input[type="text"]');
-                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        if (typeof showToast === 'function') showToast(`Evilness factor for parity tracing ${isOn ? 'enabled' : 'disabled'}.`, 3000, 'success');
-                    };
-                });
-            }
-
-            // Evilness string return checkbox — confirm before expensive recalculation
-            const evilnessStringReturnCheckbox = settingsContent.querySelector(`#evilnessStringReturnCheckbox-${timestamp}`);
-            if (evilnessStringReturnCheckbox) {
-                evilnessStringReturnCheckbox.addEventListener('change', (e) => {
-                    const newVal = e.target.checked;
-                    // Revert the checkbox visually until confirmed
-                    e.target.checked = !newVal;
-
-                    const choiceContainer = document.createElement('div');
-                    choiceContainer.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:320px;`;
-                    choiceContainer.innerHTML = `
-                        <h3 style="margin:0 0 12px 0;color:#333;font-size:1.1rem;">${newVal ? 'Enable' : 'Disable'} Evilness in Parity Results?</h3>
-                        <p style="margin:0 0 20px 0;color:#666;font-size:0.9rem;">This will recalculate parity for all 90 cases. The app may be briefly unresponsive.</p>
-                        <div style="display:flex;gap:10px;justify-content:flex-end;">
-                            <button class="cancel-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-                            <button class="confirm-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
-                        </div>`;
-                    const overlay = document.createElement('div');
-                    overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
-                    overlay.appendChild(choiceContainer);
-                    document.body.appendChild(overlay);
-
-                    choiceContainer.querySelector('.cancel-btn').onclick = () => { overlay.remove(); };
-                    choiceContainer.querySelector('.confirm-btn').onclick = () => {
-                        overlay.remove();
-                        e.target.checked = newVal;
-                        if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
-                        if (typeof saveState === 'function') saveState();
-                        // Force full recalculation
-                        if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
-                        if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
-                        if (typeof render === 'function') render();
-                        if (typeof filterAndSort === 'function') filterAndSort();
-                        // Update open parity tracer modal
-                        if (modalElement) {
-                            const si = modalElement.querySelector('input[type="text"]');
-                            if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                        if (typeof showToast === 'function') showToast('Parity results updated with evilness setting.', 3000, 'success');
-                    };
-                });
-            }
-
-            // Evilness cases button
-            if (openEvilnessCasesBtn) {
-                openEvilnessCasesBtn.addEventListener('click', () => {
-                    closeSettingsModal();
-                    showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
-                });
-            }
-        }, 100);
-
-        const closeSettingsModal = () => {
-            window.removeEventListener('resize', updateSettingsClosePosition);
-            settingsModalDiv.removeEventListener('scroll', updateSettingsClosePosition);
-            settingsModalDiv.remove();
-            settingsFloatingCloseBtn.remove();
-
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
-        };
-
-        // Back button handler
-        if (typeof pushModalState !== 'undefined') {
-            pushModalState('paritySettingsModal', closeSettingsModal);
-        }
-
-        settingsFloatingCloseBtn.onclick = closeSettingsModal;
-        settingsModalDiv.onclick = (e) => {
-            if (e.target === settingsModalDiv) {
-                closeSettingsModal();
+                close();
             }
         };
     }
@@ -1808,34 +1140,34 @@
 
         const evilInner = document.createElement('div');
         evilInner.style.cssText = `
-            background:#fff; border-radius:14px; width:min(560px,100%);
+            background:var(--surface); border-radius:14px; width:min(560px,100%);
             max-height:80vh; display:flex; flex-direction:column;
             box-shadow:0 8px 32px rgba(0,0,0,0.25); overflow:hidden;
         `;
 
         evilInner.innerHTML = `
             <!-- Header -->
-            <div style="flex-shrink:0; padding:16px 20px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; align-items:center; justify-content:space-between;">
+            <div style="flex-shrink:0; padding:16px 20px; background:var(--surface2); border-bottom:1px solid var(--surface-border); display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:1.15rem; font-weight:700; color:#2d3748;">Per-case Evilness settings</span>
-                    <span id="evilCountBar" style="font-size:0.8rem; color:#888; font-weight:400;"></span>
+                    <span style="font-size:1.15rem; font-weight:700; color:var(--text-ui);">Per-case Evilness settings</span>
+                    <span id="evilCountBar" style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;"></span>
                 </div>
-                <button id="evilModalCloseBtn" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:#666; line-height:1; padding:0;">&times;</button>
+                <button id="evilModalCloseBtn" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
             </div>
             <!-- Search + Bulk action bar -->
-            <div style="flex-shrink:0; padding:10px 14px; background:#f8f9fa; border-bottom:1px solid #e9ecef; display:flex; gap:8px; align-items:center;">
+            <div style="flex-shrink:0; padding:10px 14px; background:var(--surface2); border-bottom:1px solid var(--surface-border); display:flex; gap:8px; align-items:center;">
                 <div style="position:relative; flex:1; min-width:0;">
                     <input type="text" id="evilSearchInput"
                         placeholder="Search cases..."
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid #dee2e6; border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;">
+                        style="width:100%; padding:7px 10px 7px 32px; border:1px solid var(--border-color); border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box; background:var(--surface); color:var(--text-ui);">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         style="position:absolute; left:9px; top:50%; transform:translateY(-50%); width:15px; height:15px; pointer-events:none;">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                 </div>
                 <select id="evilBulkAction"
-                    style="padding:7px 8px; border:1px solid #dee2e6; border-radius:7px; font-size:0.82rem; background:white; cursor:pointer; color:#495057; flex-shrink:0;"
+                    style="padding:7px 8px; border:1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;"
                     onchange="this.value && (() => { window._evilBulkHandler && window._evilBulkHandler(this.value); this.value=''; })()">
                     <option value="" disabled selected>Select…</option>
                     <option value="mark_all_evil">Mark All Evil</option>
@@ -1851,11 +1183,11 @@
                 gap:7px; align-content:start;
             "></div>
             <!-- Footer -->
-            <div style="flex-shrink:0; padding:12px 16px; background:#f8f9fa; border-top:1px solid #e9ecef; display:flex; gap:8px; justify-content:flex-end; align-items:center;">
-                <span id="evilUnsavedDot" style="font-size:0.8rem; color:#e08000; font-weight:600; display:none;">● Unsaved changes</span>
-                <button id="evilResetBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
-                <button id="evilCancelBtn" style="padding:6px 14px; background:#f8f9fa; color:#495057; border:1px solid #ced4da; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
-                <button id="evilSaveBtn" style="padding:6px 14px; background:#28a745; color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
+            <div style="flex-shrink:0; padding:12px 16px; background:var(--surface2); border-top:1px solid var(--surface-border); display:flex; gap:8px; justify-content:flex-end; align-items:center;">
+                <span id="evilUnsavedDot" style="font-size:0.8rem; color:var(--warning-color,#e08000); font-weight:600; display:none;">● Unsaved changes</span>
+                <button id="evilResetBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
+                <button id="evilCancelBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
+                <button id="evilSaveBtn" style="padding:6px 14px; background:var(--bar-learned); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
             </div>
         `;
 
@@ -1990,15 +1322,18 @@
             }
             delete window._evilToggleCase;
             delete window._evilBulkHandler;
-            evilModalDiv.remove();
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            closeModalWithHistory(() => {
+                evilModalDiv.remove();
+                if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+                if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            });
         }
 
         evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
         evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
         evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
         evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
+        pushModalState('evilModal', () => closeEvilModal(false));
 
         evilInner.querySelector('#evilResetBtn').addEventListener('click', () => {
             const presetEvil = (typeof presetData !== 'undefined' && presetData && presetData.evilnessMap) ? presetData.evilnessMap : {};
@@ -2037,37 +1372,37 @@
         const configModalDiv = document.createElement('div');
         configModalDiv.className = 'parity-tracer-config-modal';
         configModalDiv.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.7);
-      z-index: 10008;
-      padding: 2rem;
-      overflow-y: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      overflow: hidden;
-    `;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 10008;
+            padding: 2rem;
+            overflow-y: auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            overflow: hidden;
+        `;
 
         const configContent = document.createElement('div');
         configContent.className = 'parity-tracer-config-content';
         configContent.style.cssText = `
-      background: ${config.backgroundColor};
-      border-radius: 16px;
-      padding: 2rem;
-      max-width: 600px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
-      position: relative;
-    `;
+            background: ${config.backgroundColor};
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            position: relative;
+        `;
 
         const headerDiv = document.createElement('div');
         headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
@@ -2093,15 +1428,15 @@
         searchDiv.className = 'shape-search-container';
         searchDiv.style.cssText = 'margin-bottom: 1.5rem;';
         searchDiv.innerHTML = `
-      <input type="text" id="shape-search-input" placeholder="Search shapes by name..." style="width: 100%; padding: 0.75rem; border: 2px solid ${borderColor}; background: ${inputBgColor}; color: ${textColor}; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s;">
-    `;
+            <input type="text" id="shape-search-input" placeholder="Search shapes by name..." style="width: 100%; padding: 0.75rem; border: 2px solid ${borderColor}; background: ${inputBgColor}; color: ${textColor}; border-radius: 8px; font-size: 0.9rem; transition: all 0.2s;">
+        `;
 
         const casesListDiv = document.createElement('div');
         casesListDiv.className = 'shape-cases-grid';
         casesListDiv.style.cssText = 'display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;';
 
         // Sort entries alphabetically by name
-        const sortedEntries = Object.entries(currentShapePatternsStorageWithLongName).sort((a, b) => a[1].localeCompare(b[1]));
+        const sortedEntries = Object.entries(shapePatterns).sort((a, b) => a[1].localeCompare(b[1]));
 
         sortedEntries.forEach(([pattern, name], idx) => {
             const caseDiv = document.createElement('div');
@@ -2133,22 +1468,22 @@
 
             const cardBg = isDark ? adjustColorBrightness(config.backgroundColor, 12) : adjustColorBrightness(config.backgroundColor, -4);
             caseDiv.style.cssText = `
-  background: ${cardBg};
-  padding: 1rem;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  transition: all 0.2s;
-  ${gridColumn}
-`;
+                background: ${cardBg};
+                padding: 1rem;
+                border-radius: 8px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                transition: all 0.2s;
+                ${gridColumn}
+            `;
 
             const nameSpan = document.createElement('div');
             nameSpan.style.cssText = `font-weight: 600; color: ${textColor}; font-size: 0.9rem; margin-bottom: 0.5rem; text-align: center;`;
             nameSpan.textContent = name;
 
             const vizDiv = document.createElement('div');
-            vizDiv.innerHTML = generateSimpleShapeVisualizationSVGWithLongName(pattern, 112, 'config-' + pattern);
+            vizDiv.innerHTML = generateShapeSVG(pattern, 112, 'config-' + pattern);
             vizDiv.style.cssText = 'margin-bottom: 0.5rem;';
 
             caseDiv.appendChild(nameSpan);
@@ -2165,16 +1500,16 @@
         saveBtn.textContent = 'Save & Apply';
         saveBtn.id = 'configSaveBtn';
         saveBtn.style.cssText = `
-      padding: 0.75rem 2rem;
-      border: 2px solid ${borderColor};
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: ${saveBtnBg};
-      color: ${textColor};
-    `;
+            padding: 0.75rem 2rem;
+            border: 2px solid ${borderColor};
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: ${saveBtnBg};
+            color: ${textColor};
+        `;
 
         saveBtn.onmouseover = () => {
             saveBtn.style.background = saveBtnHover;
@@ -2186,7 +1521,7 @@
 
         const performSave = () => {
             // Save shape patterns and corner sticker mode
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            saveShapes(shapePatterns);
             if (typeof saveState === 'function') {
                 saveState();
             }
@@ -2229,28 +1564,6 @@
                 filterAndSort();
             }
 
-            // If there's an open case modal, close and reopen it to refresh
-            const caseModal = document.getElementById('caseModal');
-            if (caseModal && typeof openModal === 'function') {
-                const modalTitle = caseModal.querySelector('.modal-title');
-                if (modalTitle) {
-                    const caseName = modalTitle.textContent.trim();
-                    // Find the actual case name from data
-                    if (typeof data !== 'undefined') {
-                        const matchedCase = data.find(item => {
-                            const displayName = typeof getDisplayName === 'function' ? getDisplayName(item.name) : item.name;
-                            return displayName === caseName;
-                        });
-                        if (matchedCase) {
-                            closeModal();
-                            setTimeout(() => {
-                                openModal(matchedCase.name);
-                            }, 100);
-                        }
-                    }
-                }
-            }
-
             if (typeof showToast === 'function') {
                 showToast('Settings saved! All parity calculations have been updated.', 3000, 'success');
             }
@@ -2263,16 +1576,16 @@
         const resetBtn = document.createElement('button');
         resetBtn.textContent = 'Reset to Default';
         resetBtn.style.cssText = `
-      padding: 0.75rem 2rem;
-      border: 2px solid ${borderColor};
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      background: ${resetBtnBg};
-      color: ${textColor};
-    `;
+            padding: 0.75rem 2rem;
+            border: 2px solid ${borderColor};
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: ${resetBtnBg};
+            color: ${textColor};
+        `;
 
         resetBtn.onmouseover = () => {
             resetBtn.style.background = resetBtnHover;
@@ -2283,12 +1596,12 @@
         };
 
         resetBtn.onclick = () => {
-            currentShapePatternsStorageWithLongName = { ...defaultShapePatternsForSquareOnePuzzleWithLongName };
-            saveShapesToStorageWithLongName(currentShapePatternsStorageWithLongName);
+            shapePatterns = { ...defaultShapePatterns };
+            saveShapes(shapePatterns);
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
-            showConfigurationModalWithLongName(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+            showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
 
         buttonsDiv.appendChild(saveBtn);
@@ -2403,57 +1716,57 @@
         // Add style to hide webkit scrollbar for config modal and add responsive layout
         const configStyle = document.createElement('style');
         configStyle.textContent = `
-      .parity-tracer-config-modal::-webkit-scrollbar {
-        display: none;
-      }
-      .parity-tracer-config-content::-webkit-scrollbar {
-        display: none;
-      }
-      .shape-search-container {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        height: auto !important;
-        overflow: visible !important;
-        position: relative !important;
-      }
-      .shape-search-container input {
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        position: relative !important;
-      }
-      @media (max-width: 570px) {
-        .shape-search-container {
-          display: block !important;
-          visibility: visible !important;
-        }
-        .shape-search-container input {
-          opacity: 1 !important;
-          pointer-events: auto !important;
-          position: relative !important;
-        }
-        .shape-cases-grid {
-          grid-template-columns: repeat(2, 1fr) !important;
-        }
-        .shape-config-item.second-to-last-card,
-        .shape-config-item.last-card {
-          transform: none !important;
-        }
-        .shape-config-item.last-odd-card {
-          grid-column: 1 / -1;
-          max-width: calc(50% - 0.5rem);
-          margin: 0 auto !important;
-        }
-      }
-      @media (max-width: 420px) {
-        .shape-cases-grid {
-          grid-template-columns: 1fr !important;
-        }
-        .shape-config-item.last-odd-card {
-          max-width: 100% !important;
-        }
-      }
-    `;
+            .parity-tracer-config-modal::-webkit-scrollbar {
+                display: none;
+            }
+            .parity-tracer-config-content::-webkit-scrollbar {
+                display: none;
+            }
+            .shape-search-container {
+                display: block !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                height: auto !important;
+                overflow: visible !important;
+                position: relative !important;
+            }
+            .shape-search-container input {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                position: relative !important;
+            }
+            @media (max-width: 570px) {
+                .shape-search-container {
+                display: block !important;
+                visibility: visible !important;
+                }
+                .shape-search-container input {
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                position: relative !important;
+                }
+                .shape-cases-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                }
+                .shape-config-item.second-to-last-card,
+                .shape-config-item.last-card {
+                transform: none !important;
+                }
+                .shape-config-item.last-odd-card {
+                grid-column: 1 / -1;
+                max-width: calc(50% - 0.5rem);
+                margin: 0 auto !important;
+                }
+            }
+            @media (max-width: 420px) {
+                .shape-cases-grid {
+                grid-template-columns: 1fr !important;
+                }
+                .shape-config-item.last-odd-card {
+                max-width: 100% !important;
+                }
+            }
+        `;
         document.head.appendChild(configStyle);
 
         // Create floating close button for config modal
@@ -2461,22 +1774,22 @@
         configFloatingCloseBtn.className = 'config-floating-close-btn';
         configFloatingCloseBtn.innerHTML = '×';
         configFloatingCloseBtn.style.cssText = `
-      position: fixed;
-      width: 36px;
-      height: 36px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      font-size: 1.5rem;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-      z-index: 10009;
-      border: none;
-      background: #f7fafc;
-      color: #2d3748;
-      transition: transform 0.2s;
-    `;
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 10009;
+            border: none;
+            background: #f7fafc;
+            color: #2d3748;
+            transition: transform 0.2s;
+        `;
 
         const configCloseBg = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5);
         const configCloseHover = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -8);
@@ -2599,31 +1912,33 @@
                 return;
             }
 
-            // Clean up scroll listeners first
-            configContent.removeEventListener('scroll', updateFloatingSaveBtn);
-            window.removeEventListener('resize', resizeHandler);
-            configModalDiv.removeEventListener('scroll', scrollHandler);
-            const backdrop = document.querySelector('.parity-tracer-backdrop');
-            if (backdrop) {
-                backdrop.removeEventListener('scroll', scrollHandler);
-            }
+            closeModalWithHistory(() => {
+                // Clean up scroll listeners first
+                configContent.removeEventListener('scroll', updateFloatingSaveBtn);
+                window.removeEventListener('resize', resizeHandler);
+                configModalDiv.removeEventListener('scroll', scrollHandler);
+                const backdrop = document.querySelector('.parity-tracer-backdrop');
+                if (backdrop) {
+                    backdrop.removeEventListener('scroll', scrollHandler);
+                }
 
-            // Clear any update intervals
-            if (typeof updateInterval !== 'undefined') {
-                clearInterval(updateInterval);
-            }
+                // Clear any update intervals
+                if (typeof updateInterval !== 'undefined') {
+                    clearInterval(updateInterval);
+                }
 
-            // Remove elements
-            if (floatingSaveBtn && floatingSaveBtn.parentNode) {
-                floatingSaveBtn.remove();
-            }
-            configModalDiv.remove();
-            configFloatingCloseBtn.remove();
-            configStyle.remove();
+                // Remove elements
+                if (floatingSaveBtn && floatingSaveBtn.parentNode) {
+                    floatingSaveBtn.remove();
+                }
+                configModalDiv.remove();
+                configFloatingCloseBtn.remove();
+                configStyle.remove();
 
-            // Restore main modal buttons if they exist
-            if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
-            if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+                // Restore main modal buttons if they exist
+                if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
+                if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
+            });
         };
         function setCornerStickerMode(mode) {
             cornerStickerMode = mode;
@@ -2659,7 +1974,7 @@
                             // Save scroll position before update
                             const scrollPos = configModalDiv.scrollTop;
 
-                            setShapeOrientationWithLongName(pattern, clickedIndex, 'config');
+                            setShapeOrientation(pattern, clickedIndex, 'config');
                             dataChanged = true;
                             updateFloatingSaveBtn();
 
@@ -2674,7 +1989,7 @@
 
                                 // Find the new pattern for this shape
                                 let newPattern = '';
-                                for (const [pat, name] of Object.entries(currentShapePatternsStorageWithLongName)) {
+                                for (const [pat, name] of Object.entries(shapePatterns)) {
                                     if (name.toLowerCase() === shapeName) {
                                         newPattern = pat;
                                         break;
@@ -2682,7 +1997,7 @@
                                 }
 
                                 if (newPattern) {
-                                    vizDiv.innerHTML = generateSimpleShapeVisualizationSVGWithLongName(newPattern, 112, 'config-' + newPattern);
+                                    vizDiv.innerHTML = generateShapeSVG(newPattern, 112, 'config-' + newPattern);
 
                                     // Re-attach click handlers to new pieces
                                     vizDiv.querySelectorAll('[class*="shape-piece-config-"]').forEach(newPiece => {
@@ -2709,7 +2024,7 @@
     // Main library function - THE ONLY EXPORTED FUNCTION - COMPLETE
     function createSquareOneParityTracerModalWithAllParametersIncluded(options = {}) {
         // CRITICAL: Always reload shapes from storage when modal opens
-        currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+        shapePatterns = loadShapes();
 
         const config = {
             backgroundColor: options.backgroundColor || '#ffffff',
@@ -2735,7 +2050,7 @@
         };
 
         // Set global color configuration
-        superDuperSquareOnePuzzleColorConfigurationObjectThatWillNeverConflict = {
+        colorConfig = {
             topLayerMainColor: config.topLayerMainColor,
             topLayerColorFullName: config.topLayerColorFullName,
             topLayerColorAbbreviation: config.topLayerColorAbbreviation,
@@ -2751,9 +2066,9 @@
         // If returnOnlyValue, calculate and return only the parity result - COMPLETE LOGIC
         if (config.returnOnlyParityValue && config.scrambleTextInput) {
             try {
-                const state = applyScrambleToStateArrayWithLongName(config.scrambleTextInput);
-                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                const state = applyScramble(config.scrambleTextInput);
+                const topRaw = buildUnits(state, 0);
+                const botRaw = buildUnits(state, 12);
                 // Check if we have stored symmetry offsets for this scramble
                 // Use original scramble for key, not transformed
                 const scrambleKey = scrambleText.replace(/\s+/g, '');
@@ -2764,8 +2079,8 @@
                     window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                 }
 
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
 
                 // Apply symmetry offsets if they exist
                 const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -2790,10 +2105,10 @@
                 topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                 botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                const topCounts = countPieces(topUnits);
+                const botCounts = countPieces(botUnits);
 
                 const shouldSwapForParity = (topCounts.label === '2E5C' && botCounts.label === '6E3C');
 
@@ -2828,7 +2143,7 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
+                const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, config.scrambleTextInput);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {
@@ -2858,27 +2173,27 @@
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
         const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 10) : adjustColorBrightness(config.backgroundColor, -3);
-        const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 15) : adjustColorBrightness(config.backgroundColor, -5);
-        const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -8);
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, 8) : adjustColorBrightness(config.backgroundColor, -2);
+        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
+        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_INPUT_BG) : adjustColorBrightness(config.backgroundColor, LM_INPUT_BG);
+        const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_BUTTON_BG) : adjustColorBrightness(config.backgroundColor, LM_BUTTON_BG);
+        const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_HOVER_BG) : adjustColorBrightness(config.backgroundColor, LM_HOVER_BG);
 
         // Create backdrop
         const backdrop = document.createElement('div');
         backdrop.className = 'parity-tracer-backdrop';
         backdrop.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 10005;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    `;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 10005;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        `;
 
         // Create modal structure
         const modal = document.createElement('div');
@@ -2889,17 +2204,17 @@
         const padding = vw <= 420 ? '1rem' : '1.5rem';
         const borderRadius = vw <= 420 ? '12px' : '16px';
         modal.style.cssText = `
-      position: relative;
-      background: ${config.backgroundColor};
-      border-radius: ${borderRadius};
-      padding: ${padding};
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      max-width: 600px;
-      width: 90%;
-      max-height: ${maxHeight};
-      overflow-y: auto;
-      z-index: 10006;
-    `;
+            position: relative;
+            background: ${config.backgroundColor};
+            border-radius: ${borderRadius};
+            padding: ${padding};
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 90%;
+            max-height: ${maxHeight};
+            overflow-y: auto;
+            z-index: 10006;
+        `;
 
         const uniqueId = 'pt-' + Math.random().toString(36).substr(2, 9);
 
@@ -3082,7 +2397,7 @@
           transform: scale(1.1);
           opacity: 0.9;
         }
-        
+
         .parity-tracer-modal-container .color-dot {
           display: inline-block;
           width: 16px;
@@ -3135,7 +2450,7 @@
         </button>
       </div>
       <div class="parity-tracer-input-container">
-        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" placeholder="Enter your scramble..." style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor};">
+        <input type="text" id="${uniqueId}-scramble" value="${config.scrambleTextInput}" placeholder="Enter your scramble..." style="margin: 0; background: ${inputBgColor}; color: ${textColor}; border-color: ${borderColor}; border-radius:8px;">
       </div>
       <div id="${uniqueId}-visualization" style="display: flex; justify-content: center; margin-bottom: 1rem;"></div>
       <div class="utility-buttons-container">
@@ -3143,7 +2458,7 @@
         <button class="utility-toggle-btn" id="${uniqueId}-y2-btn">y2</button>
         <button class="utility-toggle-btn" id="${uniqueId}-flip-btn">Flip Color</button>
       </div>
-      <div id="${uniqueId}-results" class="results-section"></div>    
+      <div id="${uniqueId}-results" class="results-section"></div>
     `;
 
         // Attach event handlers - COMPLETE LOGIC
@@ -3177,9 +2492,19 @@
             window.addEventListener('resize', updateButtonPositions);
             backdrop.addEventListener('scroll', updateButtonPositions);
 
-            function performAnalysisWithLongName() {
+            function performAnalysis() {
                 // Ensure we have the latest shapes before analysis
-                currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+                shapePatterns = loadShapes();
+
+                // Re-read all live settings from localStorage on every analysis
+                const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+                z2TracingModeEnabled = storedZ2 !== null ? storedZ2 === 'true' : true;
+                const storedImgSize = localStorage.getItem('parityTracerImageSize');
+                parityTracerImageSize = storedImgSize !== null ? parseInt(storedImgSize) : 200;
+                const storedArrow = localStorage.getItem('parityTracerShowArrow');
+                showCircularArrow = storedArrow !== null ? storedArrow === 'true' : true;
+                const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
+                if (storedArrowSettings) { try { arrowSettings = JSON.parse(storedArrowSettings); } catch(_) {} }
 
                 let scrambleText = scrambleInput.value.trim() || '(0,0)';
                 if (typeof window.ScrambleNormalizer !== 'undefined' && window.ScrambleNormalizer.normalizeScramble) {
@@ -3192,14 +2517,14 @@
                 const transformedScramble = applyUtilityTransformationsToScramble(scrambleText);
 
                 try {
-                    const state = applyScrambleToStateArrayWithLongName(transformedScramble);
+                    const state = applyScramble(transformedScramble);
 
                     // Validation - RESTORED
-                    const val = validateCornersTogetherSameLayerWithLongName(state);
+                    const val = validateCorners(state);
 
                     // Build units - COMPLETE
-                    const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                    const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
+                    const topRaw = buildUnits(state, 0);
+                    const botRaw = buildUnits(state, 12);
 
                     // Check if we have stored symmetry offsets for this scramble
                     // Use original scramble for key, not transformed
@@ -3211,8 +2536,8 @@
                         window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
                     }
 
-                    const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                    const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
+                    const topMatch = matchPattern(topRaw.types);
+                    const botMatch = matchPattern(botRaw.types);
 
                     // Apply symmetry offsets if they exist
                     const topSymmetryOffset = window.parityTracerSymmetryOffsets[scrambleKey].top || 0;
@@ -3237,10 +2562,10 @@
                     topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
                     botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
 
-                    const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                    const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                    const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                    const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                    const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                    const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                    const topCounts = countPieces(topUnits);
+                    const botCounts = countPieces(botUnits);
 
                     // Determine order - always Top → Bottom
                     const orderMode = 'TB';
@@ -3291,16 +2616,16 @@
                     }
 
                     const useClockwise = (cornerStickerMode === 'clockwise');
-                    const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                    const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
 
                     // Visualize scramble if enabled - COMPLETE
-                    if (config.shouldGenerateImage && globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames) {
-                        const encodedScramble = encodeStateToHexStringWithLongName(state);
+                    if (config.shouldGenerateImage && lib.Square1Visualizer) {
+                        const encodedScramble = window.Square1Utils ? window.Square1Utils.stateToHex(state) : encodeState(state);
                         if (!encodedScramble.startsWith('Error:')) {
                             try {
 
                                 const imageSize = parityTracerImageSize;
-                                const svgContent = globalThisWindowObjectThingyForParityTracer.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCodePlease(
+                                const svgContent = lib.Square1Visualizer.visualizeFromHex(
                                     encodedScramble,
                                     imageSize,
                                     {
@@ -3315,8 +2640,8 @@
 
                                 // Calculate arrow positions
                                 // Note: We need to calculate based on the UNROTATED units to find the physical position
-                                const topArrowData = calculateArrowStartAngleWithLongName(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
-                                const botArrowData = calculateArrowStartAngleWithLongName(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+                                const topArrowData = calculateArrowAngle(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
+                                const botArrowData = calculateArrowAngle(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
 
                                 // Calculate circle dimensions (matching draw-scramble logic)
                                 const unit10vh = imageSize * 0.4;
@@ -3333,12 +2658,12 @@
                                 if (svgs.length >= 2) {
                                     // Add arrow to first SVG (top layer)
                                     const firstSvg = svgs[0];
-                                    const arrowSvg1 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
+                                    const arrowSvg1 = generateArrowSVG(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize);
                                     firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
 
                                     // Add arrow to second SVG (bottom layer)
                                     const secondSvg = svgs[1];
-                                    const arrowSvg2 = generateArrowSVGOverlayWithLongName(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
+                                    const arrowSvg2 = generateArrowSVG(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize);
                                     secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
                                 }
 
@@ -3381,7 +2706,7 @@
                                                 window.parityTracerSymmetryOffsets[scrambleKey][layerType] = newOffset;
 
                                                 // Re-run analysis
-                                                performAnalysisWithLongName();
+                                                performAnalysis();
                                             });
                                         }
 
@@ -3403,7 +2728,7 @@
                     }
 
                     // Display results
-                    displayResultsInModalWithVeryLongFunctionName(resultsContainer, sixStepParity, config);
+                    displayResults(resultsContainer, sixStepParity, config);
 
                 } catch (err) {
                     console.error(err);
@@ -3412,7 +2737,7 @@
             }
 
             scrambleInput.addEventListener('input', () => {
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             scrambleInput.addEventListener('keydown', (e) => {
@@ -3429,34 +2754,36 @@
             z2Btn.addEventListener('click', () => {
                 utilityZ2Enabled = !utilityZ2Enabled;
                 z2Btn.classList.toggle('active', utilityZ2Enabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             y2Btn.addEventListener('click', () => {
                 utilityY2Enabled = !utilityY2Enabled;
                 y2Btn.classList.toggle('active', utilityY2Enabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             flipBtn.addEventListener('click', () => {
                 utilityFlipColorEnabled = !utilityFlipColorEnabled;
                 flipBtn.classList.toggle('active', utilityFlipColorEnabled);
-                performAnalysisWithLongName();
+                performAnalysis();
             });
 
             const closeMainModal = () => {
-                // Reset utility states when closing
-                utilityZ2Enabled = false;
-                utilityY2Enabled = false;
-                utilityFlipColorEnabled = false;
+                closeModalWithHistory(() => {
+                    // Reset utility states when closing
+                    utilityZ2Enabled = false;
+                    utilityY2Enabled = false;
+                    utilityFlipColorEnabled = false;
 
-                window.removeEventListener('resize', updateButtonPositions);
-                backdrop.remove();
-                closeBtnElement.remove();
-                settingsBtnElement.remove();
-                document.body.classList.remove('modal-open');
-                document.body.style.top = '';
-                window.scrollTo(0, window.modalScrollY || 0);
+                    window.removeEventListener('resize', updateButtonPositions);
+                    backdrop.remove();
+                    closeBtnElement.remove();
+                    settingsBtnElement.remove();
+                    document.body.classList.remove('modal-open');
+                    document.body.style.top = '';
+                    window.scrollTo(0, window.modalScrollY || 0);
+                });
             };
 
             // Use unified back button handler
@@ -3475,10 +2802,7 @@
             }
 
             settingsBtnElement.addEventListener('click', () => {
-                closeBtnElement.style.display = 'none';
-                settingsBtnElement.style.display = 'none';
-                // Open the new settings modal
-                showParityTracerSettingsModal(modal, config, closeBtnElement, null, settingsBtnElement);
+                window.openUnifiedSettings('parity');
             });
 
             // Close on backdrop click
@@ -3490,9 +2814,9 @@
 
             // Auto-analyze if scramble is provided, otherwise use (0,0)
             if (config.scrambleTextInput) {
-                performAnalysisWithLongName();
+                performAnalysis();
             } else {
-                performAnalysisWithLongName();
+                performAnalysis();
             }
         }, 0);
         // Create close button
@@ -3523,32 +2847,33 @@
     }
 
     // Export the single function
-    globalThisWindowObjectThingyForParityTracer.ParityTracerLibrary = {
+    lib.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
-        openConfigModal: showConfigurationModalWithLongName,
+        openConfigModal: showTracingSchemeSettingsModal,
+        openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+            shapePatterns = loadShapes();
         },
         version: '2.0.0'
     };
 
     // Export parity analysis function for use by other parts of the app
-    globalThisWindowObjectThingyForParityTracer.Square1ParityAnalyzerLibraryWithSillyNames = {
-        getParityTextFromScramblePlease: function (scrambleText, colorConfig, cornerMode, customRotation) {
+    lib.ParityAnalyzerLib = {
+        getParityText: function (scrambleText, colorConfig, cornerMode, customRotation) {
             // Always use fresh shapes from storage
-            currentShapePatternsStorageWithLongName = loadShapesFromStorageWithLongName();
+            shapePatterns = loadShapes();
 
             try {
-                const state = applyScrambleToStateArrayWithLongName(scrambleText);
-                const topRaw = buildUnitsFromStateLayerWithLongName(state, 0);
-                const botRaw = buildUnitsFromStateLayerWithLongName(state, 12);
-                const topMatch = matchPatternWithRotationCheckingWithLongName(topRaw.types);
-                const botMatch = matchPatternWithRotationCheckingWithLongName(botRaw.types);
-                const topUnits = rotateArrayCircularlyWithLongName(topRaw.units, topMatch.rot);
-                const botUnits = rotateArrayCircularlyWithLongName(botRaw.units, botMatch.rot);
-                const topCounts = countEdgesAndCornersWithLongName(topUnits);
-                const botCounts = countEdgesAndCornersWithLongName(botUnits);
+                const state = applyScramble(scrambleText);
+                const topRaw = buildUnits(state, 0);
+                const botRaw = buildUnits(state, 12);
+                const topMatch = matchPattern(topRaw.types);
+                const botMatch = matchPattern(botRaw.types);
+                const topUnits = rotateArray(topRaw.units, topMatch.rot);
+                const botUnits = rotateArray(botRaw.units, botMatch.rot);
+                const topCounts = countPieces(topUnits);
+                const botCounts = countPieces(botUnits);
 
                 const shouldSwapForParity = z2TracingModeEnabled &&
                     (topCounts.label === '2E5C' && botCounts.label === '6E3C' ||
@@ -3585,7 +2910,7 @@
                 }
 
                 const useClockwise = (cornerMode === 'clockwise');
-                const sixStepParity = calculateSixStepParityWithExtremelyLongFunctionName(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+                const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
                 const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
                 return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
             } catch (err) {

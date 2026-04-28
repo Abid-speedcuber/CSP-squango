@@ -14,6 +14,132 @@ let quickEditState = {
 // Load auto-select setting from localStorage
 let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
 
+// Expand :varName: tokens in an alg string using algVariables map
+function expandAlgVariables(alg) {
+    if (!alg || !algVariables || algVariables.size === 0) return alg;
+    return alg.replace(/:([a-zA-Z_][a-zA-Z0-9_]*):/g, (match, name) => {
+        return algVariables.has(name) ? algVariables.get(name) : match;
+    });
+}
+
+// Expand variables then normalize — used on defocus
+function expandAndNormalize(alg) {
+    if (!alg || alg === 'Done!') return alg;
+    const expanded = expandAlgVariables(alg);
+    return window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(expanded) : expanded;
+}
+
+// Expand variables then normalize for live color coding only (don't mutate cell)
+function expandForColorCheck(alg) {
+    if (!alg || alg === 'Done!') return alg;
+    return expandAlgVariables(alg);
+}
+
+function generateGeneralTableRowsShell() {
+    const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="general"><td colspan="${evilnessFactor ? 5 : 4}" style="height:41px;"></td></tr>`).join('');
+}
+
+function generateAlgorithmsTableRowsShell() {
+    const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`).join('');
+}
+
+function hydrateGeneralRow(row) {
+    const item = data.find(d => d.name === row.dataset.case);
+    if (!item) return;
+    const displayName = getDisplayName(item.name);
+    const subtitle = perCaseSubtitles.get(item.name) || '';
+    const note = comments.get(item.name) || '';
+    const formattedNote = sanitizeNoteHTML(note);
+    const isEvil = evilnessMap[item.name] === true;
+    row.classList.remove('qe-lazy-row');
+    row.innerHTML = `
+        <td class="uneditable">${displayName}</td>
+        <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
+        <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
+        <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
+        ${evilnessFactor ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked;saveState();const k=this.nextElementSibling;k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)';k.querySelector('span').style.left=this.checked?'18px':'2px';"><span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span></label></td>` : ''}
+    `;
+    setupRowHandlers(row, 'general');
+}
+
+function hydrateAlgorithmsRow(row) {
+    const item = data.find(d => d.name === row.dataset.case);
+    if (!item) return;
+    const visibleCols = quickEditState.visibleAlgColumns || 6;
+    const displayName = getDisplayName(item.name);
+    const customAlgs = customAlgorithms.get(item.name);
+    let allAlgs = customAlgs ? [...(customAlgs.odd || []), ...(customAlgs.even || [])] : [...(item.odd || []), ...(item.even || [])];
+    const totalCols = Math.max(visibleCols, 6);
+    while (allAlgs.length < totalCols) allAlgs.push('');
+    row.classList.remove('qe-lazy-row');
+    row.innerHTML = `
+        <td class="uneditable display-name-col">${displayName}</td>
+        ${allAlgs.slice(0, totalCols).map((alg, idx) => `<td class="editable alg-cell" contenteditable="true" data-field="alg${idx}" data-original="${alg}" style="${idx >= visibleCols ? 'display:none;' : ''}">${alg}</td>`).join('')}
+    `;
+    setupRowHandlers(row, 'algorithms');
+    row.querySelectorAll('.alg-cell').forEach(cell => { if (cell.textContent.trim()) updateAlgorithmCellParity(cell); });
+}
+
+function setupRowHandlers(row, tab) {
+    row.querySelectorAll('.editable').forEach(cell => {
+        cell.addEventListener('focus', function() {
+            if (this.classList.contains('notes-cell')) { const r = this.dataset.rawHtml || ''; this.textContent = r; }
+            if (autoSelectTextOnFocus) { const range = document.createRange(); range.selectNodeContents(this); const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range); }
+            quickEditState.lastFocusedCell = this;
+            if (tab === 'general') { const f = this.dataset.field; quickEditState.findReplaceScope = f === 'displayName' ? 'name' : f === 'subtitle' ? 'subtitle' : f === 'notes' ? 'notes' : null; }
+        });
+        cell.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.shiftKey && this.dataset.field === 'notes') { e.preventDefault(); document.execCommand('insertLineBreak'); return; }
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const nr = this.closest('tr').nextElementSibling; if (nr) { if (nr.classList.contains('qe-lazy-row')) { tab === 'general' ? hydrateGeneralRow(nr) : hydrateAlgorithmsRow(nr); } const sc = nr.querySelector(`[data-field="${this.dataset.field}"]`); if (sc) sc.focus(); } return; }
+            if (e.key === 'Tab') { e.preventDefault(); const cells = Array.from(this.closest('tr').querySelectorAll('.editable')); const ci = cells.indexOf(this); if (e.shiftKey) { if (ci > 0) cells[ci-1].focus(); } else { if (ci < cells.length-1) cells[ci+1].focus(); } return; }
+        });
+        cell.addEventListener('blur', function() {
+            if (this.classList.contains('notes-cell')) { const r = this.textContent.trim(); this.dataset.rawHtml = r; this.innerHTML = sanitizeNoteHTML(r); }
+        });
+        if (cell.classList.contains('alg-cell')) {
+            cell.addEventListener('input', function() { updateAlgorithmCellParityLive(this); });
+            cell.addEventListener('blur', function() { const t = this.textContent.trim(); if (t && t !== 'Done!') this.textContent = expandAndNormalize(t); updateAlgorithmCellParity(this); });
+            cell.addEventListener('paste', function(e) { e.preventDefault(); const t = (e.clipboardData||window.clipboardData).getData('text/plain'); document.execCommand('insertText', false, t); });
+        }
+    });
+}
+
+function initQuickEditLazyLoad() {
+    const modal = document.getElementById('quickEditModal');
+    if (!modal) return;
+    const body = modal.querySelector('.quick-edit-body');
+
+    // Hydrate first ~8 visible rows immediately
+    const generalRows = Array.from(document.querySelectorAll('#quickEditGeneralBody .qe-lazy-row'));
+    const algRows = Array.from(document.querySelectorAll('#quickEditAlgorithmsBody .qe-lazy-row'));
+    generalRows.slice(0, 8).forEach(hydrateGeneralRow);
+    algRows.slice(0, 8).forEach(hydrateAlgorithmsRow);
+
+    // REPLACE:
+    // Render all remaining rows in small batches so the UI stays responsive
+    const remainingGeneral = generalRows.slice(8);
+    const remainingAlg = algRows.slice(8);
+    const allRemaining = [...remainingGeneral, ...remainingAlg];
+    let idx = 0;
+    function renderNextBatch() {
+        const batchSize = 10;
+        const end = Math.min(idx + batchSize, allRemaining.length);
+        for (; idx < end; idx++) {
+            const row = allRemaining[idx];
+            if (row.classList.contains('qe-lazy-row')) {
+                row.dataset.tab === 'general' ? hydrateGeneralRow(row) : hydrateAlgorithmsRow(row);
+            }
+        }
+        if (idx < allRemaining.length) {
+            requestAnimationFrame(renderNextBatch);
+        }
+    }
+    if (allRemaining.length > 0) requestAnimationFrame(renderNextBatch);
+    modal._lazyObserver = null;
+}
+
 function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
@@ -50,6 +176,9 @@ function openQuickEditModal() {
                     <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
                         +2
                     </button>
+                    <button class="quick-edit-icon-btn alg-variables-btn-header" onclick="openAlgVariablesModal()" title="Algorithm Variables" style="display: none;">
+                        <img src="res/var.svg" alt="Variables">
+                    </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
                     </button>
@@ -61,7 +190,7 @@ function openQuickEditModal() {
                     </button>
                 </div>
             </div>
-            
+
  <div class="quick-edit-find-replace-popup" id="quickEditFindReplace" style="display: none;">
     <div class="find-replace-header">
         <span>Find and Replace</span>
@@ -101,33 +230,34 @@ function openQuickEditModal() {
         <span id="quickEditMatchCount">No matches</span>
     </div>
 </div>
-            
+
             <div class="quick-edit-body">
                 <div class="quick-edit-content" id="quickEditGeneralTab">
                     <table class="quick-edit-table">
                         <thead>
                             <tr>
-                                <th style="width: 20%;">Case Name</th>
-                                <th style="width: 25%;">Display Name</th>
-                                <th style="width: 20%;">Subtitle</th>
-                                <th style="width: 35%;">Notes</th>
+                                <th>Case Name</th>
+                                <th>Display Name</th>
+                                <th>Subtitle</th>
+                                <th class="notes-header">Notes</th>
+                                ${evilnessFactor ? '<th style="text-align:center;">Evil</th>' : ''}
                             </tr>
                         </thead>
                         <tbody id="quickEditGeneralBody">
-                            ${generateGeneralTableRows()}
+                            ${generateGeneralTableRowsShell()}
                         </tbody>
                     </table>
                 </div>
-                
+
                 <div class="quick-edit-content" id="quickEditAlgorithmsTab" style="display: none;">
                     <table class="quick-edit-table algorithms-table">
                         <thead>
                             <tr id="algorithmTableHeader">
-                                <th class="display-name-header">Display Name</th>
+                                <th class="display-name-header" style="white-space:nowrap;">Display Name</th>
                             </tr>
                         </thead>
                         <tbody id="quickEditAlgorithmsBody">
-                            ${generateAlgorithmsTableRows()}
+                            ${generateAlgorithmsTableRowsShell()}
                         </tbody>
                     </table>
                 </div>
@@ -137,12 +267,20 @@ function openQuickEditModal() {
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
+    pushModalState('quickEditModal', closeQuickEditModal);
+
+    // Keep modal in sync with theme changes
+    modal._themeObserver = new MutationObserver(() => {
+        modal.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || '');
+    });
+    modal._themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    modal.setAttribute('data-theme', document.documentElement.getAttribute('data-theme') || '');
 
     // Add keyboard shortcuts
     setupQuickEditKeyboardShortcuts();
 
-    // Setup cell focus handlers
-    setupQuickEditCellHandlers();
+    // Lazy load rows
+    initQuickEditLazyLoad();
 }
 
 function generateGeneralTableRows() {
@@ -158,12 +296,19 @@ function generateGeneralTableRows() {
         const note = comments.get(item.name) || '';
         const formattedNote = sanitizeNoteHTML(note);
 
+        const isEvil = evilnessMap[item.name] === true;
         return `
             <tr data-case="${item.name}">
                 <td class="uneditable">${caseNameDisplay}</td>
                 <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
                 <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
                 <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
+                ${evilnessFactor ? `<td style="text-align:center; vertical-align:middle;">
+                    <label style="position:relative;display:inline-block;width:36px;height:20px;">
+                        <input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked; saveState(); const k=this.nextElementSibling; k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)'; k.querySelector('span').style.left=this.checked?'18px':'2px';">
+                        <span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span>
+                    </label>
+                </td>` : ''}
             </tr>
         `;
     }).join('');
@@ -246,8 +391,7 @@ function addAlgorithmColumns() {
                 td.addEventListener('blur', function () {
                     const rawText = this.textContent.trim();
                     if (rawText && rawText !== 'Done!') {
-                        const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                        this.textContent = normalized;
+                        this.textContent = expandAndNormalize(rawText);
                     }
                     updateAlgorithmCellParity(this);
                 });
@@ -441,9 +585,7 @@ function setupQuickEditCellHandlers() {
             cell.addEventListener('blur', function () {
                 const rawText = this.textContent.trim();
                 if (rawText && rawText !== 'Done!') {
-                    // Normalize the scramble
-                    const normalized = window.ScrambleNormalizer.normalizeScramble(rawText);
-                    this.textContent = normalized;
+                    this.textContent = expandAndNormalize(rawText);
                 }
                 updateAlgorithmCellParity(this);
             });
@@ -538,7 +680,7 @@ function updateAlgorithmCellParity(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined') {
+        typeof window.ParityAnalyzerLib === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
         return;
@@ -560,7 +702,7 @@ function updateAlgorithmCellParity(cell) {
         if (isDirectMatch || isInOrg) {
             // Correct case - check parity
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -568,7 +710,7 @@ function updateAlgorithmCellParity(cell) {
 
             if (isDirectMatch) {
                 // Canonical angle - fix angle if needed
-                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+                cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             } else {
                 // Org match but not canonical - try to fix angle
                 if (canonicalIdx !== null) {
@@ -578,13 +720,13 @@ function updateAlgorithmCellParity(cell) {
                         cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
                     }
                 }
-                cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+                cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             }
             cell.style.fontWeight = '600';
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -597,15 +739,15 @@ function updateAlgorithmCellParity(cell) {
                     cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
                 }
             }
-            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             cell.style.fontWeight = '600';
 
         } else {
-            cell.style.color = '#71000bff';
+            cell.style.color = 'var(--parity-invalid)';
             cell.style.fontWeight = '600';
         }
     } catch (error) {
-        cell.style.color = '#71000bff';
+        cell.style.color = 'var(--parity-invalid)';
         cell.style.fontWeight = '600';
     }
 }
@@ -619,7 +761,7 @@ function updateAlgorithmCellParityLive(cell) {
     }
 
     if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.Square1ParityAnalyzerLibraryWithSillyNames === 'undefined' ||
+        typeof window.ParityAnalyzerLib === 'undefined' ||
         typeof window.ScrambleNormalizer === 'undefined') {
         cell.style.color = '';
         cell.style.fontWeight = '';
@@ -632,7 +774,7 @@ function updateAlgorithmCellParityLive(cell) {
     const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
     try {
-        const normalized = window.ScrambleNormalizer.normalizeScramble(alg);
+        const normalized = window.ScrambleNormalizer.normalizeScramble(expandForColorCheck(alg));
         const result = window.algToShapeIndex(normalized);
         const resultShapeIndex = result.shapeIndex;
 
@@ -642,28 +784,28 @@ function updateAlgorithmCellParityLive(cell) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-            cell.style.color = parityText === 'Odd' ? '#00a126ff' : '#0069d9ff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.Square1ParityAnalyzerLibraryWithSillyNames.getParityTextFromScramblePlease(setup, {
+            const parityText = window.ParityAnalyzerLib.getParityText(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
             }, cornerStickerMode);
-            cell.style.color = parityText === 'Odd' ? '#006b1aff' : '#004a9fff';
+            cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
             cell.style.fontWeight = '600';
         } else {
-            cell.style.color = '#71000bff';
+            cell.style.color = 'var(--parity-invalid)';
             cell.style.fontWeight = '600';
         }
     } catch (error) {
-        cell.style.color = '#71000bff';
+        cell.style.color = 'var(--parity-invalid)';
         cell.style.fontWeight = '600';
     }
 }
@@ -716,14 +858,17 @@ function switchQuickEditTab(tab) {
     const algorithmsTab = document.getElementById('quickEditAlgorithmsTab');
     const addColumnsBtn = document.querySelector('.add-columns-btn-header');
 
+    const varBtn = document.querySelector('.alg-variables-btn-header');
     if (tab === 'general') {
         generalTab.style.display = 'block';
         algorithmsTab.style.display = 'none';
         if (addColumnsBtn) addColumnsBtn.style.display = 'none';
+        if (varBtn) varBtn.style.display = 'none';
     } else {
         generalTab.style.display = 'none';
         algorithmsTab.style.display = 'block';
         if (addColumnsBtn) addColumnsBtn.style.display = '';
+        if (varBtn) varBtn.style.display = '';
         // Initialize algorithm table headers when switching to algorithm tab
         updateAlgorithmTableHeaders();
     }
@@ -1232,23 +1377,27 @@ function closeQuickEditModal() {
 }
 
 function forceCloseQuickEditModal() {
-    const modal = document.getElementById('quickEditModal');
-    if (modal) {
-        modal.remove();
-        document.body.classList.remove('modal-open');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('quickEditModal');
+        if (modal) {
+            if (modal._lazyObserver) modal._lazyObserver.disconnect();
+            if (modal._themeObserver) modal._themeObserver.disconnect();
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        }
 
-    // Reset state
-    quickEditState = {
-        currentTab: 'general',
-        findReplaceOpen: false,
-        findReplaceScope: null,
-        currentFindIndex: -1,
-        findMatches: [],
-        lastFocusedCell: null,
-        allMatchRanges: [],
-        visibleAlgColumns: 6
-    };
+        // Reset state
+        quickEditState = {
+            currentTab: 'general',
+            findReplaceOpen: false,
+            findReplaceScope: null,
+            currentFindIndex: -1,
+            findMatches: [],
+            lastFocusedCell: null,
+            allMatchRanges: [],
+            visibleAlgColumns: 6
+        };
+    });
 }
 
 function revertQuickEditChanges() {
@@ -1291,7 +1440,7 @@ window.showQuickEditInfoModal = function () {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text"><strong>Algorithms Tab:</strong> <b>Edit</b> algorithms for all cases. Algorithms are auto-normalized when you click away from the cell (so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself). They are also color-coded in real time by parity and validity: <span style="color: #00a126ff; font-weight: 600;">green = odd</span>, <span style="color: #0069d9ff; font-weight: 600;">blue = even</span>, <span style="color: #006b1aff; font-weight: 600;">barely-noticeable dark green = odd (mirrored)</span>, <span style="color: #004a9fff; font-weight: 600;">ever-so-slightly dark blue = even (mirrored)</span>, <span style="color: #71000bff; font-weight: 600;">red = invalid</span> (either doesn't solve the case or does not lead to valid squan position at all).</div>
+                        <div class="training-info-text"><strong>Algorithms Tab:</strong> <b>Edit</b> algorithms for all cases. Algorithms are auto-normalized when you click away from the cell <span style="font-weight:500">(so you can write 1043'2'1'-3-3 as algorithm and the cell will fix itself)</span>. They are also color-coded in real time by parity and validity: <span style="color: var(--parity-odd); font-weight: 600;">green = odd</span>, <span style="color: var(--parity-even); font-weight: 600;">blue = even</span>, <span style="color: var(--parity-odd-mirror); font-weight: 600;">dark-green = odd (mirrored)</span>, <span style="color: var(--parity-even-mirror); font-weight: 600;">dark-blue = even (mirrored)</span>, <span style="color: var(--parity-invalid); font-weight: 600;">red = invalid</span> (either doesn't solve the case or does not lead to valid squan position at all).</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
@@ -1311,6 +1460,10 @@ window.showQuickEditInfoModal = function () {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">7</div>
+                        <div class="training-info-text"><strong>Variable Table:</strong> While in the algorithm tab, press the <b>"var"</b> button on the toolbar to access variable table. There you can store commonly use algorithm parts <b>(</b>like, <span style="font-weight:500">scal-kite=/(-1,-2)/(-3,0)/</span><b>)</b> and you can reuse them anywhere. To reuse the variable, wrap it around two colons (:variableName:). (ie, the algorithm for <span style="font-weight:500">left 5-1/pair</span> can be written as <span style="font-weight:500">/(-2,3):scal-kite:</span> provided that you have scal-kite saved in the variable table.). The variable will expand when you click away. The color-coding works even with variables.</div>
+                    </div>
+                    <div class="training-info-item">
+                        <div class="training-info-number">7</div>
                         <div class="training-info-text"><strong>Save:</strong> Click Save to apply all changes. Exit without saving to <b>discard all the changes</b></div>
                     </div>
                 </div>
@@ -1320,14 +1473,148 @@ window.showQuickEditInfoModal = function () {
     }
 
     infoModal.classList.add('active');
+    if (typeof pushModalState === 'function') pushModalState('quickEditInfoModal', closeQuickEditInfoModal);
 };
 
 window.closeQuickEditInfoModal = function () {
-    const modal = document.getElementById('quickEditInfoModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('quickEditInfoModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    });
 };
+
+// REPLACE:
+function openAlgVariablesModal() {
+    const existing = document.getElementById('algVariablesModal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'algVariablesModal';
+    modal.style.cssText = `
+        position: fixed; inset: 0; z-index: 10100;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.5);
+    `;
+
+    modal.innerHTML = `
+        <div style="
+            background: var(--surface);
+            border-radius: 14px;
+            width: min(560px, 95vw);
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+            border: 1px solid var(--surface-border);
+        ">
+            <div style="
+                display: flex; align-items: center; justify-content: space-between;
+                padding: 18px 22px; border-bottom: 1px solid var(--surface-border);
+                background: var(--modal-header-bg); flex-shrink: 0;
+            ">
+                <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-ui);">Algorithm Variables</span>
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <button onclick="saveAlgVariables()" style="
+                        padding: 7px 18px; background: var(--accent); color: white;
+                        border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+                    ">Save</button>
+                    <button onclick="closeAlgVariablesModal()" style="
+                        background: none; border: none; cursor: pointer; font-size: 1.5rem;
+                        color: var(--sidebar-close-color); line-height: 1; padding: 2px 6px;
+                    ">&times;</button>
+                </div>
+            </div>
+            <div style="padding: 14px 22px 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; background: var(--surface);">
+                Use <code style="background:var(--surface2);border:1px solid var(--border-color);padding:1px 5px;border-radius:4px;font-size:0.82rem;color:var(--text-primary);">:varName:</code> inside any algorithm to insert the variable's value at defocus.
+                Variable values are normalized when you click away.
+            </div>
+            <div style="overflow-y: auto; flex: 1; padding: 10px 22px 18px;">
+                <table style="width:100%; border-collapse: collapse;" id="algVarTable">
+                    <thead style="background: var(--surface2); position: sticky; top: 0;">
+                        <tr>
+                            <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border); width:28%;">Name</th>
+                            <th style="text-align:left; padding: 8px 6px; font-size:0.85rem; color:var(--text-secondary); border-bottom:1px solid var(--surface-border);">Value</th>
+                            <th style="width:36px; border-bottom:1px solid var(--surface-border); background: var(--surface2);"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="algVarTableBody">
+                        ${renderAlgVarRows()}
+                    </tbody>
+                </table>
+                <button onclick="addAlgVarRow()" style="
+                    margin-top: 12px; padding: 7px 16px; background: var(--surface2);
+                    border: 1px dashed var(--border-color); border-radius: 7px;
+                    cursor: pointer; font-size: 0.9rem; color: var(--text-ui);
+                    width: 100%; transition: background 0.15s;
+                " onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">+ Add Variable</button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.addEventListener('mousedown', e => { if (e.target === modal) closeAlgVariablesModal(); });
+    if (typeof pushModalState === 'function') pushModalState('algVariablesModal', closeAlgVariablesModal);
+}
+
+function closeAlgVariablesModal() {
+    closeModalWithHistory(() => {
+        const modal = document.getElementById('algVariablesModal');
+        if (modal) modal.remove();
+    });
+}
+
+function renderAlgVarRows() {
+    if (!algVariables || algVariables.size === 0) return '';
+    return Array.from(algVariables.entries()).map(([name, value]) => algVarRowHTML(name, value)).join('');
+}
+
+function algVarRowHTML(name, value) {
+    return `
+        <tr class="alg-var-row">
+            <td style="padding: 6px 6px;">
+                <input class="alg-var-name" type="text" value="${name}" placeholder="name"
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;">
+            </td>
+            <td style="padding: 6px 6px;">
+                <input class="alg-var-value" type="text" value="${value}" placeholder="e.g. /(3,0)/(2,2)/"
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;"
+                    onblur="this.value = this.value.trim() && this.value.trim() !== 'Done!' && window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(this.value.trim()) : this.value.trim()">
+            </td>
+            <td style="padding: 6px 4px; text-align:center;">
+                <button onclick="this.closest('tr').remove()" style="
+                    background: var(--delete-btn-bg); border: none; border-radius: 5px;
+                    cursor: pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+                "><img src="res/delete.svg" style="width:14px;height:14px;" alt="Delete"></button>
+            </td>
+        </tr>
+    `;
+}
+
+function addAlgVarRow() {
+    const tbody = document.getElementById('algVarTableBody');
+    if (!tbody) return;
+    const tr = document.createElement('tr');
+    tr.className = 'alg-var-row';
+    tr.innerHTML = algVarRowHTML('', '').match(/<tr[^>]*>([\s\S]*)<\/tr>/)[1];
+    tbody.appendChild(tr);
+    tr.querySelector('.alg-var-name').focus();
+}
+
+function saveAlgVariables() {
+    const rows = document.querySelectorAll('#algVarTableBody .alg-var-row');
+    algVariables = new Map();
+    rows.forEach(row => {
+        const name = row.querySelector('.alg-var-name').value.trim().replace(/[^a-zA-Z0-9_]/g, '');
+        const value = row.querySelector('.alg-var-value').value.trim();
+        if (name && value) algVariables.set(name, value);
+    });
+    saveState();
+    document.getElementById('algVariablesModal').remove();
+    showToast('Variables saved!', 2000, 'success');
+}
 
 // Make functions globally accessible
 window.openQuickEditModal = openQuickEditModal;
@@ -1346,6 +1633,9 @@ window.liveSearchQuickEdit = liveSearchQuickEdit;
 window.handleReplaceEnter = handleReplaceEnter;
 window.changeFindScope = changeFindScope;
 window.addAlgorithmColumns = addAlgorithmColumns;
+window.openAlgVariablesModal = openAlgVariablesModal;
+window.saveAlgVariables = saveAlgVariables;
+window.addAlgVarRow = addAlgVarRow;
 
 // Global function to toggle auto-select text on focus
 window.setAutoSelectTextOnFocus = function (enabled) {

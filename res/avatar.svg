@@ -4,7 +4,7 @@
      height="256">
 
     <!-- Background circle -->
-    <circle cx="32" cy="32" r="32" fill="#ffffffff"/>
+    <circle cx="32" cy="32" r="32" fill="none"/>
 
     <!-- Head -->
     <circle cx="32" cy="22" r="11" fill="#b0b3b8"/>
