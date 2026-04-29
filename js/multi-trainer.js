@@ -444,7 +444,7 @@ function generateMultiCaseScrambleData() {
     if (!indices || indices.length === 0) return null;
 
     const scramble = indices[Math.floor(Math.random() * indices.length)];
-    const hexCode = generateHexFromShapeIndex(scramble);
+    const hexCode = shapeIndexToHex(scramble);
 
     let scrambleText = hexCode;
     let scrambleImage = '<div style="color:var(--text-muted);">Image unavailable</div>';

@@ -245,7 +245,7 @@ function generateNextScrambleData() {
 
     const randomIndex = Math.floor(Math.random() * trainingScrambles.length);
     const scramble = trainingScrambles[randomIndex];
-    const hexCode = generateHexFromShapeIndex(scramble);
+    const hexCode = shapeIndexToHex(scramble);
 
     let scrambleText = hexCode;
     try {
@@ -1624,7 +1624,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
         questionCount++;
 
-        currentHexCode = generateHexFromShapeIndex(currentItem.idx);
+        currentHexCode = shapeIndexToHex(currentItem.idx);
         window._evilCurrentHexCode = currentHexCode;
         let imgHTML = '';
         try {
@@ -1842,6 +1842,14 @@ function startParityQuiz(chosenCaseNames) {
         </div>
     `;
 
+    const closeQuiz = () => {
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
+    };
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('parityQuizModal', closeQuiz);
@@ -1850,7 +1858,7 @@ function startParityQuiz(chosenCaseNames) {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
         questionCount++;
 
-        const hexCode = generateHexFromShapeIndex(currentItem.idx);
+        const hexCode = shapeIndexToHex(currentItem.idx);
         let scrambleText = '';
         let imgHTML = '';
 
@@ -1897,14 +1905,6 @@ function startParityQuiz(chosenCaseNames) {
 
         setTimeout(nextQuestion, 1400);
     }
-
-    const closeQuiz = () => {
-        closeModalWithHistory(() => {
-            clearInterval(timerInt);
-            modal.remove();
-            document.body.classList.remove('modal-open');
-        });
-    };
 
     document.getElementById('parityQuizGood').addEventListener('click', () => handleAnswer(true));
     document.getElementById('parityQuizBad').addEventListener('click', () => handleAnswer(false));
@@ -2101,6 +2101,15 @@ function startColorRecognitionPractice() {
         </div>
     `;
 
+    const closeQuiz = () => {
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            document.removeEventListener('keydown', handleColorKeyDown);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
+    };
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('colorRecogModal', closeQuiz);
@@ -2208,15 +2217,6 @@ function startColorRecognitionPractice() {
             }
         }
     }
-
-    const closeQuiz = () => {
-        closeModalWithHistory(() => {
-            clearInterval(timerInt);
-            document.removeEventListener('keydown', handleColorKeyDown);
-            modal.remove();
-            document.body.classList.remove('modal-open');
-        });
-    };
 
     function handleColorKeyDown(e) {
         if (!document.getElementById('colorRecogModal')) { document.removeEventListener('keydown', handleColorKeyDown); return; }
