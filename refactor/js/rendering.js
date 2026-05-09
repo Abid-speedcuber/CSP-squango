@@ -208,8 +208,9 @@ function getShapePath(scramble) {
     }
 
     try {
-        if (typeof window.Square1ShapePathTracerLibraryWithSillyNames !== 'undefined') {
-            const shapePathString = window.Square1ShapePathTracerLibraryWithSillyNames.traceSolutionToSolutionShapePath(scramble);
+        const shapePathTracer = window.Square1ShapePathTracer || window.Square1ShapePathTracerLibraryWithSillyNames;
+        if (shapePathTracer) {
+            const shapePathString = shapePathTracer.traceSolutionToSolutionShapePath(scramble);
             if (shapePathString) {
                 // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
                 const steps = shapePathString.split(' → ').map(s => s.trim());
@@ -1035,4 +1036,3 @@ function highlightPartialMatch(text, searchTerm) {
     const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
     return text.replace(regex, '<mark class="search-hl">$1</mark>');
 }
-

@@ -242,19 +242,13 @@ function traceSolutionToSolutionShapePath(solution, options = {}) {
   return formatShapePathAsString(reversedPath);
 }
 
-// ========================================
-// === EXPORT FOR USE ===
-// ========================================
-
-// For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
-  window.Square1ShapePathTracerLibraryWithSillyNames = {
+  window.Square1ShapePathTracer = {
     traceScrambleToScrambleShapePath,
     traceScrambleToSolutionShapePath,
     traceSolutionToScrambleShapePath,
     traceSolutionToSolutionShapePath,
-    // Expose default shape patterns for reference
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
+  window.Square1ShapePathTracerLibraryWithSillyNames = window.Square1ShapePathTracer;
 }
-

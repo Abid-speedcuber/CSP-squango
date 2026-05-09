@@ -3,9 +3,13 @@
 (function (global) {
     'use strict';
 
-    const caseList = Array.isArray(data) ? data : [];
-    const shapeList = Array.isArray(shapeIndex) ? shapeIndex : [];
-    const canonicalShapeIndex = typeof shapeIndexMap === 'object' && shapeIndexMap !== null ? shapeIndexMap : {};
+    const caseList = typeof data !== 'undefined' && Array.isArray(data) ? data : [];
+    const shapeList = typeof shapeIndex !== 'undefined' && Array.isArray(shapeIndex) ? shapeIndex : [];
+    const canonicalShapeIndex = typeof shapeIndexMap !== 'undefined' &&
+        global.SQG &&
+        global.SQG.isPlainObject(shapeIndexMap)
+        ? shapeIndexMap
+        : {};
 
     const casesByName = new Map(caseList.map(item => [item.name, item]));
     const shapeEntriesByName = new Map(shapeList.map(item => [item.name, item]));
@@ -68,7 +72,7 @@
         return errors;
     }
 
-    global.CSPData = Object.freeze({
+    const store = Object.freeze({
         cases: caseList,
         shapeEntries: shapeList,
         casesByName,
@@ -83,4 +87,11 @@
         getCaseNames: () => caseList.map(item => item.name),
         validate: validateData
     });
+
+    global.CSPData = store;
+
+    const validationErrors = store.validate();
+    if (validationErrors.length > 0) {
+        console.warn('[CSPData] Data validation found issues:', validationErrors);
+    }
 })(window);

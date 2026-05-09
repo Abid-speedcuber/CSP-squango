@@ -544,17 +544,12 @@ function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDi
   return visualizeFromScrambleNotation(invertedScramble, size, colors, ringDistance);
 }
 
-// ========================================
-// === EXPORT FOR USE ===
-// ========================================
-
-// For direct browser usage, attach to window
 if (typeof window !== 'undefined') {
-  window.Square1VisualizerLibraryWithSillyNames = {
+  window.Square1Visualizer = {
     visualizeFromHexCode,
     visualizeFromScrambleNotation,
     visualizeFromSolutionNotation,
-    visualizeCubeShapeOutlines  // <-- This line should be here!
+    visualizeCubeShapeOutlines
   };
+  window.Square1VisualizerLibraryWithSillyNames = window.Square1Visualizer;
 }
-

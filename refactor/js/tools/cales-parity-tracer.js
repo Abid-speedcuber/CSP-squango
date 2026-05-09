@@ -6,26 +6,26 @@
     // Parity Tracer Core
     // Scramble to hex -> utils.js
 
-    // ── Dark-mode brightness offsets (tweak these to restyle the modal) ──────
-    // All values are % brightness adjustments relative to config.backgroundColor.
-    // Positive = lighter, negative = darker.
-    const DM_INPUT_BG        =  4;   // scramble input field
-    const DM_CARD_BG         =  1;   // outer result card ("Parity Analysis" wrapper)
-    const DM_INNER_CARD_BG   = 2;   // individual step cards inside result card
-    const DM_BUTTON_BG       =  8;   // close / settings floating buttons
-    const DM_HOVER_BG        = 14;   // utility btn (z2/y2/Flip) hover
-    const DM_RESULT_TITLE_COLOR = '#9299b0'; // "Parity Analysis" heading color in dark mode
+    const THEME_SURFACE_OFFSETS = Object.freeze({
+        dark: {
+            input: 4,
+            card: 1,
+            innerCard: 2,
+            button: 8,
+            hover: 14,
+            resultTitle: '#9299b0'
+        },
+        light: {
+            input: -3,
+            card: -2,
+            innerCard: -4,
+            button: -5,
+            hover: -8,
+            resultTitle: '#2d3748'
+        }
+    });
 
-    // ── Light-mode brightness offsets ────────────────────────────────────────
-    const LM_INPUT_BG        = -3;
-    const LM_CARD_BG         = -2;
-    const LM_INNER_CARD_BG   = -4;
-    const LM_BUTTON_BG       = -5;
-    const LM_HOVER_BG        = -8;
-    const LM_RESULT_TITLE_COLOR = '#2d3748';
-
-    // Color configuration with absurdly long name
-    let C_Colors = {
+    const defaultTracerColors = Object.freeze({
         tlMainCol: '#FFD700',
         tlColName: 'Yellow',
         tlColAbb: 'Y',
@@ -36,7 +36,9 @@
         rightCol: '#00AA00',
         backCol: '#FF8C00',
         leftCol: '#0066CC'
-    };
+    });
+
+    let C_Colors = { ...defaultTracerColors };
 
     // scrambleToHex → defined in utils.js
 
@@ -57,14 +59,26 @@
     const TOP_HEX = new Set(['0','1','2','3','4','5','6','7']);
     const CORNER_HEX = new Set(['1','3','5','7','9','b','d','f']);
 
-    // Helper functions used across multiple modals
-    function getContrastColor(hexColor) {
-        const r = parseInt(hexColor.substr(1, 2), 16);
-        const g = parseInt(hexColor.substr(3, 2), 16);
-        const b = parseInt(hexColor.substr(5, 2), 16);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance > 0.5 ? '#000000' : '#FFFFFF';
-    }
+    const getContrastColor = Cglobal.SQG && Cglobal.SQG.color
+        ? Cglobal.SQG.color.getContrastColor
+        : function (hexColor) {
+            const r = parseInt(hexColor.substr(1, 2), 16);
+            const g = parseInt(hexColor.substr(3, 2), 16);
+            const b = parseInt(hexColor.substr(5, 2), 16);
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            return luminance > 0.5 ? '#000000' : '#FFFFFF';
+        };
+
+    const adjustColorBrightness = Cglobal.SQG && Cglobal.SQG.color
+        ? Cglobal.SQG.color.adjustColorBrightness
+        : function (hexColor, percent) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        };
 
     // Default shape patterns — keys are bitstrings: 0=Edge, 1=Corner
     const defaultShapePatterns = {
@@ -101,18 +115,22 @@
 
     // Load custom shapes from localStorage or use defaults
     function loadShapesFromStorage() {
-        const stored = localStorage.getItem('customTracingSchemes');
-        if (stored) {
-            try {
-                return JSON.parse(stored);
-            } catch {
-                return { ...defaultShapePatterns };
-            }
+        if (Cglobal.SQG && Cglobal.SQG.storage) {
+            return Cglobal.SQG.storage.readJSON('customTracingSchemes', { ...defaultShapePatterns });
         }
-        return { ...defaultShapePatterns };
+
+        try {
+            return JSON.parse(localStorage.getItem('customTracingSchemes')) || { ...defaultShapePatterns };
+        } catch {
+            return { ...defaultShapePatterns };
+        }
     }
 
     function saveShapesToStorage(shapes) {
+        if (Cglobal.SQG && Cglobal.SQG.storage) {
+            Cglobal.SQG.storage.writeJSON('customTracingSchemes', shapes);
+            return;
+        }
         localStorage.setItem('customTracingSchemes', JSON.stringify(shapes));
     }
 
@@ -124,25 +142,19 @@
     let utilityFlipColorEnabled = false;
 
     // Load z2 tracing mode from localStorage
-    let z2TracingModeEnabled = true; // default to true
-    const storedZ2Mode = localStorage.getItem('z2TracingMode');
-    if (storedZ2Mode !== null) {
-        z2TracingModeEnabled = storedZ2Mode === 'true';
-    }
+    let z2TracingModeEnabled = Cglobal.SQG && Cglobal.SQG.storage
+        ? Cglobal.SQG.storage.readBoolean('z2TracingMode', true)
+        : localStorage.getItem('z2TracingMode') !== 'false';
 
     // Parity tracer specific image size
-    let parityTracerImageSize = 200;
-    const storedImageSize = localStorage.getItem('parityTracerImageSize');
-    if (storedImageSize !== null) {
-        parityTracerImageSize = parseInt(storedImageSize);
-    }
+    let parityTracerImageSize = Cglobal.SQG && Cglobal.SQG.storage
+        ? Cglobal.SQG.storage.readNumber('parityTracerImageSize', 200, { min: 80, max: 600 })
+        : parseInt(localStorage.getItem('parityTracerImageSize'), 10) || 200;
     
     // Arrow settings
-    let showCircularArrow = true;
-    const storedShowArrow = localStorage.getItem('parityTracerArrow');
-    if (storedShowArrow !== null) {
-        showCircularArrow = storedShowArrow === 'true';
-    }
+    let showCircularArrow = Cglobal.SQG && Cglobal.SQG.storage
+        ? Cglobal.SQG.storage.readBoolean('parityTracerArrow', true)
+        : localStorage.getItem('parityTracerArrow') !== 'false';
 
     let arrowSettings = {
         color: 'rgba(253, 34, 34, 0.7)',
@@ -150,14 +162,12 @@
         strokeWidth: 1.6,
         radius: 0.3
     };
-    const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
-    if (storedArrowSettings !== null) {
-        try {
-            arrowSettings = JSON.parse(storedArrowSettings);
-        } catch {
-            // Use defaults
-        }
-    }
+    arrowSettings = {
+        ...arrowSettings,
+        ...(Cglobal.SQG && Cglobal.SQG.storage
+            ? Cglobal.SQG.storage.readJSON('parityTracerArrowSettings', {})
+            : {})
+    };
 
     // Evilness (loaded from parent app state, not localStorage directly - uses window references)
     function getEvilnessFactor() {
@@ -395,7 +405,7 @@
         };
     }
 
-    // Shape visualization for config modal - RESTORED
+    // Shape visualization for config modal.
     function drawSchemeSettingsImage(pattern, size, idPrefix) {
         const cx = size / 2;
         const cy = size / 2;
@@ -519,7 +529,6 @@
         }
         // We rotate clockwise (subtract) from the initial position
         const finalAngle = initialAngle - totalRotationDegrees;
-        console.groupEnd();
 
         return { startAngle: finalAngle, arcDegrees: arcDegrees };
     }
@@ -592,23 +601,6 @@
     }
 
     function displayResults(container, sixStepParity, config) {
-        function getContrastColor(hexColor) {
-            const r = parseInt(hexColor.substr(1, 2), 16);
-            const g = parseInt(hexColor.substr(3, 2), 16);
-            const b = parseInt(hexColor.substr(5, 2), 16);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            return luminance > 0.5 ? '#000000' : '#FFFFFF';
-        }
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
         function colorSqHTML(codenames) {
             if (!codenames || !codenames.length) return '';
             const colorMap = {
@@ -632,8 +624,9 @@
 
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
-        const cardBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
-        const innerCardBg = isDark ? adjustColorBrightness(config.backgroundColor, DM_INNER_CARD_BG) : adjustColorBrightness(config.backgroundColor, LM_INNER_CARD_BG);
+        const themeOffsets = isDark ? THEME_SURFACE_OFFSETS.dark : THEME_SURFACE_OFFSETS.light;
+        const cardBgColor = adjustColorBrightness(config.backgroundColor, themeOffsets.card);
+        const innerCardBg = adjustColorBrightness(config.backgroundColor, themeOffsets.innerCard);
 
         const allSteps = [...sixStepParity.steps];
         if (getEvilnessFactor() && sixStepParity.evilStep !== null) {
@@ -646,7 +639,7 @@
             });
         }
 
-        const resultTitleColor = isDark ? DM_RESULT_TITLE_COLOR : LM_RESULT_TITLE_COLOR;
+        const resultTitleColor = themeOffsets.resultTitle;
         container.innerHTML = `
       <div style="background: ${cardBgColor}; padding: 0.75rem; border-radius: 8px;">
         <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: ${resultTitleColor}; font-weight: 600;">Parity Analysis</h3>
@@ -681,7 +674,7 @@
     `;
     }
 
-    // Function to set shape orientation - RESTORED
+    // Set shape orientation after the user selects a tracing start.
     function setShapeOrientation(pattern, clickedIndex) {
         const rotated = rotateToMatchPattern(pattern, clickedIndex);
 
@@ -1374,7 +1367,7 @@
 
                 if (dataChanged && !saveBtnVisible) {
                     floatingSaveBtn.style.display = 'flex';
-                    // NUCLEAR: Calculate position from viewport, not relative values
+                    // Calculate from viewport coordinates so the button follows the modal edge.
                     const viewportWidth = window.innerWidth;
                     const viewportHeight = window.innerHeight;
                     const modalRight = contentRect.right;
@@ -1400,7 +1393,7 @@
         configContent.addEventListener('scroll', updateFloatingSaveBtn);
         window.addEventListener('resize', updateFloatingSaveBtn);
 
-        // NUCLEAR: Continuous updates until position stabilizes
+        // Keep position updates short-lived while layout settles.
         let updateCount = 0;
         const maxUpdates = 20;
         const updateInterval = setInterval(() => {
@@ -1673,7 +1666,7 @@
             }
         };
 
-        // Handle shape piece clicks for rotation - COMPLETE LOGIC RESTORED
+        // Handle shape piece clicks for tracing rotation.
         setTimeout(() => {
             configContent.querySelectorAll('[class*="shape-piece-config-"]').forEach(piece => {
                 piece.style.cursor = 'pointer';
@@ -1791,30 +1784,13 @@
             }
         }
 
-        // Calculate contrasting colors based on background
-        function getContrastColor(hexColor) {
-            const r = parseInt(hexColor.substr(1, 2), 16);
-            const g = parseInt(hexColor.substr(3, 2), 16);
-            const b = parseInt(hexColor.substr(5, 2), 16);
-            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-            return luminance > 0.5 ? '#000000' : '#FFFFFF';
-        }
-
-        function adjustColorBrightness(hexColor, percent) {
-            const num = parseInt(hexColor.replace('#', ''), 16);
-            const amt = Math.round(2.55 * percent);
-            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
-            const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
-            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
-            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
-        }
-
         const textColor = getContrastColor(config.backgroundColor);
         const isDark = textColor === '#FFFFFF';
+        const themeOffsets = isDark ? THEME_SURFACE_OFFSETS.dark : THEME_SURFACE_OFFSETS.light;
         const borderColor = isDark ? adjustColorBrightness(config.backgroundColor, 20) : adjustColorBrightness(config.backgroundColor, -10);
-        const inputBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_INPUT_BG) : adjustColorBrightness(config.backgroundColor, LM_INPUT_BG);
-        const buttonBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_BUTTON_BG) : adjustColorBrightness(config.backgroundColor, LM_BUTTON_BG);
-        const hoverBgColor = isDark ? adjustColorBrightness(config.backgroundColor, DM_HOVER_BG) : adjustColorBrightness(config.backgroundColor, LM_HOVER_BG);
+        const inputBgColor = adjustColorBrightness(config.backgroundColor, themeOffsets.input);
+        const buttonBgColor = adjustColorBrightness(config.backgroundColor, themeOffsets.button);
+        const hoverBgColor = adjustColorBrightness(config.backgroundColor, themeOffsets.hover);
 
         // Create backdrop
         const backdrop = document.createElement('div');
@@ -2159,11 +2135,12 @@
                     const parity = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, scrambleText);
 
                     // Visualize
-                    if (config.shouldGenerateImage && Cglobal.Square1VisualizerLibraryWithSillyNames) {
+                    const visualizer = Cglobal.Square1Visualizer || Cglobal.Square1VisualizerLibraryWithSillyNames;
+                    if (config.shouldGenerateImage && visualizer) {
                         const hexCode = tlHex + '|' + blHex.slice(0,6) + blHex.slice(6);
                         try {
                             const imageSize = parityTracerImageSize;
-                            const svgContent = Cglobal.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
+                            const svgContent = visualizer.visualizeFromHexCode(
                                 hexCode, imageSize,
                                 { topColor: config.tlMainCol, bottomColor: config.blMainCol,
                                   frontColor: config.frontCol, rightColor: config.rightCol,
@@ -2352,11 +2329,14 @@
 
     // Export parity analysis function for use by other parts of the app
     Cglobal.caleTracer = {
-        getParityTextFromScramble: function (scrambleText, cornerMode) {
+        getParityTextFromScramble: function (scrambleText, colorConfigOrCornerMode, cornerMode) {
             currentShapePatterns = loadShapesFromStorage();
             try {
                 const { tlHex, blHex } = scrambleToHex(scrambleText);
-                const useClockwise = (cornerMode === 'clockwise');
+                const resolvedCornerMode = typeof colorConfigOrCornerMode === 'string'
+                    ? colorConfigOrCornerMode
+                    : cornerMode;
+                const useClockwise = resolvedCornerMode === 'clockwise';
                 const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, scrambleText);
                 const useEvil = getEvilnessValue() && p.evilStep !== null;
                 return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';
@@ -2368,5 +2348,3 @@
     };
 
 })(typeof window !== 'undefined' ? window : this);
-
-

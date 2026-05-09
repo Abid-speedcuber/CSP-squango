@@ -265,13 +265,14 @@ function parseScramble(scramble, animateBothLayers = false) {
     }
 
     function renderVisualization(hex, colorScheme, imageSize) {
-        if (typeof window.Square1VisualizerLibraryWithSillyNames === 'undefined') {
+        const visualizer = window.Square1Visualizer || window.Square1VisualizerLibraryWithSillyNames;
+        if (!visualizer) {
             return '<div style="color: var(--alg-invalid-color); font-style: italic;">draw-scramble.js not found</div>';
         }
 
         try {
             const hexCode = hex.tlHex + '|' + hex.blHex;
-            const svgHtml = window.Square1VisualizerLibraryWithSillyNames.visualizeFromHexCode(
+            const svgHtml = visualizer.visualizeFromHexCode(
                 hexCode,
                 imageSize,
                 {
@@ -1494,5 +1495,4 @@ function parseScramble(scramble, animateBothLayers = false) {
         };
     }
 })();
-
 
