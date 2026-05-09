@@ -1,4 +1,5 @@
 /* ==== FILE: js/training-modal.js ==== */
+/* exported openTrainingModal */
 
 ﻿// Training modal variables
 let currentTrainingCase = null;
@@ -1313,7 +1314,6 @@ function startEvilnessQuiz(chosenCaseNames) {
     let quizStartTime = 0;
     let currentItem = null;
     let timerInt = null;
-    let questionCount = 0;
     let quizRunning = false;
     let sidebarOpen = false;
 
@@ -1371,11 +1371,7 @@ function startEvilnessQuiz(chosenCaseNames) {
             const sm = document.getElementById('evilQuizSettingsModal');
             if (sm) sm.remove();
 
-            const obs = new MutationObserver((mutations) => {
-            });
-            obs.observe(document.body, { childList: true, subtree: false });
             modal.remove();
-            setTimeout(() => obs.disconnect(), 500);
             document.body.classList.remove('modal-open');
         });
     };
@@ -1406,7 +1402,7 @@ function startEvilnessQuiz(chosenCaseNames) {
         const list = document.getElementById('evilQuizLogList');
         if (!list) return;
         if (quizLog.length === 0) { list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>'; return; }
-        list.innerHTML = [...quizLog].reverse().map((entry, i) => {
+        list.innerHTML = [...quizLog].reverse().map(entry => {
             const icon = entry.correct ? '✓' : '✗';
             const color = entry.correct ? '#2d6a2d' : '#cc0000';
             const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
@@ -1431,7 +1427,6 @@ function startEvilnessQuiz(chosenCaseNames) {
     function nextQuestion() {
         clearInterval(timerInt);
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
-        questionCount++;
 
         currentHexCode = shapeIndexToHex(currentItem.idx);
         window._evilCurrentHexCode = currentHexCode;
@@ -1915,8 +1910,6 @@ function startColorRecognitionPractice() {
     function renderTrio(trio) {
         return trio.map(face => {
             const col = faceColors[face];
-            const r2 = parseInt(col.substr(1, 2), 16), g2 = parseInt(col.substr(3, 2), 16), b2 = parseInt(col.substr(5, 2), 16);
-            const txtCol = ((0.299 * r2 + 0.587 * g2 + 0.114 * b2) / 255) > 0.5 ? '#000' : '#fff';
             return `<div style="width:90px;height:90px;border-radius:14px;background:${col};box-shadow:0 2px 10px rgba(0,0,0,0.2);border-radius:14px;"></div>`;
         }).join('');
     }
@@ -2164,4 +2157,3 @@ window.trainerPickerLaunch = function (type) {
         startColorRecognitionPractice();
     }
 };
-

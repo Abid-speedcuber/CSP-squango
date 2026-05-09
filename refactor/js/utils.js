@@ -1,4 +1,5 @@
 /* ==== FILE: js/utils.js ==== */
+/* exported scrambleToHex invertScramble applyScrambleToCubeState encodeCubeStateToHex hexToShapeIndex shapeIndexToHex */
 
 function parseScramble(scramble) {
     const moves = [];
@@ -265,4 +266,3 @@ function shapeIndexToHex(shapeIndex) {
                 f.dr.toString(16).padStart(6,'0');
     return hex;
 }
-

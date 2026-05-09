@@ -1,4 +1,5 @@
 /* ==== FILE: js/restoftheapp.js ==== */
+/* exported filteredData algorithmFontSize getCaseNameFromScramble isCaseEvil initializeSVGData getPresetDefaults handleFileImport searchInput sortSelect learnFilterSelect grid initializeDOMReferences */
 
 ﻿// Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
@@ -591,8 +592,38 @@ window.initializePreset = async function () {
     }
 }
 
-window.exportData = function() {
-    const state = {
+const EXPORT_FORMAT_VERSION = 2;
+
+function readStoredJSONSetting(key) {
+    const value = localStorage.getItem(key);
+    if (value === null || value === '') return undefined;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return value;
+    }
+}
+
+function stringifyStoredJSONSetting(value) {
+    if (value === undefined || value === null || value === '') return null;
+    return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
+function readStoredBooleanSetting(key) {
+    const value = localStorage.getItem(key);
+    if (value === null) return undefined;
+    return value === 'true';
+}
+
+function readStoredNumberSetting(key) {
+    const value = localStorage.getItem(key);
+    if (value === null || value === '') return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function buildLegacyExportState() {
+    return {
         learned: Array.from(learnedCases),
         learning: Array.from(learningCases),
         planned: Array.from(plannedCases),
@@ -602,9 +633,10 @@ window.exportData = function() {
         displayNames: displayNames,
         showHints: showHints,
         hideInstructions: hideInstructions,
+        hideParenthesis: hideParenthesis,
         colorScheme: colorScheme,
         scrambleImageSize: scrambleImageSize,
-        customTracingSchemes: localStorage.getItem('customTracingSchemes'),
+        customTracingSchemes: readStoredJSONSetting('customTracingSchemes'),
         perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
         cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
         lastParityCalculationSettings: lastParityCalculationSettings,
@@ -616,19 +648,143 @@ window.exportData = function() {
         evilnessFactor: evilnessFactor,
         evilnessStringReturn: evilnessStringReturn,
         evilnessMap: evilnessMap,
-        parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
-        parityTracerArrow: localStorage.getItem('parityTracerArrow'),
-        parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
-        trainingScrambleImageSize: localStorage.getItem('trainingScrambleImageSize'),
-        trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
-        trainingHoldToStart: localStorage.getItem('trainingHoldToStart'),
-        trainingTimerSize: localStorage.getItem('trainingTimerSize'),
-        trainingShowPrevScramble: localStorage.getItem('trainingShowPrevScramble'),
+        parityTracerImageSize: readStoredNumberSetting('parityTracerImageSize'),
+        parityTracerArrow: readStoredBooleanSetting('parityTracerArrow'),
+        parityTracerArrowSettings: readStoredJSONSetting('parityTracerArrowSettings'),
+        trainingScrambleImageSize: readStoredNumberSetting('trainingScrambleImageSize'),
+        trainingScrambleTextSize: readStoredNumberSetting('trainingScrambleTextSize'),
+        trainingHoldToStart: readStoredNumberSetting('trainingHoldToStart'),
+        trainingTimerSize: readStoredNumberSetting('trainingTimerSize'),
+        trainingShowPrevScramble: readStoredBooleanSetting('trainingShowPrevScramble'),
         profileName: profileName,
         profileAvatar: profileAvatar,
     };
-    // Let training-selector.js add its data
+}
+
+function buildExportDocument() {
+    const state = buildLegacyExportState();
     if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
+
+    return {
+        app: 'SquanGo CSP',
+        formatVersion: EXPORT_FORMAT_VERSION,
+        exportedAt: new Date().toISOString(),
+        compatibility: {
+            canImportLegacyFlatFormat: true,
+            note: 'This file contains your SquanGo CSP progress, notes, algorithms, trainer settings, and visual customization.'
+        },
+        profile: {
+            name: state.profileName,
+            avatar: state.profileAvatar
+        },
+        progress: {
+            learned: state.learned,
+            learning: state.learning,
+            planned: state.planned,
+            plannedLevels: state.plannedLevels
+        },
+        cases: {
+            displayNames: state.displayNames,
+            subtitles: state.perCaseSubtitles,
+            comments: state.comments,
+            algorithms: state.customAlgorithms,
+            variables: state.algVariables,
+            generalNotes: state.generalNotes
+        },
+        preferences: {
+            showHints: state.showHints,
+            hideInstructions: state.hideInstructions,
+            hideParenthesis: state.hideParenthesis,
+            colorScheme: state.colorScheme,
+            scrambleImageSize: state.scrambleImageSize,
+            cornerStickerMode: state.cornerStickerMode
+        },
+        parityTracing: {
+            orientations: state.parityOrientations,
+            customTracingSchemes: state.customTracingSchemes,
+            evilnessFactor: state.evilnessFactor,
+            evilnessStringReturn: state.evilnessStringReturn,
+            evilnessMap: state.evilnessMap,
+            imageSize: state.parityTracerImageSize,
+            arrowEnabled: state.parityTracerArrow,
+            arrowSettings: state.parityTracerArrowSettings
+        },
+        trainer: {
+            scrambleImageSize: state.trainingScrambleImageSize,
+            scrambleTextSize: state.trainingScrambleTextSize,
+            holdToStart: state.trainingHoldToStart,
+            timerSize: state.trainingTimerSize,
+            showPreviousScramble: state.trainingShowPrevScramble,
+            multiCaseSelectedCases: state.selectorSelectedCases || []
+        },
+        visuals: {
+            svgData: state.svgData
+        },
+        cache: {
+            cachedParityAlgorithms: state.cachedParityAlgorithms,
+            lastParityCalculationSettings: state.lastParityCalculationSettings
+        }
+    };
+}
+
+function flattenImportedState(rawState) {
+    if (!rawState || typeof rawState !== 'object') {
+        throw new Error('Import file must contain a JSON object.');
+    }
+
+    // Version 1 exports were flat. Keep them importable forever.
+    if (!rawState.formatVersion) return rawState;
+
+    const progress = rawState.progress || {};
+    const cases = rawState.cases || {};
+    const preferences = rawState.preferences || {};
+    const parityTracing = rawState.parityTracing || {};
+    const trainer = rawState.trainer || {};
+    const visuals = rawState.visuals || {};
+    const cache = rawState.cache || {};
+    const profile = rawState.profile || {};
+
+    return {
+        learned: progress.learned,
+        learning: progress.learning,
+        planned: progress.planned,
+        plannedLevels: progress.plannedLevels,
+        comments: cases.comments,
+        displayNames: cases.displayNames,
+        perCaseSubtitles: cases.subtitles,
+        customAlgorithms: cases.algorithms,
+        algVariables: cases.variables,
+        generalNotes: cases.generalNotes,
+        showHints: preferences.showHints,
+        hideInstructions: preferences.hideInstructions,
+        hideParenthesis: preferences.hideParenthesis,
+        colorScheme: preferences.colorScheme,
+        scrambleImageSize: preferences.scrambleImageSize,
+        cornerStickerMode: preferences.cornerStickerMode,
+        parityOrientations: parityTracing.orientations,
+        customTracingSchemes: parityTracing.customTracingSchemes,
+        evilnessFactor: parityTracing.evilnessFactor,
+        evilnessStringReturn: parityTracing.evilnessStringReturn,
+        evilnessMap: parityTracing.evilnessMap,
+        parityTracerImageSize: parityTracing.imageSize,
+        parityTracerArrow: parityTracing.arrowEnabled,
+        parityTracerArrowSettings: parityTracing.arrowSettings,
+        trainingScrambleImageSize: trainer.scrambleImageSize,
+        trainingScrambleTextSize: trainer.scrambleTextSize,
+        trainingHoldToStart: trainer.holdToStart,
+        trainingTimerSize: trainer.timerSize,
+        trainingShowPrevScramble: trainer.showPreviousScramble,
+        selectorSelectedCases: trainer.multiCaseSelectedCases,
+        profileName: profile.name,
+        profileAvatar: profile.avatar,
+        svgData: visuals.svgData,
+        cachedParityAlgorithms: cache.cachedParityAlgorithms,
+        lastParityCalculationSettings: cache.lastParityCalculationSettings
+    };
+}
+
+window.exportData = function() {
+    const state = buildExportDocument();
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -641,11 +797,11 @@ window.exportData = function() {
 
 function importData(jsonStr) {
     try {
-        const state = JSON.parse(jsonStr);
+        const state = flattenImportedState(JSON.parse(jsonStr));
 
         // Force reload shape patterns from imported data FIRST
         if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', state.customTracingSchemes);
+            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
             // Force the parity tracer library to reload shapes immediately
             if (typeof window.ParityTracerLibrary !== 'undefined') {
                 setTimeout(() => {
@@ -675,10 +831,10 @@ function importData(jsonStr) {
             displayNames = { ...defaultDisplayNames };
         }
         hideInstructions = state.hideInstructions || false;
-        hideParenthesis = false;
+        hideParenthesis = state.hideParenthesis || false;
         colorScheme = state.colorScheme || colorScheme;
         if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', state.customTracingSchemes);
+            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
         }
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
@@ -704,14 +860,6 @@ function importData(jsonStr) {
             lastParityCalculationSettings = state.lastParityCalculationSettings;
         }
 
-        generalNotes = state.generalNotes || '';
-        algVariables = new Map(Object.entries(state.algVariables || {}));
-        
-        // Import evilness settings
-        if (state.evilnessFactor !== undefined) evilnessFactor = state.evilnessFactor;
-        if (state.evilnessStringReturn !== undefined) evilnessStringReturn = state.evilnessStringReturn;
-        if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap;
-
         // Import selector selections
         if (typeof window.selectorImportHook === 'function') window.selectorImportHook(state);
 
@@ -724,7 +872,7 @@ function importData(jsonStr) {
             applyHintVisibility();
         }
         if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', state.customTracingSchemes);
+            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
         }
         if (state.parityTracerImageSize) {
             localStorage.setItem('parityTracerImageSize', state.parityTracerImageSize);
@@ -733,7 +881,7 @@ function importData(jsonStr) {
             localStorage.setItem('parityTracerArrow', state.parityTracerArrow);
         }
         if (state.parityTracerArrowSettings) {
-            localStorage.setItem('parityTracerArrowSettings', state.parityTracerArrowSettings);
+            localStorage.setItem('parityTracerArrowSettings', stringifyStoredJSONSetting(state.parityTracerArrowSettings));
         }
         if (state.trainingScrambleImageSize) {
             localStorage.setItem('trainingScrambleImageSize', state.trainingScrambleImageSize);
@@ -772,6 +920,15 @@ function importData(jsonStr) {
         showToast('Error importing data: ' + e.message, 3000, 'error');
     }
 }
+
+window.SQG = window.SQG || {};
+window.SQG.appState = Object.freeze({
+    exportVersion: EXPORT_FORMAT_VERSION,
+    createExportDocument: buildExportDocument,
+    createLegacySnapshot: buildLegacyExportState,
+    importFromJSON: importData,
+    save: saveState
+});
 
 function handleFileImport(file) {
     const reader = new FileReader();

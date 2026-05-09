@@ -1,4 +1,5 @@
 /* ==== FILE: js/modals.js ==== */
+/* exported generateModalHTML openNewParityAnalysis openEditCaseModal openCustomizeSVGsModal openNotesModal openParityTracingPersonalization */
 
 ﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -434,7 +435,7 @@ function handlePresetChange(presetName) {
                 </div>
             </div>
         `;
-        const close = (e) => {
+        const close = () => {
             reloadModal.remove();
             removeCloseModalFromStack(close);
         }
@@ -484,7 +485,7 @@ function handlePresetChange(presetName) {
         </div>
     `;
 
-    const close = (e) => {
+    const close = () => {
         warningModal.remove();
         removeCloseModalFromStack(close);
     }
@@ -2431,4 +2432,3 @@ document.addEventListener('click', (e) => {
 window.addEventListener('scroll', () => {
     document.querySelectorAll(".info-box.show").forEach(box => box.classList.remove("show"));
 }, true);
-

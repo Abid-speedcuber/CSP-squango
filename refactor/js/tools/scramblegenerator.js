@@ -1,4 +1,5 @@
 /* ==== FILE: js/tools/scramblegenerator.js ==== */
+/* exported parseHexFormat */
 
 (function () {
     // Mathlib dependencies
@@ -38,10 +39,6 @@
         return circle;
     }
 
-    function rn(n) {
-        return Math.floor(Math.random() * n);
-    }
-
     function bitCount(x) {
         x -= x >> 1 & 1431655765;
         x = (x >> 2 & 858993459) + (x & 858993459);
@@ -70,7 +67,7 @@
     }
 
     // Core Square-1 code
-    var sq1 = (function (setNPerm, getNPerm, circle, rn) {
+    var sq1 = (function (setNPerm, getNPerm, circle) {
         "use strict";
 
         function SqCubie() {
@@ -677,7 +674,7 @@
             scrambleFromState: scrambleFromState,
             SqCubie: SqCubie
         };
-    })(setNPerm, getNPerm, circle, rn);
+    })(setNPerm, getNPerm, circle);
 
     // Export to window
     window.sq1Tools = sq1;
@@ -725,4 +722,3 @@ function parseHexFormat(input) {
         throw new Error('Invalid hex format: ' + error.message);
     }
 }
-

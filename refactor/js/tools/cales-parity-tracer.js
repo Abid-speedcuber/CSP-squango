@@ -829,10 +829,7 @@
         };
     }
 
-    function showEvilnessCasesModal(modalElement, config, mainCloseBtn, mainSettingsBtn) {
-        const textColor = getContrastColor(config.backgroundColor);
-        const isDark = textColor === '#FFFFFF';
-
+    function showEvilnessCasesModal(modalElement, _config, mainCloseBtn, mainSettingsBtn) {
         const allCases = typeof defaultDisplayNames !== 'undefined' ? Object.keys(defaultDisplayNames) : (typeof data !== 'undefined' ? data.map(d => d.name) : []);
         const getDispName = (cn) => {
             if (typeof displayNames !== 'undefined' && displayNames[cn]) return displayNames[cn];
@@ -2147,7 +2144,7 @@
                                   backColor: config.backCol, leftColor: config.leftCol }
                             );
 
-                            const { topMatch, botMatch, topUnits, botUnits, topBits, botBits } = parity;
+                            const { topMatch, botMatch, topBits, botBits } = parity;
                             // unrotated units for arrow calculation
                             const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
 

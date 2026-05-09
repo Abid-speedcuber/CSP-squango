@@ -1,0 +1,32 @@
+{
+  "name": "csp-squango",
+  "version": "1.0.0",
+  "description": "",
+  "main": "all-in-one.js",
+  "scripts": {
+    "lint": "npm run lint:refactor",
+    "lint:refactor": "node scripts/lint-refactor.js",
+    "lint:refactor:quiet": "node node_modules/eslint/bin/eslint.js refactor/js refactor/database refactor/res/shapeImages --quiet --format json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Abid-speedcuber/CSP-squango.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Abid-speedcuber/CSP-squango/issues"
+  },
+  "homepage": "https://github.com/Abid-speedcuber/CSP-squango#readme",
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "globals": "^17.5.0"
+  },
+  "dependencies": {
+    "@babel/parser": "^7.29.2",
+    "@babel/traverse": "^7.29.0"
+  }
+}

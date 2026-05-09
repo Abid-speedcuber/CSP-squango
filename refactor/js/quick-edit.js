@@ -293,14 +293,11 @@ function addAlgorithmColumns() {
     // For each row, ensure we have enough cells
     const rows = tbody.querySelectorAll('tr');
     rows.forEach(row => {
-        const caseName = row.dataset.case;
         const existingCells = row.querySelectorAll('.alg-cell');
         const currentCellCount = existingCells.length;
 
         // If we need more cells than we have, create them
         if (currentCellCount < quickEditState.visibleAlgColumns) {
-            const displayNameCell = row.querySelector('.display-name-col');
-
             for (let idx = currentCellCount; idx < quickEditState.visibleAlgColumns; idx++) {
                 const td = document.createElement('td');
                 td.className = 'editable alg-cell';
@@ -1499,7 +1496,7 @@ function initializeFindReplaceDrag(popup) {
         }
     }
 
-    function dragEnd(e) {
+    function dragEnd() {
         isDragging = false;
     }
 

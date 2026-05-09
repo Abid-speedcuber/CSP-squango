@@ -1,4 +1,5 @@
 /* ==== FILE: js/rendering.js ==== */
+/* exported render */
 
 ﻿// Helper function to sanitize note HTML (allow various text formatting tags)
 function sanitizeNoteHTML(html) {

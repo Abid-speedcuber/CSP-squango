@@ -1,78 +1,100 @@
 /* ==== FILE: js/index.js ==== */
 
-window.closeModalStack = [];
-window._sqgModalPopstateClosing = false;
-window._sqgModalSkipPopstate = false;
+(function setupModalHistory(global) {
+    const modalStack = [];
+    let isClosingFromPopstate = false;
+    let skipNextPopstate = false;
 
-window.pushModalState = function (modalId, closeFn, ...args) {
-    if (typeof closeFn !== 'function') return;
-    const entry = args.length ? [closeFn, ...args] : closeFn;
-    window.closeModalStack.push(entry);
-    try {
-        window.history.pushState({ sqgModal: true, modalId }, '');
-    } catch { }
-};
+    function entryMatchesCloseFn(entry, closeFn) {
+        if (typeof entry === 'function') return entry === closeFn;
+        return Array.isArray(entry) && entry[0] === closeFn;
+    }
 
-window.removeCloseModalFromStack = function (closeFn) {
-    if (typeof closeFn !== 'function') return;
-    window.closeModalStack = window.closeModalStack.filter((entry) => {
-        if (typeof entry === 'function') return entry !== closeFn;
-        if (Array.isArray(entry) && typeof entry[0] === 'function') return entry[0] !== closeFn;
+    function pushModalState(modalId, closeFn, ...args) {
+        if (typeof closeFn !== 'function') return;
+        modalStack.push(args.length ? [closeFn, ...args] : closeFn);
+        try {
+            global.history.pushState({ sqgModal: true, modalId }, '');
+        } catch { }
+    }
+
+    function removeCloseModalFromStack(closeFn) {
+        if (typeof closeFn !== 'function') return;
+        for (let i = modalStack.length - 1; i >= 0; i--) {
+            if (entryMatchesCloseFn(modalStack[i], closeFn)) {
+                modalStack.splice(i, 1);
+            }
+        }
+    }
+
+    function popCloseModalStack() {
+        if (modalStack.length === 0) return false;
+        const entry = modalStack.pop();
+        if (typeof entry === 'function') {
+            entry();
+        } else if (Array.isArray(entry)) {
+            const closeFn = entry[0];
+            if (typeof closeFn === 'function') {
+                closeFn(...entry.slice(1));
+            }
+        }
         return true;
+    }
+
+    function closeModalWithHistory(closeFn, ...args) {
+        if (typeof closeFn !== 'function') return;
+        removeCloseModalFromStack(closeFn);
+
+        const shouldPopHistory = !isClosingFromPopstate && global.history.state && global.history.state.sqgModal;
+        if (shouldPopHistory) {
+            skipNextPopstate = true;
+        }
+
+        closeFn(...args);
+
+        if (shouldPopHistory) {
+            global.history.back();
+        }
+    }
+
+    global.SQG = global.SQG || {};
+    global.SQG.modalHistory = Object.freeze({
+        push: pushModalState,
+        remove: removeCloseModalFromStack,
+        pop: popCloseModalStack,
+        closeWithHistory: closeModalWithHistory,
+        get depth() {
+            return modalStack.length;
+        }
     });
-};
 
-window.popCloseModalStack = function () {
-    if (window.closeModalStack.length === 0) return false;
-    const entry = window.closeModalStack.pop();
-    if (typeof entry === 'function') {
-        entry();
-    } else if (Array.isArray(entry)) {
-        const closeFn = entry[0];
-        if (typeof closeFn === 'function') {
-            closeFn(...entry.slice(1));
+    global.pushModalState = pushModalState;
+    global.removeCloseModalFromStack = removeCloseModalFromStack;
+    global.popCloseModalStack = popCloseModalStack;
+    global.closeModalWithHistory = closeModalWithHistory;
+
+    global.addEventListener('popstate', function () {
+        if (skipNextPopstate) {
+            skipNextPopstate = false;
+            return;
         }
-    }
-    return true;
-};
 
-window.closeModalWithHistory = function (closeFn, ...args) {
-    if (typeof closeFn !== 'function') return;
-    window.removeCloseModalFromStack(closeFn);
-
-    const shouldPopHistory = !window._sqgModalPopstateClosing && window.history.state && window.history.state.sqgModal;
-    if (shouldPopHistory) {
-        window._sqgModalSkipPopstate = true;
-    }
-
-    closeFn(...args);
-
-    if (shouldPopHistory) {
-        window.history.back();
-    }
-};
-
-window.addEventListener('popstate', function () {
-    if (window._sqgModalSkipPopstate) {
-        window._sqgModalSkipPopstate = false;
-        return;
-    }
-
-    if (window.closeModalStack.length > 0) {
-        window._sqgModalPopstateClosing = true;
-        window.popCloseModalStack();
-        window._sqgModalPopstateClosing = false;
-    }
-});
-
-document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') {
-        if (document.getElementById('evilnessQuizModal')) return;
-        if (window.closeModalStack.length > 0) {
-            window.popCloseModalStack();
+        if (modalStack.length > 0) {
+            isClosingFromPopstate = true;
+            popCloseModalStack();
+            isClosingFromPopstate = false;
         }
-    }
-});
+    });
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') {
+            if (document.getElementById('evilnessQuizModal')) return;
+            if (modalStack.length > 0) {
+                popCloseModalStack();
+            }
+        }
+    });
+})(window);
 
 // Drag and drop support
 document.body.addEventListener('dragover', (e) => {
@@ -97,7 +119,6 @@ window.onclick = function (event) {
         const confessionModal = document.getElementById('confessionModal');
         const colorSchemeModal = document.getElementById('colorSchemeModal');
         const trainingModal = document.getElementById('trainingModal');
-        const profileModal = document.getElementById('profileModal');
 
         if (event.target == settingsModal) {
             closeSettingsModal();

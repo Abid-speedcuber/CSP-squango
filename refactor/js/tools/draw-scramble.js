@@ -277,7 +277,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const leftLayerAngles = Array.from({ length: 12 }, (v, j) => 90 + j * 30);
+  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
@@ -298,7 +298,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const rightLayerAngles = Array.from({ length: 12 }, (v, j) => 300 + j * 30);
+  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
@@ -406,7 +406,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const leftLayerAngles = Array.from({ length: 12 }, (v, j) => 90 + j * 30);
+  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter < 12) {
@@ -426,7 +426,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
   htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
   htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
 
-  const rightLayerAngles = Array.from({ length: 12 }, (v, j) => 300 + j * 30);
+  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
 
   slots.forEach(slot => {
     if (slot.startLetter >= 12) {
