@@ -92,6 +92,15 @@
         }
     }
 
+    function escapeHTML(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     SQG.isPlainObject = isPlainObject;
     SQG.storage = Object.freeze({
         read: readStorage,
@@ -105,7 +114,7 @@
         getContrastColor,
         adjustColorBrightness
     });
-    SQG.dom = Object.freeze({ ready });
+    SQG.dom = Object.freeze({ ready, escapeHTML });
 
     global.SQG = SQG;
 })(window);

@@ -6,7 +6,9 @@
   "scripts": {
     "lint": "npm run lint:refactor",
     "lint:refactor": "node scripts/lint-refactor.js",
-    "lint:refactor:quiet": "node node_modules/eslint/bin/eslint.js refactor/js refactor/database refactor/res/shapeImages --quiet --format json"
+    "lint:refactor:quiet": "node node_modules/eslint/bin/eslint.js refactor/js refactor/database refactor/res/shapeImages --quiet --format json",
+    "test": "node test/algorithm-animation-core.test.js",
+    "verify": "npm run lint:refactor && npm test"
   },
   "repository": {
     "type": "git",

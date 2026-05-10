@@ -3,229 +3,19 @@
 (function () {
     'use strict';
 
-    // SHAPE_INDEX_ARRAY, hexTwist, hexCycleLeft, invertScramble → utils.js
+    const algorithmCore = window.SQG && window.SQG.algAnimation;
+    const escapeHTML = window.SQG && window.SQG.dom
+        ? window.SQG.dom.escapeHTML
+        : value => String(value ?? '');
 
-    function scrambleToHex(scramble, animateBothLayers = false) {
-    const moves = animateBothLayers
-        ? parseScramble(scramble)
-        : parseScrambleLegacy(scramble);
-
-    let tlHex = '011233455677';
-    let blHex = '998bbaddcffe';
-
-    for (const move of moves) {
-        if (move.type === 'twist') {
-            ({ tlHex, blHex } = hexTwist(tlHex, blHex));
-        } else if (move.type === 'turn') {
-            tlHex = hexCycleLeft(tlHex, move.top);
-            blHex = hexCycleLeft(blHex, move.bottom);
-        }
-    }
-    return { tlHex, blHex };
-}
-
-
-    function parseScrambleLegacy(scramble) {
-    const paired = window.parseScramble(scramble);
-    const moves = [];
-    for (const move of paired) {
-        if (move.type === 'twist') {
-            moves.push(move);
-        } else {
-            const { top, bottom } = move;
-            if (top !== 0) moves.push({ type: 'turn', top, bottom: 0 });
-            if (bottom !== 0) moves.push({ type: 'turn', top: 0, bottom });
-            if (top === 0 && bottom === 0) moves.push({ type: 'turn', top: 0, bottom: 0 });
-        }
-    }
-    return moves;
-}
-
-function parseScramble(scramble, animateBothLayers = false) {
-    if (animateBothLayers) return window.parseScramble(scramble);
-    return parseScrambleLegacy(scramble);
-}
-
-    // ========================================
-    // STEP GENERATION
-    // ========================================
-    function generateSteps(alg, animateBothLayers = false) {
-        const steps = [];
-        const chars = alg.split('');
-        let position = 0;
-
-        // Animate both layers together mode
-        if (animateBothLayers) {
-            while (position < chars.length) {
-                const char = chars[position];
-
-                if (char === '/') {
-                    steps.push({
-                        position: position,
-                        highlightStart: position,
-                        highlightEnd: position + 1,
-                        currentAlg: alg.substring(position),
-                        description: 'Slash (twist)'
-                    });
-                    position++;
-                }
-                else if (char === '(') {
-                    let numEnd = position + 1;
-                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]) || chars[numEnd] === ',' || chars[numEnd] === ')')) {
-                        if (chars[numEnd] === ')') {
-                            numEnd++;
-                            break;
-                        }
-                        numEnd++;
-                    }
-
-                    steps.push({
-                        position: position,
-                        highlightStart: position,
-                        highlightEnd: numEnd,
-                        currentAlg: alg.substring(position),
-                        description: 'Both layers turn'
-                    });
-
-                    position = numEnd;
-                }
-                else {
-                    position++;
-                }
-            }
-        } else {
-            // LEGACY MODE: Separate layers
-            while (position < chars.length) {
-                const char = chars[position];
-
-                if (char === '/') {
-                    steps.push({
-                        position: position,
-                        highlightStart: position,
-                        highlightEnd: position + 1,
-                        currentAlg: alg.substring(position),
-                        description: 'Slash (twist)'
-                    });
-                    position++;
-                }
-                else if (char === '(') {
-                    let numEnd = position + 1;
-                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-                        numEnd++;
-                    }
-
-                    steps.push({
-                        position: position,
-                        highlightStart: position,
-                        highlightEnd: numEnd,
-                        currentAlg: alg.substring(position),
-                        description: 'Top layer turn'
-                    });
-
-                    position = numEnd;
-                }
-                else if (char === ',') {
-                    let numEnd = position + 1;
-                    while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-                        numEnd++;
-                    }
-                    if (numEnd < chars.length && chars[numEnd] === ')') {
-                        numEnd++;
-                    }
-
-                    let moveStart = position;
-                    while (moveStart > 0 && chars[moveStart - 1] !== '/') {
-                        moveStart--;
-                    }
-
-                    let firstNumStart = moveStart;
-                    while (firstNumStart < position && chars[firstNumStart] !== '(' && (chars[firstNumStart] === '-' || /\d/.test(chars[firstNumStart]))) {
-                        firstNumStart++;
-                    }
-                    if (chars[firstNumStart] === '(') firstNumStart++;
-
-                    let firstNumEnd = firstNumStart;
-                    while (firstNumEnd < position && (chars[firstNumEnd] === '-' || /\d/.test(chars[firstNumEnd]))) {
-                        firstNumEnd++;
-                    }
-
-                    const remainingAlg = alg.substring(position + 1);
-                    const modifiedAlg = '(0,' + remainingAlg;
-
-                    steps.push({
-                        position: position,
-                        highlightStart: position + 1,
-                        highlightEnd: numEnd,
-                        currentAlg: modifiedAlg,
-                        description: 'Bottom layer turn'
-                    });
-
-                    position = numEnd;
-                }
-                else {
-                    position++;
-                }
-            }
-        }
-
-        steps.push({
-            position: alg.length,
-            highlightStart: alg.length,
-            highlightEnd: alg.length,
-            currentAlg: '',
-            description: 'Solved state'
-        });
-
-        let firstNonZeroIndex = 0;
-        for (let i = 0; i < steps.length; i++) {
-            if (!isZeroMove(steps[i], alg, animateBothLayers)) {
-                firstNonZeroIndex = i;
-                break;
-            }
-        }
-
-        return steps.slice(firstNonZeroIndex);
+    if (!algorithmCore) {
+        console.error('[Square1AlgorithmViewer] Missing SQG.algAnimation core module.');
+        return;
     }
 
-    function getHexForStep(step, animateBothLayers = false) {
-        try {
-            if (step.currentAlg.trim() === '' || step.currentAlg === '(0,0)') {
-                return { tlHex: '011233455677', blHex: '998bbaddcffe' };
-            }
-            const inverted = invertScramble(step.currentAlg);
-            return scrambleToHex(inverted, animateBothLayers);
-        } catch {
-            return { tlHex: '011233455677', blHex: '998bbaddcffe' };
-        }
-    }
-
-    function isZeroMove(step, originalAlg, animateBothLayers) {
-        const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
-
-        if (highlighted.includes('/')) {
-            return false;
-        }
-
-        // In "both layers" mode, check if BOTH numbers are zero
-        if (animateBothLayers) {
-            const match = highlighted.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
-            if (match) {
-                const top = parseInt(match[1]);
-                const bottom = parseInt(match[2]);
-                return top === 0 && bottom === 0;
-            }
-            return false;
-        }
-
-        // In single layer mode, check if the single number is zero
-        const numberMatch = highlighted.match(/-?\d+/);
-        if (numberMatch) {
-            const number = parseInt(numberMatch[0]);
-            return number === 0;
-        }
-
-        return false;
-    }
+    const generateSteps = algorithmCore.generateSteps;
+    const getHexForStep = algorithmCore.getHexForStep;
+    const isZeroMove = algorithmCore.isZeroMove;
 
     // ========================================
     // RENDERING FUNCTIONS
@@ -238,19 +28,20 @@ function parseScramble(scramble, animateBothLayers = false) {
         steps.forEach((s, index) => {
             if (s.highlightStart > position) {
                 // Add any text between tokens (whitespace)
-                html += originalAlg.substring(position, s.highlightStart);
+                html += escapeHTML(originalAlg.substring(position, s.highlightStart));
             }
 
             const tokenText = originalAlg.substring(s.highlightStart, s.highlightEnd);
+            const tokenHTML = escapeHTML(tokenText);
             const isCurrent = index === currentStepIndex;
             const isZero = isZeroMove(s, originalAlg, animateBothLayers);
 
             // Make token clickable unless it's a zero move
             if (!isZero) {
-                html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: var(--hover-bg); color: var(--text-primary);' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+                html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: var(--hover-bg); color: var(--text-primary);' : ''} display: inline-block; margin: 0 1px;">${tokenHTML}</span>`;
             } else {
                 // Zero moves are not clickable
-                html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+                html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenHTML}</span>`;
             }
 
             position = s.highlightEnd;
@@ -258,7 +49,7 @@ function parseScramble(scramble, animateBothLayers = false) {
 
         // Add any remaining text
         if (position < originalAlg.length) {
-            html += originalAlg.substring(position);
+            html += escapeHTML(originalAlg.substring(position));
         }
 
         return html;
@@ -289,7 +80,7 @@ function parseScramble(scramble, animateBothLayers = false) {
             );
             return svgHtml;
         } catch (e) {
-            return '<div style="color: var(--alg-invalid-color); font-style: italic;">Error rendering: ' + e.message + '</div>';
+            return '<div style="color: var(--alg-invalid-color); font-style: italic;">Error rendering: ' + escapeHTML(e.message) + '</div>';
         }
     }
 
@@ -685,8 +476,8 @@ function parseScramble(scramble, animateBothLayers = false) {
         <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
         <div style="display: flex; flex-direction: column; gap: 2px;">
             ${caseName && parity ? `
-                <div style="font-size: 16px; font-weight: bold; color: var(--text-primary);">${caseName} (${parity})</div>
-                <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm}</div>
+                <div style="font-size: 16px; font-weight: bold; color: var(--text-primary);">${escapeHTML(caseName)} (${escapeHTML(parity)})</div>
+                <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${escapeHTML(algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm)}</div>
             ` : `
                 <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">Algorithm Viewer</div>
             `}
@@ -1495,4 +1286,3 @@ function parseScramble(scramble, animateBothLayers = false) {
         };
     }
 })();
-
