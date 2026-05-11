@@ -512,7 +512,7 @@
     // Display results in modal
     function getArrowStartAngle(rotationAmount, unitsArray, layerType, patternBits) {
 
-        const initialAngle = layerType === 'TOP' ? 90 : 120;
+        const initialAngle = layerType === 'TOP' ? 90 : 300;
 
         const endsWithCorner = patternBits.endsWith('1');
         const arcDegrees = endsWithCorner ? 300 : 330;
