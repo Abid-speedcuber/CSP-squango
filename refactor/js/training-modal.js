@@ -1644,6 +1644,14 @@ function startParityQuiz(chosenCaseNames) {
         </div>
     `;
 
+    const closeQuiz = () => {
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
+    };
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('parityQuizModal', closeQuiz);
@@ -1699,14 +1707,6 @@ function startParityQuiz(chosenCaseNames) {
 
         setTimeout(nextQuestion, 1400);
     }
-
-    const closeQuiz = () => {
-        closeModalWithHistory(() => {
-            clearInterval(timerInt);
-            modal.remove();
-            document.body.classList.remove('modal-open');
-        });
-    };
 
     document.getElementById('parityQuizGood').addEventListener('click', () => handleAnswer(true));
     document.getElementById('parityQuizBad').addEventListener('click', () => handleAnswer(false));
@@ -1903,6 +1903,15 @@ function startColorRecognitionPractice() {
         </div>
     `;
 
+    const closeQuiz = () => {
+        closeModalWithHistory(() => {
+            clearInterval(timerInt);
+            document.removeEventListener('keydown', handleColorKeyDown);
+            modal.remove();
+            document.body.classList.remove('modal-open');
+        });
+    };
+
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('colorRecogModal', closeQuiz);
@@ -2008,15 +2017,6 @@ function startColorRecognitionPractice() {
             }
         }
     }
-
-    const closeQuiz = () => {
-        closeModalWithHistory(() => {
-            clearInterval(timerInt);
-            document.removeEventListener('keydown', handleColorKeyDown);
-            modal.remove();
-            document.body.classList.remove('modal-open');
-        });
-    };
 
     function handleColorKeyDown(e) {
         if (!document.getElementById('colorRecogModal')) { document.removeEventListener('keydown', handleColorKeyDown); return; }
