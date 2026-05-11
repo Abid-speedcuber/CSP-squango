@@ -28,8 +28,8 @@
     const { top, bot } = shape;
 
     let color = null;
-    if (top === 'CECECECE' && bot === 'ECECECEC') color = 'blue';
-    else if (top === 'ECECECEC' && bot === 'CECECECE') color = 'red';
+    if (top === '10101010' && bot === '01010101') color = 'blue';
+    else if (top === '01010101' && bot === '10101010') color = 'red';
 
     const before = scramble.substring(0, slashIndex);
     const after = scramble.substring(slashIndex + 3);
@@ -45,4 +45,3 @@
   global.SQ1ColorizerLib = { processScramble };
 
 })(globalThis);
-

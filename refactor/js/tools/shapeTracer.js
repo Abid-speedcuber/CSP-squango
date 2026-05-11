@@ -11,9 +11,45 @@ import {
 // Shape recognition is delegated to Cale's parity tracer so both popups and
 // parity analysis use the same shape patterns, rotations, and custom schemes.
 
+export const shortShapeNamesForTracing = {
+  Square: 'sq',
+  Kite: 'kt',
+  Barrel: 'br',
+  'Left Fist': 'lfist',
+  'Right Fist': 'rfist',
+  Shield: 'sh',
+  Muffin: 'mf',
+  'Left Pawn': 'lpw',
+  'Right Pawn': 'rpw',
+  Scallop: 'sc',
+  Pair: 'pr',
+  'L-Shape': 'l',
+  Line: 'ln',
+  '6-0': '6',
+  'Right 5-1': 'r51',
+  'Left 5-1': 'l51',
+  'Right 4-2': 'r42',
+  'Left 4-2': 'l42',
+  '4-1-1': '411',
+  '3-3': '33',
+  '3-1-2': '312',
+  '3-2-1': '321',
+  '2-2-2': '222',
+  '8-0': '8',
+  '6-2': '62',
+  '4-4': '44',
+  '7-1': '71',
+  '5-3': '53',
+  Star: 'star'
+};
+
 export function StandardizeThisScramble(scrambleString) {
   if (!scrambleString) return '';
   return String(scrambleString).trim();
+}
+
+export function getShortShapeNameForTracing(shapeName) {
+  return shortShapeNamesForTracing[shapeName] || shapeName;
 }
 
 function getCaleShapeDetector() {
@@ -46,7 +82,9 @@ export function traceTheShapePathThroughThisScramble(scrambleString) {
 }
 
 export function formatShapePathAsString(shapePath) {
-  return shapePath.map(step => `${step.topShape}/${step.bottomShape}`).join(' → ');
+  return shapePath
+    .map(step => `${getShortShapeNameForTracing(step.topShape)}/${getShortShapeNameForTracing(step.bottomShape)}`)
+    .join(' → ');
 }
 
 export function traceScrambleToScrambleShapePath(scramble) {
@@ -80,12 +118,15 @@ if (typeof window !== 'undefined') {
     traceScrambleToScrambleShapePath,
     traceScrambleToSolutionShapePath,
     traceSolutionToScrambleShapePath,
-    traceSolutionToSolutionShapePath
+    traceSolutionToSolutionShapePath,
+    shortShapeNamesForTracing
   };
   window.Square1ShapePathTracerLibraryWithSillyNames = window.Square1ShapePathTracer;
 
   for (const [name, descriptor] of Object.entries({
     StandardizeThisScramble: { get: () => StandardizeThisScramble, set: value => { Object.defineProperty(window, 'StandardizeThisScramble', { configurable: true, enumerable: true, writable: true, value }); } },
+    shortShapeNamesForTracing: { get: () => shortShapeNamesForTracing, set: value => { Object.defineProperty(window, 'shortShapeNamesForTracing', { configurable: true, enumerable: true, writable: true, value }); } },
+    getShortShapeNameForTracing: { get: () => getShortShapeNameForTracing, set: value => { Object.defineProperty(window, 'getShortShapeNameForTracing', { configurable: true, enumerable: true, writable: true, value }); } },
     traceTheShapePathThroughThisScramble: { get: () => traceTheShapePathThroughThisScramble, set: value => { Object.defineProperty(window, 'traceTheShapePathThroughThisScramble', { configurable: true, enumerable: true, writable: true, value }); } },
     formatShapePathAsString: { get: () => formatShapePathAsString, set: value => { Object.defineProperty(window, 'formatShapePathAsString', { configurable: true, enumerable: true, writable: true, value }); } },
     traceScrambleToScrambleShapePath: { get: () => traceScrambleToScrambleShapePath, set: value => { Object.defineProperty(window, 'traceScrambleToScrambleShapePath', { configurable: true, enumerable: true, writable: true, value }); } },
