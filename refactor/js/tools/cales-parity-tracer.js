@@ -320,7 +320,7 @@
     };
 
     const whiteEdgeParityMap = {
-        '8ace':1, '8aec':0, '8cae':0, '8cea':1, '8eac':1, '8eca':0, 'a8ce':0, 'a8ec':1, 'ac8e':1, 'ace8':0, 'ae8c':0, 'aec8':1, 'c8ae':1, 'c8ea':0, 'ca8e':0, 'cae8':1, 'ce8a':1, 'cea8':0, 'e8ac':0, 'e8ca':1, 'ea8c':1, 'eac8':0, 'ec8a':0, 'eca8':1
+        '8ace':0, '8aec':1, '8cae':1, '8cea':0, '8eac':0, '8eca':1, 'a8ce':1, 'a8ec':0, 'ac8e':0, 'ace8':1, 'ae8c':1, 'aec8':0, 'c8ae':0, 'c8ea':1, 'ca8e':1, 'cae8':0, 'ce8a':0, 'cea8':1, 'e8ac':1, 'e8ca':0, 'ea8c':0, 'eac8':1, 'ec8a':1, 'eca8':0
     };
 
     const blackCornerParityMap = {
