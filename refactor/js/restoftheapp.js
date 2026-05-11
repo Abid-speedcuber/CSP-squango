@@ -291,6 +291,63 @@ function needsParityRecalculation() {
     );
 }
 
+function normalizeTracingSchemePatterns(rawSchemes) {
+    if (!rawSchemes) return rawSchemes;
+
+    let schemes = rawSchemes;
+    let wasString = typeof rawSchemes === 'string';
+    if (wasString) {
+        try {
+            schemes = JSON.parse(rawSchemes);
+        } catch {
+            return rawSchemes;
+        }
+    }
+
+    if (!schemes || typeof schemes !== 'object' || Array.isArray(schemes)) {
+        return rawSchemes;
+    }
+
+    let changed = false;
+    const normalized = {};
+    for (const [pattern, shapeName] of Object.entries(schemes)) {
+        const normalizedPattern = /^[EC]+$/.test(pattern)
+            ? pattern.replace(/E/g, '0').replace(/C/g, '1')
+            : pattern;
+        if (normalizedPattern !== pattern) changed = true;
+        normalized[normalizedPattern] = shapeName;
+    }
+
+    if (!changed && !wasString) return rawSchemes;
+    return wasString ? JSON.stringify(normalized) : normalized;
+}
+
+function storeCustomTracingSchemes(rawSchemes) {
+    if (!rawSchemes) return;
+    const normalized = normalizeTracingSchemePatterns(rawSchemes);
+    const serialized = typeof normalized === 'string' ? normalized : JSON.stringify(normalized);
+    localStorage.setItem('customTracingSchemes', serialized);
+}
+
+function getCustomTracingSchemesFromState(state) {
+    return state && (state.customTracingSchemes || state.customShapesForParityTracerLibrary);
+}
+
+function migrateLegacyTracingSchemesFromStorage() {
+    const currentSchemes = localStorage.getItem('customTracingSchemes');
+    if (currentSchemes) {
+        storeCustomTracingSchemes(currentSchemes);
+        return;
+    }
+
+    const legacySchemes = localStorage.getItem('customShapesForParityTracerLibrary');
+    if (legacySchemes) {
+        storeCustomTracingSchemes(legacySchemes);
+    }
+}
+
+migrateLegacyTracingSchemesFromStorage();
+
 // Load evilness settings from localStorage
 const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
 if (storedEvilnessFactor !== null) evilnessFactor = storedEvilnessFactor === 'true';
@@ -315,8 +372,9 @@ try {
         hideParenthesis = state.hideParenthesis || false;
         colorScheme = state.colorScheme || colorScheme;
         scrambleImageSize = state.scrambleImageSize || 200;
-        if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', state.customTracingSchemes);
+        const customTracingSchemes = getCustomTracingSchemesFromState(state);
+        if (customTracingSchemes) {
+            storeCustomTracingSchemes(customTracingSchemes);
         }
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
@@ -504,7 +562,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
 
     // Apply shape patterns from preset
     if (data.customTracingSchemes) {
-        localStorage.setItem('customTracingSchemes', data.customTracingSchemes);
+        storeCustomTracingSchemes(data.customTracingSchemes);
     }
 
     // Apply preset subtitle configurations
@@ -763,6 +821,7 @@ function flattenImportedState(rawState) {
         cornerStickerMode: preferences.cornerStickerMode,
         parityOrientations: parityTracing.orientations,
         customTracingSchemes: parityTracing.customTracingSchemes,
+        customShapesForParityTracerLibrary: parityTracing.customShapesForParityTracerLibrary,
         evilnessFactor: parityTracing.evilnessFactor,
         evilnessStringReturn: parityTracing.evilnessStringReturn,
         evilnessMap: parityTracing.evilnessMap,
@@ -798,10 +857,11 @@ window.exportData = function() {
 function importData(jsonStr) {
     try {
         const state = flattenImportedState(JSON.parse(jsonStr));
+        const importedTracingSchemes = getCustomTracingSchemesFromState(state);
 
         // Force reload shape patterns from imported data FIRST
-        if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
+        if (importedTracingSchemes) {
+            storeCustomTracingSchemes(importedTracingSchemes);
             // Force the parity tracer library to reload shapes immediately
             if (typeof window.ParityTracerLibrary !== 'undefined') {
                 setTimeout(() => {
@@ -833,8 +893,8 @@ function importData(jsonStr) {
         hideInstructions = state.hideInstructions || false;
         hideParenthesis = state.hideParenthesis || false;
         colorScheme = state.colorScheme || colorScheme;
-        if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
+        if (importedTracingSchemes) {
+            storeCustomTracingSchemes(importedTracingSchemes);
         }
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
@@ -871,8 +931,8 @@ function importData(jsonStr) {
             localStorage.setItem('showHints', showHints);
             applyHintVisibility();
         }
-        if (state.customTracingSchemes) {
-            localStorage.setItem('customTracingSchemes', stringifyStoredJSONSetting(state.customTracingSchemes));
+        if (importedTracingSchemes) {
+            storeCustomTracingSchemes(importedTracingSchemes);
         }
         if (state.parityTracerImageSize) {
             localStorage.setItem('parityTracerImageSize', state.parityTracerImageSize);
