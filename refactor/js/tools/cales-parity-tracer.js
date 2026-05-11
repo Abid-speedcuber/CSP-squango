@@ -311,10 +311,14 @@
         '9bdf':1, '9bfd':0, '9dbf':0, '9dfb':1, '9fbd':1, '9fdb':0, 'b9df':0, 'b9fd':1, 'bd9f':1, 'bdf9':0, 'bf9d':0, 'bfd9':1, 'd9bf':1, 'd9fb':0, 'db9f':0, 'dbf9':1, 'df9b':1, 'dfb9':0, 'f9bd':0, 'f9db':1, 'fb9d':1, 'fbd9':0, 'fd9b':0, 'fdb9':1
     };
 
+    function getSymmetryOffsetKey(tlHex, blHex) {
+        return `${tlHex}${blHex}`;
+    }
+
     function calculateParityFromHex(tlHex, blHex, z2Mode, useClockwise, scrambleForEvil) {
         const { topUnits, topBits, botUnits, botBits } = hexToUnits(tlHex, blHex);
 
-        const scrambleKey = (tlHex + blHex);
+        const scrambleKey = getSymmetryOffsetKey(tlHex, blHex);
         if (!window.parityTracerSymmetryOffsets) window.parityTracerSymmetryOffsets = {};
         if (!window.parityTracerSymmetryOffsets[scrambleKey])
             window.parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
@@ -396,6 +400,8 @@
             ],
             topUnits: tU, botUnits: bU,
             topMatch, botMatch,
+            topTraceRotation: topRot,
+            botTraceRotation: botRot,
             topBits, botBits,
             wasSwapped: shouldSwap
         };
@@ -2140,7 +2146,7 @@
                                   backColor: config.backCol, leftColor: config.leftCol }
                             );
 
-                            const { topMatch, botMatch, topBits, botBits } = parity;
+                            const { topBits, botBits } = parity;
                             // unrotated units for arrow calculation
                             const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
 
@@ -2149,8 +2155,8 @@
                             const ringRadius = radiusOuter + (unit10vh * 0.4);
                             const centerX = imageSize / 2, centerY = imageSize / 2;
 
-                            const topArrowData = getArrowStartAngle(topMatch.rot, topRawU, 'TOP', topBits);
-                            const botArrowData = getArrowStartAngle(botMatch.rot, botRawU, 'BOTTOM', botBits);
+                            const topArrowData = getArrowStartAngle(parity.topTraceRotation, topRawU, 'TOP', topBits);
+                            const botArrowData = getArrowStartAngle(parity.botTraceRotation, botRawU, 'BOTTOM', botBits);
 
                             const tempDiv = document.createElement('div');
                             tempDiv.innerHTML = svgContent;
@@ -2170,9 +2176,11 @@
                                     btn.setAttribute('cx', centerX); btn.setAttribute('cy', centerY);
                                     btn.setAttribute('r', ringRadius * 0.3);
                                     btn.setAttribute('fill', 'transparent');
+                                    btn.setAttribute('pointer-events', 'all');
+                                    btn.setAttribute('aria-label', `Cycle ${layerType} symmetry start`);
                                     btn.setAttribute('style', 'cursor:pointer;');
                                     btn.addEventListener('click', () => {
-                                        const sk = (window.currentParityTracerScramble||scrambleInput.value.trim()).replace(/\s+/g,'');
+                                        const sk = getSymmetryOffsetKey(tlHex, blHex);
                                         if (!window.parityTracerSymmetryOffsets) window.parityTracerSymmetryOffsets = {};
                                         if (!window.parityTracerSymmetryOffsets[sk]) window.parityTracerSymmetryOffsets[sk] = {top:0,bottom:0};
                                         const cur = window.parityTracerSymmetryOffsets[sk][layerType] || 0;
