@@ -83,10 +83,10 @@
     // Default shape patterns — keys are bitstrings: 0=Edge, 1=Corner
     const defaultShapePatterns = {
         '01010101': 'Square',
-        '00101001': 'Kite',
+        '00101101': 'Kite',
         '00110011': 'Barrel',
         '00110101': 'Left Fist',
-        '00100110': 'Right Fist',
+        '00101011': 'Right Fist',
         '00100111': 'Shield',
         '00011011': 'Muffin',
         '00010111': 'Left Pawn',
@@ -94,7 +94,7 @@
         '00001111': 'Scallop',
         '0011111': 'Pair',
         '0101111': 'L-Shape',
-        '0110111': 'Line',
+        '0111011': 'Line',
         '000000111': '6-0',
         '010000011': 'Right 5-1',
         '000001011': 'Left 5-1',
@@ -267,12 +267,8 @@
             }
             return { units, bits };
         }
-        // bottom layer: blHex is stored as first6reversed + last6reversed
-        // undo: reverse each half back, then read right-to-left as normal
-        const blRaw = blHex.slice(0,6).split('').reverse().join('') +
-                      blHex.slice(6).split('').reverse().join('');
         const top = walkLayer(tlHex);
-        const bot = walkLayer(blRaw);
+        const bot = walkLayer(blHex);
         return { topUnits: top.units, topBits: top.bits,
                  botUnits: bot.units, botBits: bot.bits };
     }

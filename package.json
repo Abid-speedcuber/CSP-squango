@@ -8,6 +8,9 @@
     "lint:refactor": "node scripts/lint-refactor.js",
     "lint:refactor:quiet": "node node_modules/eslint/bin/eslint.js refactor/js refactor/database refactor/res/shapeImages --quiet --format json",
     "test": "node test/algorithm-animation-core.test.js",
+    "test:cale-parity": "node test/cale-parity-tracer-compare.test.js",
+    "test:cale-parity:quick": "node test/cale-parity-tracer-compare.test.js --random=0 --max-mismatches=10",
+    "test:cale-parity:strict": "node test/cale-parity-tracer-compare.test.js --strict-stages=true",
     "verify": "npm run lint:refactor && npm test"
   },
   "repository": {
