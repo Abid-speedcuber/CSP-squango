@@ -421,7 +421,7 @@ function handlePresetChange(presetName) {
                 </div>
                 <div class="modal-body">
                     <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
-                        Reloading will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
+                        Reloading will <strong>keep</strong> your learning progress (priority levels, learned, and learning) and personal preferences (font size, hints, etc.).<br><br>
                         It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the newest version of this preset.
                     </p>
                     <p style="font-weight: 500;">
@@ -464,7 +464,7 @@ function handlePresetChange(presetName) {
             </div>
             <div class="modal-body">
                 <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
-                    Switching to "<strong>${presetName.replaceAll("_", " ")}</strong>" will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
+                    Switching to "<strong>${presetName.replaceAll("_", " ")}</strong>" will <strong>keep</strong> your learning progress (priority levels, learned, and learning) and personal preferences (font size, hints, etc.).<br><br>
                     It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the preset.
                 </p>
                 <p style="font-weight: 500;">
@@ -681,7 +681,7 @@ window.showHomepageInfoModal = function() {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">Sort <strong>By Priority</strong> instead of by Highest Probability to organize cases by learning priority (1-7). However the <b>Learning Cases</b> are the highest priority. Adjust priorities via the three dots menu.</div>
+                        <div class="training-info-text">Sort <strong>By Priority</strong> instead of by Highest Probability to organize cases by learning priority. <b>Learning Cases</b> sit above level 7, and <b>Learned Cases</b> sit below level 1. Adjust planned priorities via the three dots menu.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>
@@ -2082,14 +2082,14 @@ window.saveProfileEdit = function(mode) {
 
 function updateProfileStats() {
     const totalCases = data.length;
-    const learnedCount = learnedCases.size;
-    const learningCount = learningCases.size;
+    const learnedCount = data.filter(item => isCaseLearned(item.name)).length;
+    const learningCount = data.filter(item => isCaseLearning(item.name)).length;
     const learnedPercent = (learnedCount / totalCases) * 100;
     const learningPercent = (learningCount / totalCases) * 100;
 
     const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
     const learnedProbability = data
-        .filter(item => learnedCases.has(item.name))
+        .filter(item => isCaseLearned(item.name))
         .reduce((sum, item) => sum + item.probability, 0);
 
     const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
@@ -2115,7 +2115,7 @@ function updateProfileStats() {
         }
 
         if (learnedText) {
-            learnedText.textContent = learnedCount + '/90';
+            learnedText.textContent = learnedCount + '/' + totalCases;
         }
 
         if (coverageProgress) {

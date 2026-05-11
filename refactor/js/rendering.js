@@ -485,10 +485,10 @@ window.showContextMenu = function(caseName, event) {
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
 
-    const isLearned = learnedCases.has(caseName);
-    const isLearning = learningCases.has(caseName);
-    const priorityLevel = plannedLevels.get(caseName) || 4;
-    const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
+    const isLearned = isCaseLearned(caseName);
+    const isLearning = isCaseLearning(caseName);
+    const priorityLevel = getPlannedPriorityLevel(caseName);
+    const priorityNames = ['Lowest', 'Lower', 'Low', 'Normal', 'High', 'Higher', 'Highest'];
 
     const menu = document.createElement('div');
     menu.id = 'caseContextMenu';
@@ -526,29 +526,29 @@ window.showContextMenu = function(caseName, event) {
     menu.appendChild(statusIndicator);
 
     const menuItems = [];
+    const priorityMenuEntries = [];
+    let refreshPriorityMenuState = () => {};
 
     // Only show priority adjustment for planned cases
     if (!isLearned && !isLearning) {
         menuItems.push(
             {
                 label: 'Move Up in Priority',
+                priorityDirection: 'up',
                 action: () => {
-                    adjustPriority(caseName, -1);
-                    // Don't close menu
-                    const newPriority = plannedLevels.get(caseName) || 4;
-                    statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
+                    adjustPriority(caseName, 1);
+                    refreshPriorityMenuState();
                 },
-                disabled: priorityLevel === 1
+                disabled: priorityLevel === 7
             },
             {
                 label: 'Move Down in Priority',
+                priorityDirection: 'down',
                 action: () => {
-                    adjustPriority(caseName, 1);
-                    // Don't close menu
-                    const newPriority = plannedLevels.get(caseName) || 4;
-                    statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
+                    adjustPriority(caseName, -1);
+                    refreshPriorityMenuState();
                 },
-                disabled: priorityLevel === 7
+                disabled: priorityLevel === 1
             },
             { divider: true }
         );
@@ -588,6 +588,40 @@ window.showContextMenu = function(caseName, event) {
         }
     );
 
+    const applyMenuItemState = (option, item) => {
+        option.style.cursor = item.disabled ? 'not-allowed' : 'pointer';
+        option.style.color = item.disabled ? 'var(--text-muted)' : 'var(--text-ui)';
+        option.style.opacity = item.disabled ? '0.5' : '1';
+
+        if (item.disabled) {
+            option.onmouseover = null;
+            option.onmouseout = null;
+            option.onclick = null;
+            option.style.background = 'transparent';
+            return;
+        }
+
+        option.onmouseover = () => {
+            option.style.background = 'var(--sidebar-item-hover)';
+        };
+        option.onmouseout = () => {
+            option.style.background = 'transparent';
+        };
+        option.onclick = item.action;
+    };
+
+    refreshPriorityMenuState = () => {
+        const newPriority = getPlannedPriorityLevel(caseName);
+        statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
+
+        priorityMenuEntries.forEach(({ option, item }) => {
+            item.disabled = item.priorityDirection === 'up'
+                ? newPriority === 7
+                : newPriority === 1;
+            applyMenuItemState(option, item);
+        });
+    };
+
     menuItems.forEach(item => {
         if (item.divider) {
             const divider = document.createElement('div');
@@ -598,20 +632,15 @@ window.showContextMenu = function(caseName, event) {
             option.textContent = item.label;
             option.style.cssText = `
                 padding: 8px 16px;
-                cursor: ${item.disabled ? 'not-allowed' : 'pointer'};
+                cursor: pointer;
                 font-size: 0.9rem;
-                color: ${item.disabled ? 'var(--text-muted)' : 'var(--text-ui)'}
-                opacity: ${item.disabled ? '0.5' : '1'};
+                color: var(--text-ui);
+                opacity: 1;
             `;
 
-            if (!item.disabled) {
-                option.onmouseover = () => {
-                    option.style.background = 'var(--sidebar-item-hover)';
-                };
-                option.onmouseout = () => {
-                    option.style.background = 'transparent';
-                };
-                option.onclick = item.action;
+            applyMenuItemState(option, item);
+            if (item.priorityDirection) {
+                priorityMenuEntries.push({ option, item });
             }
 
             menu.appendChild(option);
@@ -694,33 +723,21 @@ window.toggleLearned = function(name, event = null) {
     if (isRightClick) {
         event.preventDefault();
         // Right click: learned -> learning -> planned
-        if (learnedCases.has(name)) {
-            learnedCases.delete(name);
-            learningCases.add(name);
-            plannedCases.delete(name);
-        } else if (learningCases.has(name)) {
-            learningCases.delete(name);
-            plannedCases.add(name);
-            if (!plannedLevels.has(name)) plannedLevels.set(name, 4);
+        if (isCaseLearned(name)) {
+            setCasePriorityLevel(name, LEARNING_PRIORITY_LEVEL);
+        } else if (isCaseLearning(name)) {
+            setCasePriorityLevel(name, DEFAULT_PRIORITY_LEVEL);
         } else {
-            learnedCases.add(name);
-            learningCases.delete(name);
-            plannedCases.delete(name);
+            setCasePriorityLevel(name, LEARNED_PRIORITY_LEVEL);
         }
     } else {
         // Left click: planned -> learning -> learned
-        if (learnedCases.has(name)) {
-            learnedCases.delete(name);
-            learningCases.delete(name);
-            plannedCases.add(name);
-            if (!plannedLevels.has(name)) plannedLevels.set(name, 4);
-        } else if (learningCases.has(name)) {
-            learningCases.delete(name);
-            learnedCases.add(name);
-            plannedCases.delete(name);
+        if (isCaseLearned(name)) {
+            setCasePriorityLevel(name, DEFAULT_PRIORITY_LEVEL);
+        } else if (isCaseLearning(name)) {
+            setCasePriorityLevel(name, LEARNED_PRIORITY_LEVEL);
         } else {
-            learningCases.add(name);
-            plannedCases.delete(name);
+            setCasePriorityLevel(name, LEARNING_PRIORITY_LEVEL);
         }
     }
     saveState();
@@ -742,21 +759,14 @@ window.toggleLearned = function(name, event = null) {
 }
 
 function adjustPriority(name, delta) {
-    // Ensure case is in planned state
-    if (!plannedCases.has(name)) {
-        plannedCases.add(name);
-        learnedCases.delete(name);
-        learningCases.delete(name);
-    }
-
-    const currentLevel = plannedLevels.get(name) || 4;
+    const currentLevel = getPlannedPriorityLevel(name);
     let newLevel = currentLevel + delta;
 
-    // Clamp between 1 (Top) and 7 (Meh)
+    // Clamp between 1 (lowest planned) and 7 (highest planned)
     if (newLevel < 1) newLevel = 1;
     if (newLevel > 7) newLevel = 7;
 
-    plannedLevels.set(name, newLevel);
+    setCasePriorityLevel(name, newLevel);
     saveState();
     updateProfileStats();
 
@@ -783,9 +793,9 @@ function adjustPriority(name, delta) {
 
 function renderCard(item) {
     const prob = (item.probability / 3678 * 100).toFixed(3);
-    const isLearned = learnedCases.has(item.name);
-    const isLearning = learningCases.has(item.name);
-    const plannedLevel = plannedLevels.get(item.name) || 4;
+    const isLearned = isCaseLearned(item.name);
+    const isLearning = isCaseLearning(item.name);
+    const plannedLevel = getPriorityVisualLevel(item.name);
 
     let cardClass = '';
     if (isLearned) {

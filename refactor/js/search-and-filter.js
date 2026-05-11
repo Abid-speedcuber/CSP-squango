@@ -16,9 +16,9 @@ function filterAndSort(softRender = false) {
     filteredData = data.filter(item => {
         let matchesLearnFilter = true;
         if (learnFilter === 'learned') {
-            matchesLearnFilter = learnedCases.has(item.name);
+            matchesLearnFilter = isCaseLearned(item.name);
         } else if (learnFilter === 'unlearned') {
-            matchesLearnFilter = !learnedCases.has(item.name);
+            matchesLearnFilter = !isCaseLearned(item.name);
         }
 
         if (!matchesLearnFilter) return false;
@@ -72,27 +72,8 @@ function filterAndSort(softRender = false) {
     if (sortType === 'priority') {
         filteredData.sort((a, b) => b.probability - a.probability);
         filteredData.sort((a, b) => {
-            const aIsLearning = learningCases.has(a.name);
-            const bIsLearning = learningCases.has(b.name);
-            const aIsPlanned  = plannedCases.has(a.name);
-            const bIsPlanned  = plannedCases.has(b.name);
-            const aIsLearned  = learnedCases.has(a.name);
-            const bIsLearned  = learnedCases.has(b.name);
-
-            if (aIsLearning && !bIsLearning) return -1;
-            if (!aIsLearning && bIsLearning) return 1;
-
-            if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
-            if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
-            if (aIsPlanned && bIsPlanned) {
-                const aPriority = plannedLevels.get(a.name) || 4;
-                const bPriority = plannedLevels.get(b.name) || 4;
-                return aPriority - bPriority;
-            }
-
-            if (aIsLearned && !bIsLearned) return 1;
-            if (!aIsLearned && bIsLearned) return -1;
-            return 0;
+            const priorityDelta = getPrioritySortValue(b.name) - getPrioritySortValue(a.name);
+            return priorityDelta || (b.probability - a.probability);
         });
     } else {
         filteredData.sort((a, b) => b.probability - a.probability);
@@ -192,4 +173,3 @@ if (document.readyState === 'loading') {
 
 updateSelectLabels();
 window.addEventListener('resize', updateSelectLabels);
-

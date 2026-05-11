@@ -168,22 +168,8 @@ window.onSelectorSearch = function (val) {
 
 function getSelectorSorted(arr) {
     return [...arr].sort((a, b) => {
-        const aLearning = learningCases.has(a.name);
-        const bLearning = learningCases.has(b.name);
-        const aLearned = learnedCases.has(a.name);
-        const bLearned = learnedCases.has(b.name);
-        const aPlanned = plannedCases.has(a.name);
-        const bPlanned = plannedCases.has(b.name);
-        if (aLearning && !bLearning) return -1;
-        if (!aLearning && bLearning) return 1;
-        if (aPlanned && bPlanned) {
-            return (plannedLevels.get(a.name) || 4) - (plannedLevels.get(b.name) || 4);
-        }
-        if (aPlanned && !bPlanned) return -1;
-        if (!aPlanned && bPlanned) return 1;
-        if (aLearned && !bLearned) return 1;
-        if (!aLearned && bLearned) return -1;
-        return 0;
+        const priorityDelta = getPrioritySortValue(b.name) - getPrioritySortValue(a.name);
+        return priorityDelta || (b.probability - a.probability);
     });
 }
 
@@ -216,9 +202,9 @@ function renderSelectorCases() {
 
     grid.innerHTML = selectorFilteredData.map(item => {
         const isSelected = selectorSelectedCases.has(item.name);
-        const isLearned = learnedCases.has(item.name);
-        const isLearning = learningCases.has(item.name);
-        const priorityLevel = plannedLevels.get(item.name) || 4;
+        const isLearned = isCaseLearned(item.name);
+        const isLearning = isCaseLearning(item.name);
+        const priorityLevel = getPriorityVisualLevel(item.name);
 
         let bgColor, borderColor, textColor, checkColor;
         if (isLearned) {
@@ -313,16 +299,16 @@ window.applySelectorBulkAction = function (action) {
             break;
         case 'select_learning':
             selectorSelectedCases.clear();
-            data.forEach(i => { if (learningCases.has(i.name)) selectorSelectedCases.add(i.name); });
+            data.forEach(i => { if (isCaseLearning(i.name)) selectorSelectedCases.add(i.name); });
             break;
         case 'select_learned':
             selectorSelectedCases.clear();
-            data.forEach(i => { if (learnedCases.has(i.name)) selectorSelectedCases.add(i.name); });
+            data.forEach(i => { if (isCaseLearned(i.name)) selectorSelectedCases.add(i.name); });
             break;
         case 'select_learning_learned':
             selectorSelectedCases.clear();
             data.forEach(i => {
-                if (learningCases.has(i.name) || learnedCases.has(i.name)) selectorSelectedCases.add(i.name);
+                if (isCaseLearning(i.name) || isCaseLearned(i.name)) selectorSelectedCases.add(i.name);
             });
             break;
         case 'select_these':
@@ -330,7 +316,7 @@ window.applySelectorBulkAction = function (action) {
             selectorFilteredData.forEach(i => selectorSelectedCases.add(i.name));
             break;
         case 'deselect_learned':
-            data.forEach(i => { if (learnedCases.has(i.name)) selectorSelectedCases.delete(i.name); });
+            data.forEach(i => { if (isCaseLearned(i.name)) selectorSelectedCases.delete(i.name); });
             break;
         case 'deselect_these':
             selectorFilteredData.forEach(i => selectorSelectedCases.delete(i.name));
@@ -519,4 +505,3 @@ window.selectorImportHook = function (stateObj) {
         saveSelectorSelection();
     }
 };
-

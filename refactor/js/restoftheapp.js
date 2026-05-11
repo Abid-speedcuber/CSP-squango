@@ -1,5 +1,5 @@
 /* ==== FILE: js/restoftheapp.js ==== */
-/* exported filteredData algorithmFontSize getCaseNameFromScramble isCaseEvil initializeSVGData getPresetDefaults handleFileImport searchInput sortSelect learnFilterSelect grid initializeDOMReferences */
+/* exported filteredData algorithmFontSize getCaseNameFromScramble isCaseEvil initializeSVGData getPresetDefaults handleFileImport searchInput sortSelect learnFilterSelect grid initializeDOMReferences getPlannedPriorityLevel getPriorityVisualLevel setCasePriorityLevel isCaseLearned isCaseLearning isCasePlanned getPrioritySortValue */
 
 ﻿// Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
@@ -107,11 +107,8 @@ const defaultDisplayNames = {
 let displayNames = {};
 
 let filteredData = [...data];
-let learnedCases = new Set();
-let learningCases = new Set();
-let plannedCases = new Set();
 let comments = new Map(); // stores {caseName: "comment text"}
-let plannedLevels = new Map(); // stores {caseName: 1-6}
+let plannedLevels = new Map(); // stores {caseName: 0 learned, 1-7 planned priority, 8 learning}
 let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
 let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
 let evilnessFactor = false; // Toggle evilness factor on/off
@@ -147,6 +144,108 @@ let colorScheme = {
     dividerColor: '#7a0000',
     circleColor: 'transparent'
 };
+
+const LEARNED_PRIORITY_LEVEL = 0;
+const MIN_PLANNED_PRIORITY_LEVEL = 1;
+const DEFAULT_PRIORITY_LEVEL = 4;
+const MAX_PLANNED_PRIORITY_LEVEL = 7;
+const LEARNING_PRIORITY_LEVEL = 8;
+
+function normalizePriorityLevel(level, fallback = DEFAULT_PRIORITY_LEVEL) {
+    const parsed = Number(level);
+    if (!Number.isFinite(parsed)) return fallback;
+    const rounded = Math.round(parsed);
+    if (rounded < LEARNED_PRIORITY_LEVEL) return LEARNED_PRIORITY_LEVEL;
+    if (rounded > LEARNING_PRIORITY_LEVEL) return LEARNING_PRIORITY_LEVEL;
+    return rounded;
+}
+
+function getCasePriorityLevel(caseName) {
+    if (!plannedLevels.has(caseName)) return DEFAULT_PRIORITY_LEVEL;
+    return normalizePriorityLevel(plannedLevels.get(caseName));
+}
+
+function getPlannedPriorityLevel(caseName) {
+    const level = getCasePriorityLevel(caseName);
+    return (level >= MIN_PLANNED_PRIORITY_LEVEL && level <= MAX_PLANNED_PRIORITY_LEVEL)
+        ? level
+        : DEFAULT_PRIORITY_LEVEL;
+}
+
+function getPriorityVisualLevel(caseName) {
+    return (MAX_PLANNED_PRIORITY_LEVEL + MIN_PLANNED_PRIORITY_LEVEL) - getPlannedPriorityLevel(caseName);
+}
+
+function setCasePriorityLevel(caseName, level) {
+    plannedLevels.set(caseName, normalizePriorityLevel(level));
+}
+
+function isCaseLearned(caseName) {
+    return getCasePriorityLevel(caseName) === LEARNED_PRIORITY_LEVEL;
+}
+
+function isCaseLearning(caseName) {
+    return getCasePriorityLevel(caseName) === LEARNING_PRIORITY_LEVEL;
+}
+
+function isCasePlanned(caseName) {
+    const level = getCasePriorityLevel(caseName);
+    return level >= MIN_PLANNED_PRIORITY_LEVEL && level <= MAX_PLANNED_PRIORITY_LEVEL;
+}
+
+function getPrioritySortValue(caseName) {
+    return getCasePriorityLevel(caseName);
+}
+
+function ensurePriorityLevelsForAllCases() {
+    const validCaseNames = new Set(data.map(item => item.name));
+    plannedLevels = new Map(
+        [...plannedLevels.entries()]
+            .filter(([caseName]) => validCaseNames.has(caseName))
+            .map(([caseName, level]) => [caseName, normalizePriorityLevel(level)])
+    );
+
+    for (const item of data) {
+        if (!plannedLevels.has(item.name)) {
+            plannedLevels.set(item.name, DEFAULT_PRIORITY_LEVEL);
+        }
+    }
+}
+
+function hydratePriorityLevels(state = {}) {
+    const levels = new Map();
+    if (state.plannedLevels && typeof state.plannedLevels === 'object') {
+        for (const [caseName, level] of Object.entries(state.plannedLevels)) {
+            levels.set(caseName, normalizePriorityLevel(level));
+        }
+    }
+
+    // Legacy migration: old progress arrays become priority levels.
+    for (const caseName of state.planned || []) {
+        if (!levels.has(caseName)) levels.set(caseName, DEFAULT_PRIORITY_LEVEL);
+    }
+    for (const caseName of state.learned || []) {
+        levels.set(caseName, LEARNED_PRIORITY_LEVEL);
+    }
+    for (const caseName of state.learning || []) {
+        levels.set(caseName, LEARNING_PRIORITY_LEVEL);
+    }
+
+    plannedLevels = levels;
+    ensurePriorityLevelsForAllCases();
+}
+
+window.SQG = window.SQG || {};
+window.SQG.progress = Object.freeze({
+    getPriorityLevel: getCasePriorityLevel,
+    getPlannedPriorityLevel,
+    getPriorityVisualLevel,
+    setPriorityLevel: setCasePriorityLevel,
+    isLearned: isCaseLearned,
+    isLearning: isCaseLearning,
+    isPlanned: isCasePlanned,
+    getSortValue: getPrioritySortValue
+});
 
 let scrambleImageSize = 200; // Default size
 let profileName = localStorage.getItem('profileName') || 'Profile';
@@ -361,13 +460,9 @@ try {
     const saved = localStorage.getItem('sq1-parity-progress');
     if (saved) {
         const state = JSON.parse(saved);
-        learnedCases = new Set(state.learned || []);
-        learningCases = new Set(state.learning || []);
-        plannedCases = new Set(state.planned || []);
+        hydratePriorityLevels(state);
         comments = new Map(Object.entries(state.comments || {}));
-        plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
         parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
-        enablePriorityLearning = true; // Always true now
         hideInstructions = state.hideInstructions || false;
         hideParenthesis = state.hideParenthesis || false;
         colorScheme = state.colorScheme || colorScheme;
@@ -416,16 +511,7 @@ try {
         window.enhancedAccess = enhancedAccessSaved === 'true';
     }
 
-    // Initialize all cases as planned with priority 4 (Normal) if not already set
-    data.forEach(item => {
-        if (!learnedCases.has(item.name) && !learningCases.has(item.name) && !plannedCases.has(item.name)) {
-            plannedCases.add(item.name);
-            plannedLevels.set(item.name, 4);
-        }
-        if (!plannedLevels.has(item.name) && plannedCases.has(item.name)) {
-            plannedLevels.set(item.name, 4);
-        }
-    });
+    ensurePriorityLevelsForAllCases();
     saveState();
 } catch (e) {
     console.error('Error loading saved state:', e);
@@ -465,13 +551,9 @@ function saveState() {
     localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
     try {
         localStorage.setItem('sq1-parity-progress', JSON.stringify({
-            learned: Array.from(learnedCases),
-            learning: Array.from(learningCases),
-            planned: Array.from(plannedCases),
             comments: Object.fromEntries(comments),
             plannedLevels: Object.fromEntries(plannedLevels),
             parityOrientations: Object.fromEntries(parityOrientations),
-            enablePriorityLearning: true,
             displayNames: displayNames,
             hideInstructions: hideInstructions,
             hideParenthesis: hideParenthesis,
@@ -537,7 +619,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
 
     // PRESERVE user's learning progress AND personal UI preferences:
     // Learning Progress (DON'T overwrite):
-    // - learnedCases, learningCases, plannedCases, plannedLevels
+    // - plannedLevels
     //
     // Personal UI/UX Preferences (DON'T overwrite):
     // - hideInstructions, hideParenthesis
@@ -650,7 +732,7 @@ window.initializePreset = async function () {
     }
 }
 
-const EXPORT_FORMAT_VERSION = 2;
+const EXPORT_FORMAT_VERSION = 3;
 
 function readStoredJSONSetting(key) {
     const value = localStorage.getItem(key);
@@ -682,9 +764,6 @@ function readStoredNumberSetting(key) {
 
 function buildLegacyExportState() {
     return {
-        learned: Array.from(learnedCases),
-        learning: Array.from(learningCases),
-        planned: Array.from(plannedCases),
         comments: Object.fromEntries(comments),
         plannedLevels: Object.fromEntries(plannedLevels),
         parityOrientations: Object.fromEntries(parityOrientations),
@@ -736,9 +815,6 @@ function buildExportDocument() {
             avatar: state.profileAvatar
         },
         progress: {
-            learned: state.learned,
-            learning: state.learning,
-            planned: state.planned,
             plannedLevels: state.plannedLevels
         },
         cases: {
@@ -871,11 +947,8 @@ function importData(jsonStr) {
                 }, 100);
             }
         }
-        learnedCases = new Set(state.learned || []);
-        learningCases = new Set(state.learning || []);
-        plannedCases = new Set(state.planned || []);
+        hydratePriorityLevels(state);
         comments = new Map(Object.entries(state.comments || {}));
-        plannedLevels = new Map(Object.entries(state.plannedLevels || {}));
         parityOrientations = new Map(Object.entries(state.parityOrientations || {}));
 
         // Load display names
