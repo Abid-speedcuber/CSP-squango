@@ -337,6 +337,123 @@ export let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.
 export let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
 export let presetData = null; // Will store loaded preset data
 
+const APP_STATE_KEYS = new Set([
+    'displayNames',
+    'filteredData',
+    'comments',
+    'plannedLevels',
+    'parityOrientations',
+    'cornerStickerMode',
+    'evilnessFactor',
+    'evilnessStringReturn',
+    'evilnessMap',
+    'customAlgorithms',
+    'parityAlgorithmsByCase',
+    'parityAlgorithmsDirty',
+    'perCaseSubtitles',
+    'hideInstructions',
+    'hideParenthesis',
+    'algorithmFontSize',
+    'generalNotes',
+    'algVariables',
+    'showHints',
+    'currentSortMode',
+    'colorScheme',
+    'scrambleImageSize',
+    'profileName',
+    'profileAvatar',
+    'currentPreset',
+    'presetData'
+]);
+
+export function getAppStateValue(key) {
+    switch (key) {
+        case 'displayNames': return displayNames;
+        case 'filteredData': return filteredData;
+        case 'comments': return comments;
+        case 'plannedLevels': return plannedLevels;
+        case 'parityOrientations': return parityOrientations;
+        case 'cornerStickerMode': return cornerStickerMode;
+        case 'evilnessFactor': return evilnessFactor;
+        case 'evilnessStringReturn': return evilnessStringReturn;
+        case 'evilnessMap': return evilnessMap;
+        case 'customAlgorithms': return customAlgorithms;
+        case 'parityAlgorithmsByCase': return parityAlgorithmsByCase;
+        case 'parityAlgorithmsDirty': return parityAlgorithmsDirty;
+        case 'perCaseSubtitles': return perCaseSubtitles;
+        case 'hideInstructions': return hideInstructions;
+        case 'hideParenthesis': return hideParenthesis;
+        case 'algorithmFontSize': return algorithmFontSize;
+        case 'generalNotes': return generalNotes;
+        case 'algVariables': return algVariables;
+        case 'showHints': return showHints;
+        case 'currentSortMode': return currentSortMode;
+        case 'colorScheme': return colorScheme;
+        case 'scrambleImageSize': return scrambleImageSize;
+        case 'profileName': return profileName;
+        case 'profileAvatar': return profileAvatar;
+        case 'currentPreset': return currentPreset;
+        case 'presetData': return presetData;
+        default: throw new Error(`Unknown app state key: ${key}`);
+    }
+}
+
+export function setAppStateValue(key, value) {
+    if (!APP_STATE_KEYS.has(key)) throw new Error(`Unknown app state key: ${key}`);
+
+    switch (key) {
+        case 'displayNames': displayNames = value; break;
+        case 'filteredData': filteredData = value; break;
+        case 'comments': comments = value; break;
+        case 'plannedLevels': plannedLevels = value; break;
+        case 'parityOrientations': parityOrientations = value; break;
+        case 'cornerStickerMode':
+            cornerStickerMode = value;
+            markParityAlgorithmsDirty();
+            break;
+        case 'evilnessFactor':
+            evilnessFactor = value;
+            markParityAlgorithmsDirty();
+            break;
+        case 'evilnessStringReturn':
+            evilnessStringReturn = value;
+            markParityAlgorithmsDirty();
+            break;
+        case 'evilnessMap':
+            evilnessMap = value;
+            markParityAlgorithmsDirty();
+            break;
+        case 'customAlgorithms':
+            customAlgorithms = value;
+            markParityAlgorithmsDirty();
+            break;
+        case 'parityAlgorithmsByCase': parityAlgorithmsByCase = value; break;
+        case 'parityAlgorithmsDirty': parityAlgorithmsDirty = value; break;
+        case 'perCaseSubtitles': perCaseSubtitles = value; break;
+        case 'hideInstructions': hideInstructions = value; break;
+        case 'hideParenthesis': hideParenthesis = value; break;
+        case 'algorithmFontSize': algorithmFontSize = value; break;
+        case 'generalNotes': generalNotes = value; break;
+        case 'algVariables': algVariables = value; break;
+        case 'showHints': showHints = value; break;
+        case 'currentSortMode': currentSortMode = value; break;
+        case 'colorScheme': colorScheme = value; break;
+        case 'scrambleImageSize': scrambleImageSize = value; break;
+        case 'profileName': profileName = value; break;
+        case 'profileAvatar': profileAvatar = value; break;
+        case 'currentPreset': currentPreset = value; break;
+        case 'presetData': presetData = value; break;
+    }
+
+    return value;
+}
+
+export function updateAppState(patch) {
+    for (const [key, value] of Object.entries(patch || {})) {
+        setAppStateValue(key, value);
+    }
+}
+
 // Check if this is first load BEFORE loading state
 export const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 
@@ -1241,27 +1358,27 @@ document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);
 // ESM live global compatibility bridge
 for (const [name, descriptor] of Object.entries({
     "defaultDisplayNames": { get: () => defaultDisplayNames, set: value => { Object.defineProperty(window, "defaultDisplayNames", { configurable: true, enumerable: true, writable: true, value }); } },
-    "displayNames": { get: () => displayNames, set: value => { displayNames = value; } },
-    "filteredData": { get: () => filteredData, set: value => { filteredData = value; } },
-    "comments": { get: () => comments, set: value => { comments = value; } },
-    "plannedLevels": { get: () => plannedLevels, set: value => { plannedLevels = value; } },
-    "parityOrientations": { get: () => parityOrientations, set: value => { parityOrientations = value; } },
-    "cornerStickerMode": { get: () => cornerStickerMode, set: value => { cornerStickerMode = value; } },
-    "evilnessFactor": { get: () => evilnessFactor, set: value => { evilnessFactor = value; } },
-    "evilnessStringReturn": { get: () => evilnessStringReturn, set: value => { evilnessStringReturn = value; } },
-    "evilnessMap": { get: () => evilnessMap, set: value => { evilnessMap = value; } },
-    "customAlgorithms": { get: () => customAlgorithms, set: value => { customAlgorithms = value; } },
-    "parityAlgorithmsByCase": { get: () => parityAlgorithmsByCase, set: value => { parityAlgorithmsByCase = value; } },
-    "parityAlgorithmsDirty": { get: () => parityAlgorithmsDirty, set: value => { parityAlgorithmsDirty = value; } },
-    "perCaseSubtitles": { get: () => perCaseSubtitles, set: value => { perCaseSubtitles = value; } },
-    "hideInstructions": { get: () => hideInstructions, set: value => { hideInstructions = value; } },
-    "hideParenthesis": { get: () => hideParenthesis, set: value => { hideParenthesis = value; } },
-    "algorithmFontSize": { get: () => algorithmFontSize, set: value => { algorithmFontSize = value; } },
-    "generalNotes": { get: () => generalNotes, set: value => { generalNotes = value; } },
-    "algVariables": { get: () => algVariables, set: value => { algVariables = value; } },
-    "showHints": { get: () => showHints, set: value => { showHints = value; } },
-    "currentSortMode": { get: () => currentSortMode, set: value => { currentSortMode = value; } },
-    "colorScheme": { get: () => colorScheme, set: value => { colorScheme = value; } },
+    "displayNames": { get: () => displayNames, set: value => { setAppStateValue('displayNames', value); } },
+    "filteredData": { get: () => filteredData, set: value => { setAppStateValue('filteredData', value); } },
+    "comments": { get: () => comments, set: value => { setAppStateValue('comments', value); } },
+    "plannedLevels": { get: () => plannedLevels, set: value => { setAppStateValue('plannedLevels', value); } },
+    "parityOrientations": { get: () => parityOrientations, set: value => { setAppStateValue('parityOrientations', value); } },
+    "cornerStickerMode": { get: () => cornerStickerMode, set: value => { setAppStateValue('cornerStickerMode', value); } },
+    "evilnessFactor": { get: () => evilnessFactor, set: value => { setAppStateValue('evilnessFactor', value); } },
+    "evilnessStringReturn": { get: () => evilnessStringReturn, set: value => { setAppStateValue('evilnessStringReturn', value); } },
+    "evilnessMap": { get: () => evilnessMap, set: value => { setAppStateValue('evilnessMap', value); } },
+    "customAlgorithms": { get: () => customAlgorithms, set: value => { setAppStateValue('customAlgorithms', value); } },
+    "parityAlgorithmsByCase": { get: () => parityAlgorithmsByCase, set: value => { setAppStateValue('parityAlgorithmsByCase', value); } },
+    "parityAlgorithmsDirty": { get: () => parityAlgorithmsDirty, set: value => { setAppStateValue('parityAlgorithmsDirty', value); } },
+    "perCaseSubtitles": { get: () => perCaseSubtitles, set: value => { setAppStateValue('perCaseSubtitles', value); } },
+    "hideInstructions": { get: () => hideInstructions, set: value => { setAppStateValue('hideInstructions', value); } },
+    "hideParenthesis": { get: () => hideParenthesis, set: value => { setAppStateValue('hideParenthesis', value); } },
+    "algorithmFontSize": { get: () => algorithmFontSize, set: value => { setAppStateValue('algorithmFontSize', value); } },
+    "generalNotes": { get: () => generalNotes, set: value => { setAppStateValue('generalNotes', value); } },
+    "algVariables": { get: () => algVariables, set: value => { setAppStateValue('algVariables', value); } },
+    "showHints": { get: () => showHints, set: value => { setAppStateValue('showHints', value); } },
+    "currentSortMode": { get: () => currentSortMode, set: value => { setAppStateValue('currentSortMode', value); } },
+    "colorScheme": { get: () => colorScheme, set: value => { setAppStateValue('colorScheme', value); } },
     "LEARNED_PRIORITY_LEVEL": { get: () => LEARNED_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "LEARNED_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
     "MIN_PLANNED_PRIORITY_LEVEL": { get: () => MIN_PLANNED_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "MIN_PLANNED_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
     "DEFAULT_PRIORITY_LEVEL": { get: () => DEFAULT_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "DEFAULT_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
@@ -1284,11 +1401,14 @@ for (const [name, descriptor] of Object.entries({
     "markParityAlgorithmsDirty": { get: () => markParityAlgorithmsDirty, set: value => { Object.defineProperty(window, "markParityAlgorithmsDirty", { configurable: true, enumerable: true, writable: true, value }); } },
     "ensurePriorityLevelsForAllCases": { get: () => ensurePriorityLevelsForAllCases, set: value => { Object.defineProperty(window, "ensurePriorityLevelsForAllCases", { configurable: true, enumerable: true, writable: true, value }); } },
     "hydratePriorityLevels": { get: () => hydratePriorityLevels, set: value => { Object.defineProperty(window, "hydratePriorityLevels", { configurable: true, enumerable: true, writable: true, value }); } },
-    "scrambleImageSize": { get: () => scrambleImageSize, set: value => { scrambleImageSize = value; } },
-    "profileName": { get: () => profileName, set: value => { profileName = value; } },
-    "profileAvatar": { get: () => profileAvatar, set: value => { profileAvatar = value; } },
-    "currentPreset": { get: () => currentPreset, set: value => { currentPreset = value; } },
-    "presetData": { get: () => presetData, set: value => { presetData = value; } },
+    "scrambleImageSize": { get: () => scrambleImageSize, set: value => { setAppStateValue('scrambleImageSize', value); } },
+    "profileName": { get: () => profileName, set: value => { setAppStateValue('profileName', value); } },
+    "profileAvatar": { get: () => profileAvatar, set: value => { setAppStateValue('profileAvatar', value); } },
+    "currentPreset": { get: () => currentPreset, set: value => { setAppStateValue('currentPreset', value); } },
+    "presetData": { get: () => presetData, set: value => { setAppStateValue('presetData', value); } },
+    "getAppStateValue": { get: () => getAppStateValue, set: value => { Object.defineProperty(window, "getAppStateValue", { configurable: true, enumerable: true, writable: true, value }); } },
+    "setAppStateValue": { get: () => setAppStateValue, set: value => { Object.defineProperty(window, "setAppStateValue", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateAppState": { get: () => updateAppState, set: value => { Object.defineProperty(window, "updateAppState", { configurable: true, enumerable: true, writable: true, value }); } },
     "isFirstLoad": { get: () => isFirstLoad, set: value => { Object.defineProperty(window, "isFirstLoad", { configurable: true, enumerable: true, writable: true, value }); } },
     "calculateAndCacheAllParity": { get: () => calculateAndCacheAllParity, set: value => { Object.defineProperty(window, "calculateAndCacheAllParity", { configurable: true, enumerable: true, writable: true, value }); } },
     "buildShapeIndexToCaseMap": { get: () => buildShapeIndexToCaseMap, set: value => { Object.defineProperty(window, "buildShapeIndexToCaseMap", { configurable: true, enumerable: true, writable: true, value }); } },

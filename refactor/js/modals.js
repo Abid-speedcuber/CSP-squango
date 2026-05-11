@@ -5,6 +5,7 @@ import { CSPData } from './data-store.js?v=esm-20260511-2';
 import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
 import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 import { normalizeScramble } from './tools/scrambleNormalizer.js?v=esm-20260511-2';
+import { updateAppState } from './restoftheapp.js?v=esm-20260511-2';
 
 ﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -502,8 +503,8 @@ export function handlePresetChange(presetName) {
 }
 
 window.toggleHints = function(isChecked) {
-    showHints = isChecked;
-    localStorage.setItem('showHints', showHints);
+    updateAppState({ showHints: isChecked });
+    localStorage.setItem('showHints', isChecked);
     applyHintVisibility();
 }
 
@@ -516,7 +517,7 @@ export function applyHintVisibility() {
 }
 
 window.toggleHideInstructions = function(isChecked) {
-    hideInstructions = isChecked;
+    updateAppState({ hideInstructions: isChecked });
     saveState();
     applyInstructionVisibility();
 }
@@ -529,7 +530,7 @@ export function applyInstructionVisibility() {
 }
 
 window.toggleHideParenthesis = function(isChecked) {
-    hideParenthesis = isChecked;
+    updateAppState({ hideParenthesis: isChecked });
     saveState();
     render();
 }
@@ -597,13 +598,13 @@ export function closeColorSchemeModal() {
 
 window.updateImageSizePreview = function(value) {
     document.getElementById('sizeValue').textContent = value;
-    scrambleImageSize = parseInt(value);
+    updateAppState({ scrambleImageSize: parseInt(value) });
     saveState();
 }
 
 window.updateAlgFontSizePreview = function(value) {
     document.getElementById('algFontSizeValue').textContent = value;
-    algorithmFontSize = parseInt(value);
+    updateAppState({ algorithmFontSize: parseInt(value) });
     localStorage.setItem('algorithmFontSize', value);
     applyAlgorithmFontSize();
 }
@@ -1547,8 +1548,8 @@ export function switchToViewMode() {
 
 export function saveGeneralNotes() {
     const textarea = document.getElementById('generalNotesTextarea');
-    generalNotes = textarea.value;
-    window.originalGeneralNotes = generalNotes;
+    updateAppState({ generalNotes: textarea.value });
+    window.originalGeneralNotes = textarea.value;
     saveState();
     switchToViewMode();
     showToast('Notes saved!', 2000, 'success');
@@ -2083,10 +2084,14 @@ window.switchToViewProfile = function(mode) {
 window.saveProfileEdit = function(mode) {
     const nameInput = document.getElementById(`profileNameInput${mode}`);
     const newName = nameInput ? nameInput.value.trim() : '';
-    profileName = newName || 'Profile';
-    profileAvatar = tempSelectedAvatar || profileAvatar;
-    localStorage.setItem('profileName', profileName);
-    localStorage.setItem('profileAvatar', profileAvatar);
+    const nextProfileName = newName || 'Profile';
+    const nextProfileAvatar = tempSelectedAvatar || profileAvatar;
+    updateAppState({
+        profileName: nextProfileName,
+        profileAvatar: nextProfileAvatar
+    });
+    localStorage.setItem('profileName', nextProfileName);
+    localStorage.setItem('profileAvatar', nextProfileAvatar);
     tempSelectedAvatar = null;
     applyProfileUI();
     switchToViewProfile(mode);

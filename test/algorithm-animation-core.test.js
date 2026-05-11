@@ -7,9 +7,7 @@ const root = path.resolve(__dirname, '..');
 
 function runBrowserScript(context, relativePath) {
   const absolutePath = path.join(root, relativePath);
-  const source = fs.readFileSync(absolutePath, 'utf8')
-    .replace(/\n\/\/ ESM live global compatibility bridge[\s\S]*$/m, '')
-    .replace(/^export\s+/gm, '');
+  const source = fs.readFileSync(absolutePath, 'utf8');
   vm.runInContext(source, context, { filename: relativePath });
 }
 
@@ -18,11 +16,11 @@ function createBrowserContext() {
     console,
     localStorage: {
       getItem: () => null,
-      setItem: () => {}
+      setItem: () => { }
     },
     document: {
       readyState: 'complete',
-      addEventListener: () => {}
+      addEventListener: () => { }
     }
   };
 

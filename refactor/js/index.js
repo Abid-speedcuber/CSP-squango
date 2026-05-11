@@ -28,12 +28,16 @@ import {
     calculateAndCacheAllParity,
     currentSortMode,
     handleFileImport,
+    hideInstructions,
+    hideParenthesis,
     initializeDOMReferences,
     initializePreset,
     initializeSVGData,
     isFirstLoad,
     needsParityRecalculation,
     saveState,
+    showHints,
+    updateAppState,
     sortSelect
 } from './restoftheapp.js?v=esm-20260511-2';
 import { render } from './rendering.js?v=esm-20260511-2';
@@ -502,30 +506,30 @@ document.addEventListener('keydown', (e) => {
         switch (e.key.toLowerCase()) {
             case 't': // Alt+T - Show tracing guides
                 e.preventDefault();
-                window.showHints = !window.showHints;
-                localStorage.setItem('showHints', window.showHints);
+                updateAppState({ showHints: !showHints });
+                localStorage.setItem('showHints', showHints);
                 applyHintVisibility();
                 const hintToggle = document.getElementById('hintToggle');
-                if (hintToggle) hintToggle.checked = window.showHints;
-                showToast(`Tracing guides ${window.showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
+                if (hintToggle) hintToggle.checked = showHints;
+                showToast(`Tracing guides ${showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
                 break;
             case 'h': // Alt+H - Hide instructions
                 e.preventDefault();
-                window.hideInstructions = !window.hideInstructions;
+                updateAppState({ hideInstructions: !hideInstructions });
                 saveState();
                 applyInstructionVisibility();
                 const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
-                if (hideInstructionsToggle) hideInstructionsToggle.checked = window.hideInstructions;
-                showToast(`Instruction buttons ${window.hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
+                if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
+                showToast(`Instruction buttons ${hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
                 break;
             case 'p': // Alt+P - Hide parenthesis
                 e.preventDefault();
-                window.hideParenthesis = !window.hideParenthesis;
+                updateAppState({ hideParenthesis: !hideParenthesis });
                 saveState();
                 render();
                 const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
-                if (hideParenthesisToggle) hideParenthesisToggle.checked = window.hideParenthesis;
-                showToast(`Parenthesis ${window.hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
+                if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
+                showToast(`Parenthesis ${hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
                 break;
             case 'w': // Alt+W - Parity tracing personalization
                 e.preventDefault();

@@ -1,6 +1,7 @@
 /* ==== FILE: js/settings.js ==== */
 
 import { ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+import { updateAppState } from './restoftheapp.js?v=esm-20260511-2';
 
 /*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -363,7 +364,7 @@ export function _renderParityTab(panel) {
 }
 
 window._ptSaveCornerSticker = function(val) {
-    cornerStickerMode = val;
+    updateAppState({ cornerStickerMode: val });
     if (typeof saveState === 'function') saveState();
     _triggerParityLiveUpdate();
 };
@@ -406,7 +407,7 @@ window._ptToggleEvilness = function(checkbox) {
         'This will update the parity calculations and may freeze your page for a brief moment.',
         () => {
             checkbox.checked = newVal;
-            if (typeof evilnessFactor !== 'undefined') evilnessFactor = newVal;
+            updateAppState({ evilnessFactor: newVal });
             if (typeof saveState === 'function') saveState();
             const sub = document.getElementById('pt_evilSubSettings');
             if (sub) { sub.style.opacity = newVal ? '1' : '0.4'; sub.style.pointerEvents = newVal ? 'auto' : 'none'; }
@@ -425,7 +426,7 @@ window._ptToggleEvilStr = function(checkbox) {
         'This will update the parity calculations and may freeze your page for a brief moment.',
         () => {
             checkbox.checked = newVal;
-            if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
+            updateAppState({ evilnessStringReturn: newVal });
             if (typeof saveState === 'function') saveState();
             if (typeof markParityAlgorithmsDirty === 'function') markParityAlgorithmsDirty();
             if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();

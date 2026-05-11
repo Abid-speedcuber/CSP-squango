@@ -1,6 +1,8 @@
 /* ==== FILE: js/search-and-filter.js ==== */
 
 ﻿// Store search matches for highlighting
+import { updateAppState } from './restoftheapp.js?v=esm-20260511-2';
+
 window.searchMatches = new Map();
 
 export function filterAndSort(softRender = false) {
@@ -10,10 +12,10 @@ export function filterAndSort(softRender = false) {
 
     window.searchMatches.clear();
 
-    currentSortMode = sortType;
-    localStorage.setItem('sortMode', currentSortMode);
+    updateAppState({ currentSortMode: sortType });
+    localStorage.setItem('sortMode', sortType);
 
-    filteredData = data.filter(item => {
+    const nextFilteredData = data.filter(item => {
         let matchesLearnFilter = true;
         if (learnFilter === 'learned') {
             matchesLearnFilter = isCaseLearned(item.name);
@@ -70,16 +72,17 @@ export function filterAndSort(softRender = false) {
 
     // Apply sorting
     if (sortType === 'priority') {
-        filteredData.sort((a, b) => b.probability - a.probability);
-        filteredData.sort((a, b) => {
+        nextFilteredData.sort((a, b) => b.probability - a.probability);
+        nextFilteredData.sort((a, b) => {
             const priorityDelta = getPrioritySortValue(b.name) - getPrioritySortValue(a.name);
             return priorityDelta || (b.probability - a.probability);
         });
     } else {
-        filteredData.sort((a, b) => b.probability - a.probability);
-        if (sortType === 'antiProbability') filteredData.reverse();
+        nextFilteredData.sort((a, b) => b.probability - a.probability);
+        if (sortType === 'antiProbability') nextFilteredData.reverse();
     }
 
+    updateAppState({ filteredData: nextFilteredData });
     render(softRender);
 }
 

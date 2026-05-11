@@ -18,9 +18,9 @@ import {
     evilnessFactor,
     evilnessMap,
     getCaseAlgorithmList,
-    markParityAlgorithmsDirty,
     perCaseSubtitles,
-    saveState
+    saveState,
+    updateAppState
 } from './restoftheapp.js?v=esm-20260511-2';
 import {
     getDisplayName,
@@ -1218,11 +1218,12 @@ export function revertQuickEditChanges() {
 
     showConfirmation('Are you sure you want to revert all changes to the last save point?', () => {
         // Restore initial state
-        displayNames = { ...window.quickEditInitialState.displayNames };
-        perCaseSubtitles = new Map(window.quickEditInitialState.perCaseSubtitles);
-        comments = new Map(window.quickEditInitialState.comments);
-        customAlgorithms = new Map(window.quickEditInitialState.customAlgorithms);
-        markParityAlgorithmsDirty();
+        updateAppState({
+            displayNames: { ...window.quickEditInitialState.displayNames },
+            perCaseSubtitles: new Map(window.quickEditInitialState.perCaseSubtitles),
+            comments: new Map(window.quickEditInitialState.comments),
+            customAlgorithms: new Map(window.quickEditInitialState.customAlgorithms)
+        });
 
         // Close and reopen modal to refresh
         closeQuickEditModal();
@@ -1419,12 +1420,13 @@ export function addAlgVarRow() {
 
 export function saveAlgVariables() {
     const rows = document.querySelectorAll('#algVarTableBody .alg-var-row');
-    algVariables = new Map();
+    const nextAlgVariables = new Map();
     rows.forEach(row => {
         const name = row.querySelector('.alg-var-name').value.trim().replace(/[^a-zA-Z0-9_]/g, '');
         const value = row.querySelector('.alg-var-value').value.trim();
-        if (name && value) algVariables.set(name, value);
+        if (name && value) nextAlgVariables.set(name, value);
     });
+    updateAppState({ algVariables: nextAlgVariables });
     saveState();
     document.getElementById('algVariablesModal').remove();
     showToast('Variables saved!', 2000, 'success');
