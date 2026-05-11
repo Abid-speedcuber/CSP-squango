@@ -294,6 +294,26 @@
         return { name: 'Unknown', pat: bitStr, rot: 0, originalPat: bitStr, symmetryDegree: 1 };
     }
 
+    function detectShapesFromHex(tlHex, blHex) {
+        if (!currentShapePatterns || Object.keys(currentShapePatterns).length === 0) {
+            currentShapePatterns = loadShapesFromStorage();
+        }
+        const { topUnits, topBits, botUnits, botBits } = hexToUnits(tlHex, blHex);
+        const topMatch = matchPattern(topBits);
+        const botMatch = matchPattern(botBits);
+
+        return {
+            topShape: topMatch.name,
+            bottomShape: botMatch.name,
+            topPattern: topBits,
+            bottomPattern: botBits,
+            topUnits,
+            bottomUnits: botUnits,
+            topMatch,
+            bottomMatch: botMatch
+        };
+    }
+
     // Lookup Tables instead of algorithmic analysis for speed
     const blackEdgeParityMap = {
         '0246':0, '0264':1, '0426':1, '0462':0, '0624':0, '0642':1, '2046':1, '2064':0, '2406':0, '2460':1, '2604':1, '2640':0, '4026':0, '4062':1, '4206':1, '4260':0, '4602':0, '4620':1, '6024':1, '6042':0, '6204':0, '6240':1, '6402':1, '6420':0
@@ -2325,6 +2345,7 @@
             // Force reload shape patterns from localStorage
             currentShapePatterns = loadShapesFromStorage();
         },
+        detectShapesFromHex,
         version: '2.0.0'
     };
 

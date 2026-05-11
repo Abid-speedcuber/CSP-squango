@@ -463,12 +463,8 @@ export function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transp
   }
   // Otherwise treat as scramble notation
   else if (typeof input === 'string') {
-    const cubeState = applyScrambleToCubeState(input);
-    hexCode = encodeCubeStateToHex(cubeState);
-
-    if (hexCode.startsWith('Error:')) {
-      return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
-    }
+    const { tlHex, blHex } = scrambleToHex(input);
+    hexCode = `${tlHex}|${blHex}`;
   }
   else {
     return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">Error: Invalid input type</div>`;
@@ -522,12 +518,8 @@ export function visualizeFromScrambleNotation(scramble, size = 200, colors = {},
     circleColor: colors.circleColor || 'transparent'
   };
 
-  const cubeState = applyScrambleToCubeState(scramble);
-  const hexCode = encodeCubeStateToHex(cubeState);
-
-  if (hexCode.startsWith('Error:')) {
-    return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">${hexCode}</div>`;
-  }
+  const { tlHex, blHex } = scrambleToHex(scramble);
+  const hexCode = `${tlHex}|${blHex}`;
 
   return GenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
 }

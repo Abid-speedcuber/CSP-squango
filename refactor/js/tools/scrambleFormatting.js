@@ -4,49 +4,18 @@
 (function (global) {
   'use strict';
 
-  // EDGE_PIECES, CORNER_PARTNER, getSolvedState, rotateLayer, doSlice, parseScramble → utils.js
-
-  function buildUnitString(state, start) {
-    const units = [];
-    let i = 0;
-    while (i < 12) {
-      const ch = state[start + i];
-      if (EDGE_PIECES.has(ch)) {
-        units.push('E'); i += 1; continue;
-      }
-      const nextCh = state[start + ((i + 1) % 12)];
-      if (CORNER_PARTNER[ch] === nextCh) {
-        units.push('C'); i += 2;
-      } else {
-        units.push('C'); i += 1;
-      }
-    }
-    return units.join('');
-  }
-
-  function C_getShapePattern(state) {
-    const topPattern = buildUnitString(state, 0);
-    const botPattern = buildUnitString(state, 12);
-    return { top: topPattern, bot: botPattern };
-  }
-
-  function C_ApplyScramble(scr) {
-    const a = getSolvedState();
-    for (const move of parseScramble(scr)) {
-      if (move.type === 'turn') {
-        rotateLayer(a, 0, 12, move.top);
-        rotateLayer(a, 12, 12, move.bottom);
-        if (move.hasSlash) doSlice(a);
-      } else {
-        doSlice(a);
-      }
-    }
-    return a;
-  }
-
   function detectSpecialSlash(scramble) {
     const match = scramble.match(/`\/`/);
     return match ? match.index : null;
+  }
+
+  function getShapePattern(scramble) {
+    const detector = global.ParityTracerLibrary && global.ParityTracerLibrary.detectShapesFromHex;
+    if (typeof detector !== 'function') return null;
+
+    const { tlHex, blHex } = global.scrambleToHex(scramble);
+    const shape = detector(tlHex, blHex);
+    return { top: shape.topPattern, bot: shape.bottomPattern };
   }
 
   function processScramble(scramble) {
@@ -54,8 +23,9 @@
     if (slashIndex === null) return { color: null, html: scramble };
 
     const beforeSlash = scramble.substring(0, slashIndex);
-    const state = C_ApplyScramble(beforeSlash);
-    const { top, bot } = C_getShapePattern(state);
+    const shape = getShapePattern(beforeSlash);
+    if (!shape) return { color: null, html: scramble };
+    const { top, bot } = shape;
 
     let color = null;
     if (top === 'CECECECE' && bot === 'ECECECEC') color = 'blue';
@@ -75,5 +45,4 @@
   global.SQ1ColorizerLib = { processScramble };
 
 })(globalThis);
-
 

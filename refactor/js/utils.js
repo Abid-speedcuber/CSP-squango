@@ -1,5 +1,5 @@
 /* ==== FILE: js/utils.js ==== */
-/* exported scrambleToHex invertScramble applyScrambleToCubeState encodeCubeStateToHex hexToShapeIndex shapeIndexToHex */
+/* exported scrambleToHex invertScramble hexToShapeIndex shapeIndexToHex */
 
 export function parseScramble(scramble) {
     const moves = [];
@@ -94,95 +94,6 @@ export function invertScramble(s) {
 }
 
 
-// ── 4. CUBE STATE HELPERS & HEX ENCODING ─────────────────────
-export function getSolvedState() {
-    return 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
-}
-
-export function rotateLayer(arr, start, len, k) {
-    const n = ((k % len) + len) % len;
-    if (n === 0) return;
-    const seg = arr.slice(start, start + len);
-    const out = [];
-    for (let i = 0; i < len; i++) out[(i + n) % len] = seg[i];
-    for (let i = 0; i < len; i++) arr[start + i] = out[i];
-}
-
-export function doSlice(arr) {
-    for (let i = 0; i < 6; i++) [arr[i], arr[12 + i]] = [arr[12 + i], arr[i]];
-}
-
-export const EDGE_PIECES = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-
-export const CORNER_PARTNER = {
-    A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-    N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W'
-};
-
-export const PIECE_LABELS = {
-    A: 'YOG', B: 'YOG', C: 'YG',  D: 'YGR', E: 'YGR', F: 'YR',
-    G: 'YRB', H: 'YRB', I: 'YB',  J: 'YBO', K: 'YBO', L: 'YO',
-    M: 'WR',  N: 'WRG', O: 'WRG', P: 'WG',  Q: 'WGO', R: 'WGO',
-    S: 'WO',  T: 'WOB', U: 'WOB', V: 'WB',  W: 'WBR', X: 'WBR'
-};
-
-export const PIECE_TO_HEX = {
-    'YO': '0', 'YOG': '77', 'YG': '6', 'YGR': '55', 'YR': '4', 'YRB': '33',
-    'YB': '2', 'YBO': '11', 'WR': 'a', 'WRG': 'bb', 'WG': '8', 'WGO': '99',
-    'WO': 'e', 'WOB': 'ff', 'WB': 'c', 'WBR': 'dd'
-};
-
-export function applyScrambleToCubeState(scramble) {
-    const state = getSolvedState();
-    for (const move of parseScramble(scramble)) {
-        if (move.type === 'turn') {
-            rotateLayer(state, 0,  12, move.top);
-            rotateLayer(state, 12, 12, move.bottom);
-            if (move.hasSlash) doSlice(state);
-        } else {
-            doSlice(state);
-        }
-    }
-    return state;
-}
-
-export function encodeCubeStateToHex(state) {
-    function processLayer(startIdx) {
-        const pieces = [];
-        let i = 0;
-        while (i < 12) {
-            const ch = state[startIdx + i];
-            if (EDGE_PIECES.has(ch)) {
-                pieces.push(PIECE_LABELS[ch]);
-                i++;
-            } else {
-                const nextCh = state[startIdx + ((i + 1) % 12)];
-                if (CORNER_PARTNER[ch] === nextCh) {
-                    pieces.push(PIECE_LABELS[ch]);
-                    i += 2;
-                } else {
-                    return null; // invalid
-                }
-            }
-        }
-        return pieces;
-    }
-
-    const topPieces = processLayer(0);
-    const botPieces  = processLayer(12);
-    if (!topPieces || !botPieces) return 'Error: Invalid corner pairing';
-
-    const topHex = topPieces.map(p => PIECE_TO_HEX[p] || '?').join('');
-    const botHex  = botPieces.map(p => PIECE_TO_HEX[p] || '?').join('');
-    if (topHex.includes('?') || botHex.includes('?')) return 'Error: Unknown piece mapping';
-    if (topHex.length !== 12 || botHex.length !== 12)  return 'Error: Invalid hex length';
-
-    const left  = topHex.split('').reverse().join('');
-    const right1 = botHex.slice(0, 6).split('').reverse().join('');
-    const right2 = botHex.slice(6, 12).split('').reverse().join('');
-    return `${left}|${right1}${right2}`;
-}
-
 export const HALF_LAYER = [0, 3, 6, 12, 15, 24, 27, 30, 48, 51, 54, 60, 63];
 export const SHAPE_INDEX_ARRAY = [];
 (function buildShapeIndexArray() {
@@ -274,15 +185,6 @@ for (const [name, descriptor] of Object.entries({
     "hexCycleLeft": { get: () => hexCycleLeft, set: value => { Object.defineProperty(window, "hexCycleLeft", { configurable: true, enumerable: true, writable: true, value }); } },
     "scrambleToHex": { get: () => scrambleToHex, set: value => { Object.defineProperty(window, "scrambleToHex", { configurable: true, enumerable: true, writable: true, value }); } },
     "invertScramble": { get: () => invertScramble, set: value => { Object.defineProperty(window, "invertScramble", { configurable: true, enumerable: true, writable: true, value }); } },
-    "getSolvedState": { get: () => getSolvedState, set: value => { Object.defineProperty(window, "getSolvedState", { configurable: true, enumerable: true, writable: true, value }); } },
-    "rotateLayer": { get: () => rotateLayer, set: value => { Object.defineProperty(window, "rotateLayer", { configurable: true, enumerable: true, writable: true, value }); } },
-    "doSlice": { get: () => doSlice, set: value => { Object.defineProperty(window, "doSlice", { configurable: true, enumerable: true, writable: true, value }); } },
-    "EDGE_PIECES": { get: () => EDGE_PIECES, set: value => { Object.defineProperty(window, "EDGE_PIECES", { configurable: true, enumerable: true, writable: true, value }); } },
-    "CORNER_PARTNER": { get: () => CORNER_PARTNER, set: value => { Object.defineProperty(window, "CORNER_PARTNER", { configurable: true, enumerable: true, writable: true, value }); } },
-    "PIECE_LABELS": { get: () => PIECE_LABELS, set: value => { Object.defineProperty(window, "PIECE_LABELS", { configurable: true, enumerable: true, writable: true, value }); } },
-    "PIECE_TO_HEX": { get: () => PIECE_TO_HEX, set: value => { Object.defineProperty(window, "PIECE_TO_HEX", { configurable: true, enumerable: true, writable: true, value }); } },
-    "applyScrambleToCubeState": { get: () => applyScrambleToCubeState, set: value => { Object.defineProperty(window, "applyScrambleToCubeState", { configurable: true, enumerable: true, writable: true, value }); } },
-    "encodeCubeStateToHex": { get: () => encodeCubeStateToHex, set: value => { Object.defineProperty(window, "encodeCubeStateToHex", { configurable: true, enumerable: true, writable: true, value }); } },
     "HALF_LAYER": { get: () => HALF_LAYER, set: value => { Object.defineProperty(window, "HALF_LAYER", { configurable: true, enumerable: true, writable: true, value }); } },
     "SHAPE_INDEX_ARRAY": { get: () => SHAPE_INDEX_ARRAY, set: value => { Object.defineProperty(window, "SHAPE_INDEX_ARRAY", { configurable: true, enumerable: true, writable: true, value }); } },
     "hexToShapeIndex": { get: () => hexToShapeIndex, set: value => { Object.defineProperty(window, "hexToShapeIndex", { configurable: true, enumerable: true, writable: true, value }); } },
