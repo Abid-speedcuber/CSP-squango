@@ -9,13 +9,13 @@
 // EDGE_PIECES, CORNER_PARTNER, getSolvedState, rotateLayer, doSlice → defined in utils.js
 
 // cornerID map (shapeTracer-specific — not duplicated elsewhere)
-const CORNER_ID = {
+export const CORNER_ID = {
   A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
   N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX'
 };
 
 // Default shape patterns
-const defaultShapePatternsForTracing = {
+export const defaultShapePatternsForTracing = {
   'ECECECEC': 'Sq',
   'EECECCEC': 'Kite',
   'EECCEECC': 'Barr',
@@ -47,14 +47,14 @@ const defaultShapePatternsForTracing = {
   'CCCCCC': 'Star'
 };
 
-function rotateStringForPatternSearch(str, rotAmount) {
+export function rotateStringForPatternSearch(str, rotAmount) {
   const len = str.length;
   const n = ((rotAmount % len) + len) % len;
   return str.slice(n) + str.slice(0, n);
 }
 
 // === SCRAMBLE STANDARDIZATION ===
-function StandardizeThisScramble(scrambleString) {
+export function StandardizeThisScramble(scrambleString) {
   if (!scrambleString) return '';
   let str = scrambleString.trim();
   if (str.startsWith('/')) str = '(0,0)' + str;
@@ -63,7 +63,7 @@ function StandardizeThisScramble(scrambleString) {
 }
 
 // === BUILD UNITS FROM CUBE STATE ===
-function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
+export function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
   const units = [];
   let i = 0;
 
@@ -90,7 +90,7 @@ function buildUnitsFromCubeStateForShapeTracing(cubeState, startIdx) {
 }
 
 // === PATTERN MATCHING ===
-function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
+export function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
   for (const [pattern, name] of Object.entries(shapePatterns)) {
     if (pattern.length !== typeStr.length) continue;
     for (let rotation = 0; rotation < typeStr.length; rotation++) {
@@ -103,7 +103,7 @@ function matchThisPatternToFindTheShapeName(typeStr, shapePatterns) {
 }
 
 // === SHAPE PATH TRACING ===
-function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
+export function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
   const shapePath = [];
   const cubeState = getSolvedState();
 
@@ -158,7 +158,7 @@ function traceTheShapePathThroughThisScramble(scrambleString, shapePatterns) {
 }
 
 // === FORMAT SHAPE PATH ===
-function formatShapePathAsString(shapePath) {
+export function formatShapePathAsString(shapePath) {
   return shapePath.map(step => `${step.topShape}/${step.bottomShape}`).join(' → ');
 }
 
@@ -169,7 +169,7 @@ function formatShapePathAsString(shapePath) {
 /**
  * Option 1: Scramble input → Scramble shape path output
  */
-function traceScrambleToScrambleShapePath(scramble, options = {}) {
+export function traceScrambleToScrambleShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
@@ -185,7 +185,7 @@ function traceScrambleToScrambleShapePath(scramble, options = {}) {
 /**
  * Option 2: Scramble input → Solution shape path output (reversed)
  */
-function traceScrambleToSolutionShapePath(scramble, options = {}) {
+export function traceScrambleToSolutionShapePath(scramble, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Standardize
@@ -204,7 +204,7 @@ function traceScrambleToSolutionShapePath(scramble, options = {}) {
 /**
  * Option 3: Solution input → Scramble shape path output (invert then trace)
  */
-function traceSolutionToScrambleShapePath(solution, options = {}) {
+export function traceSolutionToScrambleShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
@@ -223,7 +223,7 @@ function traceSolutionToScrambleShapePath(solution, options = {}) {
 /**
  * Option 4: Solution input → Solution shape path output (invert, trace, reverse)
  */
-function traceSolutionToSolutionShapePath(solution, options = {}) {
+export function traceSolutionToSolutionShapePath(solution, options = {}) {
   const shapePatterns = options.shapePatterns || { ...defaultShapePatternsForTracing };
 
   // Invert solution to scramble
@@ -251,4 +251,27 @@ if (typeof window !== 'undefined') {
     defaultShapePatternsForTracing: defaultShapePatternsForTracing
   };
   window.Square1ShapePathTracerLibraryWithSillyNames = window.Square1ShapePathTracer;
+}
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "CORNER_ID": { get: () => CORNER_ID, set: value => { Object.defineProperty(window, "CORNER_ID", { configurable: true, enumerable: true, writable: true, value }); } },
+    "defaultShapePatternsForTracing": { get: () => defaultShapePatternsForTracing, set: value => { Object.defineProperty(window, "defaultShapePatternsForTracing", { configurable: true, enumerable: true, writable: true, value }); } },
+    "rotateStringForPatternSearch": { get: () => rotateStringForPatternSearch, set: value => { Object.defineProperty(window, "rotateStringForPatternSearch", { configurable: true, enumerable: true, writable: true, value }); } },
+    "StandardizeThisScramble": { get: () => StandardizeThisScramble, set: value => { Object.defineProperty(window, "StandardizeThisScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "buildUnitsFromCubeStateForShapeTracing": { get: () => buildUnitsFromCubeStateForShapeTracing, set: value => { Object.defineProperty(window, "buildUnitsFromCubeStateForShapeTracing", { configurable: true, enumerable: true, writable: true, value }); } },
+    "matchThisPatternToFindTheShapeName": { get: () => matchThisPatternToFindTheShapeName, set: value => { Object.defineProperty(window, "matchThisPatternToFindTheShapeName", { configurable: true, enumerable: true, writable: true, value }); } },
+    "traceTheShapePathThroughThisScramble": { get: () => traceTheShapePathThroughThisScramble, set: value => { Object.defineProperty(window, "traceTheShapePathThroughThisScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "formatShapePathAsString": { get: () => formatShapePathAsString, set: value => { Object.defineProperty(window, "formatShapePathAsString", { configurable: true, enumerable: true, writable: true, value }); } },
+    "traceScrambleToScrambleShapePath": { get: () => traceScrambleToScrambleShapePath, set: value => { Object.defineProperty(window, "traceScrambleToScrambleShapePath", { configurable: true, enumerable: true, writable: true, value }); } },
+    "traceScrambleToSolutionShapePath": { get: () => traceScrambleToSolutionShapePath, set: value => { Object.defineProperty(window, "traceScrambleToSolutionShapePath", { configurable: true, enumerable: true, writable: true, value }); } },
+    "traceSolutionToScrambleShapePath": { get: () => traceSolutionToScrambleShapePath, set: value => { Object.defineProperty(window, "traceSolutionToScrambleShapePath", { configurable: true, enumerable: true, writable: true, value }); } },
+    "traceSolutionToSolutionShapePath": { get: () => traceSolutionToSolutionShapePath, set: value => { Object.defineProperty(window, "traceSolutionToSolutionShapePath", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
 }

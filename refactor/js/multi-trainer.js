@@ -4,18 +4,18 @@
 // ║                        MULTI-CASE TRAINING SELECTOR                     ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
-let selectorSelectedCases = new Set();
-let selectorSearchTerm = '';
-let selectorFilteredData = [];
+export let selectorSelectedCases = new Set();
+export let selectorSearchTerm = '';
+export let selectorFilteredData = [];
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
-function saveSelectorSelection(key) {
+export function saveSelectorSelection(key) {
     const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
     localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
 }
 
-function loadSelectorSelection(key) {
+export function loadSelectorSelection(key) {
     try {
         const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
         const raw = localStorage.getItem(storageKey);
@@ -44,7 +44,7 @@ window.openTrainingSelector = function () {
     openMultiCaseTrainingModal([...selectorSelectedCases]);
 };
 
-function openSelectorModal(storageKey, onCloseCallback) {
+export function openSelectorModal(storageKey, onCloseCallback) {
     if (storageKey) window._selectorStorageKey = storageKey;
     else if (!window._selectorStorageKey) window._selectorStorageKey = 'sq1-selector-cases';
 
@@ -78,7 +78,7 @@ window.closeSelectorModal = function () {
 
 // ─── Modal Creation ───────────────────────────────────────────────────────────
 
-function createSelectorModal() {
+export function createSelectorModal() {
     if (document.getElementById('trainingSelectorModal')) return;
 
     const modal = document.createElement('div');
@@ -166,14 +166,14 @@ window.onSelectorSearch = function (val) {
     renderSelectorCases();
 };
 
-function getSelectorSorted(arr) {
+export function getSelectorSorted(arr) {
     return [...arr].sort((a, b) => {
         const priorityDelta = getPrioritySortValue(b.name) - getPrioritySortValue(a.name);
         return priorityDelta || (b.probability - a.probability);
     });
 }
 
-function getSelectorFilteredData() {
+export function getSelectorFilteredData() {
     if (!selectorSearchTerm) return getSelectorSorted(data);
     return getSelectorSorted(data.filter(item => {
         const displayName = getDisplayName(item.name).toLowerCase();
@@ -194,7 +194,7 @@ function getSelectorFilteredData() {
 
 // ─── Render Cases Grid ────────────────────────────────────────────────────────
 
-function renderSelectorCases() {
+export function renderSelectorCases() {
     const grid = document.getElementById('selectorCaseGrid');
     if (!grid) return;
 
@@ -340,7 +340,7 @@ window.applySelectorBulkAction = function (action) {
 
 // ─── Multi-Case Training Modal ────────────────────────────────────────────────
 
-let multiTrainingCases = [];
+export let multiTrainingCases = [];
 
 window.openMultiCaseTrainingModal = function (caseNames) {
     multiTrainingCases = caseNames;
@@ -392,7 +392,7 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     if (typeof applyTimerSize === 'function') applyTimerSize();
 };
 
-function updateMultiTrainingTitle() {
+export function updateMultiTrainingTitle() {
     const titleEl = document.getElementById('trainingCaseName');
     if (!titleEl) return;
     const n = multiTrainingCases.length;
@@ -401,7 +401,7 @@ function updateMultiTrainingTitle() {
 
 // ─── Regenerate lookahead when cases change ───────────────────────────────────
 
-function regenerateMultiScrambleLookahead() {
+export function regenerateMultiScrambleLookahead() {
     preGeneratedScrambles = [];
     for (let i = 0; i < 3; i++) {
         preGeneratedScrambles.push(generateNextScrambleData());
@@ -415,7 +415,7 @@ function regenerateMultiScrambleLookahead() {
 
 // ─── Scramble Generation ──────────────────────────────────────────────────────
 
-function generateMultiCaseScrambleData() {
+export function generateMultiCaseScrambleData() {
     if (!multiTrainingCases || multiTrainingCases.length === 0) return null;
 
     const caseName = multiTrainingCases[Math.floor(Math.random() * multiTrainingCases.length)];
@@ -449,7 +449,7 @@ function generateMultiCaseScrambleData() {
             const notation = window.sq1Tools.scrambleFromState(state) || hexCode;
             scrambleImage = visualizeFromScrambleNotation(notation, trainingScrambleImageSize, colorScheme);
         } else {
-            scrambleImage = generateScrambleSVGFromHex(hexCode);
+            scrambleImage = visualizeFromHexCode(hexCode, trainingScrambleImageSize, colorScheme);
         }
     } catch (e) { console.error('Multi image gen error:', e); }
 
@@ -458,7 +458,7 @@ function generateMultiCaseScrambleData() {
 
 // ─── Patch generateNextScrambleData ──────────────────────────────────────────
 
-const _origGenerateNextScrambleData = generateNextScrambleData;
+export const _origGenerateNextScrambleData = generateNextScrambleData;
 window.generateNextScrambleData = function () {
     if (window._multiCaseMode) {
         const d = generateMultiCaseScrambleData();
@@ -505,3 +505,29 @@ window.selectorImportHook = function (stateObj) {
         saveSelectorSelection();
     }
 };
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "selectorSelectedCases": { get: () => selectorSelectedCases, set: value => { selectorSelectedCases = value; } },
+    "selectorSearchTerm": { get: () => selectorSearchTerm, set: value => { selectorSearchTerm = value; } },
+    "selectorFilteredData": { get: () => selectorFilteredData, set: value => { selectorFilteredData = value; } },
+    "saveSelectorSelection": { get: () => saveSelectorSelection, set: value => { Object.defineProperty(window, "saveSelectorSelection", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadSelectorSelection": { get: () => loadSelectorSelection, set: value => { Object.defineProperty(window, "loadSelectorSelection", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openSelectorModal": { get: () => openSelectorModal, set: value => { Object.defineProperty(window, "openSelectorModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "createSelectorModal": { get: () => createSelectorModal, set: value => { Object.defineProperty(window, "createSelectorModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getSelectorSorted": { get: () => getSelectorSorted, set: value => { Object.defineProperty(window, "getSelectorSorted", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getSelectorFilteredData": { get: () => getSelectorFilteredData, set: value => { Object.defineProperty(window, "getSelectorFilteredData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderSelectorCases": { get: () => renderSelectorCases, set: value => { Object.defineProperty(window, "renderSelectorCases", { configurable: true, enumerable: true, writable: true, value }); } },
+    "multiTrainingCases": { get: () => multiTrainingCases, set: value => { multiTrainingCases = value; } },
+    "updateMultiTrainingTitle": { get: () => updateMultiTrainingTitle, set: value => { Object.defineProperty(window, "updateMultiTrainingTitle", { configurable: true, enumerable: true, writable: true, value }); } },
+    "regenerateMultiScrambleLookahead": { get: () => regenerateMultiScrambleLookahead, set: value => { Object.defineProperty(window, "regenerateMultiScrambleLookahead", { configurable: true, enumerable: true, writable: true, value }); } },
+    "generateMultiCaseScrambleData": { get: () => generateMultiCaseScrambleData, set: value => { Object.defineProperty(window, "generateMultiCaseScrambleData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_origGenerateNextScrambleData": { get: () => _origGenerateNextScrambleData, set: value => { Object.defineProperty(window, "_origGenerateNextScrambleData", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

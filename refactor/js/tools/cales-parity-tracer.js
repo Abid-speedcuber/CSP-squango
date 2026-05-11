@@ -1767,7 +1767,7 @@
         if (config.returnOnlyParityValue && config.scrambleTextInput) {
             try {
                 const { tlHex, blHex } = scrambleToHex(config.scrambleTextInput);
-                const useClockwise = (typeof cornerMode !== 'undefined' && cornerMode === 'clockwise');
+                const useClockwise = (typeof cornerStickerMode !== 'undefined' && cornerStickerMode === 'clockwise');
                 const p = calculateParityFromHex(tlHex, blHex, z2TracingModeEnabled, useClockwise, config.scrambleTextInput);
                 const useEvil = getEvilnessValue() && p.evilStep !== null;
                 return (useEvil ? p.isOddWithEvil : p.isOdd) ? 'Odd' : 'Even';

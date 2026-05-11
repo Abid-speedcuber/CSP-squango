@@ -10,7 +10,7 @@ window.PRESET_CONFIG = {
 };
 
 // Default display names for all 90 cases (used for fresh installs)
-const defaultDisplayNames = {
+export const defaultDisplayNames = {
     "8/Star": "8/Star",
     "7-1/Star": "7-1/Star",
     "6-2/Star": "6-2/Star",
@@ -104,16 +104,16 @@ const defaultDisplayNames = {
 };
 
 // Display names - THE single source of truth (initialized from defaults or loaded from save)
-let displayNames = {};
+export let displayNames = {};
 
-let filteredData = [...data];
-let comments = new Map(); // stores {caseName: "comment text"}
-let plannedLevels = new Map(); // stores {caseName: 0 learned, 1-7 planned priority, 8 learning}
-let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
-let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
-let evilnessFactor = false; // Toggle evilness factor on/off
-let evilnessStringReturn = false; // Toggle if string return uses evilness
-let evilnessMap = {}; // {caseName: boolean} - true = evil
+export let filteredData = [...data];
+export let comments = new Map(); // stores {caseName: "comment text"}
+export let plannedLevels = new Map(); // stores {caseName: 0 learned, 1-7 planned priority, 8 learning}
+export let parityOrientations = new Map(); // stores {shapePattern: rotationAmount}
+export let cornerStickerMode = 'counterclockwise'; // 'counterclockwise' or 'clockwise'
+export let evilnessFactor = false; // Toggle evilness factor on/off
+export let evilnessStringReturn = false; // Toggle if string return uses evilness
+export let evilnessMap = {}; // {caseName: boolean} - true = evil
 
 // Global function to set corner sticker mode
 window.setCornerStickerMode = function (mode) {
@@ -121,21 +121,21 @@ window.setCornerStickerMode = function (mode) {
     markParityAlgorithmsDirty();
     saveState();
 };
-let customAlgorithms = new Map(); // stores {caseName: [algorithm, ...]}
+export let customAlgorithms = new Map(); // stores {caseName: [algorithm, ...]}
 // svgData is now the source of truth, initialized from DEFAULT_SVGS in svg.js
-let parityAlgorithmsByCase = new Map(); // runtime-only {caseName: {odd: [...], even: [...]}}
-let parityAlgorithmsDirty = true;
+export let parityAlgorithmsByCase = new Map(); // runtime-only {caseName: {odd: [...], even: [...]}}
+export let parityAlgorithmsDirty = true;
 
-let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
-let hideInstructions = false; // Toggle for hiding instruction buttons
-let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
-let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
-let generalNotes = ''; // HTML content for general notes
-let algVariables = new Map();
+export let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
+export let hideInstructions = false; // Toggle for hiding instruction buttons
+export let hideParenthesis = false; // Toggle for hiding parenthesis in algorithms
+export let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
+export let generalNotes = ''; // HTML content for general notes
+export let algVariables = new Map();
 window.enhancedAccess = localStorage.getItem('enhancedAccess') === 'true'; // Toggle for enhanced access (not exported)
-let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
-let currentSortMode = localStorage.getItem('sortMode') || 'probability';
-let colorScheme = {
+export let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
+export let currentSortMode = localStorage.getItem('sortMode') || 'probability';
+export let colorScheme = {
     topColor: '#000000',
     bottomColor: '#FFFFFF',
     frontColor: '#CC0000',
@@ -146,13 +146,13 @@ let colorScheme = {
     circleColor: 'transparent'
 };
 
-const LEARNED_PRIORITY_LEVEL = 0;
-const MIN_PLANNED_PRIORITY_LEVEL = 1;
-const DEFAULT_PRIORITY_LEVEL = 4;
-const MAX_PLANNED_PRIORITY_LEVEL = 7;
-const LEARNING_PRIORITY_LEVEL = 8;
+export const LEARNED_PRIORITY_LEVEL = 0;
+export const MIN_PLANNED_PRIORITY_LEVEL = 1;
+export const DEFAULT_PRIORITY_LEVEL = 4;
+export const MAX_PLANNED_PRIORITY_LEVEL = 7;
+export const LEARNING_PRIORITY_LEVEL = 8;
 
-function normalizePriorityLevel(level, fallback = DEFAULT_PRIORITY_LEVEL) {
+export function normalizePriorityLevel(level, fallback = DEFAULT_PRIORITY_LEVEL) {
     const parsed = Number(level);
     if (!Number.isFinite(parsed)) return fallback;
     const rounded = Math.round(parsed);
@@ -161,44 +161,44 @@ function normalizePriorityLevel(level, fallback = DEFAULT_PRIORITY_LEVEL) {
     return rounded;
 }
 
-function getCasePriorityLevel(caseName) {
+export function getCasePriorityLevel(caseName) {
     if (!plannedLevels.has(caseName)) return DEFAULT_PRIORITY_LEVEL;
     return normalizePriorityLevel(plannedLevels.get(caseName));
 }
 
-function getPlannedPriorityLevel(caseName) {
+export function getPlannedPriorityLevel(caseName) {
     const level = getCasePriorityLevel(caseName);
     return (level >= MIN_PLANNED_PRIORITY_LEVEL && level <= MAX_PLANNED_PRIORITY_LEVEL)
         ? level
         : DEFAULT_PRIORITY_LEVEL;
 }
 
-function getPriorityVisualLevel(caseName) {
+export function getPriorityVisualLevel(caseName) {
     return (MAX_PLANNED_PRIORITY_LEVEL + MIN_PLANNED_PRIORITY_LEVEL) - getPlannedPriorityLevel(caseName);
 }
 
-function setCasePriorityLevel(caseName, level) {
+export function setCasePriorityLevel(caseName, level) {
     plannedLevels.set(caseName, normalizePriorityLevel(level));
 }
 
-function isCaseLearned(caseName) {
+export function isCaseLearned(caseName) {
     return getCasePriorityLevel(caseName) === LEARNED_PRIORITY_LEVEL;
 }
 
-function isCaseLearning(caseName) {
+export function isCaseLearning(caseName) {
     return getCasePriorityLevel(caseName) === LEARNING_PRIORITY_LEVEL;
 }
 
-function isCasePlanned(caseName) {
+export function isCasePlanned(caseName) {
     const level = getCasePriorityLevel(caseName);
     return level >= MIN_PLANNED_PRIORITY_LEVEL && level <= MAX_PLANNED_PRIORITY_LEVEL;
 }
 
-function getPrioritySortValue(caseName) {
+export function getPrioritySortValue(caseName) {
     return getCasePriorityLevel(caseName);
 }
 
-function normalizeAlgorithmList(rawAlgorithms) {
+export function normalizeAlgorithmList(rawAlgorithms) {
     let algorithms = rawAlgorithms;
     if (typeof algorithms === 'string') {
         try {
@@ -225,7 +225,7 @@ function normalizeAlgorithmList(rawAlgorithms) {
     return [];
 }
 
-function parseLegacyAlgorithmSnapshot(rawSnapshot) {
+export function parseLegacyAlgorithmSnapshot(rawSnapshot) {
     if (!rawSnapshot) return undefined;
     if (typeof rawSnapshot !== 'string') return rawSnapshot;
     try {
@@ -235,7 +235,7 @@ function parseLegacyAlgorithmSnapshot(rawSnapshot) {
     }
 }
 
-function hydrateCustomAlgorithms(rawAlgorithms, legacySnapshot) {
+export function hydrateCustomAlgorithms(rawAlgorithms, legacySnapshot) {
     const source = rawAlgorithms || parseLegacyAlgorithmSnapshot(legacySnapshot) || {};
     const hydrated = new Map();
 
@@ -248,7 +248,7 @@ function hydrateCustomAlgorithms(rawAlgorithms, legacySnapshot) {
     markParityAlgorithmsDirty();
 }
 
-function getCaseAlgorithmList(itemOrCaseName) {
+export function getCaseAlgorithmList(itemOrCaseName) {
     const caseName = typeof itemOrCaseName === 'string' ? itemOrCaseName : itemOrCaseName.name;
     const item = typeof itemOrCaseName === 'string'
         ? window.CSPData && window.CSPData.getCase(caseName)
@@ -259,16 +259,16 @@ function getCaseAlgorithmList(itemOrCaseName) {
     return normalizeAlgorithmList([...(item.odd || []), ...(item.even || [])]);
 }
 
-function getParityAlgorithmsForCase(caseName) {
+export function getParityAlgorithmsForCase(caseName) {
     if (parityAlgorithmsDirty) calculateAndCacheAllParity();
     return parityAlgorithmsByCase.get(caseName) || { odd: [], even: [] };
 }
 
-function markParityAlgorithmsDirty() {
+export function markParityAlgorithmsDirty() {
     parityAlgorithmsDirty = true;
 }
 
-function ensurePriorityLevelsForAllCases() {
+export function ensurePriorityLevelsForAllCases() {
     const validCaseNames = new Set(data.map(item => item.name));
     plannedLevels = new Map(
         [...plannedLevels.entries()]
@@ -283,7 +283,7 @@ function ensurePriorityLevelsForAllCases() {
     }
 }
 
-function hydratePriorityLevels(state = {}) {
+export function hydratePriorityLevels(state = {}) {
     const levels = new Map();
     if (state.plannedLevels && typeof state.plannedLevels === 'object') {
         for (const [caseName, level] of Object.entries(state.plannedLevels)) {
@@ -324,19 +324,19 @@ window.SQG.algorithms = Object.freeze({
     markParityAlgorithmsDirty
 });
 
-let scrambleImageSize = 200; // Default size
-let profileName = localStorage.getItem('profileName') || 'Profile';
-let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
-let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
-let presetData = null; // Will store loaded preset data
+export let scrambleImageSize = 200; // Default size
+export let profileName = localStorage.getItem('profileName') || 'Profile';
+export let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
+export let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
+export let presetData = null; // Will store loaded preset data
 
 // Check if this is first load BEFORE loading state
-const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
+export const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 
 // If first load, we'll apply default preset after initialization
 
 // Function to calculate and cache parity for all cases
-function calculateAndCacheAllParity() {
+export function calculateAndCacheAllParity() {
 
     if (typeof window.caleTracer === 'undefined') {
         console.warn('Parity analyzer not available, skipping parity calculation');
@@ -391,7 +391,7 @@ function calculateAndCacheAllParity() {
 }
 
 // Build shape index → caseName lookup (computed once)
-function buildShapeIndexToCaseMap() {
+export function buildShapeIndexToCaseMap() {
     if (window.CSPData) {
         return Object.fromEntries(window.CSPData.caseNameByShapeIndex);
     }
@@ -416,14 +416,14 @@ function buildShapeIndexToCaseMap() {
     return map;
 }
 
-let _shapeIndexToCaseMap = null;
-function getShapeIndexToCaseMap() {
+export let _shapeIndexToCaseMap = null;
+export function getShapeIndexToCaseMap() {
     if (!_shapeIndexToCaseMap) _shapeIndexToCaseMap = buildShapeIndexToCaseMap();
     return _shapeIndexToCaseMap;
 }
 
 // Get case name from a scramble string using shape index
-function getCaseNameFromScramble(scramble) {
+export function getCaseNameFromScramble(scramble) {
     if (!scramble || typeof window.algToShapeIndex === 'undefined') return null;
     try {
         const setup = invertScramble(scramble);
@@ -437,17 +437,17 @@ function getCaseNameFromScramble(scramble) {
 }
 
 // Check if a case is evil
-function isCaseEvil(caseName) {
+export function isCaseEvil(caseName) {
     if (!evilnessFactor) return false;
     return evilnessMap[caseName] === true;
 }
 
 // Function to check if parity needs recalculation
-function needsParityRecalculation() {
+export function needsParityRecalculation() {
     return parityAlgorithmsDirty;
 }
 
-function normalizeTracingSchemePatterns(rawSchemes) {
+export function normalizeTracingSchemePatterns(rawSchemes) {
     if (!rawSchemes) return rawSchemes;
 
     let schemes = rawSchemes;
@@ -478,7 +478,7 @@ function normalizeTracingSchemePatterns(rawSchemes) {
     return wasString ? JSON.stringify(normalized) : normalized;
 }
 
-function storeCustomTracingSchemes(rawSchemes) {
+export function storeCustomTracingSchemes(rawSchemes) {
     if (!rawSchemes) return;
     const normalized = normalizeTracingSchemePatterns(rawSchemes);
     const serialized = typeof normalized === 'string' ? normalized : JSON.stringify(normalized);
@@ -486,11 +486,11 @@ function storeCustomTracingSchemes(rawSchemes) {
     markParityAlgorithmsDirty();
 }
 
-function getCustomTracingSchemesFromState(state) {
+export function getCustomTracingSchemesFromState(state) {
     return state && (state.customTracingSchemes || state.customShapesForParityTracerLibrary);
 }
 
-function migrateLegacyTracingSchemesFromStorage() {
+export function migrateLegacyTracingSchemesFromStorage() {
     const currentSchemes = localStorage.getItem('customTracingSchemes');
     if (currentSchemes) {
         storeCustomTracingSchemes(currentSchemes);
@@ -506,11 +506,11 @@ function migrateLegacyTracingSchemesFromStorage() {
 migrateLegacyTracingSchemesFromStorage();
 
 // Load evilness settings from localStorage
-const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
+export const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
 if (storedEvilnessFactor !== null) evilnessFactor = storedEvilnessFactor === 'true';
-const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
+export const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
 if (storedEvilnessStringReturn !== null) evilnessStringReturn = storedEvilnessStringReturn === 'true';
-const storedEvilnessMap = localStorage.getItem('evilnessMap');
+export const storedEvilnessMap = localStorage.getItem('evilnessMap');
 if (storedEvilnessMap !== null) evilnessMap = JSON.parse(storedEvilnessMap);
 
 // Load saved state
@@ -572,7 +572,7 @@ try {
 }
 
 // Function to initialize SVG data from defaults if needed
-function initializeSVGData() {
+export function initializeSVGData() {
     if (!window.svgData) {
         window.svgData = { ...DEFAULT_SVGS };
     }
@@ -596,7 +596,7 @@ if (isFirstLoad) {
     saveState();
 }
 
-function saveState() {
+export function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
     localStorage.setItem('enhancedAccess', window.enhancedAccess.toString());
     localStorage.setItem('currentPreset', currentPreset);
@@ -630,7 +630,7 @@ function saveState() {
 }
 
 // Load preset data
-async function loadPresetData(presetName) {
+export async function loadPresetData(presetName) {
     try {
         const presetPath = window.PRESET_CONFIG[presetName];
         if (!presetPath) {
@@ -647,13 +647,13 @@ async function loadPresetData(presetName) {
 }
 
 // Get default values from current preset
-function getPresetDefaults() {
+export function getPresetDefaults() {
     if (!presetData) return null;
     return presetData;
 }
 
 // Load preset data to use as defaults only (doesn't overwrite user data)
-async function loadPresetAsDefaults(presetName) {
+export async function loadPresetAsDefaults(presetName) {
     const preset = await loadPresetData(presetName);
     if (!preset) return false;
 
@@ -673,7 +673,7 @@ async function loadPresetAsDefaults(presetName) {
 }
 
 // Apply preset (overwrites all user data - only used on first load or explicit switch)
-window.applyPreset = async function (presetName, skipWarning = false, silent = false) {
+export async function applyPreset(presetName, skipWarning = false, silent = false) {
     const data = await loadPresetData(presetName);
     if (!data) return;
 
@@ -785,8 +785,10 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     }
 }
 
+window.applyPreset = applyPreset;
+
 // Initialize preset on load (just loads as defaults, doesn't overwrite user data)
-window.initializePreset = async function () {
+export async function initializePreset() {
     const savedPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
     const success = await loadPresetAsDefaults(savedPreset);
     if (!success) {
@@ -795,9 +797,11 @@ window.initializePreset = async function () {
     }
 }
 
-const EXPORT_FORMAT_VERSION = 4;
+window.initializePreset = initializePreset;
 
-function readStoredJSONSetting(key) {
+export const EXPORT_FORMAT_VERSION = 4;
+
+export function readStoredJSONSetting(key) {
     const value = localStorage.getItem(key);
     if (value === null || value === '') return undefined;
     try {
@@ -807,25 +811,25 @@ function readStoredJSONSetting(key) {
     }
 }
 
-function stringifyStoredJSONSetting(value) {
+export function stringifyStoredJSONSetting(value) {
     if (value === undefined || value === null || value === '') return null;
     return typeof value === 'string' ? value : JSON.stringify(value);
 }
 
-function readStoredBooleanSetting(key) {
+export function readStoredBooleanSetting(key) {
     const value = localStorage.getItem(key);
     if (value === null) return undefined;
     return value === 'true';
 }
 
-function readStoredNumberSetting(key) {
+export function readStoredNumberSetting(key) {
     const value = localStorage.getItem(key);
     if (value === null || value === '') return undefined;
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function buildLegacyExportState() {
+export function buildLegacyExportState() {
     return {
         comments: Object.fromEntries(comments),
         plannedLevels: Object.fromEntries(plannedLevels),
@@ -859,7 +863,7 @@ function buildLegacyExportState() {
     };
 }
 
-function buildExportDocument() {
+export function buildExportDocument() {
     const state = buildLegacyExportState();
     if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
 
@@ -918,7 +922,7 @@ function buildExportDocument() {
     };
 }
 
-function flattenImportedState(rawState) {
+export function flattenImportedState(rawState) {
     if (!rawState || typeof rawState !== 'object') {
         throw new Error('Import file must contain a JSON object.');
     }
@@ -984,7 +988,7 @@ window.exportData = function() {
     URL.revokeObjectURL(url);
 }
 
-function importData(jsonStr) {
+export function importData(jsonStr) {
     try {
         const state = flattenImportedState(JSON.parse(jsonStr));
         const importedTracingSchemes = getCustomTracingSchemesFromState(state);
@@ -1111,7 +1115,7 @@ window.SQG.appState = Object.freeze({
     save: saveState
 });
 
-function handleFileImport(file) {
+export function handleFileImport(file) {
     const reader = new FileReader();
     reader.onload = (e) => {
         importData(e.target.result);
@@ -1125,13 +1129,13 @@ function handleFileImport(file) {
 }
 
 // DOM element references - will be initialized after DOM is ready
-let searchInput = null;
-let sortSelect = null;
-let learnFilterSelect = null;
-let grid = null;
+export let searchInput = null;
+export let sortSelect = null;
+export let learnFilterSelect = null;
+export let grid = null;
 
 // Initialize DOM references
-function initializeDOMReferences() {
+export function initializeDOMReferences() {
     searchInput = document.getElementById('search');
     sortSelect = document.getElementById('sort');
     learnFilterSelect = document.getElementById('learnFilter');
@@ -1139,12 +1143,12 @@ function initializeDOMReferences() {
 }
 
 // Dynamic SVG scaling based on viewport width
-function updateSVGScaling() {
+export function updateSVGScaling() {
     // No longer needed - CSS handles scaling with aspect-ratio
 }
 
 // Debounced resize handler for better performance
-function handleResize() {
+export function handleResize() {
     // Reserved for future resize logic if needed
 }
 
@@ -1153,7 +1157,7 @@ window.addEventListener('load', updateSVGScaling);
 window.addEventListener('resize', handleResize);
 
 // Also call after rendering cards
-const originalRender = window.render;
+export const originalRender = window.render;
 if (typeof originalRender === 'function') {
     window.render = function () {
         originalRender();
@@ -1217,7 +1221,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
 };
 
 // Apply VW-based sizing to topbar on mobile
-function applyTopbarVWScaling() {
+export function applyTopbarVWScaling() {
     const topbar = document.querySelector('.topbar');
     if (!topbar) return;
 
@@ -1230,3 +1234,102 @@ function applyTopbarVWScaling() {
 
 window.addEventListener('resize', applyTopbarVWScaling);
 document.addEventListener('DOMContentLoaded', applyTopbarVWScaling);
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "defaultDisplayNames": { get: () => defaultDisplayNames, set: value => { Object.defineProperty(window, "defaultDisplayNames", { configurable: true, enumerable: true, writable: true, value }); } },
+    "displayNames": { get: () => displayNames, set: value => { displayNames = value; } },
+    "filteredData": { get: () => filteredData, set: value => { filteredData = value; } },
+    "comments": { get: () => comments, set: value => { comments = value; } },
+    "plannedLevels": { get: () => plannedLevels, set: value => { plannedLevels = value; } },
+    "parityOrientations": { get: () => parityOrientations, set: value => { parityOrientations = value; } },
+    "cornerStickerMode": { get: () => cornerStickerMode, set: value => { cornerStickerMode = value; } },
+    "evilnessFactor": { get: () => evilnessFactor, set: value => { evilnessFactor = value; } },
+    "evilnessStringReturn": { get: () => evilnessStringReturn, set: value => { evilnessStringReturn = value; } },
+    "evilnessMap": { get: () => evilnessMap, set: value => { evilnessMap = value; } },
+    "customAlgorithms": { get: () => customAlgorithms, set: value => { customAlgorithms = value; } },
+    "parityAlgorithmsByCase": { get: () => parityAlgorithmsByCase, set: value => { parityAlgorithmsByCase = value; } },
+    "parityAlgorithmsDirty": { get: () => parityAlgorithmsDirty, set: value => { parityAlgorithmsDirty = value; } },
+    "perCaseSubtitles": { get: () => perCaseSubtitles, set: value => { perCaseSubtitles = value; } },
+    "hideInstructions": { get: () => hideInstructions, set: value => { hideInstructions = value; } },
+    "hideParenthesis": { get: () => hideParenthesis, set: value => { hideParenthesis = value; } },
+    "algorithmFontSize": { get: () => algorithmFontSize, set: value => { algorithmFontSize = value; } },
+    "generalNotes": { get: () => generalNotes, set: value => { generalNotes = value; } },
+    "algVariables": { get: () => algVariables, set: value => { algVariables = value; } },
+    "showHints": { get: () => showHints, set: value => { showHints = value; } },
+    "currentSortMode": { get: () => currentSortMode, set: value => { currentSortMode = value; } },
+    "colorScheme": { get: () => colorScheme, set: value => { colorScheme = value; } },
+    "LEARNED_PRIORITY_LEVEL": { get: () => LEARNED_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "LEARNED_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
+    "MIN_PLANNED_PRIORITY_LEVEL": { get: () => MIN_PLANNED_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "MIN_PLANNED_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
+    "DEFAULT_PRIORITY_LEVEL": { get: () => DEFAULT_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "DEFAULT_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
+    "MAX_PLANNED_PRIORITY_LEVEL": { get: () => MAX_PLANNED_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "MAX_PLANNED_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
+    "LEARNING_PRIORITY_LEVEL": { get: () => LEARNING_PRIORITY_LEVEL, set: value => { Object.defineProperty(window, "LEARNING_PRIORITY_LEVEL", { configurable: true, enumerable: true, writable: true, value }); } },
+    "normalizePriorityLevel": { get: () => normalizePriorityLevel, set: value => { Object.defineProperty(window, "normalizePriorityLevel", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCasePriorityLevel": { get: () => getCasePriorityLevel, set: value => { Object.defineProperty(window, "getCasePriorityLevel", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getPlannedPriorityLevel": { get: () => getPlannedPriorityLevel, set: value => { Object.defineProperty(window, "getPlannedPriorityLevel", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getPriorityVisualLevel": { get: () => getPriorityVisualLevel, set: value => { Object.defineProperty(window, "getPriorityVisualLevel", { configurable: true, enumerable: true, writable: true, value }); } },
+    "setCasePriorityLevel": { get: () => setCasePriorityLevel, set: value => { Object.defineProperty(window, "setCasePriorityLevel", { configurable: true, enumerable: true, writable: true, value }); } },
+    "isCaseLearned": { get: () => isCaseLearned, set: value => { Object.defineProperty(window, "isCaseLearned", { configurable: true, enumerable: true, writable: true, value }); } },
+    "isCaseLearning": { get: () => isCaseLearning, set: value => { Object.defineProperty(window, "isCaseLearning", { configurable: true, enumerable: true, writable: true, value }); } },
+    "isCasePlanned": { get: () => isCasePlanned, set: value => { Object.defineProperty(window, "isCasePlanned", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getPrioritySortValue": { get: () => getPrioritySortValue, set: value => { Object.defineProperty(window, "getPrioritySortValue", { configurable: true, enumerable: true, writable: true, value }); } },
+    "normalizeAlgorithmList": { get: () => normalizeAlgorithmList, set: value => { Object.defineProperty(window, "normalizeAlgorithmList", { configurable: true, enumerable: true, writable: true, value }); } },
+    "parseLegacyAlgorithmSnapshot": { get: () => parseLegacyAlgorithmSnapshot, set: value => { Object.defineProperty(window, "parseLegacyAlgorithmSnapshot", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hydrateCustomAlgorithms": { get: () => hydrateCustomAlgorithms, set: value => { Object.defineProperty(window, "hydrateCustomAlgorithms", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCaseAlgorithmList": { get: () => getCaseAlgorithmList, set: value => { Object.defineProperty(window, "getCaseAlgorithmList", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getParityAlgorithmsForCase": { get: () => getParityAlgorithmsForCase, set: value => { Object.defineProperty(window, "getParityAlgorithmsForCase", { configurable: true, enumerable: true, writable: true, value }); } },
+    "markParityAlgorithmsDirty": { get: () => markParityAlgorithmsDirty, set: value => { Object.defineProperty(window, "markParityAlgorithmsDirty", { configurable: true, enumerable: true, writable: true, value }); } },
+    "ensurePriorityLevelsForAllCases": { get: () => ensurePriorityLevelsForAllCases, set: value => { Object.defineProperty(window, "ensurePriorityLevelsForAllCases", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hydratePriorityLevels": { get: () => hydratePriorityLevels, set: value => { Object.defineProperty(window, "hydratePriorityLevels", { configurable: true, enumerable: true, writable: true, value }); } },
+    "scrambleImageSize": { get: () => scrambleImageSize, set: value => { scrambleImageSize = value; } },
+    "profileName": { get: () => profileName, set: value => { profileName = value; } },
+    "profileAvatar": { get: () => profileAvatar, set: value => { profileAvatar = value; } },
+    "currentPreset": { get: () => currentPreset, set: value => { currentPreset = value; } },
+    "presetData": { get: () => presetData, set: value => { presetData = value; } },
+    "isFirstLoad": { get: () => isFirstLoad, set: value => { Object.defineProperty(window, "isFirstLoad", { configurable: true, enumerable: true, writable: true, value }); } },
+    "calculateAndCacheAllParity": { get: () => calculateAndCacheAllParity, set: value => { Object.defineProperty(window, "calculateAndCacheAllParity", { configurable: true, enumerable: true, writable: true, value }); } },
+    "buildShapeIndexToCaseMap": { get: () => buildShapeIndexToCaseMap, set: value => { Object.defineProperty(window, "buildShapeIndexToCaseMap", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_shapeIndexToCaseMap": { get: () => _shapeIndexToCaseMap, set: value => { _shapeIndexToCaseMap = value; } },
+    "getShapeIndexToCaseMap": { get: () => getShapeIndexToCaseMap, set: value => { Object.defineProperty(window, "getShapeIndexToCaseMap", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCaseNameFromScramble": { get: () => getCaseNameFromScramble, set: value => { Object.defineProperty(window, "getCaseNameFromScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "isCaseEvil": { get: () => isCaseEvil, set: value => { Object.defineProperty(window, "isCaseEvil", { configurable: true, enumerable: true, writable: true, value }); } },
+    "needsParityRecalculation": { get: () => needsParityRecalculation, set: value => { Object.defineProperty(window, "needsParityRecalculation", { configurable: true, enumerable: true, writable: true, value }); } },
+    "normalizeTracingSchemePatterns": { get: () => normalizeTracingSchemePatterns, set: value => { Object.defineProperty(window, "normalizeTracingSchemePatterns", { configurable: true, enumerable: true, writable: true, value }); } },
+    "storeCustomTracingSchemes": { get: () => storeCustomTracingSchemes, set: value => { Object.defineProperty(window, "storeCustomTracingSchemes", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCustomTracingSchemesFromState": { get: () => getCustomTracingSchemesFromState, set: value => { Object.defineProperty(window, "getCustomTracingSchemesFromState", { configurable: true, enumerable: true, writable: true, value }); } },
+    "migrateLegacyTracingSchemesFromStorage": { get: () => migrateLegacyTracingSchemesFromStorage, set: value => { Object.defineProperty(window, "migrateLegacyTracingSchemesFromStorage", { configurable: true, enumerable: true, writable: true, value }); } },
+    "storedEvilnessFactor": { get: () => storedEvilnessFactor, set: value => { Object.defineProperty(window, "storedEvilnessFactor", { configurable: true, enumerable: true, writable: true, value }); } },
+    "storedEvilnessStringReturn": { get: () => storedEvilnessStringReturn, set: value => { Object.defineProperty(window, "storedEvilnessStringReturn", { configurable: true, enumerable: true, writable: true, value }); } },
+    "storedEvilnessMap": { get: () => storedEvilnessMap, set: value => { Object.defineProperty(window, "storedEvilnessMap", { configurable: true, enumerable: true, writable: true, value }); } },
+    "initializeSVGData": { get: () => initializeSVGData, set: value => { Object.defineProperty(window, "initializeSVGData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveState": { get: () => saveState, set: value => { Object.defineProperty(window, "saveState", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadPresetData": { get: () => loadPresetData, set: value => { Object.defineProperty(window, "loadPresetData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getPresetDefaults": { get: () => getPresetDefaults, set: value => { Object.defineProperty(window, "getPresetDefaults", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadPresetAsDefaults": { get: () => loadPresetAsDefaults, set: value => { Object.defineProperty(window, "loadPresetAsDefaults", { configurable: true, enumerable: true, writable: true, value }); } },
+    "EXPORT_FORMAT_VERSION": { get: () => EXPORT_FORMAT_VERSION, set: value => { Object.defineProperty(window, "EXPORT_FORMAT_VERSION", { configurable: true, enumerable: true, writable: true, value }); } },
+    "readStoredJSONSetting": { get: () => readStoredJSONSetting, set: value => { Object.defineProperty(window, "readStoredJSONSetting", { configurable: true, enumerable: true, writable: true, value }); } },
+    "stringifyStoredJSONSetting": { get: () => stringifyStoredJSONSetting, set: value => { Object.defineProperty(window, "stringifyStoredJSONSetting", { configurable: true, enumerable: true, writable: true, value }); } },
+    "readStoredBooleanSetting": { get: () => readStoredBooleanSetting, set: value => { Object.defineProperty(window, "readStoredBooleanSetting", { configurable: true, enumerable: true, writable: true, value }); } },
+    "readStoredNumberSetting": { get: () => readStoredNumberSetting, set: value => { Object.defineProperty(window, "readStoredNumberSetting", { configurable: true, enumerable: true, writable: true, value }); } },
+    "buildLegacyExportState": { get: () => buildLegacyExportState, set: value => { Object.defineProperty(window, "buildLegacyExportState", { configurable: true, enumerable: true, writable: true, value }); } },
+    "buildExportDocument": { get: () => buildExportDocument, set: value => { Object.defineProperty(window, "buildExportDocument", { configurable: true, enumerable: true, writable: true, value }); } },
+    "flattenImportedState": { get: () => flattenImportedState, set: value => { Object.defineProperty(window, "flattenImportedState", { configurable: true, enumerable: true, writable: true, value }); } },
+    "importData": { get: () => importData, set: value => { Object.defineProperty(window, "importData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleFileImport": { get: () => handleFileImport, set: value => { Object.defineProperty(window, "handleFileImport", { configurable: true, enumerable: true, writable: true, value }); } },
+    "searchInput": { get: () => searchInput, set: value => { searchInput = value; } },
+    "sortSelect": { get: () => sortSelect, set: value => { sortSelect = value; } },
+    "learnFilterSelect": { get: () => learnFilterSelect, set: value => { learnFilterSelect = value; } },
+    "grid": { get: () => grid, set: value => { grid = value; } },
+    "initializeDOMReferences": { get: () => initializeDOMReferences, set: value => { Object.defineProperty(window, "initializeDOMReferences", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateSVGScaling": { get: () => updateSVGScaling, set: value => { Object.defineProperty(window, "updateSVGScaling", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleResize": { get: () => handleResize, set: value => { Object.defineProperty(window, "handleResize", { configurable: true, enumerable: true, writable: true, value }); } },
+    "originalRender": { get: () => originalRender, set: value => { Object.defineProperty(window, "originalRender", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyTopbarVWScaling": { get: () => applyTopbarVWScaling, set: value => { Object.defineProperty(window, "applyTopbarVWScaling", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

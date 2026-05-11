@@ -2,7 +2,7 @@
 /* exported render */
 
 ﻿// Helper function to sanitize note HTML (allow various text formatting tags)
-function sanitizeNoteHTML(html) {
+export function sanitizeNoteHTML(html) {
     if (!html) return '';
 
     // Create a temporary div to parse HTML
@@ -95,7 +95,7 @@ function sanitizeNoteHTML(html) {
 }
 
 // Helper function to strip parenthesis if hideParenthesis is enabled
-function stripParenthesisIfNeeded(alg) {
+export function stripParenthesisIfNeeded(alg) {
     if (!alg || typeof alg !== 'string') return alg;
     if (hideParenthesis) {
         return alg.replace(/\(/g, ' ').replace(/\)/g, ' ');
@@ -104,7 +104,7 @@ function stripParenthesisIfNeeded(alg) {
 }
 
 // Helper function to wrap algorithm tokens to prevent breaking inside parentheses
-function wrapAlgorithmTokens(alg) {
+export function wrapAlgorithmTokens(alg) {
     if (!alg || typeof alg !== 'string') return alg;
 
     // Strip parenthesis first if needed
@@ -121,7 +121,7 @@ function wrapAlgorithmTokens(alg) {
 }
 
 // Helper function to style algorithm with gray setup/finish moves
-function styleAlgorithmWithGrayMoves(alg) {
+export function styleAlgorithmWithGrayMoves(alg) {
     if (!alg || typeof alg !== 'string' || alg === 'Done!') return alg;
 
     const parts = alg.split('/');
@@ -167,7 +167,7 @@ function styleAlgorithmWithGrayMoves(alg) {
  * Gets the display name for a case.
  * Single source of truth - displayNames object.
  */
-function getDisplayName(caseName) {
+export function getDisplayName(caseName) {
     return displayNames[caseName] || caseName;
 }
 
@@ -179,7 +179,7 @@ function getDisplayName(caseName) {
 
 // invertScramble → defined in utils.js
 
-function getAlgDisplayMeta(alg, caseName) {
+export function getAlgDisplayMeta(alg, caseName) {
     if (!alg || alg === 'Done!' || typeof window.algToShapeIndex === 'undefined') {
         return { invalid: false, mirrored: false };
     }
@@ -203,7 +203,7 @@ function getAlgDisplayMeta(alg, caseName) {
     }
 }
 
-function getShapePath(scramble) {
+export function getShapePath(scramble) {
     if (!scramble || scramble.trim() === '' || scramble === 'Done!') {
         return null;
     }
@@ -228,7 +228,7 @@ function getShapePath(scramble) {
     return null;
 }
 
-function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFamily) {
+export function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFamily) {
     const fontStyle = fontFamily ? `font-family: ${fontFamily};` : '';
     return algArray.map((alg, idx) => {
         const algId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
@@ -250,9 +250,9 @@ function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFamily) {
     }).join('');
 }
 
-let activePopup = null;
-let activePopupElement = null;
-let popupHoverTimeout = null;
+export let activePopup = null;
+export let activePopupElement = null;
+export let popupHoverTimeout = null;
 
 window.showAlgPopup = function(element, alg, isPermanent) {
     // Clear any pending hide timeout
@@ -758,7 +758,7 @@ window.toggleLearned = function(name, event = null) {
     }
 }
 
-function adjustPriority(name, delta) {
+export function adjustPriority(name, delta) {
     const currentLevel = getPlannedPriorityLevel(name);
     let newLevel = currentLevel + delta;
 
@@ -791,7 +791,7 @@ function adjustPriority(name, delta) {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-function renderCard(item) {
+export function renderCard(item) {
     const prob = (item.probability / 3678 * 100).toFixed(3);
     const isLearned = isCaseLearned(item.name);
     const isLearning = isCaseLearning(item.name);
@@ -901,11 +901,11 @@ function renderCard(item) {
     `;
 }
 
-let renderTimeout = null;
+export let renderTimeout = null;
 
-let _progressiveRenderToken = 0;
+export let _progressiveRenderToken = 0;
 
-function render(softRender = false) {
+export function render(softRender = false) {
     if (renderTimeout) clearTimeout(renderTimeout);
 
     renderTimeout = setTimeout(() => {
@@ -928,9 +928,11 @@ function render(softRender = false) {
     }, 50);
 }
 
-function _doProgressiveRender() {
+export function _doProgressiveRender() {
     const token = ++_progressiveRenderToken;
     const items = filteredData;
+    if (!grid) initializeDOMReferences();
+    if (!grid) return;
 
     // Figure out how many cards fit in the viewport
     // Estimate ~320px per card row, at least 8 cards visible
@@ -994,7 +996,7 @@ function _doProgressiveRender() {
     }
 }
 
-function showRenderLoading() {
+export function showRenderLoading() {
     let loadingDiv = document.getElementById('renderLoadingIndicator');
     if (!loadingDiv) {
         loadingDiv = document.createElement('div');
@@ -1009,14 +1011,14 @@ function showRenderLoading() {
     loadingDiv.style.display = 'flex';
 }
 
-function hideRenderLoading() {
+export function hideRenderLoading() {
     const loadingDiv = document.getElementById('renderLoadingIndicator');
     if (loadingDiv) {
         loadingDiv.style.display = 'none';
     }
 }
 
-function showReorderButton() {
+export function showReorderButton() {
     let reorderBtn = document.getElementById('reorderButton');
     if (reorderBtn) return; // Already showing
 
@@ -1033,7 +1035,7 @@ function showReorderButton() {
     document.body.appendChild(reorderBtn);
 }
 
-function hideReorderButton() {
+export function hideReorderButton() {
     const reorderBtn = document.getElementById('reorderButton');
     if (reorderBtn) {
         reorderBtn.remove();
@@ -1041,13 +1043,47 @@ function hideReorderButton() {
 }
 
 // Helper function to escape regex special characters
-function escapeRegex(str) {
+export function escapeRegex(str) {
     return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Helper function to highlight partial matches in a string
-function highlightPartialMatch(text, searchTerm) {
+export function highlightPartialMatch(text, searchTerm) {
     if (!searchTerm) return text;
     const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');
     return text.replace(regex, '<mark class="search-hl">$1</mark>');
+}
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "sanitizeNoteHTML": { get: () => sanitizeNoteHTML, set: value => { Object.defineProperty(window, "sanitizeNoteHTML", { configurable: true, enumerable: true, writable: true, value }); } },
+    "stripParenthesisIfNeeded": { get: () => stripParenthesisIfNeeded, set: value => { Object.defineProperty(window, "stripParenthesisIfNeeded", { configurable: true, enumerable: true, writable: true, value }); } },
+    "wrapAlgorithmTokens": { get: () => wrapAlgorithmTokens, set: value => { Object.defineProperty(window, "wrapAlgorithmTokens", { configurable: true, enumerable: true, writable: true, value }); } },
+    "styleAlgorithmWithGrayMoves": { get: () => styleAlgorithmWithGrayMoves, set: value => { Object.defineProperty(window, "styleAlgorithmWithGrayMoves", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getDisplayName": { get: () => getDisplayName, set: value => { Object.defineProperty(window, "getDisplayName", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getAlgDisplayMeta": { get: () => getAlgDisplayMeta, set: value => { Object.defineProperty(window, "getAlgDisplayMeta", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getShapePath": { get: () => getShapePath, set: value => { Object.defineProperty(window, "getShapePath", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderAlgorithmWithPopup": { get: () => renderAlgorithmWithPopup, set: value => { Object.defineProperty(window, "renderAlgorithmWithPopup", { configurable: true, enumerable: true, writable: true, value }); } },
+    "activePopup": { get: () => activePopup, set: value => { activePopup = value; } },
+    "activePopupElement": { get: () => activePopupElement, set: value => { activePopupElement = value; } },
+    "popupHoverTimeout": { get: () => popupHoverTimeout, set: value => { popupHoverTimeout = value; } },
+    "adjustPriority": { get: () => adjustPriority, set: value => { Object.defineProperty(window, "adjustPriority", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderCard": { get: () => renderCard, set: value => { Object.defineProperty(window, "renderCard", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderTimeout": { get: () => renderTimeout, set: value => { renderTimeout = value; } },
+    "_progressiveRenderToken": { get: () => _progressiveRenderToken, set: value => { _progressiveRenderToken = value; } },
+    "render": { get: () => render, set: value => { Object.defineProperty(window, "render", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_doProgressiveRender": { get: () => _doProgressiveRender, set: value => { Object.defineProperty(window, "_doProgressiveRender", { configurable: true, enumerable: true, writable: true, value }); } },
+    "showRenderLoading": { get: () => showRenderLoading, set: value => { Object.defineProperty(window, "showRenderLoading", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hideRenderLoading": { get: () => hideRenderLoading, set: value => { Object.defineProperty(window, "hideRenderLoading", { configurable: true, enumerable: true, writable: true, value }); } },
+    "showReorderButton": { get: () => showReorderButton, set: value => { Object.defineProperty(window, "showReorderButton", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hideReorderButton": { get: () => hideReorderButton, set: value => { Object.defineProperty(window, "hideReorderButton", { configurable: true, enumerable: true, writable: true, value }); } },
+    "escapeRegex": { get: () => escapeRegex, set: value => { Object.defineProperty(window, "escapeRegex", { configurable: true, enumerable: true, writable: true, value }); } },
+    "highlightPartialMatch": { get: () => highlightPartialMatch, set: value => { Object.defineProperty(window, "highlightPartialMatch", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
 }

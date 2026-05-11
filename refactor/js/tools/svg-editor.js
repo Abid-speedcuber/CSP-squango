@@ -6,7 +6,7 @@
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-const SVGEditor = {
+export const SVGEditor = {
     state: {
         currentSvg: null,
         selectedElements: new Set(),
@@ -1056,4 +1056,14 @@ if (document.readyState === 'loading') {
     SVGEditor.init();
 }
 
-
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "SVGEditor": { get: () => SVGEditor, set: value => { Object.defineProperty(window, "SVGEditor", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

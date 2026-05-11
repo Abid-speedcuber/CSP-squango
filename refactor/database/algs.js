@@ -1,4 +1,4 @@
-const data = [
+export const data = [
     { name: "Kite/Square", top: "Kite_top", bottom: "Square_bottom", odd: ["(3,1)/(-1,0)/(2,0)/(-2,0)/(2,0)/(-1,0)/(-3,0)/"], even: ["(3,0)/(1,0)/(-2,0)/(2,0)/(-2,0)/(1,0)/(3,0)/(-1,1)"], probability: 16 },
     { name: "7-1/Star", top: "svg_7_1", bottom: "Star", odd: ["(0,2)/(0,-2)/(-1,-2)/(2,-3)/(1,2)/(3,0)/(-1,1)"], even: ["/(0,-2)/(-1,-2)/(2,-3)/(1,2)/(3,0)/(-1,1)"], probability: 16 },
     { name: "8/Star", top: "svg_8", bottom: "Star", odd: ["(0,2)/(2,4)/(-2,-1)/(3,3)/"], even: ["/(2,4)/(-2,-1)/(3,3)/"], probability: 16 },
@@ -90,3 +90,16 @@ const data = [
     { name: "Kite/Kite", top: "Kite_top", bottom: "Kite_bottom", odd: ["(0,6)/"], even: ["(-3,3)/(-2,-1)/(2,-2)/(-2,2)/(-1,-2)/(-3,-3)/"], probability: 16 },
     { name: "Square/Square", top: "Square_top", bottom: "Square_bottom", odd: ["/(3,3)/(1,2)/(2,-2)/(-2,2)/(-1,-2)/(-3,-3)/"], even: ["Done!"], probability: 4 }
 ];
+window.data = data;
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "data": { get: () => data, set: value => { Object.defineProperty(window, "data", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

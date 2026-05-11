@@ -1,6 +1,6 @@
 /* ==== FILE: js/tools/scrambleNormalizer.js ==== */
 
-function normalizeScramble(input) {
+export function normalizeScramble(input) {
     if (!input) return '';
     return normalizeScrambleFormat(input);
 }
@@ -10,7 +10,7 @@ function normalizeScramble(input) {
  * @param {string} input - Raw scramble string
  * @returns {string} Normalized scramble
  */
-function normalizeScrambleFormat(input) {
+export function normalizeScrambleFormat(input) {
     if (!input) return '';
 
     // Remove all whitespace and normalize slashes
@@ -45,7 +45,7 @@ function normalizeScrambleFormat(input) {
 /**
  * Remove whitespace and normalize basic syntax
  */
-function normalizeInput(str) {
+export function normalizeInput(str) {
     return str
         .replace(/\\/g, "/")
         .replace(/\+\+/g, "+")
@@ -57,7 +57,7 @@ function normalizeInput(str) {
  * @param {string} str - Input with letters/primes
  * @returns {string} Decoded string with only numbers and valid syntax
  */
-function decodeScramble(str) {
+export function decodeScramble(str) {
     if (!str) return '';
 
     // Define letter mappings (case-insensitive)
@@ -148,7 +148,7 @@ function decodeScramble(str) {
 /**
  * Parse scramble into token array
  */
-function parseSets(str) {
+export function parseSets(str) {
     // Handle empty or whitespace-only input
     if (!str || str.trim() === '') {
         return [];
@@ -276,7 +276,7 @@ function parseSets(str) {
 /**
  * Add two move sets together
  */
-function addSets(a, b) {
+export function addSets(a, b) {
     let m = /\((-?\d+),(-?\d+)\)/.exec(a);
     let n = /\((-?\d+),(-?\d+)\)/.exec(b);
     let x1 = parseInt(m[1]), y1 = parseInt(m[2]);
@@ -297,7 +297,7 @@ function addSets(a, b) {
 /**
  * Simplify scramble by combining adjacent moves
  */
-function simplifyScramble(tokens, steps) {
+export function simplifyScramble(tokens, steps) {
     let changed = true;
 
     while (changed) {
@@ -349,3 +349,20 @@ if (typeof window !== 'undefined') {
     };
 }
 
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "normalizeScramble": { get: () => normalizeScramble, set: value => { Object.defineProperty(window, "normalizeScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "normalizeScrambleFormat": { get: () => normalizeScrambleFormat, set: value => { Object.defineProperty(window, "normalizeScrambleFormat", { configurable: true, enumerable: true, writable: true, value }); } },
+    "normalizeInput": { get: () => normalizeInput, set: value => { Object.defineProperty(window, "normalizeInput", { configurable: true, enumerable: true, writable: true, value }); } },
+    "decodeScramble": { get: () => decodeScramble, set: value => { Object.defineProperty(window, "decodeScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "parseSets": { get: () => parseSets, set: value => { Object.defineProperty(window, "parseSets", { configurable: true, enumerable: true, writable: true, value }); } },
+    "addSets": { get: () => addSets, set: value => { Object.defineProperty(window, "addSets", { configurable: true, enumerable: true, writable: true, value }); } },
+    "simplifyScramble": { get: () => simplifyScramble, set: value => { Object.defineProperty(window, "simplifyScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

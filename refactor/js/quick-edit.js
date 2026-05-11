@@ -2,7 +2,7 @@
 
 ﻿// Quick Edit System for batch editing cases
 
-let quickEditState = {
+export let quickEditState = {
     currentTab: 'general',
     findReplaceOpen: false,
     findReplaceScope: null,
@@ -14,10 +14,10 @@ let quickEditState = {
 };
 
 // Load auto-select setting from localStorage
-let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
+export let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
 
 // Expand :varName: tokens in an alg string using algVariables map
-function expandAlgVariables(alg) {
+export function expandAlgVariables(alg) {
     if (!alg || !algVariables || algVariables.size === 0) return alg;
     return alg.replace(/:([a-zA-Z_][a-zA-Z0-9_]*):/g, (match, name) => {
         return algVariables.has(name) ? algVariables.get(name) : match;
@@ -25,29 +25,29 @@ function expandAlgVariables(alg) {
 }
 
 // Expand variables then normalize — used on defocus
-function expandAndNormalize(alg) {
+export function expandAndNormalize(alg) {
     if (!alg || alg === 'Done!') return alg;
     const expanded = expandAlgVariables(alg);
     return window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(expanded) : expanded;
 }
 
 // Expand variables then normalize for live color coding only (don't mutate cell)
-function expandForColorCheck(alg) {
+export function expandForColorCheck(alg) {
     if (!alg || alg === 'Done!') return alg;
     return expandAlgVariables(alg);
 }
 
-function getGeneralTableRows() {
+export function getGeneralTableRows() {
     const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
     return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="general"><td colspan="${evilnessFactor ? 5 : 4}" style="height:41px;"></td></tr>`).join('');
 }
 
-function getAlgTableRows() {
+export function getAlgTableRows() {
     const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
     return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`).join('');
 }
 
-function hydrateGeneralRow(row) {
+export function hydrateGeneralRow(row) {
     const item = window.CSPData.getCase(row.dataset.case);
     if (!item) return;
     const displayName = getDisplayName(item.name);
@@ -66,7 +66,7 @@ function hydrateGeneralRow(row) {
     setupRowHandlers(row, 'general');
 }
 
-function hydrateAlgorithmsRow(row) {
+export function hydrateAlgorithmsRow(row) {
     const item = window.CSPData.getCase(row.dataset.case);
     if (!item) return;
     const visibleCols = quickEditState.visibleAlgColumns || 6;
@@ -83,7 +83,7 @@ function hydrateAlgorithmsRow(row) {
     row.querySelectorAll('.alg-cell').forEach(cell => { if (cell.textContent.trim()) updateAlgorithmCellParity(cell); });
 }
 
-function setupRowHandlers(row, tab) {
+export function setupRowHandlers(row, tab) {
     row.querySelectorAll('.editable').forEach(cell => {
         cell.addEventListener('focus', function() {
             if (this.classList.contains('notes-cell')) { const r = this.dataset.rawHtml || ''; this.textContent = r; }
@@ -107,7 +107,7 @@ function setupRowHandlers(row, tab) {
     });
 }
 
-function initQuickEditLazyLoad() {
+export function initQuickEditLazyLoad() {
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
 
@@ -140,7 +140,7 @@ function initQuickEditLazyLoad() {
     modal._lazyObserver = null;
 }
 
-function openQuickEditModal() {
+export function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
 
@@ -283,7 +283,7 @@ function openQuickEditModal() {
     initQuickEditLazyLoad();
 }
 
-function addAlgorithmColumns() {
+export function addAlgorithmColumns() {
     const tbody = document.getElementById('quickEditAlgorithmsBody');
     if (!tbody) return;
 
@@ -379,7 +379,7 @@ function addAlgorithmColumns() {
     document.getElementById('visibleColumnCount').textContent = quickEditState.visibleAlgColumns;
 }
 
-function updateAlgorithmTableHeaders() {
+export function updateAlgorithmTableHeaders() {
     const headerRow = document.getElementById('algorithmTableHeader');
     if (!headerRow) return;
 
@@ -397,7 +397,7 @@ function updateAlgorithmTableHeaders() {
     }
 }
 
-function updateAlgorithmTableCells() {
+export function updateAlgorithmTableCells() {
     const tbody = document.getElementById('quickEditAlgorithmsBody');
     if (!tbody) return;
 
@@ -414,7 +414,7 @@ function updateAlgorithmTableCells() {
     });
 }
 
-function getCaseShapeData(caseName) {
+export function getCaseShapeData(caseName) {
     const directMatch = window.CSPData.getShapeEntry(caseName);
     if (directMatch) return directMatch;
 
@@ -423,16 +423,16 @@ function getCaseShapeData(caseName) {
     return shapeIndex.find(shapeData => shapeData.org && shapeData.org.includes(canonicalIdx)) || null;
 }
 
-function getCanonicalCaseNameForCell(cell) {
+export function getCanonicalCaseNameForCell(cell) {
     const row = cell.closest('tr');
     if (!row) return null;
     return row.dataset.case || null;
 }
 
-const ALL_LEGAL_TOPS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
-const ALL_LEGAL_BOTTOMS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+export const ALL_LEGAL_TOPS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
+export const ALL_LEGAL_BOTTOMS = [0,1,2,3,4,5,-1,-2,-3,-4,-5,-6];
 
-function tryFixAngle(algBody, canonicalShapeIdx) {
+export function tryFixAngle(algBody, canonicalShapeIdx) {
     // algBody is everything from first / onward
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
@@ -446,7 +446,7 @@ function tryFixAngle(algBody, canonicalShapeIdx) {
     return null;
 }
 
-function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
+export function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
             const candidate = `/(6,6)/(${t},${b})` + algBody;
@@ -459,14 +459,14 @@ function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
     return null;
 }
 
-function stripBeforeFirstSlash(alg) {
+export function stripBeforeFirstSlash(alg) {
     // If starts with /, keep as is. Otherwise strip everything before first /
     const firstSlash = alg.indexOf('/');
     if (firstSlash <= 0) return alg; // starts with / or no slash found
     return alg.slice(firstSlash);
 }
 
-function updateAlgorithmCellParity(cell) {
+export function updateAlgorithmCellParity(cell) {
     const alg = cell.textContent.trim();
     if (!alg || alg === 'Done!') {
         cell.style.color = '';
@@ -546,7 +546,7 @@ function updateAlgorithmCellParity(cell) {
     }
 }
 
-function updateAlgorithmCellParityLive(cell) {
+export function updateAlgorithmCellParityLive(cell) {
     const alg = cell.textContent.trim();
     if (!alg || alg === 'Done!') {
         cell.style.color = '';
@@ -603,7 +603,7 @@ function updateAlgorithmCellParityLive(cell) {
     }
 }
 
-function setupQuickEditKeyboardShortcuts() {
+export function setupQuickEditKeyboardShortcuts() {
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
 
@@ -621,7 +621,7 @@ function setupQuickEditKeyboardShortcuts() {
     });
 }
 
-function switchQuickEditTab(tab) {
+export function switchQuickEditTab(tab) {
     // Check enhanced access for algorithms tab
     if (tab === 'algorithms' && !window.enhancedAccess) {
         showToast('Enable Enhanced Access in Settings to edit algorithms', 2000, 'error');
@@ -672,7 +672,7 @@ function switchQuickEditTab(tab) {
     }
 }
 
-function toggleQuickEditTab() {
+export function toggleQuickEditTab() {
     // Only toggle on mobile (when tabs are hidden)
     if (window.innerWidth > 630) return;
 
@@ -680,7 +680,7 @@ function toggleQuickEditTab() {
     switchQuickEditTab(newTab);
 }
 
-function openQuickEditFindReplace() {
+export function openQuickEditFindReplace() {
     const findReplace = document.getElementById('quickEditFindReplace');
     const findInput = document.getElementById('quickEditFindInput');
     const scopeSelector = document.getElementById('quickEditScopeSelector');
@@ -729,7 +729,7 @@ function openQuickEditFindReplace() {
     findInput.select();
 }
 
-function closeQuickEditFindReplace() {
+export function closeQuickEditFindReplace() {
     const findReplace = document.getElementById('quickEditFindReplace');
     findReplace.style.display = 'none';
     quickEditState.findReplaceOpen = false;
@@ -749,7 +749,7 @@ function closeQuickEditFindReplace() {
     });
 }
 
-function liveSearchQuickEdit() {
+export function liveSearchQuickEdit() {
     const findInput = document.getElementById('quickEditFindInput');
     const searchTerm = findInput.value;
 
@@ -826,7 +826,7 @@ function liveSearchQuickEdit() {
         `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
 }
 
-function highlightAllMatches() {
+export function highlightAllMatches() {
     // Store the current HTML state before highlighting
     quickEditState.allMatchRanges.forEach(range => {
         // For notes cells, work with text content (raw HTML)
@@ -853,13 +853,13 @@ function highlightAllMatches() {
 }
 
 // Helper function to escape HTML for display
-function escapeHtml(text) {
+export function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-function highlightCurrentMatch() {
+export function highlightCurrentMatch() {
     // Remove previous current highlight
     document.querySelectorAll('.find-match-current').forEach(el => {
         el.classList.remove('find-match-current');
@@ -884,7 +884,7 @@ function highlightCurrentMatch() {
     }
 }
 
-function clearFindHighlights() {
+export function clearFindHighlights() {
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
 
@@ -903,7 +903,7 @@ function clearFindHighlights() {
     });
 }
 
-function findNextQuickEdit() {
+export function findNextQuickEdit() {
     if (quickEditState.findMatches.length === 0) return;
 
     quickEditState.currentFindIndex = (quickEditState.currentFindIndex + 1) % quickEditState.findMatches.length;
@@ -913,7 +913,7 @@ function findNextQuickEdit() {
         `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
 }
 
-function findPreviousQuickEdit() {
+export function findPreviousQuickEdit() {
     if (quickEditState.findMatches.length === 0) return;
 
     quickEditState.currentFindIndex = quickEditState.currentFindIndex - 1;
@@ -927,7 +927,7 @@ function findPreviousQuickEdit() {
         `${quickEditState.currentFindIndex + 1} of ${quickEditState.findMatches.length}`;
 }
 
-function replaceQuickEdit() {
+export function replaceQuickEdit() {
     const findInput = document.getElementById('quickEditFindInput');
     const replaceInput = document.getElementById('quickEditReplaceInput');
     const searchTerm = findInput.value;
@@ -949,7 +949,7 @@ function replaceQuickEdit() {
     liveSearchQuickEdit();
 }
 
-function replaceAllQuickEdit() {
+export function replaceAllQuickEdit() {
     const findInput = document.getElementById('quickEditFindInput');
     const replaceInput = document.getElementById('quickEditReplaceInput');
     const searchTerm = findInput.value;
@@ -1001,14 +1001,14 @@ function replaceAllQuickEdit() {
     liveSearchQuickEdit();
 }
 
-function handleReplaceEnter(event) {
+export function handleReplaceEnter(event) {
     if (event.key === 'Enter') {
         event.preventDefault();
         replaceQuickEdit();
     }
 }
 
-function changeFindScope() {
+export function changeFindScope() {
     const scopeSelector = document.getElementById('quickEditScopeSelector');
     if (!scopeSelector) return;
 
@@ -1019,7 +1019,7 @@ function changeFindScope() {
     liveSearchQuickEdit();
 }
 
-function saveQuickEditChanges() {
+export function saveQuickEditChanges() {
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
 
@@ -1103,7 +1103,7 @@ function saveQuickEditChanges() {
     showToast('All changes saved successfully!', 2000, 'success');
 }
 
-function closeQuickEditModal() {
+export function closeQuickEditModal() {
     // Check for unsaved changes
     const modal = document.getElementById('quickEditModal');
     if (!modal) return;
@@ -1167,7 +1167,7 @@ function closeQuickEditModal() {
     forceCloseQuickEditModal();
 }
 
-function forceCloseQuickEditModal() {
+export function forceCloseQuickEditModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('quickEditModal');
         if (modal) {
@@ -1191,7 +1191,7 @@ function forceCloseQuickEditModal() {
     });
 }
 
-function revertQuickEditChanges() {
+export function revertQuickEditChanges() {
     if (!window.quickEditInitialState) return;
 
     showConfirmation('Are you sure you want to revert all changes to the last save point?', () => {
@@ -1278,7 +1278,7 @@ window.closeQuickEditInfoModal = function () {
 };
 
 // REPLACE:
-function openAlgVariablesModal() {
+export function openAlgVariablesModal() {
     const existing = document.getElementById('algVariablesModal');
     if (existing) existing.remove();
 
@@ -1351,19 +1351,19 @@ function openAlgVariablesModal() {
     if (typeof pushModalState === 'function') pushModalState('algVariablesModal', closeAlgVariablesModal);
 }
 
-function closeAlgVariablesModal() {
+export function closeAlgVariablesModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('algVariablesModal');
         if (modal) modal.remove();
     });
 }
 
-function renderAlgVarRows() {
+export function renderAlgVarRows() {
     if (!algVariables || algVariables.size === 0) return '';
     return Array.from(algVariables.entries()).map(([name, value]) => algVarRowHTML(name, value)).join('');
 }
 
-function algVarRowHTML(name, value) {
+export function algVarRowHTML(name, value) {
     return `
         <tr class="alg-var-row">
             <td style="padding: 6px 6px;">
@@ -1385,7 +1385,7 @@ function algVarRowHTML(name, value) {
     `;
 }
 
-function addAlgVarRow() {
+export function addAlgVarRow() {
     const tbody = document.getElementById('algVarTableBody');
     if (!tbody) return;
     const tr = document.createElement('tr');
@@ -1395,7 +1395,7 @@ function addAlgVarRow() {
     tr.querySelector('.alg-var-name').focus();
 }
 
-function saveAlgVariables() {
+export function saveAlgVariables() {
     const rows = document.querySelectorAll('#algVarTableBody .alg-var-row');
     algVariables = new Map();
     rows.forEach(row => {
@@ -1436,7 +1436,7 @@ window.setAutoSelectTextOnFocus = function (enabled) {
 };
 
 // Drag functionality for find/replace popup
-function initializeFindReplaceDrag(popup) {
+export function initializeFindReplaceDrag(popup) {
     let isDragging = false;
     let currentX = 0;
     let currentY = 0;
@@ -1501,4 +1501,66 @@ function initializeFindReplaceDrag(popup) {
     function setTranslate(xPos, yPos, el) {
         el.style.transform = `translate(${xPos}px, ${yPos}px)`;
     }
+}
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "quickEditState": { get: () => quickEditState, set: value => { quickEditState = value; } },
+    "autoSelectTextOnFocus": { get: () => autoSelectTextOnFocus, set: value => { autoSelectTextOnFocus = value; } },
+    "expandAlgVariables": { get: () => expandAlgVariables, set: value => { Object.defineProperty(window, "expandAlgVariables", { configurable: true, enumerable: true, writable: true, value }); } },
+    "expandAndNormalize": { get: () => expandAndNormalize, set: value => { Object.defineProperty(window, "expandAndNormalize", { configurable: true, enumerable: true, writable: true, value }); } },
+    "expandForColorCheck": { get: () => expandForColorCheck, set: value => { Object.defineProperty(window, "expandForColorCheck", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getGeneralTableRows": { get: () => getGeneralTableRows, set: value => { Object.defineProperty(window, "getGeneralTableRows", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getAlgTableRows": { get: () => getAlgTableRows, set: value => { Object.defineProperty(window, "getAlgTableRows", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hydrateGeneralRow": { get: () => hydrateGeneralRow, set: value => { Object.defineProperty(window, "hydrateGeneralRow", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hydrateAlgorithmsRow": { get: () => hydrateAlgorithmsRow, set: value => { Object.defineProperty(window, "hydrateAlgorithmsRow", { configurable: true, enumerable: true, writable: true, value }); } },
+    "setupRowHandlers": { get: () => setupRowHandlers, set: value => { Object.defineProperty(window, "setupRowHandlers", { configurable: true, enumerable: true, writable: true, value }); } },
+    "initQuickEditLazyLoad": { get: () => initQuickEditLazyLoad, set: value => { Object.defineProperty(window, "initQuickEditLazyLoad", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openQuickEditModal": { get: () => openQuickEditModal, set: value => { Object.defineProperty(window, "openQuickEditModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "addAlgorithmColumns": { get: () => addAlgorithmColumns, set: value => { Object.defineProperty(window, "addAlgorithmColumns", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateAlgorithmTableHeaders": { get: () => updateAlgorithmTableHeaders, set: value => { Object.defineProperty(window, "updateAlgorithmTableHeaders", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateAlgorithmTableCells": { get: () => updateAlgorithmTableCells, set: value => { Object.defineProperty(window, "updateAlgorithmTableCells", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCaseShapeData": { get: () => getCaseShapeData, set: value => { Object.defineProperty(window, "getCaseShapeData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getCanonicalCaseNameForCell": { get: () => getCanonicalCaseNameForCell, set: value => { Object.defineProperty(window, "getCanonicalCaseNameForCell", { configurable: true, enumerable: true, writable: true, value }); } },
+    "ALL_LEGAL_TOPS": { get: () => ALL_LEGAL_TOPS, set: value => { Object.defineProperty(window, "ALL_LEGAL_TOPS", { configurable: true, enumerable: true, writable: true, value }); } },
+    "ALL_LEGAL_BOTTOMS": { get: () => ALL_LEGAL_BOTTOMS, set: value => { Object.defineProperty(window, "ALL_LEGAL_BOTTOMS", { configurable: true, enumerable: true, writable: true, value }); } },
+    "tryFixAngle": { get: () => tryFixAngle, set: value => { Object.defineProperty(window, "tryFixAngle", { configurable: true, enumerable: true, writable: true, value }); } },
+    "tryFixMirroredAngle": { get: () => tryFixMirroredAngle, set: value => { Object.defineProperty(window, "tryFixMirroredAngle", { configurable: true, enumerable: true, writable: true, value }); } },
+    "stripBeforeFirstSlash": { get: () => stripBeforeFirstSlash, set: value => { Object.defineProperty(window, "stripBeforeFirstSlash", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateAlgorithmCellParity": { get: () => updateAlgorithmCellParity, set: value => { Object.defineProperty(window, "updateAlgorithmCellParity", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateAlgorithmCellParityLive": { get: () => updateAlgorithmCellParityLive, set: value => { Object.defineProperty(window, "updateAlgorithmCellParityLive", { configurable: true, enumerable: true, writable: true, value }); } },
+    "setupQuickEditKeyboardShortcuts": { get: () => setupQuickEditKeyboardShortcuts, set: value => { Object.defineProperty(window, "setupQuickEditKeyboardShortcuts", { configurable: true, enumerable: true, writable: true, value }); } },
+    "switchQuickEditTab": { get: () => switchQuickEditTab, set: value => { Object.defineProperty(window, "switchQuickEditTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "toggleQuickEditTab": { get: () => toggleQuickEditTab, set: value => { Object.defineProperty(window, "toggleQuickEditTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openQuickEditFindReplace": { get: () => openQuickEditFindReplace, set: value => { Object.defineProperty(window, "openQuickEditFindReplace", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeQuickEditFindReplace": { get: () => closeQuickEditFindReplace, set: value => { Object.defineProperty(window, "closeQuickEditFindReplace", { configurable: true, enumerable: true, writable: true, value }); } },
+    "liveSearchQuickEdit": { get: () => liveSearchQuickEdit, set: value => { Object.defineProperty(window, "liveSearchQuickEdit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "highlightAllMatches": { get: () => highlightAllMatches, set: value => { Object.defineProperty(window, "highlightAllMatches", { configurable: true, enumerable: true, writable: true, value }); } },
+    "escapeHtml": { get: () => escapeHtml, set: value => { Object.defineProperty(window, "escapeHtml", { configurable: true, enumerable: true, writable: true, value }); } },
+    "highlightCurrentMatch": { get: () => highlightCurrentMatch, set: value => { Object.defineProperty(window, "highlightCurrentMatch", { configurable: true, enumerable: true, writable: true, value }); } },
+    "clearFindHighlights": { get: () => clearFindHighlights, set: value => { Object.defineProperty(window, "clearFindHighlights", { configurable: true, enumerable: true, writable: true, value }); } },
+    "findNextQuickEdit": { get: () => findNextQuickEdit, set: value => { Object.defineProperty(window, "findNextQuickEdit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "findPreviousQuickEdit": { get: () => findPreviousQuickEdit, set: value => { Object.defineProperty(window, "findPreviousQuickEdit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "replaceQuickEdit": { get: () => replaceQuickEdit, set: value => { Object.defineProperty(window, "replaceQuickEdit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "replaceAllQuickEdit": { get: () => replaceAllQuickEdit, set: value => { Object.defineProperty(window, "replaceAllQuickEdit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleReplaceEnter": { get: () => handleReplaceEnter, set: value => { Object.defineProperty(window, "handleReplaceEnter", { configurable: true, enumerable: true, writable: true, value }); } },
+    "changeFindScope": { get: () => changeFindScope, set: value => { Object.defineProperty(window, "changeFindScope", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveQuickEditChanges": { get: () => saveQuickEditChanges, set: value => { Object.defineProperty(window, "saveQuickEditChanges", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeQuickEditModal": { get: () => closeQuickEditModal, set: value => { Object.defineProperty(window, "closeQuickEditModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "forceCloseQuickEditModal": { get: () => forceCloseQuickEditModal, set: value => { Object.defineProperty(window, "forceCloseQuickEditModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "revertQuickEditChanges": { get: () => revertQuickEditChanges, set: value => { Object.defineProperty(window, "revertQuickEditChanges", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openAlgVariablesModal": { get: () => openAlgVariablesModal, set: value => { Object.defineProperty(window, "openAlgVariablesModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeAlgVariablesModal": { get: () => closeAlgVariablesModal, set: value => { Object.defineProperty(window, "closeAlgVariablesModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderAlgVarRows": { get: () => renderAlgVarRows, set: value => { Object.defineProperty(window, "renderAlgVarRows", { configurable: true, enumerable: true, writable: true, value }); } },
+    "algVarRowHTML": { get: () => algVarRowHTML, set: value => { Object.defineProperty(window, "algVarRowHTML", { configurable: true, enumerable: true, writable: true, value }); } },
+    "addAlgVarRow": { get: () => addAlgVarRow, set: value => { Object.defineProperty(window, "addAlgVarRow", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveAlgVariables": { get: () => saveAlgVariables, set: value => { Object.defineProperty(window, "saveAlgVariables", { configurable: true, enumerable: true, writable: true, value }); } },
+    "initializeFindReplaceDrag": { get: () => initializeFindReplaceDrag, set: value => { Object.defineProperty(window, "initializeFindReplaceDrag", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
 }

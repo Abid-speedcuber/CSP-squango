@@ -681,7 +681,7 @@
 })();
 
 // Parse hex format from the random generator
-function parseHexFormat(input) {
+export function parseHexFormat(input) {
     const cubie = new window.sq1Tools.SqCubie();
 
     try {
@@ -721,4 +721,16 @@ function parseHexFormat(input) {
     } catch (error) {
         throw new Error('Invalid hex format: ' + error.message);
     }
+}
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "parseHexFormat": { get: () => parseHexFormat, set: value => { Object.defineProperty(window, "parseHexFormat", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
 }

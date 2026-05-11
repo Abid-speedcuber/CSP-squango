@@ -1,4 +1,4 @@
-const shapeIndex=[
+export const shapeIndex=[
   { name: "2-2-2/Paired Edges", org: [305,308,310,311,314,316,1855,1858,1860,1861,1864,1866], mir: [740,772,2183,2215,2981,3013,3193,3225,3471,3503,3595,3627] },
   { name: "2-2-2/Parallel Edges", org: [307,313,1857,1863], mir: [1661,1693,3363,3395] },
   { name: "2-2-2/Perpendicular Edges", org: [306,309,312,315,1856,1859,1862,1865], mir: [1262,1294,2582,2614,3301,3333,3533,3565] },
@@ -91,7 +91,7 @@ const shapeIndex=[
   { name: "Square/Square", org: [1015,1037,2485,2507] }
 ]
 
-const shapeIndexMap = {
+export const shapeIndexMap = {
   "Kite/Square": "1165",
   "7-1/Star": "181",
   "8/Star": "58",
@@ -183,3 +183,18 @@ const shapeIndexMap = {
   "Kite/Kite": "1184",
   "Square/Square": "1037"
 };
+window.shapeIndex = shapeIndex;
+window.shapeIndexMap = shapeIndexMap;
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "shapeIndex": { get: () => shapeIndex, set: value => { Object.defineProperty(window, "shapeIndex", { configurable: true, enumerable: true, writable: true, value }); } },
+    "shapeIndexMap": { get: () => shapeIndexMap, set: value => { Object.defineProperty(window, "shapeIndexMap", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

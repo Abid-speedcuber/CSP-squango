@@ -72,13 +72,8 @@
     };
   }
 
-  // Export as module or global
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { processScramble };
-  } else {
-    global.SQ1ColorizerLib = { processScramble };
-  }
+  global.SQ1ColorizerLib = { processScramble };
 
-})(this);
+})(globalThis);
 
 

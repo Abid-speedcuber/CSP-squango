@@ -22,7 +22,10 @@ function runBrowserScript(context, relativePath, options = {}) {
   const source = options.injectBeforeIifeClose
     ? insertBeforeIifeClose(read(relativePath), options.injectBeforeIifeClose)
     : read(relativePath);
-  vm.runInContext(source, context, { filename: relativePath });
+  const classicSource = source
+    .replace(/\n\/\/ ESM live global compatibility bridge[\s\S]*$/m, '')
+    .replace(/^export\s+/gm, '');
+  vm.runInContext(classicSource, context, { filename: relativePath });
 }
 
 function createStorage(seed = {}) {

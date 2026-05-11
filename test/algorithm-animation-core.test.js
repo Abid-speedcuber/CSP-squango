@@ -7,7 +7,9 @@ const root = path.resolve(__dirname, '..');
 
 function runBrowserScript(context, relativePath) {
   const absolutePath = path.join(root, relativePath);
-  const source = fs.readFileSync(absolutePath, 'utf8');
+  const source = fs.readFileSync(absolutePath, 'utf8')
+    .replace(/\n\/\/ ESM live global compatibility bridge[\s\S]*$/m, '')
+    .replace(/^export\s+/gm, '');
   vm.runInContext(source, context, { filename: relativePath });
 }
 

@@ -1,5 +1,5 @@
 // Default SVG definitions - immutable source of truth
-const DEFAULT_SVGS = {
+export const DEFAULT_SVGS = {
     svg_2_2_2: `<svg xmlns="http://www.w3.org/2000/svg" class="cubeshape-svg" width="200" height="200" viewBox="0 0 200 200" fill="none">
 <path d="M79.223,173L119.08179999999999,26.405" stroke="#848484" class=""></path>
 <path d="M99.2649,99.974L84.1074,156.542L57.85379999999999,141.385L99.2649,99.974Z" fill="none" stroke="black" stroke-width="4" stroke-linejoin="round" class=""></path>
@@ -601,4 +601,17 @@ const DEFAULT_SVGS = {
 };
 
 // Initialize active SVG data from defaults
+window.DEFAULT_SVGS = DEFAULT_SVGS;
 window.svgData = { ...DEFAULT_SVGS };
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "DEFAULT_SVGS": { get: () => DEFAULT_SVGS, set: value => { Object.defineProperty(window, "DEFAULT_SVGS", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

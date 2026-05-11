@@ -2,37 +2,37 @@
 /* exported openTrainingModal */
 
 ﻿// Training modal variables
-let currentTrainingCase = null;
-let trainingScrambles = [];
-let timerRunning = false;
-let timerStartTime = 0;
-let timerInterval = null;
-let timerElapsed = 0;
-let isHolding = false;
-let preGeneratedScrambles = [];
-let currentScrambleText = '';
-let trainingModalElement = null;
-let scrambleHistory = [];
-let currentHistoryIndex = -1;
-let trainingScrambleImageSize = 200;
-let trainingScrambleTextSize = 16;
-let trainingHoldToStart = 0.22;
-let holdStartTime = 0;
-let isHoldReady = false;
-let inspectionStartTime = 0;
-let inspectionElapsed = 0;
-let lastInspectionElapsed = 0;
-let lastParityQuizWrong = false;
-let inspectionInterval = null;
-let isInspectionPhase = false;
-let parityQuizPhase = false;
-let parityQuizAnswer = null;
-let parityQuizCorrect = false;
-let trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
-let trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+export let currentTrainingCase = null;
+export let trainingScrambles = [];
+export let timerRunning = false;
+export let timerStartTime = 0;
+export let timerInterval = null;
+export let timerElapsed = 0;
+export let isHolding = false;
+export let preGeneratedScrambles = [];
+export let currentScrambleText = '';
+export let trainingModalElement = null;
+export let scrambleHistory = [];
+export let currentHistoryIndex = -1;
+export let trainingScrambleImageSize = 200;
+export let trainingScrambleTextSize = 16;
+export let trainingHoldToStart = 0.22;
+export let holdStartTime = 0;
+export let isHoldReady = false;
+export let inspectionStartTime = 0;
+export let inspectionElapsed = 0;
+export let lastInspectionElapsed = 0;
+export let lastParityQuizWrong = false;
+export let inspectionInterval = null;
+export let isInspectionPhase = false;
+export let parityQuizPhase = false;
+export let parityQuizAnswer = null;
+export let parityQuizCorrect = false;
+export let trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
+export let trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
 
 // Create the training modal dynamically
-function createTrainingModal() {
+export function createTrainingModal() {
     if (trainingModalElement) return;
 
     const modal = document.createElement('div');
@@ -134,7 +134,7 @@ function createTrainingModal() {
     timerZone.addEventListener('touchend', e => { if (parityQuizPhase) return; handleTimerTouchEnd(e); });
 }
 
-function openTrainingModal(caseName) {
+export function openTrainingModal(caseName) {
     createTrainingModal();
 
     const modal = document.getElementById('trainingModal');
@@ -206,7 +206,7 @@ function openTrainingModal(caseName) {
     applyTimerSize();
 }
 
-function closeTrainingModal() {
+export function closeTrainingModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('trainingModal');
         if (!modal) return;
@@ -237,7 +237,7 @@ function closeTrainingModal() {
 
 window.generateNextScrambleData = generateNextScrambleData;
 window._origGenerateNextScrambleData_ref = null; // will be set by selector
-function generateNextScrambleData() {
+export function generateNextScrambleData() {
     if (trainingScrambles.length === 0) return null;
 
     const randomIndex = Math.floor(Math.random() * trainingScrambles.length);
@@ -268,10 +268,10 @@ function generateNextScrambleData() {
                 scrambleImage = visualizeFromScrambleNotation(notation, trainingScrambleImageSize, colorScheme);
             } catch (e) {
                 console.error('Error with new visualizer:', e);
-                scrambleImage = generateScrambleSVGFromHex(hexCode);
+                scrambleImage = visualizeFromHexCode(hexCode, trainingScrambleImageSize, colorScheme);
             }
         } else {
-            scrambleImage = generateScrambleSVGFromHex(hexCode);
+            scrambleImage = visualizeFromHexCode(hexCode, trainingScrambleImageSize, colorScheme);
         }
     } catch (error) {
         console.error('Error generating scramble image:', error);
@@ -281,7 +281,7 @@ function generateNextScrambleData() {
 }
 
 window.displayNextScramble = displayNextScramble;
-function displayNextScramble() {
+export function displayNextScramble() {
     // Clear inspection/parity quiz state
     clearInterval(inspectionInterval);
     isInspectionPhase = false;
@@ -329,7 +329,7 @@ function displayNextScramble() {
     applyPrevScrambleBar();
 }
 
-function previousScramble() {
+export function previousScramble() {
     if (currentHistoryIndex <= 0) return; // No previous scramble
 
     stopTimerOnly();
@@ -344,18 +344,18 @@ function previousScramble() {
     applyPrevScrambleBar();
 }
 
-function nextScrambleManual() {
+export function nextScrambleManual() {
     stopTimerOnly();
     displayNextScramble();
 }
 
-function applyTimerSize() {
+export function applyTimerSize() {
     const size = parseInt(localStorage.getItem('trainingTimerSize') || 80);
     const el = document.getElementById('trainingTimer');
     if (el) el.style.fontSize = size + 'px';
 }
 
-function applyPrevScrambleBar() {
+export function applyPrevScrambleBar() {
     const bar = document.getElementById('prevScrambleBar');
     if (!bar) return;
     const trainingActive = document.getElementById('trainingModal')?.classList.contains('active');
@@ -371,7 +371,7 @@ function applyPrevScrambleBar() {
     }
 }
 
-function regenerateScrambleLookahead() {
+export function regenerateScrambleLookahead() {
     preGeneratedScrambles = [];
     for (let i = 0; i < 3; i++) {
         preGeneratedScrambles.push(generateNextScrambleData());
@@ -381,7 +381,7 @@ function regenerateScrambleLookahead() {
     }
 }
 
-function openParityAnalysisFromTraining() {
+export function openParityAnalysisFromTraining() {
     // Strip HTML tags to get clean scramble text
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
 
@@ -413,7 +413,7 @@ function openParityAnalysisFromTraining() {
 }
 
 // Mouse handlers for timer zone
-function handleTimerMouseDown() {
+export function handleTimerMouseDown() {
     if (timerRunning) return;
     // Start inspection immediately, no hold
     if (trainingEnableInspection && !isInspectionPhase && !parityQuizPhase) {
@@ -454,7 +454,7 @@ function handleTimerMouseDown() {
     }, 10);
 }
 
-function handleTimerMouseUp() {
+export function handleTimerMouseUp() {
     if (timerRunning) {
         stopTimerOnly();
         displayNextScramble();
@@ -490,7 +490,7 @@ function handleTimerMouseUp() {
     }
 }
 
-function handleTimerMouseLeave() {
+export function handleTimerMouseLeave() {
     if (isHolding && !timerRunning) {
         isHolding = false;
         isHoldReady = false;
@@ -504,7 +504,7 @@ function handleTimerMouseLeave() {
 }
 
 // Touch handlers for timer zone
-function handleTimerTouchStart(e) {
+export function handleTimerTouchStart(e) {
     e.preventDefault();
     if (timerRunning) return;
     if (trainingEnableInspection && !isInspectionPhase && !parityQuizPhase) {
@@ -545,7 +545,7 @@ function handleTimerTouchStart(e) {
     }, 10);
 }
 
-function handleTimerTouchEnd(e) {
+export function handleTimerTouchEnd(e) {
     e.preventDefault();
     if (timerRunning) {
         stopTimerOnly();
@@ -579,7 +579,7 @@ function handleTimerTouchEnd(e) {
     }
 }
 
-function startInspection() {
+export function startInspection() {
     isInspectionPhase = true;
     inspectionElapsed = 0;
     inspectionStartTime = Date.now();
@@ -599,7 +599,7 @@ function startInspection() {
     }, 10);
 }
 
-function stopInspectionAndStartTimer() {
+export function stopInspectionAndStartTimer() {
     clearInterval(inspectionInterval);
     inspectionElapsed = Date.now() - inspectionStartTime;
     lastInspectionElapsed = inspectionElapsed;
@@ -610,7 +610,7 @@ function stopInspectionAndStartTimer() {
     startTimer();
 }
 
-function startParityQuizInspection() {
+export function startParityQuizInspection() {
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
     let parity = null;
     try {
@@ -729,7 +729,7 @@ function startParityQuizInspection() {
     document.getElementById('pqBadBtn').addEventListener('click', () => handlePQAnswer(false));
 }
 
-function startTimer() {
+export function startTimer() {
     if (timerRunning) return;
 
     // Reset timer to 0 when starting a new solve
@@ -746,7 +746,7 @@ function startTimer() {
     }, 10);
 }
 
-function stopTimerOnly() {
+export function stopTimerOnly() {
     if (!timerRunning) return;
 
     timerRunning = false;
@@ -778,13 +778,13 @@ function stopTimerOnly() {
     }
 }
 
-function updateTimerDisplay() {
+export function updateTimerDisplay() {
     const seconds = (timerElapsed / 1000).toFixed(3);
     document.getElementById('trainingTimer').textContent = seconds;
 }
 
 // Shape Index Selector Functions
-function openShapeIndexSelector() {
+export function openShapeIndexSelector() {
     if (window._multiCaseMode) return;
     const shapeIndexItem = window.CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
@@ -960,7 +960,7 @@ window.deselectAllIndices = function(type) {
     regenerateScrambleLookahead();
 }
 
-function closeShapeIndexSelector() {
+export function closeShapeIndexSelector() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('shapeIndexSelectorModal');
         if (modal) {
@@ -971,7 +971,7 @@ function closeShapeIndexSelector() {
 }
 
 // Keyboard events for timer
-let spacePressed = false;
+export let spacePressed = false;
 document.addEventListener('keydown', (e) => {
     if (document.getElementById('evilnessQuizModal')) return;
     const modal = document.getElementById('trainingModal');
@@ -1180,18 +1180,18 @@ document.addEventListener('keyup', (e) => {
     }
 });
 
-function openTrainingSettingsModal() {
+export function openTrainingSettingsModal() {
     window.openUnifiedSettings('trainer');
 }
 
-function closeTrainingSettingsModal() {
+export function closeTrainingSettingsModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('trainingSettingsModal');
         if (modal) modal.classList.remove('active');
     });
 }
 
-function openTrainingInfoModal() {
+export function openTrainingInfoModal() {
     pushModalState('trainingInfoModal', closeTrainingInfoModal);
 
     let infoModal = document.getElementById('trainingInfoModal');
@@ -1256,7 +1256,7 @@ function openTrainingInfoModal() {
     infoModal.classList.add('active');
 }
 
-function closeTrainingInfoModal() {
+export function closeTrainingInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('trainingInfoModal');
         if (modal) modal.classList.remove('active');
@@ -1267,7 +1267,7 @@ function closeTrainingInfoModal() {
 // QUIZ SHARED UTILITIES
 // ============================================================
 
-function quizGetParityFromHex(hexCode) {
+export function quizGetParityFromHex(hexCode) {
     // Returns 'Odd' or 'Even' or null
     try {
         const state = parseHexFormat(hexCode);
@@ -1295,7 +1295,7 @@ window.openEvilnessQuiz = function () {
     startEvilnessQuiz(chosen);
 };
 
-function startEvilnessQuiz(chosenCaseNames) {
+export function startEvilnessQuiz(chosenCaseNames) {
     const allIndices = [];
     function rebuildIndices(names) {
         allIndices.length = 0;
@@ -1594,7 +1594,7 @@ window.openParityQuiz = function () {
     startParityQuiz(chosen);
 };
 
-function startParityQuiz(chosenCaseNames) {
+export function startParityQuiz(chosenCaseNames) {
     const allIndices = [];
     chosenCaseNames.forEach(cn => {
         const entry = window.CSPData.getShapeEntry(cn);
@@ -1723,19 +1723,6 @@ function startParityQuiz(chosenCaseNames) {
             });
         });
     });
-    document.getElementById('parityQuizSelectCases').addEventListener('click', () => {
-        openUniversalCaseSelector(TRAINER_STORAGE_KEYS.parity, (chosen) => {
-            allIndices.length = 0;
-            chosen.forEach(cn => {
-                const entry = window.CSPData.getShapeEntry(cn);
-                if (entry) {
-                    (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                    (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                }
-            });
-        });
-    });
-
     nextQuestion();
 }
 
@@ -1747,7 +1734,7 @@ window.openColorRecognitionPractice = function () {
     startColorRecognitionPractice();
 };
 
-function startColorRecognitionPractice() {
+export function startColorRecognitionPractice() {
     const faceColors = {
         F: typeof colorScheme !== 'undefined' ? colorScheme.frontColor : '#CC0000',
         R: typeof colorScheme !== 'undefined' ? colorScheme.rightColor : '#00AA00',
@@ -2123,7 +2110,7 @@ window.openTrainerPickerModal = function () {
     picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
 };
 
-function closeTrainerPickerModal() {
+export function closeTrainerPickerModal() {
     closeModalWithHistory(() => {
         const picker = document.getElementById('trainerPickerModal');
         if (picker) picker.remove();
@@ -2157,3 +2144,76 @@ window.trainerPickerLaunch = function (type) {
         startColorRecognitionPractice();
     }
 };
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "currentTrainingCase": { get: () => currentTrainingCase, set: value => { currentTrainingCase = value; } },
+    "trainingScrambles": { get: () => trainingScrambles, set: value => { trainingScrambles = value; } },
+    "timerRunning": { get: () => timerRunning, set: value => { timerRunning = value; } },
+    "timerStartTime": { get: () => timerStartTime, set: value => { timerStartTime = value; } },
+    "timerInterval": { get: () => timerInterval, set: value => { timerInterval = value; } },
+    "timerElapsed": { get: () => timerElapsed, set: value => { timerElapsed = value; } },
+    "isHolding": { get: () => isHolding, set: value => { isHolding = value; } },
+    "preGeneratedScrambles": { get: () => preGeneratedScrambles, set: value => { preGeneratedScrambles = value; } },
+    "currentScrambleText": { get: () => currentScrambleText, set: value => { currentScrambleText = value; } },
+    "trainingModalElement": { get: () => trainingModalElement, set: value => { trainingModalElement = value; } },
+    "scrambleHistory": { get: () => scrambleHistory, set: value => { scrambleHistory = value; } },
+    "currentHistoryIndex": { get: () => currentHistoryIndex, set: value => { currentHistoryIndex = value; } },
+    "trainingScrambleImageSize": { get: () => trainingScrambleImageSize, set: value => { trainingScrambleImageSize = value; } },
+    "trainingScrambleTextSize": { get: () => trainingScrambleTextSize, set: value => { trainingScrambleTextSize = value; } },
+    "trainingHoldToStart": { get: () => trainingHoldToStart, set: value => { trainingHoldToStart = value; } },
+    "holdStartTime": { get: () => holdStartTime, set: value => { holdStartTime = value; } },
+    "isHoldReady": { get: () => isHoldReady, set: value => { isHoldReady = value; } },
+    "inspectionStartTime": { get: () => inspectionStartTime, set: value => { inspectionStartTime = value; } },
+    "inspectionElapsed": { get: () => inspectionElapsed, set: value => { inspectionElapsed = value; } },
+    "lastInspectionElapsed": { get: () => lastInspectionElapsed, set: value => { lastInspectionElapsed = value; } },
+    "lastParityQuizWrong": { get: () => lastParityQuizWrong, set: value => { lastParityQuizWrong = value; } },
+    "inspectionInterval": { get: () => inspectionInterval, set: value => { inspectionInterval = value; } },
+    "isInspectionPhase": { get: () => isInspectionPhase, set: value => { isInspectionPhase = value; } },
+    "parityQuizPhase": { get: () => parityQuizPhase, set: value => { parityQuizPhase = value; } },
+    "parityQuizAnswer": { get: () => parityQuizAnswer, set: value => { parityQuizAnswer = value; } },
+    "parityQuizCorrect": { get: () => parityQuizCorrect, set: value => { parityQuizCorrect = value; } },
+    "trainingEnableInspection": { get: () => trainingEnableInspection, set: value => { trainingEnableInspection = value; } },
+    "trainingEnableParityQuiz": { get: () => trainingEnableParityQuiz, set: value => { trainingEnableParityQuiz = value; } },
+    "createTrainingModal": { get: () => createTrainingModal, set: value => { Object.defineProperty(window, "createTrainingModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openTrainingModal": { get: () => openTrainingModal, set: value => { Object.defineProperty(window, "openTrainingModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeTrainingModal": { get: () => closeTrainingModal, set: value => { Object.defineProperty(window, "closeTrainingModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "generateNextScrambleData": { get: () => generateNextScrambleData, set: value => { Object.defineProperty(window, "generateNextScrambleData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "displayNextScramble": { get: () => displayNextScramble, set: value => { Object.defineProperty(window, "displayNextScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "previousScramble": { get: () => previousScramble, set: value => { Object.defineProperty(window, "previousScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+    "nextScrambleManual": { get: () => nextScrambleManual, set: value => { Object.defineProperty(window, "nextScrambleManual", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyTimerSize": { get: () => applyTimerSize, set: value => { Object.defineProperty(window, "applyTimerSize", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyPrevScrambleBar": { get: () => applyPrevScrambleBar, set: value => { Object.defineProperty(window, "applyPrevScrambleBar", { configurable: true, enumerable: true, writable: true, value }); } },
+    "regenerateScrambleLookahead": { get: () => regenerateScrambleLookahead, set: value => { Object.defineProperty(window, "regenerateScrambleLookahead", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openParityAnalysisFromTraining": { get: () => openParityAnalysisFromTraining, set: value => { Object.defineProperty(window, "openParityAnalysisFromTraining", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleTimerMouseDown": { get: () => handleTimerMouseDown, set: value => { Object.defineProperty(window, "handleTimerMouseDown", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleTimerMouseUp": { get: () => handleTimerMouseUp, set: value => { Object.defineProperty(window, "handleTimerMouseUp", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleTimerMouseLeave": { get: () => handleTimerMouseLeave, set: value => { Object.defineProperty(window, "handleTimerMouseLeave", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleTimerTouchStart": { get: () => handleTimerTouchStart, set: value => { Object.defineProperty(window, "handleTimerTouchStart", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handleTimerTouchEnd": { get: () => handleTimerTouchEnd, set: value => { Object.defineProperty(window, "handleTimerTouchEnd", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startInspection": { get: () => startInspection, set: value => { Object.defineProperty(window, "startInspection", { configurable: true, enumerable: true, writable: true, value }); } },
+    "stopInspectionAndStartTimer": { get: () => stopInspectionAndStartTimer, set: value => { Object.defineProperty(window, "stopInspectionAndStartTimer", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startParityQuizInspection": { get: () => startParityQuizInspection, set: value => { Object.defineProperty(window, "startParityQuizInspection", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startTimer": { get: () => startTimer, set: value => { Object.defineProperty(window, "startTimer", { configurable: true, enumerable: true, writable: true, value }); } },
+    "stopTimerOnly": { get: () => stopTimerOnly, set: value => { Object.defineProperty(window, "stopTimerOnly", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateTimerDisplay": { get: () => updateTimerDisplay, set: value => { Object.defineProperty(window, "updateTimerDisplay", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openShapeIndexSelector": { get: () => openShapeIndexSelector, set: value => { Object.defineProperty(window, "openShapeIndexSelector", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeShapeIndexSelector": { get: () => closeShapeIndexSelector, set: value => { Object.defineProperty(window, "closeShapeIndexSelector", { configurable: true, enumerable: true, writable: true, value }); } },
+    "spacePressed": { get: () => spacePressed, set: value => { spacePressed = value; } },
+    "openTrainingSettingsModal": { get: () => openTrainingSettingsModal, set: value => { Object.defineProperty(window, "openTrainingSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeTrainingSettingsModal": { get: () => closeTrainingSettingsModal, set: value => { Object.defineProperty(window, "closeTrainingSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openTrainingInfoModal": { get: () => openTrainingInfoModal, set: value => { Object.defineProperty(window, "openTrainingInfoModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeTrainingInfoModal": { get: () => closeTrainingInfoModal, set: value => { Object.defineProperty(window, "closeTrainingInfoModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "quizGetParityFromHex": { get: () => quizGetParityFromHex, set: value => { Object.defineProperty(window, "quizGetParityFromHex", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startEvilnessQuiz": { get: () => startEvilnessQuiz, set: value => { Object.defineProperty(window, "startEvilnessQuiz", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startParityQuiz": { get: () => startParityQuiz, set: value => { Object.defineProperty(window, "startParityQuiz", { configurable: true, enumerable: true, writable: true, value }); } },
+    "startColorRecognitionPractice": { get: () => startColorRecognitionPractice, set: value => { Object.defineProperty(window, "startColorRecognitionPractice", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeTrainerPickerModal": { get: () => closeTrainerPickerModal, set: value => { Object.defineProperty(window, "closeTrainerPickerModal", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

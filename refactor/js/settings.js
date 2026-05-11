@@ -6,14 +6,14 @@
 ╚═══════════════════════════════════════════════════════════════════════════╝
 */
 
-const SETTINGS_TABS = [
+export const SETTINGS_TABS = [
     { id: 'homescreen',    label: 'Personalization',    icon: 'res/settings.svg' },
     { id: 'parity',        label: 'Parity Tracer Settings', icon: 'res/tracing.svg' },
     { id: 'trainer',       label: 'Trainer Settings',       icon: 'res/training.svg' },
     { id: 'animate',       label: 'Animate Algs Settings',  icon: 'res/animate_alg_settings.svg' },
 ];
 
-let _settingsActiveTab = 'homescreen';
+export let _settingsActiveTab = 'homescreen';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
@@ -36,7 +36,7 @@ window.openParityTracingPersonalization = () => {
 
 // ── Build modal DOM ───────────────────────────────────────────────────────────
 
-function _buildSettingsModal() {
+export function _buildSettingsModal() {
     if (document.getElementById('unifiedSettingsModal')) return;
 
     window.modalScrollY = window.scrollY;
@@ -117,7 +117,7 @@ btn.innerHTML = `<img src="${tab.icon}" width="${isAnimate ? 30 : 24}" height="$
     if (typeof pushModalState === 'function') pushModalState('unifiedSettingsModal', _closeSettingsModal);
 }
 
-function _switchTab(tabId) {
+export function _switchTab(tabId) {
     _settingsActiveTab = tabId;
     SETTINGS_TABS.forEach(t => {
         const btn = document.getElementById(`settingsTab_${t.id}`);
@@ -129,7 +129,7 @@ function _switchTab(tabId) {
     _renderTab(tabId);
 }
 
-function _renderTab(tabId) {
+export function _renderTab(tabId) {
     const panel = document.getElementById('settingsPanel');
     if (!panel) return;
     const tab = SETTINGS_TABS.find(t => t.id === tabId);
@@ -147,7 +147,7 @@ function _renderTab(tabId) {
 }
 
 window.closeUnifiedSettingsModal = _closeSettingsModal;
-function _closeSettingsModal() {
+export function _closeSettingsModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('unifiedSettingsModal');
         if (!modal) return;
@@ -159,7 +159,7 @@ function _closeSettingsModal() {
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
-function _row(labelHtml, controlHtml, tipHtml) {
+export function _row(labelHtml, controlHtml, tipHtml) {
     return `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:12px;">
         <div style="display:flex;align-items:center;gap:7px;flex:1;min-width:0;">
@@ -173,11 +173,11 @@ function _row(labelHtml, controlHtml, tipHtml) {
     </div>`;
 }
 
-function _toggle(id, checked, onchange) {
+export function _toggle(id, checked, onchange) {
     return `<input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="${onchange}" style="transform:scale(1.3);cursor:pointer;">`;
 }
 
-function _slider(id, min, max, step, value, onInput, displayId) {
+export function _slider(id, min, max, step, value, onInput, displayId) {
     return `
     <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"
         style="width:100%;cursor:pointer;" oninput="${onInput}">
@@ -186,11 +186,11 @@ function _slider(id, min, max, step, value, onInput, displayId) {
     </div>`;
 }
 
-function _sectionTitle(text) {
+export function _sectionTitle(text) {
     return `<div style="font-size:0.8rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-secondary);margin:18px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--surface-border);">${text}</div>`;
 }
 
-function _actionBtn(label, onclick, tipHtml) {
+export function _actionBtn(label, onclick, tipHtml) {
     return `
     <div onclick="if(event.target===this||event.target.tagName==='SPAN')${onclick}" class="settings-action-btn"
         style="padding:11px 16px;border-radius:10px;cursor:pointer;width:100%;margin-bottom:8px;font-weight:600;font-size:0.92rem;
@@ -207,7 +207,7 @@ function _actionBtn(label, onclick, tipHtml) {
 
 // ── TAB: Homescreen ───────────────────────────────────────────────────────────
 
-function _renderHomescreenTab(panel) {
+export function _renderHomescreenTab(panel) {
     panel.innerHTML += `
         ${_sectionTitle('Display')}
         ${_row('Dark Mode',
@@ -255,7 +255,7 @@ function _renderHomescreenTab(panel) {
 
 // ── TAB: Parity Tracer ────────────────────────────────────────────────────────
 
-function _buildParityConfig() {
+export function _buildParityConfig() {
     return {
         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
@@ -272,7 +272,7 @@ function _buildParityConfig() {
     };
 }
 
-function _renderParityTab(panel) {
+export function _renderParityTab(panel) {
     const storedZ2 = localStorage.getItem('z2TracingMode');
     const z2On = storedZ2 !== null ? storedZ2 === 'true' : true;
     const ptSize = parseInt(localStorage.getItem('parityTracerImageSize') || '200');
@@ -437,7 +437,7 @@ window._openEvilnessCasesFromSettings = function() {
         window.ParityTracerLibrary.openEvilnessCasesModal(config);
     }
 };
-function _triggerParityLiveUpdate() {
+export function _triggerParityLiveUpdate() {
     const backdrop = document.querySelector('.parity-tracer-backdrop');
     if (!backdrop) return;
     const input = backdrop.querySelector('input[type="text"]');
@@ -454,7 +454,7 @@ window.toggleTheme = function(isDark) {
 
 // ── TAB: Trainer ──────────────────────────────────────────────────────────────
 
-function _renderTrainerTab(panel) {
+export function _renderTrainerTab(panel) {
     const imgSize  = parseInt(localStorage.getItem('trainingScrambleImageSize') || '200');
     const txtSize  = parseInt(localStorage.getItem('trainingScrambleTextSize')  || '16');
     const tmrSize  = parseInt(localStorage.getItem('trainingTimerSize')         || '80');
@@ -583,7 +583,7 @@ window._trTogglePQuiz = function(val) {
 
 // ── TAB: Alg Animator ────────────────────────────────────────────────────────
 
-function _renderAnimateTab(panel) {
+export function _renderAnimateTab(panel) {
     const speed   = parseFloat(localStorage.getItem('sq1AnimSpeed')          || '0.9');
     const delay   = parseInt(localStorage.getItem('sq1AutoDelay')            || '500');
     const imgSize = parseInt(localStorage.getItem('sq1AnimImageSize')        || '200');
@@ -639,7 +639,7 @@ window._aaSaveBool = function(key, val) { localStorage.setItem(key, val.toString
 
 // ── Utility: confirm expensive operation ──────────────────────────────────────
 
-function _confirmExpensiveOp(title, message, onConfirm) {
+export function _confirmExpensiveOp(title, message, onConfirm) {
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:20000;display:flex;align-items:center;justify-content:center;';
     overlay.innerHTML = `
@@ -660,3 +660,31 @@ function _confirmExpensiveOp(title, message, onConfirm) {
 // The sidebar already calls openSettingsModal() which is now shimmed above.
 // Nothing extra needed.
 
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "SETTINGS_TABS": { get: () => SETTINGS_TABS, set: value => { Object.defineProperty(window, "SETTINGS_TABS", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_settingsActiveTab": { get: () => _settingsActiveTab, set: value => { _settingsActiveTab = value; } },
+    "_buildSettingsModal": { get: () => _buildSettingsModal, set: value => { Object.defineProperty(window, "_buildSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_switchTab": { get: () => _switchTab, set: value => { Object.defineProperty(window, "_switchTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_renderTab": { get: () => _renderTab, set: value => { Object.defineProperty(window, "_renderTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_closeSettingsModal": { get: () => _closeSettingsModal, set: value => { Object.defineProperty(window, "_closeSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_row": { get: () => _row, set: value => { Object.defineProperty(window, "_row", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_toggle": { get: () => _toggle, set: value => { Object.defineProperty(window, "_toggle", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_slider": { get: () => _slider, set: value => { Object.defineProperty(window, "_slider", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_sectionTitle": { get: () => _sectionTitle, set: value => { Object.defineProperty(window, "_sectionTitle", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_actionBtn": { get: () => _actionBtn, set: value => { Object.defineProperty(window, "_actionBtn", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_renderHomescreenTab": { get: () => _renderHomescreenTab, set: value => { Object.defineProperty(window, "_renderHomescreenTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_buildParityConfig": { get: () => _buildParityConfig, set: value => { Object.defineProperty(window, "_buildParityConfig", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_renderParityTab": { get: () => _renderParityTab, set: value => { Object.defineProperty(window, "_renderParityTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_triggerParityLiveUpdate": { get: () => _triggerParityLiveUpdate, set: value => { Object.defineProperty(window, "_triggerParityLiveUpdate", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_renderTrainerTab": { get: () => _renderTrainerTab, set: value => { Object.defineProperty(window, "_renderTrainerTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_renderAnimateTab": { get: () => _renderAnimateTab, set: value => { Object.defineProperty(window, "_renderAnimateTab", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_confirmExpensiveOp": { get: () => _confirmExpensiveOp, set: value => { Object.defineProperty(window, "_confirmExpensiveOp", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

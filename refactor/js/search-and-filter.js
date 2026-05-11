@@ -3,7 +3,7 @@
 ﻿// Store search matches for highlighting
 window.searchMatches = new Map();
 
-function filterAndSort(softRender = false) {
+export function filterAndSort(softRender = false) {
     const searchTerm    = searchInput.value.toLowerCase().trim();
     const sortType      = sortSelect.value;
     const learnFilter   = learnFilterSelect.value;
@@ -84,7 +84,7 @@ function filterAndSort(softRender = false) {
 }
 
 // ── Responsive select labels ─────────────────────────────────
-function updateSelectLabels() {
+export function updateSelectLabels() {
     const width   = window.innerWidth;
     const selects = document.querySelectorAll('select');
 
@@ -110,7 +110,7 @@ function updateSelectLabels() {
 }
 
 // ── Attach event listeners ───────────────────────────────────
-function attachSearchListeners() {
+export function attachSearchListeners() {
     const searchInputEl      = document.getElementById('search');
     const sortSelectEl       = document.getElementById('sort');
     const learnFilterSelectEl = document.getElementById('learnFilter');
@@ -173,3 +173,17 @@ if (document.readyState === 'loading') {
 
 updateSelectLabels();
 window.addEventListener('resize', updateSelectLabels);
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "filterAndSort": { get: () => filterAndSort, set: value => { Object.defineProperty(window, "filterAndSort", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateSelectLabels": { get: () => updateSelectLabels, set: value => { Object.defineProperty(window, "updateSelectLabels", { configurable: true, enumerable: true, writable: true, value }); } },
+    "attachSearchListeners": { get: () => attachSearchListeners, set: value => { Object.defineProperty(window, "attachSearchListeners", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

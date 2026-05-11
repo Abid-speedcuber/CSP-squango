@@ -8,7 +8,7 @@
 */
 
 // Helper function for color names
-function getColorName(hexColor) {
+export function getColorName(hexColor) {
     const colorMap = {
         '#000000': 'Black',
         '#FFFFFF': 'White',
@@ -22,7 +22,7 @@ function getColorName(hexColor) {
 window.getColorName = getColorName;
 
 // Generate all modal HTML dynamically for lazy loading
-function generateModalHTML() {
+export function generateModalHTML() {
     const modalContainer = document.createElement('div');
     modalContainer.id = 'dynamicModals';
 
@@ -403,11 +403,11 @@ window.openSettingsModal = function() {
     window.openUnifiedSettings('homescreen');
 }
 
-function closeSettingsModal() {
+export function closeSettingsModal() {
     _closeSettingsModal();
 }
 
-function handlePresetChange(presetName) {
+export function handlePresetChange(presetName) {
     const isSamePreset = presetName === currentPreset;
 
     if (isSamePreset) {
@@ -502,7 +502,7 @@ window.toggleHints = function(isChecked) {
     applyHintVisibility();
 }
 
-function applyHintVisibility() {
+export function applyHintVisibility() {
     if (showHints) {
         document.body.classList.remove('hide-hints');
     } else {
@@ -516,7 +516,7 @@ window.toggleHideInstructions = function(isChecked) {
     applyInstructionVisibility();
 }
 
-function applyInstructionVisibility() {
+export function applyInstructionVisibility() {
     const instructionBtns = document.querySelectorAll('.settings-info-btn, .homepage-info-btn, .training-info-btn, .case-detail-info-btn, .instruction-btn');
     instructionBtns.forEach(btn => {
         btn.style.display = hideInstructions ? 'none' : 'flex';
@@ -535,7 +535,7 @@ window.toggleEnhancedAccess = function(isChecked) {
 }
 
 // Populate preset dropdown dynamically
-function populatePresetDropdown(selectorId = 'presetSelector') {
+export function populatePresetDropdown(selectorId = 'presetSelector') {
     const presetSelector = document.getElementById(selectorId);
     if (!presetSelector || typeof window.PRESET_CONFIG === 'undefined') return;
 
@@ -582,7 +582,7 @@ window.openColorSchemeModal = function() {
     });
 }
 
-function closeColorSchemeModal() {
+export function closeColorSchemeModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('colorSchemeModal');
         modal.classList.remove('active');
@@ -603,7 +603,7 @@ window.updateAlgFontSizePreview = function(value) {
     applyAlgorithmFontSize();
 }
 
-function applyAlgorithmFontSize() {
+export function applyAlgorithmFontSize() {
     const style = document.getElementById('algorithm-font-size-style') || document.createElement('style');
     style.id = 'algorithm-font-size-style';
     style.textContent = `
@@ -620,7 +620,7 @@ function applyAlgorithmFontSize() {
 applyHintVisibility();
 
 // New parity analysis using ParityTracerLibrary
-function openNewParityAnalysis(scramble) {
+export function openNewParityAnalysis(scramble) {
     if (typeof window.ParityTracerLibrary === 'undefined') {
         showToast('Parity Tracer library not loaded', 3000, 'error');
         return;
@@ -706,7 +706,7 @@ window.showHomepageInfoModal = function() {
     infoModal.classList.add('active');
 }
 
-function closeHomepageInfoModal() {
+export function closeHomepageInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('homepageInfoModal');
         if (modal) {
@@ -715,7 +715,7 @@ function closeHomepageInfoModal() {
     });
 }
 
-function openEditCaseModal(caseName) {
+export function openEditCaseModal(caseName) {
     const item = window.CSPData.getCase(caseName);
     if (!item) return;
 
@@ -875,11 +875,11 @@ function openEditCaseModal(caseName) {
     }, 200);
 }
 
-function getModalCaseShapeData(caseName) {
+export function getModalCaseShapeData(caseName) {
     return window.CSPData.getShapeEntry(caseName);
 }
 
-function updateInputColor(input) {
+export function updateInputColor(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
     if (typeof window.algToShapeIndex === 'undefined' || typeof window.caleTracer === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') {
@@ -926,7 +926,7 @@ function updateInputColor(input) {
 }
 
 // Helper to get case name from the edit case modal
-function _getEditModalCaseName(modal) {
+export function _getEditModalCaseName(modal) {
     if (!modal) return null;
     if (modal.dataset.caseName) return modal.dataset.caseName;
     const titleElement = modal.querySelector('.modal-title');
@@ -1084,7 +1084,7 @@ window.saveCaseRename = function (caseName) {
     }
 };
 
-function closeEditCaseModal() {
+export function closeEditCaseModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('editCaseModal');
         if (modal) {
@@ -1200,7 +1200,7 @@ window.closeEditCaseInfoModal = function () {
     });
 };
 
-function saveEditedCase(caseName) {
+export function saveEditedCase(caseName) {
     // Save name and subtitle from temp rename
     saveCaseRename(caseName);
 
@@ -1227,12 +1227,12 @@ function saveEditedCase(caseName) {
     showToast('Case updated successfully!', 2000, 'success');
 }
 
-function openCustomizeSVGsModal() {
+export function openCustomizeSVGsModal() {
     closeSettingsModal();
     SVGEditor.open();
 }
 
-function openNotesModal(caseName) {
+export function openNotesModal(caseName) {
     const comment = comments.get(caseName) || '';
     window.originalNoteContent = comment; // Store original for comparison
 
@@ -1357,7 +1357,7 @@ window.closeNotesInfoModal = function () {
     });
 };
 
-function closeNotesModal() {
+export function closeNotesModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('notesModal');
         if (modal) {
@@ -1367,7 +1367,7 @@ function closeNotesModal() {
     });
 }
 
-function saveNotes(caseName) {
+export function saveNotes(caseName) {
     const textarea = document.getElementById('notesTextarea');
     const noteText = textarea.value.trim();
 
@@ -1426,7 +1426,7 @@ window.openGeneralNotesModal = function() {
     renderGeneralNotes();
 }
 
-function closeGeneralNotesModal() {
+export function closeGeneralNotesModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('generalNotesModal');
         if (modal) {
@@ -1436,7 +1436,7 @@ function closeGeneralNotesModal() {
     });
 }
 
-function renderGeneralNotes() {
+export function renderGeneralNotes() {
     const viewDiv = document.getElementById('generalNotesView');
     if (!viewDiv) return;
 
@@ -1525,7 +1525,7 @@ window.attemptSwitchToViewMode = function() {
     }
 }
 
-function switchToViewMode() {
+export function switchToViewMode() {
     const viewDiv = document.getElementById('generalNotesView');
     const editDiv = document.getElementById('generalNotesEdit');
     const editBtn = document.getElementById('editGeneralNotesBtn');
@@ -1540,7 +1540,7 @@ function switchToViewMode() {
     renderGeneralNotes();
 }
 
-function saveGeneralNotes() {
+export function saveGeneralNotes() {
     const textarea = document.getElementById('generalNotesTextarea');
     generalNotes = textarea.value;
     window.originalGeneralNotes = generalNotes;
@@ -1772,7 +1772,7 @@ document.addEventListener("click", (e) => {
 }, true); // TRUE = capture phase
 
 // Toast notification system
-window.showToast = function (message, duration = 3000, type = 'info') {
+export function showToast(message, duration = 3000, type = 'info') {
     const toast = document.createElement('div');
     toast.className = `toast-notification toast-notification--${type}`;
     toast.textContent = message;
@@ -1784,7 +1784,9 @@ window.showToast = function (message, duration = 3000, type = 'info') {
         toast.classList.remove('toast-notification--visible');
         setTimeout(() => toast.remove(), 300);
     }, duration);
-};
+}
+
+window.showToast = showToast;
 
 // Confirmation modal
 window.showConfirmation = function (message, onConfirm, onCancel) {
@@ -1866,10 +1868,10 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
 };
 
 // Desktop Profile Modal Functions (Popup style - same logic as algorithm popup)
-let activeProfilePopup = null;
-let activeProfilePopupElement = null;
+export let activeProfilePopup = null;
+export let activeProfilePopupElement = null;
 
-function showProfilePopup(isPermanent) {
+export function showProfilePopup(isPermanent) {
     const profileBtn = document.getElementById('profileBtn');
     const popup = document.getElementById('profileModalDesktop');
     if (!profileBtn || !popup) return;
@@ -1942,7 +1944,7 @@ function showProfilePopup(isPermanent) {
     }
 }
 
-function hideProfilePopup(isPermanent) {
+export function hideProfilePopup(isPermanent) {
     const popup = document.getElementById('profileModalDesktop');
     if (!popup) return;
 
@@ -1960,16 +1962,16 @@ function hideProfilePopup(isPermanent) {
 }
 
 // Wrapper functions for compatibility
-function openProfileModalDesktop(isPermanent = false) {
+export function openProfileModalDesktop(isPermanent = false) {
     showProfilePopup(isPermanent);
 }
 
-function closeProfileModalDesktop(isPermanent = false) {
+export function closeProfileModalDesktop(isPermanent = false) {
     hideProfilePopup(isPermanent);
 }
 
 // Mobile Profile Modal Functions (Full modal style)
-function openProfileModalMobile() {
+export function openProfileModalMobile() {
     const modal = document.getElementById('profileModalMobile');
     if (!modal) return;
 
@@ -1984,7 +1986,7 @@ function openProfileModalMobile() {
     applyProfileUI();
 }
 
-function closeProfileModalMobile() {
+export function closeProfileModalMobile() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('profileModalMobile');
         if (modal) {
@@ -1995,7 +1997,7 @@ function closeProfileModalMobile() {
 }
 
 // Unified function that detects device type
-function openProfileModal() {
+export function openProfileModal() {
     const isMobile = window.innerWidth <= 620;
     if (isMobile) {
         openProfileModalMobile();
@@ -2011,7 +2013,7 @@ window.closeProfileModalDesktop = closeProfileModalDesktop;
 window.openProfileModalMobile = openProfileModalMobile;
 window.closeProfileModalMobile = closeProfileModalMobile;
 
-const AVATARS = [
+export const AVATARS = [
     'res/avatar.svg',
     'res/avatar/1.svg',
     'res/avatar/2.svg',
@@ -2023,9 +2025,9 @@ const AVATARS = [
     'res/avatar/8.svg',
 ];
 
-let tempSelectedAvatar = null;
+export let tempSelectedAvatar = null;
 
-function applyProfileUI() {
+export function applyProfileUI() {
     // Update floating button
     const btnAvatar = document.getElementById('profileBtnAvatar');
     if (btnAvatar) btnAvatar.src = profileAvatar;
@@ -2041,7 +2043,7 @@ function applyProfileUI() {
     if (mobTitle) mobTitle.textContent = profileName;
 }
 
-function buildAvatarGrid(mode) {
+export function buildAvatarGrid(mode) {
     const grid = document.getElementById(`avatarGrid${mode}`);
     if (!grid) return;
     grid.innerHTML = '';
@@ -2086,7 +2088,7 @@ window.saveProfileEdit = function(mode) {
     showToast('Profile saved!', 2000, 'success');
 };
 
-function updateProfileStats() {
+export function updateProfileStats() {
     const totalCases = data.length;
     const learnedCount = data.filter(item => isCaseLearned(item.name)).length;
     const learningCount = data.filter(item => isCaseLearning(item.name)).length;
@@ -2154,7 +2156,7 @@ window.openAboutModal = function() {
     pushModalState('aboutModal', closeAboutModal);
 }
 
-function closeAboutModal() {
+export function closeAboutModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('aboutModal');
         modal.classList.remove('active');
@@ -2163,7 +2165,7 @@ function closeAboutModal() {
 }
 
 // Function to open parity tracing personalization from settings
-function openParityTracingPersonalization() {
+export function openParityTracingPersonalization() {
     closeSettingsModal();
 
     // Call the config modal directly via the exported library function
@@ -2194,7 +2196,7 @@ function openParityTracingPersonalization() {
 }
 
 // Sidebar functions
-function generateSidebarHTML() {
+export function generateSidebarHTML() {
     let sidebar = document.getElementById('appSidebar');
     if (sidebar) return; // Already exists
 
@@ -2298,7 +2300,7 @@ function generateSidebarHTML() {
     initializePresetSelector();
 }
 
-function initializePresetSelector() {
+export function initializePresetSelector() {
     const currentPresetName = document.getElementById('currentPresetName');
     const presetOptions = document.getElementById('presetOptions');
 
@@ -2348,7 +2350,7 @@ window.togglePresetExpand = function () {
     }
 };
 
-window.toggleSidebar = function () {
+export function toggleSidebar() {
     generateSidebarHTML();
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
@@ -2362,7 +2364,9 @@ window.toggleSidebar = function () {
 
         sidebar.classList.toggle('active');
     }
-};
+}
+
+window.toggleSidebar = toggleSidebar;
 
 window.closeSidebar = function () {
     const sidebar = document.getElementById('appSidebar');
@@ -2438,3 +2442,57 @@ document.addEventListener('click', (e) => {
 window.addEventListener('scroll', () => {
     document.querySelectorAll(".info-box.show").forEach(box => box.classList.remove("show"));
 }, true);
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "getColorName": { get: () => getColorName, set: value => { Object.defineProperty(window, "getColorName", { configurable: true, enumerable: true, writable: true, value }); } },
+    "generateModalHTML": { get: () => generateModalHTML, set: value => { Object.defineProperty(window, "generateModalHTML", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeSettingsModal": { get: () => closeSettingsModal, set: value => { Object.defineProperty(window, "closeSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "handlePresetChange": { get: () => handlePresetChange, set: value => { Object.defineProperty(window, "handlePresetChange", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyHintVisibility": { get: () => applyHintVisibility, set: value => { Object.defineProperty(window, "applyHintVisibility", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyInstructionVisibility": { get: () => applyInstructionVisibility, set: value => { Object.defineProperty(window, "applyInstructionVisibility", { configurable: true, enumerable: true, writable: true, value }); } },
+    "populatePresetDropdown": { get: () => populatePresetDropdown, set: value => { Object.defineProperty(window, "populatePresetDropdown", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeColorSchemeModal": { get: () => closeColorSchemeModal, set: value => { Object.defineProperty(window, "closeColorSchemeModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "applyAlgorithmFontSize": { get: () => applyAlgorithmFontSize, set: value => { Object.defineProperty(window, "applyAlgorithmFontSize", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openNewParityAnalysis": { get: () => openNewParityAnalysis, set: value => { Object.defineProperty(window, "openNewParityAnalysis", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeHomepageInfoModal": { get: () => closeHomepageInfoModal, set: value => { Object.defineProperty(window, "closeHomepageInfoModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openEditCaseModal": { get: () => openEditCaseModal, set: value => { Object.defineProperty(window, "openEditCaseModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "getModalCaseShapeData": { get: () => getModalCaseShapeData, set: value => { Object.defineProperty(window, "getModalCaseShapeData", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateInputColor": { get: () => updateInputColor, set: value => { Object.defineProperty(window, "updateInputColor", { configurable: true, enumerable: true, writable: true, value }); } },
+    "_getEditModalCaseName": { get: () => _getEditModalCaseName, set: value => { Object.defineProperty(window, "_getEditModalCaseName", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeEditCaseModal": { get: () => closeEditCaseModal, set: value => { Object.defineProperty(window, "closeEditCaseModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveEditedCase": { get: () => saveEditedCase, set: value => { Object.defineProperty(window, "saveEditedCase", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openCustomizeSVGsModal": { get: () => openCustomizeSVGsModal, set: value => { Object.defineProperty(window, "openCustomizeSVGsModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openNotesModal": { get: () => openNotesModal, set: value => { Object.defineProperty(window, "openNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeNotesModal": { get: () => closeNotesModal, set: value => { Object.defineProperty(window, "closeNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveNotes": { get: () => saveNotes, set: value => { Object.defineProperty(window, "saveNotes", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeGeneralNotesModal": { get: () => closeGeneralNotesModal, set: value => { Object.defineProperty(window, "closeGeneralNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "renderGeneralNotes": { get: () => renderGeneralNotes, set: value => { Object.defineProperty(window, "renderGeneralNotes", { configurable: true, enumerable: true, writable: true, value }); } },
+    "switchToViewMode": { get: () => switchToViewMode, set: value => { Object.defineProperty(window, "switchToViewMode", { configurable: true, enumerable: true, writable: true, value }); } },
+    "saveGeneralNotes": { get: () => saveGeneralNotes, set: value => { Object.defineProperty(window, "saveGeneralNotes", { configurable: true, enumerable: true, writable: true, value }); } },
+    "activeProfilePopup": { get: () => activeProfilePopup, set: value => { activeProfilePopup = value; } },
+    "activeProfilePopupElement": { get: () => activeProfilePopupElement, set: value => { activeProfilePopupElement = value; } },
+    "showProfilePopup": { get: () => showProfilePopup, set: value => { Object.defineProperty(window, "showProfilePopup", { configurable: true, enumerable: true, writable: true, value }); } },
+    "hideProfilePopup": { get: () => hideProfilePopup, set: value => { Object.defineProperty(window, "hideProfilePopup", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openProfileModalDesktop": { get: () => openProfileModalDesktop, set: value => { Object.defineProperty(window, "openProfileModalDesktop", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeProfileModalDesktop": { get: () => closeProfileModalDesktop, set: value => { Object.defineProperty(window, "closeProfileModalDesktop", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openProfileModalMobile": { get: () => openProfileModalMobile, set: value => { Object.defineProperty(window, "openProfileModalMobile", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeProfileModalMobile": { get: () => closeProfileModalMobile, set: value => { Object.defineProperty(window, "closeProfileModalMobile", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openProfileModal": { get: () => openProfileModal, set: value => { Object.defineProperty(window, "openProfileModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "AVATARS": { get: () => AVATARS, set: value => { Object.defineProperty(window, "AVATARS", { configurable: true, enumerable: true, writable: true, value }); } },
+    "tempSelectedAvatar": { get: () => tempSelectedAvatar, set: value => { tempSelectedAvatar = value; } },
+    "applyProfileUI": { get: () => applyProfileUI, set: value => { Object.defineProperty(window, "applyProfileUI", { configurable: true, enumerable: true, writable: true, value }); } },
+    "buildAvatarGrid": { get: () => buildAvatarGrid, set: value => { Object.defineProperty(window, "buildAvatarGrid", { configurable: true, enumerable: true, writable: true, value }); } },
+    "updateProfileStats": { get: () => updateProfileStats, set: value => { Object.defineProperty(window, "updateProfileStats", { configurable: true, enumerable: true, writable: true, value }); } },
+    "closeAboutModal": { get: () => closeAboutModal, set: value => { Object.defineProperty(window, "closeAboutModal", { configurable: true, enumerable: true, writable: true, value }); } },
+    "openParityTracingPersonalization": { get: () => openParityTracingPersonalization, set: value => { Object.defineProperty(window, "openParityTracingPersonalization", { configurable: true, enumerable: true, writable: true, value }); } },
+    "generateSidebarHTML": { get: () => generateSidebarHTML, set: value => { Object.defineProperty(window, "generateSidebarHTML", { configurable: true, enumerable: true, writable: true, value }); } },
+    "initializePresetSelector": { get: () => initializePresetSelector, set: value => { Object.defineProperty(window, "initializePresetSelector", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}

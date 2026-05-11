@@ -5,7 +5,7 @@
 // ========================================
 
 // === SHAPE BUILDING ===
-function clusterify(shapeArray) {
+export function clusterify(shapeArray) {
   const slots = [];
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
 
@@ -51,7 +51,7 @@ function clusterify(shapeArray) {
   return slots;
 }
 
-function parseHexToDraw(hexScramble, slotsList) {
+export function parseHexToDraw(hexScramble, slotsList) {
   const assignments = {};
   for (let i = 0; i < slotsList.length; i++) {
     const slot = slotsList[i];
@@ -68,7 +68,7 @@ function parseHexToDraw(hexScramble, slotsList) {
 }
 
 // === GEOMETRY HELPERS ===
-function polarToCartesian(centerX, centerY, radius, angleDegrees) {
+export function polarToCartesian(centerX, centerY, radius, angleDegrees) {
   const angleRadians = angleDegrees * Math.PI / 180;
   return {
     x: centerX + radius * Math.cos(angleRadians),
@@ -76,18 +76,18 @@ function polarToCartesian(centerX, centerY, radius, angleDegrees) {
   };
 }
 
-function pointArrayToSVGString(pointsArray) {
+export function pointArrayToSVGString(pointsArray) {
   return pointsArray.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
 }
 
-function lerpBetweenTwoPoints(pointA, pointB, interpolationAmount) {
+export function lerpBetweenTwoPoints(pointA, pointB, interpolationAmount) {
   return {
     x: pointA.x + (pointB.x - pointA.x) * interpolationAmount,
     y: pointA.y + (pointB.y - pointA.y) * interpolationAmount
   };
 }
 
-function gimmeTheAngleForThisSlot(slot, angleArray) {
+export function gimmeTheAngleForThisSlot(slot, angleArray) {
   const angles = [];
   for (let k = 0; k < slot.lettersCount; k++) {
     const globalIdx = slot.startLetter + k;
@@ -98,7 +98,7 @@ function gimmeTheAngleForThisSlot(slot, angleArray) {
 }
 
 // === COLOR MAPPING ===
-function whatColorIsThisEdgePiece(hexChar, colorScheme) {
+export function whatColorIsThisEdgePiece(hexChar, colorScheme) {
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
   switch (hexChar.toLowerCase()) {
@@ -116,7 +116,7 @@ function whatColorIsThisEdgePiece(hexChar, colorScheme) {
   }
 }
 
-function whatAreTheCornerColorLetters(hexChar) {
+export function whatAreTheCornerColorLetters(hexChar) {
   switch ((hexChar || '').toLowerCase()) {
     case '1': return { top: 'y', left: 'b', right: 'o' };
     case '3': return { top: 'y', left: 'r', right: 'b' };
@@ -131,7 +131,7 @@ function whatAreTheCornerColorLetters(hexChar) {
   }
 }
 
-function convertColorLetterToHexCode(colorLetter, colorScheme) {
+export function convertColorLetterToHexCode(colorLetter, colorScheme) {
   if (!colorLetter) return '#cccccc';
   const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
 
@@ -146,7 +146,7 @@ function convertColorLetterToHexCode(colorLetter, colorScheme) {
   }
 }
 
-function gimmeCornerColorsAsHexCodes(hexChar, isThisBottomLayer, colorScheme) {
+export function gimmeCornerColorsAsHexCodes(hexChar, isThisBottomLayer, colorScheme) {
   const colorTriplet = whatAreTheCornerColorLetters(hexChar);
   let leftColor = convertColorLetterToHexCode(colorTriplet.left, colorScheme);
   let rightColor = convertColorLetterToHexCode(colorTriplet.right, colorScheme);
@@ -159,12 +159,12 @@ function gimmeCornerColorsAsHexCodes(hexChar, isThisBottomLayer, colorScheme) {
   return { top: topColor, left: leftColor, right: rightColor };
 }
 
-function whatColorIsThisHalfCorner() {
+export function whatColorIsThisHalfCorner() {
   return 'fill="#ff9999"';
 }
 
 // === SVG GENERATION FOR INDIVIDUAL PIECES ===
-function CreateOnePieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
+export function CreateOnePieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
   isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
 
   let svgMarkup = '';
@@ -218,7 +218,7 @@ function CreateOnePieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radius
 }
 
 // === MAIN SVG GENERATION ===
-function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
+export function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -317,7 +317,7 @@ function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorSc
 // === CUBE SHAPE VISUALIZER ===
 // ========================================
 
-function CreateOneShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
+export function CreateOneShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
   let svgMarkup = '';
   const halfAngle = slot.type === 'corner' ? 30 : 15;
 
@@ -349,7 +349,7 @@ function CreateOneShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInn
   return svgMarkup;
 }
 
-function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
+export function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
   if (hexScrambleCode.length !== 25) {
     throw new Error('Invalid scramble format - needs 25 characters!');
   }
@@ -450,7 +450,7 @@ function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFi
  * @returns {string} HTML string containing the SVG visualization
  */
 
-function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
+export function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
   let hexCode;
 
   // Check if input is a shape index (number)
@@ -488,7 +488,7 @@ function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent',
  * @param {object} colors - Color customization object with defaults
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 5) {
+export function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -510,7 +510,7 @@ function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 5
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDistance = 5) {
+export function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDistance = 5) {
   const colorScheme = {
     topColor: colors.topColor || '#000000',
     bottomColor: colors.bottomColor || '#FFFFFF',
@@ -539,7 +539,7 @@ function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDi
  * @param {object} colors - Color customization object
  * @returns {string} HTML string containing the SVG visualization
  */
-function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 5) {
+export function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 5) {
   const invertedScramble = invertScramble(solution);
   return visualizeFromScrambleNotation(invertedScramble, size, colors, ringDistance);
 }
@@ -552,4 +552,34 @@ if (typeof window !== 'undefined') {
     visualizeCubeShapeOutlines
   };
   window.Square1VisualizerLibraryWithSillyNames = window.Square1Visualizer;
+}
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "clusterify": { get: () => clusterify, set: value => { Object.defineProperty(window, "clusterify", { configurable: true, enumerable: true, writable: true, value }); } },
+    "parseHexToDraw": { get: () => parseHexToDraw, set: value => { Object.defineProperty(window, "parseHexToDraw", { configurable: true, enumerable: true, writable: true, value }); } },
+    "polarToCartesian": { get: () => polarToCartesian, set: value => { Object.defineProperty(window, "polarToCartesian", { configurable: true, enumerable: true, writable: true, value }); } },
+    "pointArrayToSVGString": { get: () => pointArrayToSVGString, set: value => { Object.defineProperty(window, "pointArrayToSVGString", { configurable: true, enumerable: true, writable: true, value }); } },
+    "lerpBetweenTwoPoints": { get: () => lerpBetweenTwoPoints, set: value => { Object.defineProperty(window, "lerpBetweenTwoPoints", { configurable: true, enumerable: true, writable: true, value }); } },
+    "gimmeTheAngleForThisSlot": { get: () => gimmeTheAngleForThisSlot, set: value => { Object.defineProperty(window, "gimmeTheAngleForThisSlot", { configurable: true, enumerable: true, writable: true, value }); } },
+    "whatColorIsThisEdgePiece": { get: () => whatColorIsThisEdgePiece, set: value => { Object.defineProperty(window, "whatColorIsThisEdgePiece", { configurable: true, enumerable: true, writable: true, value }); } },
+    "whatAreTheCornerColorLetters": { get: () => whatAreTheCornerColorLetters, set: value => { Object.defineProperty(window, "whatAreTheCornerColorLetters", { configurable: true, enumerable: true, writable: true, value }); } },
+    "convertColorLetterToHexCode": { get: () => convertColorLetterToHexCode, set: value => { Object.defineProperty(window, "convertColorLetterToHexCode", { configurable: true, enumerable: true, writable: true, value }); } },
+    "gimmeCornerColorsAsHexCodes": { get: () => gimmeCornerColorsAsHexCodes, set: value => { Object.defineProperty(window, "gimmeCornerColorsAsHexCodes", { configurable: true, enumerable: true, writable: true, value }); } },
+    "whatColorIsThisHalfCorner": { get: () => whatColorIsThisHalfCorner, set: value => { Object.defineProperty(window, "whatColorIsThisHalfCorner", { configurable: true, enumerable: true, writable: true, value }); } },
+    "CreateOnePieceSVG": { get: () => CreateOnePieceSVG, set: value => { Object.defineProperty(window, "CreateOnePieceSVG", { configurable: true, enumerable: true, writable: true, value }); } },
+    "GenerateTheFullSVGFromHexNotation": { get: () => GenerateTheFullSVGFromHexNotation, set: value => { Object.defineProperty(window, "GenerateTheFullSVGFromHexNotation", { configurable: true, enumerable: true, writable: true, value }); } },
+    "CreateOneShapeOutlineSVG": { get: () => CreateOneShapeOutlineSVG, set: value => { Object.defineProperty(window, "CreateOneShapeOutlineSVG", { configurable: true, enumerable: true, writable: true, value }); } },
+    "GenerateShapeVisualizationSVG": { get: () => GenerateShapeVisualizationSVG, set: value => { Object.defineProperty(window, "GenerateShapeVisualizationSVG", { configurable: true, enumerable: true, writable: true, value }); } },
+    "visualizeCubeShapeOutlines": { get: () => visualizeCubeShapeOutlines, set: value => { Object.defineProperty(window, "visualizeCubeShapeOutlines", { configurable: true, enumerable: true, writable: true, value }); } },
+    "visualizeFromHexCode": { get: () => visualizeFromHexCode, set: value => { Object.defineProperty(window, "visualizeFromHexCode", { configurable: true, enumerable: true, writable: true, value }); } },
+    "visualizeFromScrambleNotation": { get: () => visualizeFromScrambleNotation, set: value => { Object.defineProperty(window, "visualizeFromScrambleNotation", { configurable: true, enumerable: true, writable: true, value }); } },
+    "visualizeFromSolutionNotation": { get: () => visualizeFromSolutionNotation, set: value => { Object.defineProperty(window, "visualizeFromSolutionNotation", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
 }

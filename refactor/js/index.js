@@ -1,3 +1,63 @@
+import '../res/shapeImages/svg.js?v=esm-20260511-2';
+import '../database/shapeIndex.js?v=esm-20260511-2';
+import '../database/algs.js?v=esm-20260511-2';
+import './app-core.js?v=esm-20260511-2';
+import './data-store.js?v=esm-20260511-2';
+import './utils.js?v=esm-20260511-2';
+import './tools/algorithm-animation-core.js?v=esm-20260511-2';
+import './tools/scrambleNormalizer.js?v=esm-20260511-2';
+import './tools/alg_to_index.js?v=esm-20260511-2';
+import './tools/cales-parity-tracer.js?v=esm-20260511-2';
+import './tools/svg-editor.js?v=esm-20260511-2';
+import './tools/scramblegenerator.js?v=esm-20260511-2';
+import './tools/draw-scramble.js?v=esm-20260511-2';
+import './tools/scrambleFormatting.js?v=esm-20260511-2';
+import './tools/animate-alg.js?v=esm-20260511-2';
+import './restoftheapp.js?v=esm-20260511-2';
+import './tools/shapeTracer.js?v=esm-20260511-2';
+import './rendering.js?v=esm-20260511-2';
+import './search-and-filter.js?v=esm-20260511-2';
+import './settings.js?v=esm-20260511-2';
+import './modals.js?v=esm-20260511-2';
+import './quick-edit.js?v=esm-20260511-2';
+import './training-modal.js?v=esm-20260511-2';
+import './multi-trainer.js?v=esm-20260511-2';
+
+import {
+    applyPreset,
+    calculateAndCacheAllParity,
+    currentSortMode,
+    handleFileImport,
+    initializeDOMReferences,
+    initializePreset,
+    initializeSVGData,
+    isFirstLoad,
+    needsParityRecalculation,
+    saveState,
+    sortSelect
+} from './restoftheapp.js?v=esm-20260511-2';
+import { render } from './rendering.js?v=esm-20260511-2';
+import { filterAndSort } from './search-and-filter.js?v=esm-20260511-2';
+import {
+    applyHintVisibility,
+    applyInstructionVisibility,
+    applyProfileUI,
+    closeColorSchemeModal,
+    closeProfileModalMobile,
+    closeSettingsModal,
+    generateModalHTML,
+    openCustomizeSVGsModal,
+    openNewParityAnalysis,
+    openParityTracingPersonalization,
+    openProfileModalMobile,
+    showProfilePopup,
+    showToast,
+    toggleSidebar,
+    updateProfileStats
+} from './modals.js?v=esm-20260511-2';
+import { openQuickEditModal } from './quick-edit.js?v=esm-20260511-2';
+import { closeTrainingModal } from './training-modal.js?v=esm-20260511-2';
+
 /* ==== FILE: js/index.js ==== */
 
 (function setupModalHistory(global) {
@@ -123,8 +183,8 @@ window.onclick = function (event) {
         if (event.target == settingsModal) {
             closeSettingsModal();
         }
-        if (event.target == caseNameModal) {
-            closeCaseNameModal();
+        if (event.target == caseNameModal && typeof window.closeCaseNameModal === 'function') {
+            window.closeCaseNameModal();
         }
         if (event.target == colorSchemeModal) {
             closeColorSchemeModal();
@@ -133,11 +193,11 @@ window.onclick = function (event) {
             closeTrainingModal();
         }
 
-        if (event.target == suggestModal) {
-            closeSuggestModal();
+        if (event.target == suggestModal && typeof window.closeSuggestModal === 'function') {
+            window.closeSuggestModal();
         }
-        if (event.target == confessionModal) {
-            closeConfessionModal();
+        if (event.target == confessionModal && typeof window.closeConfessionModal === 'function') {
+            window.closeConfessionModal();
         }
         const profileModalMobile = document.getElementById('profileModalMobile');
         if (profileModalMobile && event.target == profileModalMobile) {
@@ -156,7 +216,7 @@ if (document.readyState === 'loading') {
 }
 
 // Ensure DOM is ready before initialization
-function initializeApp() {
+export function initializeApp() {
     // Initialize DOM references
     initializeDOMReferences();
 
@@ -174,7 +234,7 @@ if (document.readyState === 'loading') {
 }
 
 // Loading tips object
-const loadingTips = {
+export const loadingTips = {
     firstLoad: [
         "Welcome to SquanGo CSP!!",
     ],
@@ -213,7 +273,7 @@ const loadingTips = {
 };
 
 // Responsive loading screen (set BEFORE creating elements)
-function adjustLoadingScreen() {
+export function adjustLoadingScreen() {
     const width = window.innerWidth;
     const title = document.getElementById('loadingTitle');
     const author = document.getElementById('loadingAuthor');
@@ -238,23 +298,23 @@ function adjustLoadingScreen() {
 }
 
 // Select and display a random tip
-const tipElement = document.createElement('p');
+export const tipElement = document.createElement('p');
 tipElement.id = 'loadingTip';
 tipElement.className = 'loading-tip';
-const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
-const randomTip = tips[Math.floor(Math.random() * tips.length)];
+export const tips = isFirstLoad ? loadingTips.firstLoad : loadingTips.general;
+export const randomTip = tips[Math.floor(Math.random() * tips.length)];
 tipElement.textContent = randomTip;
 document.getElementById('loadingTipContainer').appendChild(tipElement);
 
 // Add Eva Kato credit
-const evaCredit = document.createElement('p');
+export const evaCredit = document.createElement('p');
 evaCredit.id = 'evaCredit';
 evaCredit.className = 'loading-credit';
 evaCredit.textContent = 'inspired from hashtagcuber.com/csp/ by Eva Kato';
 document.getElementById('loadingScreen').appendChild(evaCredit);
 
 // Add Matt credit
-const mattCredit = document.createElement('p');
+export const mattCredit = document.createElement('p');
 mattCredit.id = 'mattCredit';
 mattCredit.className = 'loading-credit loading-credit--matt';
 mattCredit.textContent = 'credit goes to Matt (@this_is_not_matt) for helping me out in this project';
@@ -265,16 +325,16 @@ adjustLoadingScreen();
 window.addEventListener('resize', adjustLoadingScreen);
 
 // Loading screen progress simulation
-let loadProgress = 0;
-const progressBar = document.getElementById('loadingProgress');
-const loadingInterval = setInterval(() => {
+export let loadProgress = 0;
+export const progressBar = document.getElementById('loadingProgress');
+export const loadingInterval = setInterval(() => {
     loadProgress += Math.random() * 30;
     if (loadProgress > 90) loadProgress = 90;
     progressBar.style.width = loadProgress + '%';
 }, 100);
 
 // Wait for DOM before calling these functions
-function finalizeInitialization() {
+export function finalizeInitialization() {
 
     // Setup sidebar
     const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -338,7 +398,7 @@ function finalizeInitialization() {
     }
 
     // Apply instruction button visibility
-    if (hideInstructions) {
+    if (window.hideInstructions) {
         const container = document.getElementById('floatingButtonsContainer');
         if (container) {
             container.classList.add('hide-instructions');
@@ -441,30 +501,30 @@ document.addEventListener('keydown', (e) => {
         switch (e.key.toLowerCase()) {
             case 't': // Alt+T - Show tracing guides
                 e.preventDefault();
-                showHints = !showHints;
-                localStorage.setItem('showHints', showHints);
+                window.showHints = !window.showHints;
+                localStorage.setItem('showHints', window.showHints);
                 applyHintVisibility();
                 const hintToggle = document.getElementById('hintToggle');
-                if (hintToggle) hintToggle.checked = showHints;
-                showToast(`Tracing guides ${showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
+                if (hintToggle) hintToggle.checked = window.showHints;
+                showToast(`Tracing guides ${window.showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
                 break;
             case 'h': // Alt+H - Hide instructions
                 e.preventDefault();
-                hideInstructions = !hideInstructions;
+                window.hideInstructions = !window.hideInstructions;
                 saveState();
                 applyInstructionVisibility();
                 const hideInstructionsToggle = document.getElementById('hideInstructionsToggle');
-                if (hideInstructionsToggle) hideInstructionsToggle.checked = hideInstructions;
-                showToast(`Instruction buttons ${hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
+                if (hideInstructionsToggle) hideInstructionsToggle.checked = window.hideInstructions;
+                showToast(`Instruction buttons ${window.hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
                 break;
             case 'p': // Alt+P - Hide parenthesis
                 e.preventDefault();
-                hideParenthesis = !hideParenthesis;
+                window.hideParenthesis = !window.hideParenthesis;
                 saveState();
                 render();
                 const hideParenthesisToggle = document.getElementById('hideParenthesisToggle');
-                if (hideParenthesisToggle) hideParenthesisToggle.checked = hideParenthesis;
-                showToast(`Parenthesis ${hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
+                if (hideParenthesisToggle) hideParenthesisToggle.checked = window.hideParenthesis;
+                showToast(`Parenthesis ${window.hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
                 break;
             case 'w': // Alt+W - Parity tracing personalization
                 e.preventDefault();
@@ -483,7 +543,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 // URL scramble deep-link: squan-go.web.app/csp/#s=(0,-1)/ (6,-3)/ ...
-function checkURLScramble() {
+export function checkURLScramble() {
     const hash = decodeURIComponent(window.location.hash);
     if (!hash || hash.length <= 1) return;
 
@@ -519,3 +579,27 @@ window.addEventListener('load', () => {
         setTimeout(checkURLScramble, 3000);
     }
 });
+
+// ESM live global compatibility bridge
+for (const [name, descriptor] of Object.entries({
+    "initializeApp": { get: () => initializeApp, set: value => { Object.defineProperty(window, "initializeApp", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadingTips": { get: () => loadingTips, set: value => { Object.defineProperty(window, "loadingTips", { configurable: true, enumerable: true, writable: true, value }); } },
+    "adjustLoadingScreen": { get: () => adjustLoadingScreen, set: value => { Object.defineProperty(window, "adjustLoadingScreen", { configurable: true, enumerable: true, writable: true, value }); } },
+    "tipElement": { get: () => tipElement, set: value => { Object.defineProperty(window, "tipElement", { configurable: true, enumerable: true, writable: true, value }); } },
+    "tips": { get: () => tips, set: value => { Object.defineProperty(window, "tips", { configurable: true, enumerable: true, writable: true, value }); } },
+    "randomTip": { get: () => randomTip, set: value => { Object.defineProperty(window, "randomTip", { configurable: true, enumerable: true, writable: true, value }); } },
+    "evaCredit": { get: () => evaCredit, set: value => { Object.defineProperty(window, "evaCredit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "mattCredit": { get: () => mattCredit, set: value => { Object.defineProperty(window, "mattCredit", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadProgress": { get: () => loadProgress, set: value => { loadProgress = value; } },
+    "progressBar": { get: () => progressBar, set: value => { Object.defineProperty(window, "progressBar", { configurable: true, enumerable: true, writable: true, value }); } },
+    "loadingInterval": { get: () => loadingInterval, set: value => { Object.defineProperty(window, "loadingInterval", { configurable: true, enumerable: true, writable: true, value }); } },
+    "finalizeInitialization": { get: () => finalizeInitialization, set: value => { Object.defineProperty(window, "finalizeInitialization", { configurable: true, enumerable: true, writable: true, value }); } },
+    "checkURLScramble": { get: () => checkURLScramble, set: value => { Object.defineProperty(window, "checkURLScramble", { configurable: true, enumerable: true, writable: true, value }); } },
+})) {
+    Object.defineProperty(window, name, {
+        configurable: true,
+        enumerable: true,
+        get: descriptor.get,
+        set: descriptor.set
+    });
+}
