@@ -57,6 +57,7 @@ import {
 } from './modals.js?v=esm-20260511-2';
 import { openQuickEditModal } from './quick-edit.js?v=esm-20260511-2';
 import { closeTrainingModal } from './training-modal.js?v=esm-20260511-2';
+import { ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 
 /* ==== FILE: js/index.js ==== */
 
@@ -560,7 +561,7 @@ export function checkURLScramble() {
 
     if (scramble && (scramble.includes('(') || scramble.includes('/'))) {
         const tryOpen = (attempts) => {
-            if (typeof window.ParityTracerLibrary !== 'undefined' && typeof openNewParityAnalysis === 'function') {
+            if (ParityTracerLibrary && typeof openNewParityAnalysis === 'function') {
                 openNewParityAnalysis(scramble);
             } else if (attempts > 0) {
                 setTimeout(() => tryOpen(attempts - 1), 300);

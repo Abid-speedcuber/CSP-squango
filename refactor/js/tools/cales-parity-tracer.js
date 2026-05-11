@@ -2370,3 +2370,6 @@
     };
 
 })(typeof window !== 'undefined' ? window : this);
+
+export const ParityTracerLibrary = globalThis.ParityTracerLibrary;
+export const caleTracer = globalThis.caleTracer;

@@ -1,6 +1,11 @@
 /* ==== FILE: js/modals.js ==== */
 /* exported generateModalHTML openNewParityAnalysis openEditCaseModal openCustomizeSVGsModal openNotesModal openParityTracingPersonalization */
 
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
+import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+import { normalizeScramble } from './tools/scrambleNormalizer.js?v=esm-20260511-2';
+
 ﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                          DYNAMIC MODAL GENERATION                         ║
@@ -621,12 +626,12 @@ applyHintVisibility();
 
 // New parity analysis using ParityTracerLibrary
 export function openNewParityAnalysis(scramble) {
-    if (typeof window.ParityTracerLibrary === 'undefined') {
+    if (!ParityTracerLibrary) {
         showToast('Parity Tracer library not loaded', 3000, 'error');
         return;
     }
 
-    window.ParityTracerLibrary.createModal({
+    ParityTracerLibrary.createModal({
         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar to trace parity using Cale\'s method.',
@@ -716,7 +721,7 @@ export function closeHomepageInfoModal() {
 }
 
 export function openEditCaseModal(caseName) {
-    const item = window.CSPData.getCase(caseName);
+    const item = CSPData.getCase(caseName);
     if (!item) return;
 
     const allAlgs = getCaseAlgorithmList(item);
@@ -876,13 +881,13 @@ export function openEditCaseModal(caseName) {
 }
 
 export function getModalCaseShapeData(caseName) {
-    return window.CSPData.getShapeEntry(caseName);
+    return CSPData.getShapeEntry(caseName);
 }
 
 export function updateInputColor(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
-    if (typeof window.algToShapeIndex === 'undefined' || typeof window.caleTracer === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') {
+    if (!caleTracer) {
         input.style.color = '';
         input.style.fontWeight = '';
         return;
@@ -892,11 +897,11 @@ export function updateInputColor(input) {
         const modal = document.getElementById('editCaseModal');
         if (!modal) return;
         const caseName = _getEditModalCaseName(modal);
-        const canonicalIdx = caseName ? window.CSPData.getCanonicalShapeIndex(caseName) : null;
+        const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
         const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
         const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
-        const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
-        const result = window.algToShapeIndex(normalized);
+        const normalized = normalizeScramble(expanded);
+        const result = algToShapeIndex(normalized);
         const idx = result.shapeIndex;
         const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
         const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
@@ -904,7 +909,7 @@ export function updateInputColor(input) {
 
         if (isDirectMatch || isInOrg || isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,
@@ -2169,7 +2174,7 @@ export function openParityTracingPersonalization() {
     closeSettingsModal();
 
     // Call the config modal directly via the exported library function
-    if (typeof window.ParityTracerLibrary === 'undefined' || !window.ParityTracerLibrary.openConfigModal) {
+    if (!ParityTracerLibrary || !ParityTracerLibrary.openConfigModal) {
         showToast('Configuration modal not available', 3000, 'error');
         return;
     }
@@ -2192,7 +2197,7 @@ export function openParityTracingPersonalization() {
         leftCol: colorScheme.leftColor
     };
 
-    window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
+    ParityTracerLibrary.openConfigModal(null, config, null, null, null);
 }
 
 // Sidebar functions

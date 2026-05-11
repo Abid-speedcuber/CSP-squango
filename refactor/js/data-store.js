@@ -1,13 +1,13 @@
 /* ==== FILE: js/data-store.js ==== */
 
-(function (global) {
-    'use strict';
+import { data } from '../database/algs.js?v=esm-20260511-2';
+import { shapeIndex, shapeIndexMap } from '../database/shapeIndex.js?v=esm-20260511-2';
 
-    const caseList = typeof data !== 'undefined' && Array.isArray(data) ? data : [];
-    const shapeList = typeof shapeIndex !== 'undefined' && Array.isArray(shapeIndex) ? shapeIndex : [];
-    const canonicalShapeIndex = typeof shapeIndexMap !== 'undefined' &&
-        global.SQG &&
-        global.SQG.isPlainObject(shapeIndexMap)
+const caseList = Array.isArray(data) ? data : [];
+const shapeList = Array.isArray(shapeIndex) ? shapeIndex : [];
+const canonicalShapeIndex = typeof shapeIndexMap !== 'undefined' &&
+        globalThis.SQG &&
+        globalThis.SQG.isPlainObject(shapeIndexMap)
         ? shapeIndexMap
         : {};
 
@@ -72,7 +72,7 @@
         return errors;
     }
 
-    const store = Object.freeze({
+export const CSPData = Object.freeze({
         cases: caseList,
         shapeEntries: shapeList,
         casesByName,
@@ -88,10 +88,9 @@
         validate: validateData
     });
 
-    global.CSPData = store;
+globalThis.CSPData = CSPData;
 
-    const validationErrors = store.validate();
+const validationErrors = CSPData.validate();
     if (validationErrors.length > 0) {
         console.warn('[CSPData] Data validation found issues:', validationErrors);
     }
-})(window);

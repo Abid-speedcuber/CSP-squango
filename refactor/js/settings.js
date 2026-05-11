@@ -1,5 +1,7 @@
 /* ==== FILE: js/settings.js ==== */
 
+import { ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+
 /*
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                        UNIFIED SETTINGS MODAL                             ║
@@ -26,9 +28,9 @@ window.openUnifiedSettings = function (tabId) {
 window.openSettingsModal = () => window.openUnifiedSettings('homescreen');
 window.openParityTracingPersonalization = () => {
     // Still delegates to the parity-tracer library's config modal
-    if (typeof window.ParityTracerLibrary !== 'undefined' && window.ParityTracerLibrary.openConfigModal) {
+    if (ParityTracerLibrary && ParityTracerLibrary.openConfigModal) {
         const config = _buildParityConfig();
-        window.ParityTracerLibrary.openConfigModal(null, config, null, null, null);
+        ParityTracerLibrary.openConfigModal(null, config, null, null, null);
     } else {
         window.openUnifiedSettings('parity');
     }
@@ -433,8 +435,8 @@ window._ptToggleEvilStr = function(checkbox) {
 };
 window._openEvilnessCasesFromSettings = function() {
     const config = _buildParityConfig();
-    if (window.ParityTracerLibrary && window.ParityTracerLibrary.openEvilnessCasesModal) {
-        window.ParityTracerLibrary.openEvilnessCasesModal(config);
+    if (ParityTracerLibrary && ParityTracerLibrary.openEvilnessCasesModal) {
+        ParityTracerLibrary.openEvilnessCasesModal(config);
     }
 };
 export function _triggerParityLiveUpdate() {

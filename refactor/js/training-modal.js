@@ -2,6 +2,9 @@
 /* exported openTrainingModal */
 
 ﻿// Training modal variables
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+
 export let currentTrainingCase = null;
 export let trainingScrambles = [];
 export let timerRunning = false;
@@ -144,13 +147,13 @@ export function openTrainingModal(caseName) {
 
     pushModalState('trainingModal', closeTrainingModal);
 
-    const dataItem = window.CSPData.getCase(caseName);
+    const dataItem = CSPData.getCase(caseName);
     if (!dataItem) {
         alert('Case not found.');
         return;
     }
 
-    const shapeIndexItem = window.CSPData.getShapeEntry(dataItem.name);
+    const shapeIndexItem = CSPData.getShapeEntry(dataItem.name);
     if (!shapeIndexItem) {
         alert('Case not found in shape index.');
         return;
@@ -385,12 +388,12 @@ export function openParityAnalysisFromTraining() {
     // Strip HTML tags to get clean scramble text
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
 
-    if (typeof window.ParityTracerLibrary === 'undefined') {
+    if (!ParityTracerLibrary) {
         alert('Parity Tracer library not loaded');
         return;
     }
 
-    window.ParityTracerLibrary.createModal({
+    ParityTracerLibrary.createModal({
         backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
         hideInstructionButton: hideInstructions,
         instructionText1: 'Enter your scramble in the top input bar and press Analyze to trace parity using Kale\'s method.',
@@ -614,8 +617,8 @@ export function startParityQuizInspection() {
     const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
     let parity = null;
     try {
-        if (typeof window.caleTracer !== 'undefined') {
-            parity = window.caleTracer.getParityTextFromScramble(
+        if (caleTracer) {
+            parity = caleTracer.getParityTextFromScramble(
                 cleanScramble,
                 typeof colorScheme !== 'undefined' ? colorScheme : {},
                 typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -786,7 +789,7 @@ export function updateTimerDisplay() {
 // Shape Index Selector Functions
 export function openShapeIndexSelector() {
     if (window._multiCaseMode) return;
-    const shapeIndexItem = window.CSPData.getShapeEntry(currentTrainingCase);
+    const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
 
     pushModalState('shapeIndexSelectorModal', closeShapeIndexSelector);
@@ -880,7 +883,7 @@ window.toggleShapeIndex = function(index) {
     const selectedKey = `training_selected_${currentTrainingCase}`;
     if (!window.trainingSelections) window.trainingSelections = {};
     if (!window.trainingSelections[selectedKey]) {
-        const shapeIndexItem = window.CSPData.getShapeEntry(currentTrainingCase);
+        const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
         window.trainingSelections[selectedKey] = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
     }
 
@@ -911,7 +914,7 @@ window.toggleShapeIndex = function(index) {
 }
 
 window.selectAllIndices = function(type) {
-    const shapeIndexItem = window.CSPData.getShapeEntry(currentTrainingCase);
+    const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
 
     const selectedKey = `training_selected_${currentTrainingCase}`;
@@ -938,7 +941,7 @@ window.selectAllIndices = function(type) {
 }
 
 window.deselectAllIndices = function(type) {
-    const shapeIndexItem = window.CSPData.getShapeEntry(currentTrainingCase);
+    const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
 
     const selectedKey = `training_selected_${currentTrainingCase}`;
@@ -1272,8 +1275,8 @@ export function quizGetParityFromHex(hexCode) {
     try {
         const state = parseHexFormat(hexCode);
         const notation = window.sq1Tools.scrambleFromState(state);
-        if (!notation || typeof window.caleTracer === 'undefined') return null;
-        return window.caleTracer.getParityTextFromScramble(
+        if (!notation || !caleTracer) return null;
+        return caleTracer.getParityTextFromScramble(
             notation,
             typeof colorScheme !== 'undefined' ? colorScheme : {},
             typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise'
@@ -1300,7 +1303,7 @@ export function startEvilnessQuiz(chosenCaseNames) {
     function rebuildIndices(names) {
         allIndices.length = 0;
         names.forEach(cn => {
-            const entry = window.CSPData.getShapeEntry(cn);
+            const entry = CSPData.getShapeEntry(cn);
             if (entry) {
                 (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
                 (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
@@ -1597,7 +1600,7 @@ window.openParityQuiz = function () {
 export function startParityQuiz(chosenCaseNames) {
     const allIndices = [];
     chosenCaseNames.forEach(cn => {
-        const entry = window.CSPData.getShapeEntry(cn);
+        const entry = CSPData.getShapeEntry(cn);
         if (entry) {
             (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
             (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
@@ -1715,7 +1718,7 @@ export function startParityQuiz(chosenCaseNames) {
         openSelectorModal('sq1-selector-parity', (chosen) => {
             allIndices.length = 0;
             chosen.forEach(cn => {
-                const entry = window.CSPData.getShapeEntry(cn);
+                const entry = CSPData.getShapeEntry(cn);
                 if (entry) {
                     (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
                     (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));

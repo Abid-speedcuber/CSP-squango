@@ -6,6 +6,7 @@ import {
   invertScramble,
   parseScramble
 } from '../utils.js?v=esm-20260511-2';
+import { ParityTracerLibrary } from './cales-parity-tracer.js?v=esm-20260511-2';
 
 // Square-1 shape path tracer.
 // Shape recognition is delegated to Cale's parity tracer so both popups and
@@ -53,7 +54,7 @@ export function getShortShapeNameForTracing(shapeName) {
 }
 
 function getCaleShapeDetector() {
-  const detector = window.ParityTracerLibrary && window.ParityTracerLibrary.detectShapesFromHex;
+  const detector = ParityTracerLibrary && ParityTracerLibrary.detectShapesFromHex;
   if (typeof detector !== 'function') {
     throw new Error('Cale parity tracer shape detector is unavailable');
   }

@@ -1,6 +1,8 @@
 /* ==== FILE: js/multi-trainer.js ==== */
 
 ﻿// ╔══════════════════════════════════════════════════════════════════════════╗
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+
 // ║                        MULTI-CASE TRAINING SELECTOR                     ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
 
@@ -419,7 +421,7 @@ export function generateMultiCaseScrambleData() {
     if (!multiTrainingCases || multiTrainingCases.length === 0) return null;
 
     const caseName = multiTrainingCases[Math.floor(Math.random() * multiTrainingCases.length)];
-    const shapeIndexItem = window.CSPData.getShapeEntry(caseName);
+    const shapeIndexItem = CSPData.getShapeEntry(caseName);
     if (!shapeIndexItem) return null;
 
     const selectedKey = `training_selected_${caseName}`;

@@ -1,6 +1,31 @@
 /* ==== FILE: js/quick-edit.js ==== */
 
 ﻿// Quick Edit System for batch editing cases
+import { data } from '../database/algs.js?v=esm-20260511-2';
+import { shapeIndex } from '../database/shapeIndex.js?v=esm-20260511-2';
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
+import { caleTracer } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+import { normalizeScramble } from './tools/scrambleNormalizer.js?v=esm-20260511-2';
+import { invertScramble } from './utils.js?v=esm-20260511-2';
+import {
+    algVariables,
+    colorScheme,
+    comments,
+    cornerStickerMode,
+    customAlgorithms,
+    displayNames,
+    evilnessFactor,
+    evilnessMap,
+    getCaseAlgorithmList,
+    markParityAlgorithmsDirty,
+    perCaseSubtitles,
+    saveState
+} from './restoftheapp.js?v=esm-20260511-2';
+import {
+    getDisplayName,
+    sanitizeNoteHTML
+} from './rendering.js?v=esm-20260511-2';
 
 export let quickEditState = {
     currentTab: 'general',
@@ -28,7 +53,7 @@ export function expandAlgVariables(alg) {
 export function expandAndNormalize(alg) {
     if (!alg || alg === 'Done!') return alg;
     const expanded = expandAlgVariables(alg);
-    return window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(expanded) : expanded;
+    return normalizeScramble(expanded) || expanded;
 }
 
 // Expand variables then normalize for live color coding only (don't mutate cell)
@@ -48,7 +73,7 @@ export function getAlgTableRows() {
 }
 
 export function hydrateGeneralRow(row) {
-    const item = window.CSPData.getCase(row.dataset.case);
+    const item = CSPData.getCase(row.dataset.case);
     if (!item) return;
     const displayName = getDisplayName(item.name);
     const subtitle = perCaseSubtitles.get(item.name) || '';
@@ -67,7 +92,7 @@ export function hydrateGeneralRow(row) {
 }
 
 export function hydrateAlgorithmsRow(row) {
-    const item = window.CSPData.getCase(row.dataset.case);
+    const item = CSPData.getCase(row.dataset.case);
     if (!item) return;
     const visibleCols = quickEditState.visibleAlgColumns || 6;
     const displayName = getDisplayName(item.name);
@@ -415,10 +440,10 @@ export function updateAlgorithmTableCells() {
 }
 
 export function getCaseShapeData(caseName) {
-    const directMatch = window.CSPData.getShapeEntry(caseName);
+    const directMatch = CSPData.getShapeEntry(caseName);
     if (directMatch) return directMatch;
 
-    const canonicalIdx = window.CSPData.getCanonicalShapeIndex(caseName);
+    const canonicalIdx = CSPData.getCanonicalShapeIndex(caseName);
     if (canonicalIdx === null) return null;
     return shapeIndex.find(shapeData => shapeData.org && shapeData.org.includes(canonicalIdx)) || null;
 }
@@ -437,7 +462,7 @@ export function tryFixAngle(algBody, canonicalShapeIdx) {
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
             const candidate = `(${t},${b})` + algBody;
-            const result = window.algToShapeIndex(candidate);
+            const result = algToShapeIndex(candidate);
             if (result.shapeIndex === canonicalShapeIdx) {
                 return candidate;
             }
@@ -450,7 +475,7 @@ export function tryFixMirroredAngle(algBody, canonicalShapeIdx) {
     for (const t of ALL_LEGAL_TOPS) {
         for (const b of ALL_LEGAL_BOTTOMS) {
             const candidate = `/(6,6)/(${t},${b})` + algBody;
-            const result = window.algToShapeIndex(candidate);
+            const result = algToShapeIndex(candidate);
             if (result.shapeIndex === canonicalShapeIdx) {
                 return `(${t},${b})` + algBody;
             }
@@ -474,19 +499,18 @@ export function updateAlgorithmCellParity(cell) {
         return;
     }
 
-    if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.caleTracer === 'undefined') {
+    if (!caleTracer) {
         cell.style.color = '';
         cell.style.fontWeight = '';
         return;
     }
 
     const caseName = getCanonicalCaseNameForCell(cell);
-    const canonicalIdx = caseName ? window.CSPData.getCanonicalShapeIndex(caseName) : null;
+    const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
     const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
     try {
-        const result = window.algToShapeIndex(alg);
+        const result = algToShapeIndex(alg);
         const resultShapeIndex = result.shapeIndex;
 
         const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
@@ -496,7 +520,7 @@ export function updateAlgorithmCellParity(cell) {
         if (isDirectMatch || isInOrg) {
             // Correct case - check parity
             const setup = invertScramble(alg);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -511,7 +535,7 @@ export function updateAlgorithmCellParity(cell) {
                     const algBody = stripBeforeFirstSlash(alg);
                     const fixed = tryFixAngle(algBody, canonicalIdx);
                     if (fixed) {
-                        cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
+                        cell.textContent = normalizeScramble(fixed);
                     }
                 }
                 cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
@@ -520,7 +544,7 @@ export function updateAlgorithmCellParity(cell) {
 
         } else if (isInMir) {
             const setup = invertScramble(alg);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -530,7 +554,7 @@ export function updateAlgorithmCellParity(cell) {
                 const algBody = stripBeforeFirstSlash(alg);
                 const fixed = tryFixMirroredAngle(algBody, canonicalIdx);
                 if (fixed) {
-                    cell.textContent = window.ScrambleNormalizer.normalizeScramble(fixed);
+                    cell.textContent = normalizeScramble(fixed);
                 }
             }
             cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
@@ -554,21 +578,19 @@ export function updateAlgorithmCellParityLive(cell) {
         return;
     }
 
-    if (typeof window.algToShapeIndex === 'undefined' ||
-        typeof window.caleTracer === 'undefined' ||
-        typeof window.ScrambleNormalizer === 'undefined') {
+    if (!caleTracer) {
         cell.style.color = '';
         cell.style.fontWeight = '';
         return;
     }
 
     const caseName = getCanonicalCaseNameForCell(cell);
-    const canonicalIdx = caseName ? window.CSPData.getCanonicalShapeIndex(caseName) : null;
+    const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
     const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
     try {
-        const normalized = window.ScrambleNormalizer.normalizeScramble(expandForColorCheck(alg));
-        const result = window.algToShapeIndex(normalized);
+        const normalized = normalizeScramble(expandForColorCheck(alg));
+        const result = algToShapeIndex(normalized);
         const resultShapeIndex = result.shapeIndex;
 
         const isDirectMatch = canonicalIdx !== null && resultShapeIndex === canonicalIdx;
@@ -577,7 +599,7 @@ export function updateAlgorithmCellParityLive(cell) {
 
         if (isDirectMatch || isInOrg) {
             const setup = invertScramble(normalized);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor
@@ -586,7 +608,7 @@ export function updateAlgorithmCellParityLive(cell) {
             cell.style.fontWeight = '600';
         } else if (isInMir) {
             const setup = invertScramble(normalized);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor,
                 backColor: colorScheme.backColor, leftColor: colorScheme.leftColor

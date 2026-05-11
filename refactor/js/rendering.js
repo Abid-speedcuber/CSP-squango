@@ -2,6 +2,37 @@
 /* exported render */
 
 ﻿// Helper function to sanitize note HTML (allow various text formatting tags)
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
+import { traceSolutionToSolutionShapePath } from './tools/shapeTracer.js?v=esm-20260511-2';
+import { invertScramble } from './utils.js?v=esm-20260511-2';
+import {
+    DEFAULT_PRIORITY_LEVEL,
+    LEARNED_PRIORITY_LEVEL,
+    LEARNING_PRIORITY_LEVEL,
+    comments,
+    currentSortMode,
+    displayNames,
+    filteredData,
+    getParityAlgorithmsForCase,
+    getPlannedPriorityLevel,
+    grid,
+    hideParenthesis,
+    initializeDOMReferences,
+    isCaseLearned,
+    isCaseLearning,
+    perCaseSubtitles,
+    saveState,
+    setCasePriorityLevel
+} from './restoftheapp.js?v=esm-20260511-2';
+import {
+    openEditCaseModal,
+    openNewParityAnalysis,
+    openNotesModal,
+    updateProfileStats
+} from './modals.js?v=esm-20260511-2';
+import { openTrainingModal } from './training-modal.js?v=esm-20260511-2';
+
 export function sanitizeNoteHTML(html) {
     if (!html) return '';
 
@@ -180,15 +211,15 @@ export function getDisplayName(caseName) {
 // invertScramble → defined in utils.js
 
 export function getAlgDisplayMeta(alg, caseName) {
-    if (!alg || alg === 'Done!' || typeof window.algToShapeIndex === 'undefined') {
+    if (!alg || alg === 'Done!') {
         return { invalid: false, mirrored: false };
     }
     try {
-        const canonicalIdx = window.CSPData.getCanonicalShapeIndex(caseName);
+        const canonicalIdx = CSPData.getCanonicalShapeIndex(caseName);
         if (canonicalIdx === null) return { invalid: false, mirrored: false };
-        const caseShapeData = window.CSPData.getShapeEntry(caseName);
+        const caseShapeData = CSPData.getShapeEntry(caseName);
 
-        const result = window.algToShapeIndex(alg);
+        const result = algToShapeIndex(alg);
         const idx = result.shapeIndex;
 
         const isDirectMatch = idx === canonicalIdx;
@@ -209,17 +240,14 @@ export function getShapePath(scramble) {
     }
 
     try {
-        const shapePathTracer = window.Square1ShapePathTracer || window.Square1ShapePathTracerLibraryWithSillyNames;
-        if (shapePathTracer) {
-            const shapePathString = shapePathTracer.traceSolutionToSolutionShapePath(scramble);
-            if (shapePathString) {
-                // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
-                const steps = shapePathString.split(' → ').map(s => s.trim());
-                return steps.map(step => {
-                    const [top, bottom] = step.split('/').map(s => s.trim());
-                    return { top, bottom };
-                });
-            }
+        const shapePathString = traceSolutionToSolutionShapePath(scramble);
+        if (shapePathString) {
+            // Parse the shape path string "Sq/Sq → 4-2/4-2 → Sq/Sq" into array format
+            const steps = shapePathString.split(' → ').map(s => s.trim());
+            return steps.map(step => {
+                const [top, bottom] = step.split('/').map(s => s.trim());
+                return { top, bottom };
+            });
         }
     } catch (err) {
         console.error('Error generating shape path:', err);
@@ -342,7 +370,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
             const parityType = element.getAttribute('data-parity') || '';
             const displayName = getDisplayName(caseName);
 
-            openAnimateAlgModal(alg, displayName, parityType);
+            window.openAnimateAlgModal(alg, displayName, parityType);
         };
         shapePathElement.onmouseenter = () => {
             shapePathElement.style.background = 'var(--hover-bg)';
@@ -746,7 +774,7 @@ window.toggleLearned = function(name, event = null) {
     // Re-render the specific card
     const cardElement = document.querySelector(`[data-case-name="${name}"]`);
     if (cardElement) {
-        const item = window.CSPData.getCase(name);
+            const item = CSPData.getCase(name);
         if (item) {
             cardElement.outerHTML = renderCard(item);
         }
@@ -773,7 +801,7 @@ export function adjustPriority(name, delta) {
     // Re-render the specific card
     const cardElement = document.querySelector(`[data-case-name="${name}"]`);
     if (cardElement) {
-        const item = window.CSPData.getCase(name);
+            const item = CSPData.getCase(name);
         if (item) {
             cardElement.outerHTML = renderCard(item);
         }

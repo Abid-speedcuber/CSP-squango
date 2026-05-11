@@ -2,6 +2,13 @@
 /* exported filteredData algorithmFontSize getCaseNameFromScramble isCaseEvil initializeSVGData getPresetDefaults handleFileImport searchInput sortSelect learnFilterSelect grid initializeDOMReferences getPlannedPriorityLevel getPriorityVisualLevel setCasePriorityLevel isCaseLearned isCaseLearning isCasePlanned getPrioritySortValue */
 
 ﻿// Modular preset configuration - add new presets here
+import { data } from '../database/algs.js?v=esm-20260511-2';
+import { shapeIndex, shapeIndexMap } from '../database/shapeIndex.js?v=esm-20260511-2';
+import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { invertScramble } from './utils.js?v=esm-20260511-2';
+import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
+import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
+
 window.PRESET_CONFIG = {
     'Default_Preset': 'presets/Default_Preset.json',
     'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
@@ -251,7 +258,7 @@ export function hydrateCustomAlgorithms(rawAlgorithms, legacySnapshot) {
 export function getCaseAlgorithmList(itemOrCaseName) {
     const caseName = typeof itemOrCaseName === 'string' ? itemOrCaseName : itemOrCaseName.name;
     const item = typeof itemOrCaseName === 'string'
-        ? window.CSPData && window.CSPData.getCase(caseName)
+        ? CSPData.getCase(caseName)
         : itemOrCaseName;
 
     if (customAlgorithms.has(caseName)) return [...customAlgorithms.get(caseName)];
@@ -338,7 +345,7 @@ export const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
 // Function to calculate and cache parity for all cases
 export function calculateAndCacheAllParity() {
 
-    if (typeof window.caleTracer === 'undefined') {
+    if (!caleTracer) {
         console.warn('Parity analyzer not available, skipping parity calculation');
         return;
     }
@@ -361,7 +368,7 @@ export function calculateAndCacheAllParity() {
 
             try {
                 const setup = invertScramble(alg);
-                const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+                const parityText = caleTracer.getParityTextFromScramble(setup, {
                     topColor: colorScheme.topColor,
                     bottomColor: colorScheme.bottomColor,
                     frontColor: colorScheme.frontColor,
@@ -392,11 +399,7 @@ export function calculateAndCacheAllParity() {
 
 // Build shape index → caseName lookup (computed once)
 export function buildShapeIndexToCaseMap() {
-    if (window.CSPData) {
-        return Object.fromEntries(window.CSPData.caseNameByShapeIndex);
-    }
-
-    const map = {};
+    const map = Object.fromEntries(CSPData.caseNameByShapeIndex);
     if (typeof shapeIndexMap === 'undefined') return map;
     for (const [caseName, idxStr] of Object.entries(shapeIndexMap)) {
         const idx = parseInt(idxStr);
@@ -424,13 +427,13 @@ export function getShapeIndexToCaseMap() {
 
 // Get case name from a scramble string using shape index
 export function getCaseNameFromScramble(scramble) {
-    if (!scramble || typeof window.algToShapeIndex === 'undefined') return null;
+    if (!scramble) return null;
     try {
         const setup = invertScramble(scramble);
-        const result = window.algToShapeIndex(setup);
-        return window.CSPData
-            ? window.CSPData.getCaseNameByShapeIndex(result.shapeIndex)
-            : getShapeIndexToCaseMap()[result.shapeIndex] || null;
+        const result = algToShapeIndex(setup);
+        return CSPData.getCaseNameByShapeIndex(result.shapeIndex) ||
+            getShapeIndexToCaseMap()[result.shapeIndex] ||
+            null;
     } catch {
         return null;
     }
@@ -760,19 +763,19 @@ export async function applyPreset(presetName, skipWarning = false, silent = fals
     render();
 
     // Force reload shape patterns in parity tracer library
-    if (presetTracingSchemes && typeof window.ParityTracerLibrary !== 'undefined') {
+    if (presetTracingSchemes && ParityTracerLibrary) {
         try {
             // Force reload from localStorage after we've saved it
             setTimeout(() => {
-                if (window.ParityTracerLibrary.reloadShapesFromStorage) {
-                    window.ParityTracerLibrary.reloadShapesFromStorage();
+                if (ParityTracerLibrary.reloadShapesFromStorage) {
+                    ParityTracerLibrary.reloadShapesFromStorage();
                 }
             }, 100);
 
             // Also invalidate any cached parity calculations
             setTimeout(() => {
-                if (window.ParityTracerLibrary.reloadShapesFromStorage) {
-                    window.ParityTracerLibrary.reloadShapesFromStorage();
+                if (ParityTracerLibrary.reloadShapesFromStorage) {
+                    ParityTracerLibrary.reloadShapesFromStorage();
                 }
             }, 300);
         } catch (e) {
@@ -997,10 +1000,10 @@ export function importData(jsonStr) {
         if (importedTracingSchemes) {
             storeCustomTracingSchemes(importedTracingSchemes);
             // Force the parity tracer library to reload shapes immediately
-            if (typeof window.ParityTracerLibrary !== 'undefined') {
+            if (ParityTracerLibrary) {
                 setTimeout(() => {
-                    if (window.ParityTracerLibrary.reloadShapesFromStorage) {
-                        window.ParityTracerLibrary.reloadShapesFromStorage();
+                    if (ParityTracerLibrary.reloadShapesFromStorage) {
+                        ParityTracerLibrary.reloadShapesFromStorage();
                     }
                 }, 100);
             }
@@ -1194,7 +1197,7 @@ window.openAnimateAlgModal = function (algorithm = '', caseName = '', computedPa
     if (!parity && algorithm && algorithm !== 'Done!') {
         try {
             const setup = invertScramble(algorithm);
-            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+            const parityText = caleTracer.getParityTextFromScramble(setup, {
                 topColor: colorScheme.topColor,
                 bottomColor: colorScheme.bottomColor,
                 frontColor: colorScheme.frontColor,
