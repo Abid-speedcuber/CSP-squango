@@ -381,6 +381,7 @@ function generateModalHTML() {
             });
 
             // Auto-save
+            markParityAlgorithmsDirty();
             saveState();
 
             // Recalculate parity if needed
@@ -718,13 +719,7 @@ function openEditCaseModal(caseName) {
     const item = window.CSPData.getCase(caseName);
     if (!item) return;
 
-    const customAlgs = customAlgorithms.get(caseName);
-    const allAlgs = [];
-    if (customAlgs) {
-        allAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
-    } else {
-        allAlgs.push(...(item.odd || []), ...(item.even || []));
-    }
+    const allAlgs = getCaseAlgorithmList(item);
 
     const customName = displayNames[caseName] || '';
     const customSubtitle = perCaseSubtitles.get(caseName) || '';
@@ -795,6 +790,7 @@ function openEditCaseModal(caseName) {
     `;
 
     document.body.appendChild(modal);
+    modal.dataset.caseName = caseName;
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.documentElement.classList.add('scroll-locked');
@@ -873,6 +869,7 @@ function openEditCaseModal(caseName) {
                 const currentValue = input.value;
                 input.value = currentValue.substring(0, start) + text + currentValue.substring(end);
                 input.selectionStart = input.selectionEnd = start + text.length;
+                updateInputColor(input);
             });
         });
     }, 200);
@@ -885,30 +882,44 @@ function getModalCaseShapeData(caseName) {
 function updateInputColor(input) {
     const alg = input.value.trim();
     if (!alg || alg === 'Done!') { input.style.color = ''; input.style.fontWeight = ''; return; }
-    if (typeof window.algToShapeIndex === 'undefined' || typeof window.caleTracer === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') { input.style.color = ''; return; }
-    const modal = document.getElementById('editCaseModal');
-    if (!modal) return;
-    const caseName = _getEditModalCaseName(modal);
-    const canonicalIdx = caseName ? window.CSPData.getCanonicalShapeIndex(caseName) : null;
-    const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
-    const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
-    const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
-    const result = window.algToShapeIndex(normalized);
-    const idx = result.shapeIndex;
-    const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
-    const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
-    const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
-    if (isDirectMatch || isInOrg) {
-        const setup = invertScramble(normalized);
-        const parityText = window.caleTracer.getParityTextFromScramble(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
-        input.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
+    if (typeof window.algToShapeIndex === 'undefined' || typeof window.caleTracer === 'undefined' || typeof window.ScrambleNormalizer === 'undefined') {
+        input.style.color = '';
+        input.style.fontWeight = '';
+        return;
+    }
+
+    try {
+        const modal = document.getElementById('editCaseModal');
+        if (!modal) return;
+        const caseName = _getEditModalCaseName(modal);
+        const canonicalIdx = caseName ? window.CSPData.getCanonicalShapeIndex(caseName) : null;
+        const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
+        const expanded = typeof expandForColorCheck === 'function' ? expandForColorCheck(alg) : alg;
+        const normalized = window.ScrambleNormalizer.normalizeScramble(expanded);
+        const result = window.algToShapeIndex(normalized);
+        const idx = result.shapeIndex;
+        const isDirectMatch = canonicalIdx !== null && idx === canonicalIdx;
+        const isInOrg = caseShapeData && caseShapeData.org && caseShapeData.org.includes(idx);
+        const isInMir = caseShapeData && caseShapeData.mir && caseShapeData.mir.includes(idx);
+
+        if (isDirectMatch || isInOrg || isInMir) {
+            const setup = invertScramble(normalized);
+            const parityText = window.caleTracer.getParityTextFromScramble(setup, {
+                topColor: colorScheme.topColor,
+                bottomColor: colorScheme.bottomColor,
+                frontColor: colorScheme.frontColor,
+                rightColor: colorScheme.rightColor,
+                backColor: colorScheme.backColor,
+                leftColor: colorScheme.leftColor
+            }, cornerStickerMode);
+            const oddColor = isInMir && !isDirectMatch && !isInOrg ? 'var(--parity-odd-mirror)' : 'var(--parity-odd)';
+            const evenColor = isInMir && !isDirectMatch && !isInOrg ? 'var(--parity-even-mirror)' : 'var(--parity-even)';
+            input.style.color = parityText === 'Odd' ? oddColor : evenColor;
+        } else {
+            input.style.color = 'var(--parity-invalid)';
+        }
         input.style.fontWeight = '600';
-    } else if (isInMir) {
-        const setup = invertScramble(normalized);
-        const parityText = window.caleTracer.getParityTextFromScramble(setup, { topColor: colorScheme.topColor, bottomColor: colorScheme.bottomColor, frontColor: colorScheme.frontColor, rightColor: colorScheme.rightColor, backColor: colorScheme.backColor, leftColor: colorScheme.leftColor }, cornerStickerMode);
-        input.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
-        input.style.fontWeight = '600';
-    } else {
+    } catch {
         input.style.color = 'var(--parity-invalid)';
         input.style.fontWeight = '600';
     }
@@ -917,6 +928,7 @@ function updateInputColor(input) {
 // Helper to get case name from the edit case modal
 function _getEditModalCaseName(modal) {
     if (!modal) return null;
+    if (modal.dataset.caseName) return modal.dataset.caseName;
     const titleElement = modal.querySelector('.modal-title');
     if (!titleElement) return null;
     for (const dataItem of data) {
@@ -962,6 +974,7 @@ window.addNewAlgorithmField = function () {
         const currentValue = input.value;
         input.value = currentValue.substring(0, start) + text + currentValue.substring(end);
         input.selectionStart = input.selectionEnd = start + text.length;
+        updateInputColor(input);
     });
 
     input.focus();
@@ -1107,12 +1120,7 @@ window.attemptCloseEditCaseModal = function () {
         return;
     }
 
-    const customAlgs = customAlgorithms.get(item.name);
-    if (customAlgs) {
-        originalAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
-    } else {
-        originalAlgs.push(...(item.odd || []), ...(item.even || []));
-    }
+    originalAlgs.push(...getCaseAlgorithmList(item));
 
     const currentAlgs = Array.from(algInputs).map(input => input.value.trim()).filter(v => v);
 
@@ -1203,14 +1211,12 @@ function saveEditedCase(caseName) {
 
     // Save custom algorithms
     if (allAlgs.length > 0) {
-        customAlgorithms.set(caseName, {
-            odd: [],
-            even: allAlgs
-        });
+        customAlgorithms.set(caseName, allAlgs);
     } else {
         customAlgorithms.delete(caseName);
     }
 
+    markParityAlgorithmsDirty();
     saveState();
 
     // Recalculate parity

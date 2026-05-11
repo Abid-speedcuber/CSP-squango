@@ -71,8 +71,7 @@ function hydrateAlgorithmsRow(row) {
     if (!item) return;
     const visibleCols = quickEditState.visibleAlgColumns || 6;
     const displayName = getDisplayName(item.name);
-    const customAlgs = customAlgorithms.get(item.name);
-    let allAlgs = customAlgs ? [...(customAlgs.odd || []), ...(customAlgs.even || [])] : [...(item.odd || []), ...(item.even || [])];
+    let allAlgs = getCaseAlgorithmList(item);
     const totalCols = Math.max(visibleCols, 6);
     while (allAlgs.length < totalCols) allAlgs.push('');
     row.classList.remove('qe-lazy-row');
@@ -1074,10 +1073,7 @@ function saveQuickEditChanges() {
             .filter(alg => alg);
 
         if (algs.length > 0) {
-            customAlgorithms.set(caseName, {
-                odd: [],
-                even: algs
-            });
+            customAlgorithms.set(caseName, algs);
         } else {
             customAlgorithms.delete(caseName);
         }
@@ -1097,6 +1093,7 @@ function saveQuickEditChanges() {
     };
 
     // Recalculate parity
+    markParityAlgorithmsDirty();
     calculateAndCacheAllParity();
 
     // Save state and re-render
@@ -1203,6 +1200,7 @@ function revertQuickEditChanges() {
         perCaseSubtitles = new Map(window.quickEditInitialState.perCaseSubtitles);
         comments = new Map(window.quickEditInitialState.comments);
         customAlgorithms = new Map(window.quickEditInitialState.customAlgorithms);
+        markParityAlgorithmsDirty();
 
         // Close and reopen modal to refresh
         closeQuickEditModal();

@@ -118,12 +118,13 @@ let evilnessMap = {}; // {caseName: boolean} - true = evil
 // Global function to set corner sticker mode
 window.setCornerStickerMode = function (mode) {
     cornerStickerMode = mode;
+    markParityAlgorithmsDirty();
     saveState();
 };
-let customAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
+let customAlgorithms = new Map(); // stores {caseName: [algorithm, ...]}
 // svgData is now the source of truth, initialized from DEFAULT_SVGS in svg.js
-let cachedParityAlgorithms = new Map(); // stores {caseName: {odd: [...], even: [...]}}
-let lastParityCalculationSettings = null; // Track settings that affect parity calculation
+let parityAlgorithmsByCase = new Map(); // runtime-only {caseName: {odd: [...], even: [...]}}
+let parityAlgorithmsDirty = true;
 
 let perCaseSubtitles = new Map(); // Stores {caseName: "Subtitle"}
 let hideInstructions = false; // Toggle for hiding instruction buttons
@@ -197,6 +198,76 @@ function getPrioritySortValue(caseName) {
     return getCasePriorityLevel(caseName);
 }
 
+function normalizeAlgorithmList(rawAlgorithms) {
+    let algorithms = rawAlgorithms;
+    if (typeof algorithms === 'string') {
+        try {
+            algorithms = JSON.parse(algorithms);
+        } catch {
+            return [algorithms].filter(alg => alg.trim());
+        }
+    }
+
+    if (Array.isArray(algorithms)) {
+        return algorithms
+            .filter(alg => typeof alg === 'string')
+            .map(alg => alg.trim())
+            .filter(Boolean);
+    }
+
+    if (algorithms && typeof algorithms === 'object') {
+        return [
+            ...normalizeAlgorithmList(algorithms.odd || []),
+            ...normalizeAlgorithmList(algorithms.even || [])
+        ];
+    }
+
+    return [];
+}
+
+function parseLegacyAlgorithmSnapshot(rawSnapshot) {
+    if (!rawSnapshot) return undefined;
+    if (typeof rawSnapshot !== 'string') return rawSnapshot;
+    try {
+        return Object.fromEntries(JSON.parse(rawSnapshot));
+    } catch {
+        return undefined;
+    }
+}
+
+function hydrateCustomAlgorithms(rawAlgorithms, legacySnapshot) {
+    const source = rawAlgorithms || parseLegacyAlgorithmSnapshot(legacySnapshot) || {};
+    const hydrated = new Map();
+
+    for (const [caseName, algorithms] of Object.entries(source)) {
+        const normalized = normalizeAlgorithmList(algorithms);
+        if (normalized.length > 0) hydrated.set(caseName, normalized);
+    }
+
+    customAlgorithms = hydrated;
+    markParityAlgorithmsDirty();
+}
+
+function getCaseAlgorithmList(itemOrCaseName) {
+    const caseName = typeof itemOrCaseName === 'string' ? itemOrCaseName : itemOrCaseName.name;
+    const item = typeof itemOrCaseName === 'string'
+        ? window.CSPData && window.CSPData.getCase(caseName)
+        : itemOrCaseName;
+
+    if (customAlgorithms.has(caseName)) return [...customAlgorithms.get(caseName)];
+    if (!item) return [];
+    return normalizeAlgorithmList([...(item.odd || []), ...(item.even || [])]);
+}
+
+function getParityAlgorithmsForCase(caseName) {
+    if (parityAlgorithmsDirty) calculateAndCacheAllParity();
+    return parityAlgorithmsByCase.get(caseName) || { odd: [], even: [] };
+}
+
+function markParityAlgorithmsDirty() {
+    parityAlgorithmsDirty = true;
+}
+
 function ensurePriorityLevelsForAllCases() {
     const validCaseNames = new Set(data.map(item => item.name));
     plannedLevels = new Map(
@@ -247,6 +318,12 @@ window.SQG.progress = Object.freeze({
     getSortValue: getPrioritySortValue
 });
 
+window.SQG.algorithms = Object.freeze({
+    getCaseAlgorithmList,
+    getParityAlgorithmsForCase,
+    markParityAlgorithmsDirty
+});
+
 let scrambleImageSize = 200; // Default size
 let profileName = localStorage.getItem('profileName') || 'Profile';
 let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
@@ -266,19 +343,10 @@ function calculateAndCacheAllParity() {
         return;
     }
 
-    // Store current settings for comparison
-    lastParityCalculationSettings = {
-        colorScheme: JSON.stringify(colorScheme),
-        cornerStickerMode: cornerStickerMode,
-        customShapes: localStorage.getItem('customTracingSchemes'),
-        customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
-    };
+    const calculated = new Map();
 
     for (const item of data) {
-        const customAlgs = customAlgorithms.get(item.name);
-        const oddAlgs = customAlgs && customAlgs.odd ? customAlgs.odd : (item.odd || []);
-        const evenAlgs = customAlgs && customAlgs.even ? customAlgs.even : (item.even || []);
-        const allAlgorithms = [...oddAlgs, ...evenAlgs];
+        const allAlgorithms = getCaseAlgorithmList(item);
 
         let dynamicOddAlgs = [];
         let dynamicEvenAlgs = [];
@@ -312,11 +380,14 @@ function calculateAndCacheAllParity() {
             }
         }
 
-        cachedParityAlgorithms.set(item.name, {
+        calculated.set(item.name, {
             odd: dynamicOddAlgs,
             even: dynamicEvenAlgs
         });
     }
+
+    parityAlgorithmsByCase = calculated;
+    parityAlgorithmsDirty = false;
 }
 
 // Build shape index → caseName lookup (computed once)
@@ -373,21 +444,7 @@ function isCaseEvil(caseName) {
 
 // Function to check if parity needs recalculation
 function needsParityRecalculation() {
-    if (!lastParityCalculationSettings) return true;
-
-    const currentSettings = {
-        colorScheme: JSON.stringify(colorScheme),
-        cornerStickerMode: cornerStickerMode,
-        customShapes: localStorage.getItem('customTracingSchemes'),
-        customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries()))
-    };
-
-    return (
-        currentSettings.colorScheme !== lastParityCalculationSettings.colorScheme ||
-        currentSettings.cornerStickerMode !== lastParityCalculationSettings.cornerStickerMode ||
-        currentSettings.customShapes !== lastParityCalculationSettings.customShapes ||
-        currentSettings.customAlgorithms !== lastParityCalculationSettings.customAlgorithms
-    );
+    return parityAlgorithmsDirty;
 }
 
 function normalizeTracingSchemePatterns(rawSchemes) {
@@ -426,6 +483,7 @@ function storeCustomTracingSchemes(rawSchemes) {
     const normalized = normalizeTracingSchemePatterns(rawSchemes);
     const serialized = typeof normalized === 'string' ? normalized : JSON.stringify(normalized);
     localStorage.setItem('customTracingSchemes', serialized);
+    markParityAlgorithmsDirty();
 }
 
 function getCustomTracingSchemesFromState(state) {
@@ -473,7 +531,10 @@ try {
         }
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
-        customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
+        hydrateCustomAlgorithms(
+            state.customAlgorithms,
+            state.lastParityCalculationSettings && state.lastParityCalculationSettings.customAlgorithms
+        );
         generalNotes = state.generalNotes || '';
         algVariables = new Map(Object.entries(state.algVariables || {}));
 
@@ -496,13 +557,6 @@ try {
             window.svgData = state.svgData;
         }
 
-        // Load cached parity calculations
-        if (state.cachedParityAlgorithms) {
-            cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
-        }
-        if (state.lastParityCalculationSettings) {
-            lastParityCalculationSettings = state.lastParityCalculationSettings;
-        }
     }
 
     // Load enhancedAccess separately (not part of export/import)
@@ -564,8 +618,6 @@ function saveState() {
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
             svgData: window.svgData,
-            cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
-            lastParityCalculationSettings: lastParityCalculationSettings,
             generalNotes: generalNotes,
             algVariables: Object.fromEntries(algVariables),
             evilnessFactor: evilnessFactor,
@@ -602,12 +654,20 @@ function getPresetDefaults() {
 
 // Load preset data to use as defaults only (doesn't overwrite user data)
 async function loadPresetAsDefaults(presetName) {
-    const data = await loadPresetData(presetName);
-    if (!data) return false;
+    const preset = await loadPresetData(presetName);
+    if (!preset) return false;
 
     currentPreset = presetName;
-    presetData = data;
+    presetData = preset;
     localStorage.setItem('currentPreset', currentPreset);
+
+    if (customAlgorithms.size === 0 && preset.customAlgorithms && Object.keys(preset.customAlgorithms).length > 0) {
+        hydrateCustomAlgorithms(
+            preset.customAlgorithms,
+            preset.lastParityCalculationSettings && preset.lastParityCalculationSettings.customAlgorithms
+        );
+        saveState();
+    }
 
     return true;
 }
@@ -643,8 +703,9 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     colorScheme = data.colorScheme || colorScheme;
 
     // Apply shape patterns from preset
-    if (data.customTracingSchemes) {
-        storeCustomTracingSchemes(data.customTracingSchemes);
+    const presetTracingSchemes = getCustomTracingSchemesFromState(data);
+    if (presetTracingSchemes) {
+        storeCustomTracingSchemes(presetTracingSchemes);
     }
 
     // Apply preset subtitle configurations
@@ -654,7 +715,10 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     cornerStickerMode = data.cornerStickerMode || 'counterclockwise';
 
     // Apply preset algorithms
-    customAlgorithms = new Map(Object.entries(data.customAlgorithms || {}));
+    hydrateCustomAlgorithms(
+        data.customAlgorithms,
+        data.lastParityCalculationSettings && data.lastParityCalculationSettings.customAlgorithms
+    );
 
     // Apply preset SVG data
     if (data.svgData) {
@@ -683,8 +747,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     currentPreset = presetName;
     presetData = data;
 
-    // Force invalidate parity cache to trigger recalculation with new settings
-    lastParityCalculationSettings = null;
+    markParityAlgorithmsDirty();
 
     saveState();
     updateProfileStats();
@@ -697,7 +760,7 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     render();
 
     // Force reload shape patterns in parity tracer library
-    if (data.customTracingSchemes && typeof window.ParityTracerLibrary !== 'undefined') {
+    if (presetTracingSchemes && typeof window.ParityTracerLibrary !== 'undefined') {
         try {
             // Force reload from localStorage after we've saved it
             setTimeout(() => {
@@ -732,7 +795,7 @@ window.initializePreset = async function () {
     }
 }
 
-const EXPORT_FORMAT_VERSION = 3;
+const EXPORT_FORMAT_VERSION = 4;
 
 function readStoredJSONSetting(key) {
     const value = localStorage.getItem(key);
@@ -775,8 +838,6 @@ function buildLegacyExportState() {
         scrambleImageSize: scrambleImageSize,
         customTracingSchemes: readStoredJSONSetting('customTracingSchemes'),
         perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
-        cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
-        lastParityCalculationSettings: lastParityCalculationSettings,
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
         svgData: window.svgData,
@@ -853,10 +914,6 @@ function buildExportDocument() {
         },
         visuals: {
             svgData: state.svgData
-        },
-        cache: {
-            cachedParityAlgorithms: state.cachedParityAlgorithms,
-            lastParityCalculationSettings: state.lastParityCalculationSettings
         }
     };
 }
@@ -875,7 +932,6 @@ function flattenImportedState(rawState) {
     const parityTracing = rawState.parityTracing || {};
     const trainer = rawState.trainer || {};
     const visuals = rawState.visuals || {};
-    const cache = rawState.cache || {};
     const profile = rawState.profile || {};
 
     return {
@@ -912,9 +968,7 @@ function flattenImportedState(rawState) {
         selectorSelectedCases: trainer.multiCaseSelectedCases,
         profileName: profile.name,
         profileAvatar: profile.avatar,
-        svgData: visuals.svgData,
-        cachedParityAlgorithms: cache.cachedParityAlgorithms,
-        lastParityCalculationSettings: cache.lastParityCalculationSettings
+        svgData: visuals.svgData
     };
 }
 
@@ -971,7 +1025,10 @@ function importData(jsonStr) {
         }
         perCaseSubtitles = new Map(Object.entries(state.perCaseSubtitles || {}));
         cornerStickerMode = state.cornerStickerMode || 'counterclockwise';
-        customAlgorithms = new Map(Object.entries(state.customAlgorithms || {}));
+        hydrateCustomAlgorithms(
+            state.customAlgorithms,
+            state.lastParityCalculationSettings && state.lastParityCalculationSettings.customAlgorithms
+        );
         generalNotes = state.generalNotes || '';
         algVariables = new Map(Object.entries(state.algVariables || {}));
 
@@ -985,19 +1042,10 @@ function importData(jsonStr) {
             window.svgData = state.svgData;
         }
 
-        // Load cached parity calculations
-        if (state.cachedParityAlgorithms) {
-            cachedParityAlgorithms = new Map(Object.entries(state.cachedParityAlgorithms));
-        }
-        if (state.lastParityCalculationSettings) {
-            lastParityCalculationSettings = state.lastParityCalculationSettings;
-        }
-
         // Import selector selections
         if (typeof window.selectorImportHook === 'function') window.selectorImportHook(state);
 
-        // Force invalidate parity calculation cache to trigger recalculation
-        lastParityCalculationSettings = null;
+        markParityAlgorithmsDirty();
 
         if (state.showHints !== undefined) {
             showHints = state.showHints;

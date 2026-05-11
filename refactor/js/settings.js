@@ -408,7 +408,7 @@ window._ptToggleEvilness = function(checkbox) {
             if (typeof saveState === 'function') saveState();
             const sub = document.getElementById('pt_evilSubSettings');
             if (sub) { sub.style.opacity = newVal ? '1' : '0.4'; sub.style.pointerEvents = newVal ? 'auto' : 'none'; }
-            if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+            if (typeof markParityAlgorithmsDirty === 'function') markParityAlgorithmsDirty();
             if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
             if (typeof render === 'function') render();
             if (typeof showToast === 'function') showToast(`Evilness ${newVal ? 'enabled' : 'disabled'}`, 3000, 'success');
@@ -425,7 +425,7 @@ window._ptToggleEvilStr = function(checkbox) {
             checkbox.checked = newVal;
             if (typeof evilnessStringReturn !== 'undefined') evilnessStringReturn = newVal;
             if (typeof saveState === 'function') saveState();
-            if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+            if (typeof markParityAlgorithmsDirty === 'function') markParityAlgorithmsDirty();
             if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
             if (typeof render === 'function') render();
         }
@@ -659,5 +659,4 @@ function _confirmExpensiveOp(title, message, onConfirm) {
 // ── Wire up sidebar settings button ──────────────────────────────────────────
 // The sidebar already calls openSettingsModal() which is now shimmed above.
 // Nothing extra needed.
-
 

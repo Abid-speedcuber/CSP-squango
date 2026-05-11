@@ -808,10 +808,9 @@ function renderCard(item) {
 
     const comment = comments.get(item.name) || '';
 
-    // Use cached parity calculations
-    const cachedAlgs = cachedParityAlgorithms.get(item.name);
-    const oddAlgs = cachedAlgs ? cachedAlgs.odd : [];
-    const evenAlgs = cachedAlgs ? cachedAlgs.even : [];
+    const parityAlgs = getParityAlgorithmsForCase(item.name);
+    const oddAlgs = parityAlgs.odd || [];
+    const evenAlgs = parityAlgs.even || [];
 
     // Fetch SVGs dynamically from svgData using string keys
     const topSVG = window.svgData[item.top] || '';
@@ -910,13 +909,18 @@ function render(softRender = false) {
     if (renderTimeout) clearTimeout(renderTimeout);
 
     renderTimeout = setTimeout(() => {
-        if (!softRender && needsParityRecalculation()) {
-            showRenderLoading();
-            requestAnimationFrame(() => {
+        if (needsParityRecalculation()) {
+            if (!softRender) showRenderLoading();
+            const renderAfterParityCalculation = () => {
                 calculateAndCacheAllParity();
-                hideRenderLoading();
+                if (!softRender) hideRenderLoading();
                 _doProgressiveRender();
-            });
+            };
+            if (softRender) {
+                renderAfterParityCalculation();
+            } else {
+                requestAnimationFrame(renderAfterParityCalculation);
+            }
         } else {
             _doProgressiveRender();
         }

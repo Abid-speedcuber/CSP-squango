@@ -992,7 +992,7 @@
             if (typeof saveState === 'function') saveState();
             const useEvilInCalc = typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn;
             if (useEvilInCalc) {
-                if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
+                if (typeof markParityAlgorithmsDirty === 'function') markParityAlgorithmsDirty();
                 if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
                 if (typeof render === 'function') render();
                 if (typeof filterAndSort === 'function') filterAndSort();
