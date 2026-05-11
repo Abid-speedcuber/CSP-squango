@@ -88,6 +88,55 @@ export default defineConfig([
     }
   },
   {
+    files: ["refactor/js/**/*.js", "refactor/res/shapeImages/**/*.js"],
+    ignores: ["refactor/js/app-core.js", "refactor/js/browser-api.js"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='svgData']",
+          message: "Use svgData/setSVGData/setSVGDataItem from restoftheapp.js instead of window.svgData."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='enhancedAccess']",
+          message: "Use enhancedAccess/setEnhancedAccess from restoftheapp.js instead of window.enhancedAccess."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='PRESET_CONFIG']",
+          message: "Use PRESET_CONFIG from restoftheapp.js instead of window.PRESET_CONFIG."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='applyPreset']",
+          message: "Register browser-callable actions through browser-api.js instead of assigning window.applyPreset."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='initializePreset']",
+          message: "Register browser-callable actions through browser-api.js instead of assigning window.initializePreset."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='exportData']",
+          message: "Register browser-callable actions through browser-api.js instead of assigning window.exportData."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='selectorExportHook']",
+          message: "Register extension hooks through browser-api.js instead of assigning window.selectorExportHook."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='window'][left.property.name='selectorImportHook']",
+          message: "Register extension hooks through browser-api.js instead of assigning window.selectorImportHook."
+        },
+        {
+          selector: "AssignmentExpression[left.object.object.name='window'][left.object.property.name='SQG']",
+          message: "Import SQG from browser-api.js instead of mutating window.SQG directly."
+        },
+        {
+          selector: "AssignmentExpression[left.object.name='globalThis'][left.property.name='CSPData']",
+          message: "Expose shared state through browser-api.js registerState instead of globalThis.CSPData."
+        }
+      ]
+    }
+  },
+  {
     files: ["refactor/database/**/*.js", "refactor/res/shapeImages/**/*.js"],
     rules: {
       "no-unused-vars": "off"

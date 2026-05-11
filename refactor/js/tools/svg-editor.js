@@ -1,5 +1,9 @@
 /* ==== FILE: js/tools/svg-editor.js ==== */
 
+import { DEFAULT_SVGS } from '../../res/shapeImages/svg.js?v=esm-20260511-2';
+import { exposeLegacyGlobal } from '../browser-api.js?v=esm-20260511-2';
+import { setSVGDataItem, svgData } from '../restoftheapp.js?v=esm-20260511-2';
+
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║                          SVG TRACING GUIDE EDITOR                          ║
@@ -245,10 +249,10 @@ export const SVGEditor = {
 
     loadSVGList() {
         const listContainer = document.getElementById('svgEditorList');
-        if (!listContainer || !window.svgData) return;
+        if (!listContainer || !svgData) return;
 
         listContainer.innerHTML = '';
-        const svgNames = Object.keys(window.svgData).sort();
+        const svgNames = Object.keys(svgData).sort();
 
         svgNames.forEach(name => {
             const item = document.createElement('div');
@@ -281,7 +285,7 @@ export const SVGEditor = {
         });
 
         const items = document.querySelectorAll('.svg-editor-item');
-        const svgNames = Object.keys(window.svgData).sort();
+        const svgNames = Object.keys(svgData).sort();
         const index = svgNames.indexOf(svgName);
         if (items[index]) {
             items[index].classList.add('active');
@@ -297,7 +301,7 @@ export const SVGEditor = {
         const canvas = document.getElementById('svgEditorCanvas');
         canvas.innerHTML = `
     <div id="svgEditorContainer" class="svg-editor-canvas-content svg-editor-force-show-hints" style="transform: scale(${this.state.currentZoom / 100});">
-        <div id="svgEditorContent">${window.svgData[svgName]}</div>
+        <div id="svgEditorContent">${svgData[svgName]}</div>
     </div>
 `;
 
@@ -781,7 +785,7 @@ export const SVGEditor = {
         });
 
         // Store in memory but don't save to localStorage yet
-        window.svgData[name] = clone.outerHTML;
+        setSVGDataItem(name, clone.outerHTML);
     },
 
     saveCurrent() {
@@ -821,7 +825,7 @@ export const SVGEditor = {
                     el.style.cursor = '';
                     el.style.transition = '';
                 });
-                window.svgData[name] = clone.outerHTML;
+                setSVGDataItem(name, clone.outerHTML);
             }
         });
 
@@ -851,9 +855,9 @@ export const SVGEditor = {
                 // Reset to preset default or absolute default
                 const defaults = getPresetDefaults();
                 if (defaults && defaults.svgData && defaults.svgData[name]) {
-                    window.svgData[name] = defaults.svgData[name];
+                    setSVGDataItem(name, defaults.svgData[name]);
                 } else {
-                    window.svgData[name] = DEFAULT_SVGS[name];
+                    setSVGDataItem(name, DEFAULT_SVGS[name]);
                 }
 
                 // Save and re-render
@@ -943,13 +947,13 @@ export const SVGEditor = {
             () => {
                 // Reset all SVGs to preset default or absolute default
                 const defaults = getPresetDefaults();
-                const svgNames = Object.keys(window.svgData);
+                const svgNames = Object.keys(svgData);
 
                 svgNames.forEach(name => {
                     if (defaults && defaults.svgData && defaults.svgData[name]) {
-                        window.svgData[name] = defaults.svgData[name];
+                        setSVGDataItem(name, defaults.svgData[name]);
                     } else {
-                        window.svgData[name] = DEFAULT_SVGS[name];
+                        setSVGDataItem(name, DEFAULT_SVGS[name]);
                     }
                 });
 
@@ -1056,14 +1060,4 @@ if (document.readyState === 'loading') {
     SVGEditor.init();
 }
 
-// ESM live global compatibility bridge
-for (const [name, descriptor] of Object.entries({
-    "SVGEditor": { get: () => SVGEditor, set: value => { Object.defineProperty(window, "SVGEditor", { configurable: true, enumerable: true, writable: true, value }); } },
-})) {
-    Object.defineProperty(window, name, {
-        configurable: true,
-        enumerable: true,
-        get: descriptor.get,
-        set: descriptor.set
-    });
-}
+exposeLegacyGlobal('SVGEditor', { get: () => SVGEditor });

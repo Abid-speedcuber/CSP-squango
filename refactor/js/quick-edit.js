@@ -15,6 +15,7 @@ import {
     cornerStickerMode,
     customAlgorithms,
     displayNames,
+    enhancedAccess,
     evilnessFactor,
     evilnessMap,
     getCaseAlgorithmList,
@@ -645,7 +646,7 @@ export function setupQuickEditKeyboardShortcuts() {
 
 export function switchQuickEditTab(tab) {
     // Check enhanced access for algorithms tab
-    if (tab === 'algorithms' && !window.enhancedAccess) {
+    if (tab === 'algorithms' && !enhancedAccess) {
         showToast('Enable Enhanced Access in Settings to edit algorithms', 2000, 'error');
         return;
     }

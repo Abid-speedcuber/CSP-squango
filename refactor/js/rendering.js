@@ -23,7 +23,8 @@ import {
     isCaseLearning,
     perCaseSubtitles,
     saveState,
-    setCasePriorityLevel
+    setCasePriorityLevel,
+    svgData
 } from './restoftheapp.js?v=esm-20260511-2';
 import {
     openEditCaseModal,
@@ -841,8 +842,8 @@ export function renderCard(item) {
     const evenAlgs = parityAlgs.even || [];
 
     // Fetch SVGs dynamically from svgData using string keys
-    const topSVG = window.svgData[item.top] || '';
-    const bottomSVG = window.svgData[item.bottom] || '';
+    const topSVG = svgData[item.top] || '';
+    const bottomSVG = svgData[item.bottom] || '';
 
     const algFontFamily = hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
     const oddAlgDisplay = oddAlgs.length > 0 ? renderAlgorithmWithPopup(oddAlgs, item.name, 'odd', algFontFamily) : '<div class="alg-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';

@@ -1,6 +1,7 @@
 import '../res/shapeImages/svg.js?v=esm-20260511-2';
 import '../database/shapeIndex.js?v=esm-20260511-2';
 import '../database/algs.js?v=esm-20260511-2';
+import './browser-api.js?v=esm-20260511-2';
 import './app-core.js?v=esm-20260511-2';
 import './data-store.js?v=esm-20260511-2';
 import './utils.js?v=esm-20260511-2';
@@ -584,27 +585,3 @@ window.addEventListener('load', () => {
         setTimeout(checkURLScramble, 3000);
     }
 });
-
-// ESM live global compatibility bridge
-for (const [name, descriptor] of Object.entries({
-    "initializeApp": { get: () => initializeApp, set: value => { Object.defineProperty(window, "initializeApp", { configurable: true, enumerable: true, writable: true, value }); } },
-    "loadingTips": { get: () => loadingTips, set: value => { Object.defineProperty(window, "loadingTips", { configurable: true, enumerable: true, writable: true, value }); } },
-    "adjustLoadingScreen": { get: () => adjustLoadingScreen, set: value => { Object.defineProperty(window, "adjustLoadingScreen", { configurable: true, enumerable: true, writable: true, value }); } },
-    "tipElement": { get: () => tipElement, set: value => { Object.defineProperty(window, "tipElement", { configurable: true, enumerable: true, writable: true, value }); } },
-    "tips": { get: () => tips, set: value => { Object.defineProperty(window, "tips", { configurable: true, enumerable: true, writable: true, value }); } },
-    "randomTip": { get: () => randomTip, set: value => { Object.defineProperty(window, "randomTip", { configurable: true, enumerable: true, writable: true, value }); } },
-    "evaCredit": { get: () => evaCredit, set: value => { Object.defineProperty(window, "evaCredit", { configurable: true, enumerable: true, writable: true, value }); } },
-    "mattCredit": { get: () => mattCredit, set: value => { Object.defineProperty(window, "mattCredit", { configurable: true, enumerable: true, writable: true, value }); } },
-    "loadProgress": { get: () => loadProgress, set: value => { loadProgress = value; } },
-    "progressBar": { get: () => progressBar, set: value => { Object.defineProperty(window, "progressBar", { configurable: true, enumerable: true, writable: true, value }); } },
-    "loadingInterval": { get: () => loadingInterval, set: value => { Object.defineProperty(window, "loadingInterval", { configurable: true, enumerable: true, writable: true, value }); } },
-    "finalizeInitialization": { get: () => finalizeInitialization, set: value => { Object.defineProperty(window, "finalizeInitialization", { configurable: true, enumerable: true, writable: true, value }); } },
-    "checkURLScramble": { get: () => checkURLScramble, set: value => { Object.defineProperty(window, "checkURLScramble", { configurable: true, enumerable: true, writable: true, value }); } },
-})) {
-    Object.defineProperty(window, name, {
-        configurable: true,
-        enumerable: true,
-        get: descriptor.get,
-        set: descriptor.set
-    });
-}

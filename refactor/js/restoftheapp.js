@@ -4,17 +4,19 @@
 ﻿// Modular preset configuration - add new presets here
 import { data } from '../database/algs.js?v=esm-20260511-2';
 import { shapeIndex, shapeIndexMap } from '../database/shapeIndex.js?v=esm-20260511-2';
+import { DEFAULT_SVGS } from '../res/shapeImages/svg.js?v=esm-20260511-2';
+import { registerAction, registerState, SQG } from './browser-api.js?v=esm-20260511-2';
 import { CSPData } from './data-store.js?v=esm-20260511-2';
 import { invertScramble } from './utils.js?v=esm-20260511-2';
 import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
 import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 
-window.PRESET_CONFIG = {
+export const PRESET_CONFIG = Object.freeze({
     'Default_Preset': 'presets/Default_Preset.json',
     'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
     // Add more presets here:
     // 'Preset_Name': 'presets/preset_file.json',
-};
+});
 
 // Default display names for all 90 cases (used for fresh installs)
 export const defaultDisplayNames = {
@@ -139,9 +141,10 @@ export let hideParenthesis = false; // Toggle for hiding parenthesis in algorith
 export let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize')) || 14; // Default 14px, stored in localStorage only
 export let generalNotes = ''; // HTML content for general notes
 export let algVariables = new Map();
-window.enhancedAccess = localStorage.getItem('enhancedAccess') === 'true'; // Toggle for enhanced access (not exported)
+export let enhancedAccess = localStorage.getItem('enhancedAccess') === 'true';
 export let showHints = localStorage.getItem('showHints') !== null ? localStorage.getItem('showHints') === 'true' : true; // Default to true
 export let currentSortMode = localStorage.getItem('sortMode') || 'probability';
+export let svgData = { ...DEFAULT_SVGS };
 export let colorScheme = {
     topColor: '#000000',
     bottomColor: '#FFFFFF',
@@ -313,8 +316,7 @@ export function hydratePriorityLevels(state = {}) {
     ensurePriorityLevelsForAllCases();
 }
 
-window.SQG = window.SQG || {};
-window.SQG.progress = Object.freeze({
+SQG.progress = Object.freeze({
     getPriorityLevel: getCasePriorityLevel,
     getPlannedPriorityLevel,
     getPriorityVisualLevel,
@@ -325,7 +327,7 @@ window.SQG.progress = Object.freeze({
     getSortValue: getPrioritySortValue
 });
 
-window.SQG.algorithms = Object.freeze({
+SQG.algorithms = Object.freeze({
     getCaseAlgorithmList,
     getParityAlgorithmsForCase,
     markParityAlgorithmsDirty
@@ -356,6 +358,7 @@ const APP_STATE_KEYS = new Set([
     'algorithmFontSize',
     'generalNotes',
     'algVariables',
+    'enhancedAccess',
     'showHints',
     'currentSortMode',
     'colorScheme',
@@ -386,6 +389,7 @@ export function getAppStateValue(key) {
         case 'algorithmFontSize': return algorithmFontSize;
         case 'generalNotes': return generalNotes;
         case 'algVariables': return algVariables;
+        case 'enhancedAccess': return enhancedAccess;
         case 'showHints': return showHints;
         case 'currentSortMode': return currentSortMode;
         case 'colorScheme': return colorScheme;
@@ -435,6 +439,7 @@ export function setAppStateValue(key, value) {
         case 'algorithmFontSize': algorithmFontSize = value; break;
         case 'generalNotes': generalNotes = value; break;
         case 'algVariables': algVariables = value; break;
+        case 'enhancedAccess': enhancedAccess = Boolean(value); break;
         case 'showHints': showHints = value; break;
         case 'currentSortMode': currentSortMode = value; break;
         case 'colorScheme': colorScheme = value; break;
@@ -452,6 +457,23 @@ export function updateAppState(patch) {
     for (const [key, value] of Object.entries(patch || {})) {
         setAppStateValue(key, value);
     }
+}
+
+export function setEnhancedAccess(value) {
+    enhancedAccess = Boolean(value);
+    localStorage.setItem('enhancedAccess', enhancedAccess.toString());
+    return enhancedAccess;
+}
+
+export function setSVGData(nextSvgData) {
+    svgData = nextSvgData && typeof nextSvgData === 'object' ? nextSvgData : { ...DEFAULT_SVGS };
+    initializeSVGData();
+    return svgData;
+}
+
+export function setSVGDataItem(name, value) {
+    svgData[name] = value;
+    return value;
 }
 
 // Check if this is first load BEFORE loading state
@@ -673,16 +695,14 @@ try {
         }
 
         // Load custom SVG data
-        if (state.svgData) {
-            window.svgData = state.svgData;
-        }
+        if (state.svgData) setSVGData(state.svgData);
 
     }
 
     // Load enhancedAccess separately (not part of export/import)
     const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
     if (enhancedAccessSaved !== null) {
-        window.enhancedAccess = enhancedAccessSaved === 'true';
+        enhancedAccess = enhancedAccessSaved === 'true';
     }
 
     ensurePriorityLevelsForAllCases();
@@ -693,15 +713,11 @@ try {
 
 // Function to initialize SVG data from defaults if needed
 export function initializeSVGData() {
-    if (!window.svgData) {
-        window.svgData = { ...DEFAULT_SVGS };
-    }
-
     // Ensure all 39 SVG keys exist
     const svgKeys = Object.keys(DEFAULT_SVGS);
     svgKeys.forEach(key => {
-        if (!window.svgData[key]) {
-            window.svgData[key] = DEFAULT_SVGS[key];
+        if (!svgData[key]) {
+            svgData[key] = DEFAULT_SVGS[key];
         }
     });
 }
@@ -718,7 +734,7 @@ if (isFirstLoad) {
 
 export function saveState() {
     localStorage.setItem('sortMode', currentSortMode);
-    localStorage.setItem('enhancedAccess', window.enhancedAccess.toString());
+    localStorage.setItem('enhancedAccess', enhancedAccess.toString());
     localStorage.setItem('currentPreset', currentPreset);
     localStorage.setItem('evilnessFactor', evilnessFactor.toString());
     localStorage.setItem('evilnessStringReturn', evilnessStringReturn.toString());
@@ -737,7 +753,7 @@ export function saveState() {
             perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
             cornerStickerMode: cornerStickerMode,
             customAlgorithms: Object.fromEntries(customAlgorithms),
-            svgData: window.svgData,
+            svgData: svgData,
             generalNotes: generalNotes,
             algVariables: Object.fromEntries(algVariables),
             evilnessFactor: evilnessFactor,
@@ -752,7 +768,7 @@ export function saveState() {
 // Load preset data
 export async function loadPresetData(presetName) {
     try {
-        const presetPath = window.PRESET_CONFIG[presetName];
+        const presetPath = PRESET_CONFIG[presetName];
         if (!presetPath) {
             throw new Error(`Preset "${presetName}" not found in configuration`);
         }
@@ -842,7 +858,7 @@ export async function applyPreset(presetName, skipWarning = false, silent = fals
 
     // Apply preset SVG data
     if (data.svgData) {
-        window.svgData = data.svgData;
+        setSVGData(data.svgData);
     }
 
     // Apply preset evilness settings
@@ -905,7 +921,7 @@ export async function applyPreset(presetName, skipWarning = false, silent = fals
     }
 }
 
-window.applyPreset = applyPreset;
+registerAction('applyPreset', applyPreset);
 
 // Initialize preset on load (just loads as defaults, doesn't overwrite user data)
 export async function initializePreset() {
@@ -917,7 +933,7 @@ export async function initializePreset() {
     }
 }
 
-window.initializePreset = initializePreset;
+registerAction('initializePreset', initializePreset);
 
 export const EXPORT_FORMAT_VERSION = 4;
 
@@ -964,7 +980,7 @@ export function buildLegacyExportState() {
         perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
         cornerStickerMode: cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        svgData: window.svgData,
+        svgData: svgData,
         generalNotes: generalNotes,
         algVariables: Object.fromEntries(algVariables),
         evilnessFactor: evilnessFactor,
@@ -985,7 +1001,7 @@ export function buildLegacyExportState() {
 
 export function buildExportDocument() {
     const state = buildLegacyExportState();
-    if (typeof window.selectorExportHook === 'function') window.selectorExportHook(state);
+    if (typeof SQG.actions.selectorExportHook === 'function') SQG.actions.selectorExportHook(state);
 
     return {
         app: 'SquanGo CSP',
@@ -1096,7 +1112,7 @@ export function flattenImportedState(rawState) {
     };
 }
 
-window.exportData = function() {
+export function exportData() {
     const state = buildExportDocument();
     const dataStr = JSON.stringify(state, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -1107,6 +1123,7 @@ window.exportData = function() {
     link.click();
     URL.revokeObjectURL(url);
 }
+registerAction('exportData', exportData);
 
 export function importData(jsonStr) {
     try {
@@ -1163,11 +1180,11 @@ export function importData(jsonStr) {
 
         // Load custom SVG data
         if (state.svgData) {
-            window.svgData = state.svgData;
+            setSVGData(state.svgData);
         }
 
         // Import selector selections
-        if (typeof window.selectorImportHook === 'function') window.selectorImportHook(state);
+        if (typeof SQG.actions.selectorImportHook === 'function') SQG.actions.selectorImportHook(state);
 
         markParityAlgorithmsDirty();
 
@@ -1226,13 +1243,24 @@ export function importData(jsonStr) {
     }
 }
 
-window.SQG = window.SQG || {};
-window.SQG.appState = Object.freeze({
+SQG.appState = Object.freeze({
     exportVersion: EXPORT_FORMAT_VERSION,
     createExportDocument: buildExportDocument,
     createLegacySnapshot: buildLegacyExportState,
     importFromJSON: importData,
     save: saveState
+});
+
+registerState('svgData', {
+    get: () => svgData,
+    set: setSVGData
+});
+registerState('enhancedAccess', {
+    get: () => enhancedAccess,
+    set: value => { enhancedAccess = Boolean(value); }
+});
+registerState('presetConfig', {
+    get: () => PRESET_CONFIG
 });
 
 export function handleFileImport(file) {

@@ -1,7 +1,7 @@
 /* ==== FILE: js/settings.js ==== */
 
 import { ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
-import { updateAppState } from './restoftheapp.js?v=esm-20260511-2';
+import { enhancedAccess, updateAppState } from './restoftheapp.js?v=esm-20260511-2';
 
 /*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -248,7 +248,7 @@ export function _renderHomescreenTab(panel) {
 
         ${_sectionTitle('Access')}
         ${_row('Enable Enhanced Access',
-            _toggle('hs_enhancedAccessToggle', window.enhancedAccess, 'toggleEnhancedAccess(this.checked)'),
+            _toggle('hs_enhancedAccessToggle', enhancedAccess, 'toggleEnhancedAccess(this.checked)'),
             'Unlocks alg editing inside Edit Case and Quick Edit. Keep off unless you are building a preset.')}
     `;
 

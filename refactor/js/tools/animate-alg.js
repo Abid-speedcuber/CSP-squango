@@ -1,11 +1,13 @@
 /* ==== FILE: js/tools/animate-alg.js ==== */
 
+import { SQG } from '../browser-api.js?v=esm-20260511-2';
+
 (function () {
     'use strict';
 
-    const algorithmCore = window.SQG && window.SQG.algAnimation;
-    const escapeHTML = window.SQG && window.SQG.dom
-        ? window.SQG.dom.escapeHTML
+    const algorithmCore = SQG.algAnimation;
+    const escapeHTML = SQG.dom
+        ? SQG.dom.escapeHTML
         : value => String(value ?? '');
 
     if (!algorithmCore) {

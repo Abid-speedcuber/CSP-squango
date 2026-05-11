@@ -2,6 +2,7 @@
 
 import { data } from '../database/algs.js?v=esm-20260511-2';
 import { shapeIndex, shapeIndexMap } from '../database/shapeIndex.js?v=esm-20260511-2';
+import { registerState } from './browser-api.js?v=esm-20260511-2';
 
 const caseList = Array.isArray(data) ? data : [];
 const shapeList = Array.isArray(shapeIndex) ? shapeIndex : [];
@@ -88,7 +89,7 @@ export const CSPData = Object.freeze({
         validate: validateData
     });
 
-globalThis.CSPData = CSPData;
+registerState('CSPData', { get: () => CSPData });
 
 const validationErrors = CSPData.validate();
     if (validationErrors.length > 0) {

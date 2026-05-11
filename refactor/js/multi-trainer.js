@@ -2,6 +2,7 @@
 
 ﻿// ╔══════════════════════════════════════════════════════════════════════════╗
 import { CSPData } from './data-store.js?v=esm-20260511-2';
+import { registerAction } from './browser-api.js?v=esm-20260511-2';
 
 // ║                        MULTI-CASE TRAINING SELECTOR                     ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
@@ -496,17 +497,19 @@ window.closeTrainingModal = function () {
 
 // ─── Export / Import hooks ────────────────────────────────────────────────────
 
-window.selectorExportHook = function (stateObj) {
+export function selectorExportHook(stateObj) {
     stateObj.selectorSelectedCases = [...selectorSelectedCases];
     return stateObj;
-};
+}
+registerAction('selectorExportHook', selectorExportHook, { legacyGlobal: false });
 
-window.selectorImportHook = function (stateObj) {
+export function selectorImportHook(stateObj) {
     if (stateObj.selectorSelectedCases && Array.isArray(stateObj.selectorSelectedCases)) {
         selectorSelectedCases = new Set(stateObj.selectorSelectedCases.filter(n => data.some(d => d.name === n)));
         saveSelectorSelection();
     }
-};
+}
+registerAction('selectorImportHook', selectorImportHook, { legacyGlobal: false });
 
 // ESM live global compatibility bridge
 for (const [name, descriptor] of Object.entries({

@@ -5,7 +5,13 @@ import { CSPData } from './data-store.js?v=esm-20260511-2';
 import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
 import { caleTracer, ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 import { normalizeScramble } from './tools/scrambleNormalizer.js?v=esm-20260511-2';
-import { updateAppState } from './restoftheapp.js?v=esm-20260511-2';
+import {
+    PRESET_CONFIG,
+    enhancedAccess,
+    setEnhancedAccess,
+    updateAppState
+} from './restoftheapp.js?v=esm-20260511-2';
+import { registerAction } from './browser-api.js?v=esm-20260511-2';
 
 ﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -453,7 +459,7 @@ export function handlePresetChange(presetName) {
     }
 
     // Validate preset exists in config
-    if (typeof window.PRESET_CONFIG === 'undefined' || !window.PRESET_CONFIG[presetName]) {
+    if (!PRESET_CONFIG[presetName]) {
         showToast('Invalid preset selected', 2000, 'error');
         document.getElementById('presetSelector').value = currentPreset;
         return;
@@ -536,18 +542,17 @@ window.toggleHideParenthesis = function(isChecked) {
 }
 
 window.toggleEnhancedAccess = function(isChecked) {
-    window.enhancedAccess = isChecked;
-    localStorage.setItem('enhancedAccess', isChecked.toString());
+    setEnhancedAccess(isChecked);
 }
 
 // Populate preset dropdown dynamically
 export function populatePresetDropdown(selectorId = 'presetSelector') {
     const presetSelector = document.getElementById(selectorId);
-    if (!presetSelector || typeof window.PRESET_CONFIG === 'undefined') return;
+    if (!presetSelector) return;
 
     presetSelector.innerHTML = '';
 
-    for (const presetName in window.PRESET_CONFIG) {
+    for (const presetName in PRESET_CONFIG) {
         const option = document.createElement('option');
         option.value = presetName;
         // Remove underscores and clean up display name
@@ -816,7 +821,7 @@ export function openEditCaseModal(caseName) {
 
 
     // Apply enhanced access restrictions
-    if (!window.enhancedAccess) {
+    if (!enhancedAccess) {
         const algorithmsSection = document.getElementById('algorithmsSection');
         if (algorithmsSection) {
             algorithmsSection.style.opacity = '0.5';
@@ -2319,7 +2324,7 @@ export function initializePresetSelector() {
     currentPresetName.textContent = currentPreset.replace(/_/g, ' ').replace(/'/g, "'");
 
     presetOptions.innerHTML = '';
-    for (const presetName in window.PRESET_CONFIG) {
+    for (const presetName in PRESET_CONFIG) {
         const displayName = presetName.replace(/_/g, ' ').replace(/'/g, "'");
         const isActive = presetName === currentPreset;
 
@@ -2339,8 +2344,7 @@ export function initializePresetSelector() {
     }
 }
 
-// Make it globally accessible
-window.initializePresetSelector = initializePresetSelector;
+registerAction('initializePresetSelector', initializePresetSelector);
 
 window.togglePresetExpand = function () {
     const presetOptions = document.getElementById('presetOptions');
@@ -2350,7 +2354,7 @@ window.togglePresetExpand = function () {
 
     if (presetOptions.style.maxHeight === '0px' || presetOptions.style.maxHeight === '') {
         // Calculate height based on number of presets
-        const numPresets = Object.keys(window.PRESET_CONFIG).length;
+        const numPresets = Object.keys(PRESET_CONFIG).length;
         const height = numPresets * 48; // 48px per option
         presetOptions.style.maxHeight = height + 'px';
         expandIcon.style.transform = 'rotate(180deg)';
