@@ -2,6 +2,7 @@
 
 import { ParityTracerLibrary } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 import { enhancedAccess, updateAppState } from './restoftheapp.js?v=esm-20260511-2';
+import { bindDelegatedActions, registerAction } from './browser-api.js?v=esm-20260511-2';
 
 /*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -20,22 +21,24 @@ export let _settingsActiveTab = 'homescreen';
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
-window.openUnifiedSettings = function (tabId) {
+export function openUnifiedSettings(tabId) {
     _settingsActiveTab = tabId || 'homescreen';
     _buildSettingsModal();
-};
+}
 
-// Legacy shims so old call-sites still work
-window.openSettingsModal = () => window.openUnifiedSettings('homescreen');
-window.openParityTracingPersonalization = () => {
+export function openSettingsModal() {
+    openUnifiedSettings('homescreen');
+}
+
+export function openParityTracingPersonalization() {
     // Still delegates to the parity-tracer library's config modal
     if (ParityTracerLibrary && ParityTracerLibrary.openConfigModal) {
         const config = _buildParityConfig();
         ParityTracerLibrary.openConfigModal(null, config, null, null, null);
     } else {
-        window.openUnifiedSettings('parity');
+        openUnifiedSettings('parity');
     }
-};
+}
 
 // ── Build modal DOM ───────────────────────────────────────────────────────────
 
@@ -69,7 +72,7 @@ export function _buildSettingsModal() {
     `;
     header.innerHTML = `
         <span style="font-size:1.4rem;font-weight:700;color:var(--text-ui);">Settings</span>
-        <button onclick="closeUnifiedSettingsModal()" style="background:none;border:none;font-size:1.7rem;cursor:pointer;color:var(--sidebar-close-color);line-height:1;padding:0;">&times;</button>
+        <button data-action="settings-close" style="background:none;border:none;font-size:1.7rem;cursor:pointer;color:var(--sidebar-close-color);line-height:1;padding:0;">&times;</button>
     `;
 
     // ── Body (sidebar + panel) ────────────────────────────────────────────────
@@ -114,6 +117,7 @@ btn.innerHTML = `<img src="${tab.icon}" width="${isAnimate ? 30 : 24}" height="$
     content.appendChild(body);
     overlay.appendChild(content);
     document.body.appendChild(overlay);
+    _wireSettingsActions(overlay);
 
     _renderTab(_settingsActiveTab);
 
@@ -149,7 +153,6 @@ export function _renderTab(tabId) {
     if (typeof applyInstructionVisibility === 'function') applyInstructionVisibility();
 }
 
-window.closeUnifiedSettingsModal = _closeSettingsModal;
 export function _closeSettingsModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('unifiedSettingsModal');
@@ -176,14 +179,14 @@ export function _row(labelHtml, controlHtml, tipHtml) {
     </div>`;
 }
 
-export function _toggle(id, checked, onchange) {
-    return `<input type="checkbox" id="${id}" ${checked ? 'checked' : ''} onchange="${onchange}" style="transform:scale(1.3);cursor:pointer;">`;
+export function _toggle(id, checked, action) {
+    return `<input type="checkbox" id="${id}" ${checked ? 'checked' : ''} data-action="${action}" style="transform:scale(1.3);cursor:pointer;">`;
 }
 
-export function _slider(id, min, max, step, value, onInput, displayId) {
+export function _slider(id, min, max, step, value, action, displayId, extraAttrs = '') {
     return `
     <input type="range" id="${id}" min="${min}" max="${max}" step="${step}" value="${value}"
-        style="width:100%;cursor:pointer;" oninput="${onInput}">
+        data-action="${action}" data-display="${displayId}" ${extraAttrs} style="width:100%;cursor:pointer;">
     <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-secondary);margin-top:3px;">
         <span>${min}</span><span id="${displayId}" style="font-weight:600;">${value}</span><span>${max}</span>
     </div>`;
@@ -193,16 +196,16 @@ export function _sectionTitle(text) {
     return `<div style="font-size:0.8rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-secondary);margin:18px 0 10px;padding-bottom:4px;border-bottom:1px solid var(--surface-border);">${text}</div>`;
 }
 
-export function _actionBtn(label, onclick, tipHtml) {
+export function _actionBtn(label, action, tipHtml) {
     return `
-    <div onclick="if(event.target===this||event.target.tagName==='SPAN')${onclick}" class="settings-action-btn"
+    <div data-action="${action}" class="settings-action-btn"
         style="padding:11px 16px;border-radius:10px;cursor:pointer;width:100%;margin-bottom:8px;font-weight:600;font-size:0.92rem;
                transition:all 0.2s;display:flex;align-items:center;justify-content:space-between;
                background:var(--surface2);border:1px solid var(--border-color);color:var(--text-ui);"
         >
         <span>${label}</span>
-        ${tipHtml ? `<span class="info-wrapper">
-            <button class="settings-info-btn" aria-label="More info" onclick="event.stopPropagation()"><img src="res/info.svg"></button>
+        ${tipHtml ? `<span class="info-wrapper" data-action-stop="true">
+            <button class="settings-info-btn" aria-label="More info"><img src="res/info.svg"></button>
             <span class="info-box">${tipHtml}</span>
         </span>` : ''}
     </div>`;
@@ -214,22 +217,22 @@ export function _renderHomescreenTab(panel) {
     panel.innerHTML += `
         ${_sectionTitle('Display')}
         ${_row('Dark Mode',
-            _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'toggleTheme(this.checked)'),
+            _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'settings-theme'),
             'Switch between light and dark mode.')}
         ${_row('Show Tracing Guides',
-            _toggle('hs_hintToggle', showHints, 'toggleHints(this.checked)'),
+            _toggle('hs_hintToggle', showHints, 'settings-hints'),
             'Show/hide the numbered tracing guide overlays on case images. The numbers indicate tracing order.<br><br><strong>Keyboard shortcut:</strong> Alt+T')}
         ${_row('Hide Instruction Buttons',
-            _toggle('hs_hideInstructionsToggle', hideInstructions, 'toggleHideInstructions(this.checked)'),
+            _toggle('hs_hideInstructionsToggle', hideInstructions, 'settings-hide-instructions'),
             'Hide all ⓘ instruction buttons across the app.<br><br><strong>Keyboard shortcut:</strong> Alt+H')}
         ${_row('Hide Parentheses',
-            _toggle('hs_hideParenthesisToggle', hideParenthesis, 'toggleHideParenthesis(this.checked)'),
+            _toggle('hs_hideParenthesisToggle', hideParenthesis, 'settings-hide-parenthesis'),
             'Removes parentheses and switches the alg font from monospace to Arial for a cleaner look.<br><br><strong>Keyboard shortcut:</strong> Alt+P')}
 
         ${_sectionTitle('Algorithm Font Size')}
         <div style="margin-bottom:18px;">
             ${_slider('hs_algFontSizeSlider', 10, 20, 1, algorithmFontSize,
-                'updateAlgFontSizePreview(this.value)', 'hs_algFontSizeValue')}
+                'settings-alg-font-size', 'hs_algFontSizeValue')}
             <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-secondary);margin-top:2px;">
                 <span>Small</span><span>Large</span>
             </div>
@@ -237,18 +240,18 @@ export function _renderHomescreenTab(panel) {
 
         ${_sectionTitle('Tools')}
         ${_actionBtn('Color Scheme Settings',
-            'openColorSchemeModal()',
+            'settings-open-color-scheme',
             'Change your Square-1 colour scheme. This affects parity tracing and draw-scramble visualizations.')}
         ${_actionBtn('Quick Edit',
-            'openQuickEditModal()',
+            'settings-open-quick-edit',
             'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q')}
         ${_actionBtn('Customize Tracing Guides',
-            'openCustomizeSVGsModal()',
+            'settings-open-svg-editor',
             'Drag the numbered labels to your preferred positions on each shape image.<br><br><strong>Keyboard shortcut:</strong> Alt+G')}
 
         ${_sectionTitle('Access')}
         ${_row('Enable Enhanced Access',
-            _toggle('hs_enhancedAccessToggle', enhancedAccess, 'toggleEnhancedAccess(this.checked)'),
+            _toggle('hs_enhancedAccessToggle', enhancedAccess, 'settings-enhanced-access'),
             'Unlocks alg editing inside Edit Case and Quick Edit. Keep off unless you are building a preset.')}
     `;
 
@@ -293,14 +296,14 @@ export function _renderParityTab(panel) {
     panel.innerHTML += `
         ${_sectionTitle('Tracing Method')}
         ${_row('Corner Sticker for Tracing',
-            `<select id="pt_cornerSticker" onchange="_ptSaveCornerSticker(this.value)"
+            `<select id="pt_cornerSticker" data-action="settings-pt-corner-sticker"
                 style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;background:var(--surface);color:var(--text-ui);">
                 <option value="counterclockwise" ${cornerMode==='counterclockwise'?'selected':''}>Counter-clockwise sticker</option>
                 <option value="clockwise" ${cornerMode==='clockwise'?'selected':''}>Clockwise sticker</option>
             </select>`,
             'Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn not affect parity calculations, just your personal preference.')}
         ${_row('z2 Tracing for 6/8-Edge Cases',
-            _toggle('pt_z2', z2On, '_ptSaveZ2(this.checked)'),
+            _toggle('pt_z2', z2On, 'settings-pt-z2'),
             'z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it is on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped')}
 
         ${_sectionTitle('Visualization')}
@@ -313,10 +316,10 @@ export function _renderParityTab(panel) {
                 </span>
             </div>
             <input type="range" id="pt_imgSize" min="100" max="400" step="10" value="${ptSize}"
-                style="width:100%;cursor:pointer;" oninput="_ptSaveImgSize(this.value)">
+                data-action="settings-pt-img-size" style="width:100%;cursor:pointer;">
         </div>
         ${_row('Show Tracing Arrow',
-            _toggle('pt_showArrow', showArrow, '_ptSaveArrow(this.checked)'),
+            _toggle('pt_showArrow', showArrow, 'settings-pt-arrow'),
             'The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.')}
 
         <div id="pt_arrowSettings" style="opacity:${showArrow?'1':'0.4'};pointer-events:${showArrow?'auto':'none'};">
@@ -325,65 +328,65 @@ export function _renderParityTab(panel) {
                     <label style="font-size:0.88rem;font-weight:500;color:var(--text-secondary);">Arrow Opacity: <span id="pt_opacityVal">${Math.round(arrowSettings.opacity*100)}%</span></label>
                 </div>
                 <input type="range" id="pt_opacity" min="0" max="100" value="${Math.round(arrowSettings.opacity*100)}"
-                    style="width:100%;cursor:pointer;" oninput="_ptSaveArrowProp('opacity',this.value/100,this)">
+                    data-action="settings-pt-arrow-prop" data-prop="opacity" style="width:100%;cursor:pointer;">
             </div>
             <div style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
                     <label style="font-size:0.88rem;font-weight:500;color:var(--text-secondary);">Stroke Width: <span id="pt_strokeVal">${arrowSettings.strokeWidth.toFixed(1)}</span></label>
                 </div>
                 <input type="range" id="pt_stroke" min="0.5" max="5" step="0.1" value="${arrowSettings.strokeWidth}"
-                    style="width:100%;cursor:pointer;" oninput="_ptSaveArrowProp('strokeWidth',parseFloat(this.value),this)">
+                    data-action="settings-pt-arrow-prop" data-prop="strokeWidth" style="width:100%;cursor:pointer;">
             </div>
             <div style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
                     <label style="font-size:0.88rem;font-weight:500;color:var(--text-secondary);">Arrow Radius: <span id="pt_radiusVal">${arrowSettings.radius.toFixed(2)}</span></label>
                 </div>
                 <input type="range" id="pt_radius" min="0.1" max="1.1" step="0.01" value="${arrowSettings.radius}"
-                    style="width:100%;cursor:pointer;" oninput="_ptSaveArrowProp('radius',parseFloat(this.value),this)">
+                    data-action="settings-pt-arrow-prop" data-prop="radius" style="width:100%;cursor:pointer;">
             </div>
         </div>
 
         ${_sectionTitle('Tools')}
         ${_actionBtn('Set Tracing Scheme',
-            '_closeSettingsModal();setTimeout(()=>openParityTracingPersonalization(),200)',
+            'settings-open-parity-personalization',
             'Set the starting piece (edge or corner) for each shape. This determines the order in which pieces are traced and therefore the odds/evens assigned to your algs.')}
 
         ${_sectionTitle('Evilness')}
         ${_row('Enable Evilness Factor',
-            _toggle('pt_evilness', evilOn, '_ptToggleEvilness(this)'),
+            _toggle('pt_evilness', evilOn, 'settings-pt-evilness'),
             'When enabled, each case can be flagged as "evil". Evil cases add +1 to the parity total, flipping the result.')}
         <div id="pt_evilSubSettings" style="opacity:${evilOn?'1':'0.4'};pointer-events:${evilOn?'auto':'none'};">
             ${_row('Evilness Affects Homescreen',
-                _toggle('pt_evilStr', evilStrOn, '_ptToggleEvilStr(this)'),
+                _toggle('pt_evilStr', evilStrOn, 'settings-pt-evil-str'),
                 'When ON, the parity tags (Odd/Even) shown on algs on the homescreen also factor in the evilness of each case.')}
             ${_actionBtn('Per-case Evilness Settings',
-                '_closeSettingsModal();setTimeout(()=>_openEvilnessCasesFromSettings(),200)',
+                'settings-open-evilness-cases',
                 'Mark individual cases as evil or good.')}
         </div>
     `;
 }
 
-window._ptSaveCornerSticker = function(val) {
+export function _ptSaveCornerSticker(val) {
     updateAppState({ cornerStickerMode: val });
     if (typeof saveState === 'function') saveState();
     _triggerParityLiveUpdate();
 };
-window._ptSaveZ2 = function(val) {
+export function _ptSaveZ2(val) {
     localStorage.setItem('z2TracingMode', val.toString());
     _triggerParityLiveUpdate();
 };
-window._ptSaveImgSize = function(val) {
+export function _ptSaveImgSize(val) {
     document.getElementById('pt_imgSizeVal').textContent = val + 'px';
     localStorage.setItem('parityTracerImageSize', val);
     _triggerParityLiveUpdate();
 };
-window._ptSaveArrow = function(val) {
+export function _ptSaveArrow(val) {
     localStorage.setItem('parityTracerArrow', val.toString());
     const container = document.getElementById('pt_arrowSettings');
     if (container) { container.style.opacity = val ? '1' : '0.4'; container.style.pointerEvents = val ? 'auto' : 'none'; }
     _triggerParityLiveUpdate();
 };
-window._ptSaveArrowProp = function(prop, val) {
+export function _ptSaveArrowProp(prop, val) {
     let settings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
     const s = localStorage.getItem('parityTracerArrowSettings');
     if (s) settings = JSON.parse(s);
@@ -399,7 +402,7 @@ window._ptSaveArrowProp = function(prop, val) {
     }
     _triggerParityLiveUpdate();
 };
-window._ptToggleEvilness = function(checkbox) {
+export function _ptToggleEvilness(checkbox) {
     const newVal = checkbox.checked;
     checkbox.checked = !newVal; // revert until confirmed
     _confirmExpensiveOp(
@@ -418,7 +421,7 @@ window._ptToggleEvilness = function(checkbox) {
         }
     );
 };
-window._ptToggleEvilStr = function(checkbox) {
+export function _ptToggleEvilStr(checkbox) {
     const newVal = checkbox.checked;
     checkbox.checked = !newVal;
     _confirmExpensiveOp(
@@ -434,7 +437,7 @@ window._ptToggleEvilStr = function(checkbox) {
         }
     );
 };
-window._openEvilnessCasesFromSettings = function() {
+export function _openEvilnessCasesFromSettings() {
     const config = _buildParityConfig();
     if (ParityTracerLibrary && ParityTracerLibrary.openEvilnessCasesModal) {
         ParityTracerLibrary.openEvilnessCasesModal(config);
@@ -447,7 +450,7 @@ export function _triggerParityLiveUpdate() {
     if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-window.toggleTheme = function(isDark) {
+export function toggleTheme(isDark) {
     const next = isDark ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('sqg-csp-theme', next);
@@ -473,14 +476,14 @@ export function _renderTrainerTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="tr_imgSizeVal">${imgSize}px</span></label>
             </div>
             <input type="range" id="tr_imgSize" min="100" max="400" step="10" value="${imgSize}"
-                style="width:100%;cursor:pointer;" oninput="_trSaveImgSize(this.value)">
+                data-action="settings-tr-img-size" style="width:100%;cursor:pointer;">
         </div>
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Scramble Text Size: <span id="tr_txtSizeVal">${txtSize}px</span></label>
             </div>
             <input type="range" id="tr_txtSize" min="10" max="24" step="1" value="${txtSize}"
-                style="width:100%;cursor:pointer;" oninput="_trSave('trainingScrambleTextSize',this.value,'tr_txtSizeVal',v=>v+'px');_trApplyTextSize(this.value)">
+                data-action="settings-tr-text-size" style="width:100%;cursor:pointer;">
         </div>
 
         ${_sectionTitle('Timer')}
@@ -489,7 +492,7 @@ export function _renderTrainerTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Timer Text Size: <span id="tr_tmrSizeVal">${tmrSize}px</span></label>
             </div>
             <input type="range" id="tr_tmrSize" min="30" max="120" step="2" value="${tmrSize}"
-                style="width:100%;cursor:pointer;" oninput="_trSave('trainingTimerSize',this.value,'tr_tmrSizeVal',v=>v+'px');_trApplyTimerSize(this.value)">
+                data-action="settings-tr-timer-size" style="width:100%;cursor:pointer;">
         </div>
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -500,32 +503,32 @@ export function _renderTrainerTab(panel) {
                 </span>
             </div>
             <input type="range" id="tr_hold" min="0.1" max="0.7" step="0.01" value="${holdVal}"
-                style="width:100%;cursor:pointer;" oninput="_trSave('trainingHoldToStart',this.value,'tr_holdVal',v=>parseFloat(v).toFixed(2)+'s');_trApplyHold(this.value)">
+                data-action="settings-tr-hold" style="width:100%;cursor:pointer;">
         </div>
 
         ${_sectionTitle('Display')}
         ${_row('Show Previous Scramble',
-            _toggle('tr_showPrev', showPrev, "_trSaveBool('trainingShowPrevScramble',this.checked);_trApplyPrevBar()"),
+            _toggle('tr_showPrev', showPrev, 'settings-tr-show-prev'),
             'Shows the previous scramble at the very bottom of the screen.')}
 
         ${_sectionTitle('Inspection')}
         ${_row('Enable Inspection',
-            _toggle('tr_insp', insp, '_trToggleInspection(this.checked)'))}
+            _toggle('tr_insp', insp, 'settings-tr-inspection'))}
         <div id="tr_pquizRow" style="opacity:${insp?'1':'0.4'};pointer-events:${insp?'auto':'none'};">
             ${_row('Parity Quiz During Inspection',
-                _toggle('tr_pquiz', pquiz, '_trTogglePQuiz(this.checked)'),
+                _toggle('tr_pquiz', pquiz, 'settings-tr-parity-quiz'),
                 'During inspection, the trainer will quiz you about the parity state of the current scramble')}
         </div>
     `;
 }
 
-window._trSave = function(key, val, displayId, fmt) {
+export function _trSave(key, val, displayId, fmt) {
     localStorage.setItem(key, val);
     const el = document.getElementById(displayId);
     if (el) el.textContent = fmt ? fmt(val) : val;
 };
-window._trSaveBool = function(key, val) { localStorage.setItem(key, val.toString()); };
-window._trSaveImgSize = function(val) {
+export function _trSaveBool(key, val) { localStorage.setItem(key, val.toString()); };
+export function _trSaveImgSize(val) {
     localStorage.setItem('trainingScrambleImageSize', val);
     const el = document.getElementById('tr_imgSizeVal');
     if (el) el.textContent = val + 'px';
@@ -550,22 +553,22 @@ window._trSaveImgSize = function(val) {
         }
     }
 };
-window._trApplyTextSize = function(val) {
+export function _trApplyTextSize(val) {
     const el = document.getElementById('trainingScramble');
     if (el) { el.style.fontSize = val + 'px'; if (typeof trainingScrambleTextSize !== 'undefined') trainingScrambleTextSize = parseInt(val); }
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
-window._trApplyTimerSize = function() {
+export function _trApplyTimerSize() {
     if (typeof trainingScrambleTextSize !== 'undefined') {}
     if (typeof applyTimerSize === 'function') applyTimerSize();
 };
-window._trApplyHold = function(val) {
+export function _trApplyHold(val) {
     if (typeof trainingHoldToStart !== 'undefined') trainingHoldToStart = parseFloat(val);
 };
-window._trApplyPrevBar = function() {
+export function _trApplyPrevBar() {
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
-window._trToggleInspection = function(val) {
+export function _trToggleInspection(val) {
     if (typeof trainingEnableInspection !== 'undefined') trainingEnableInspection = val;
     localStorage.setItem('trainingEnableInspection', val.toString());
     if (!val) {
@@ -577,7 +580,7 @@ window._trToggleInspection = function(val) {
     const row = document.getElementById('tr_pquizRow');
     if (row) { row.style.opacity = val ? '1' : '0.4'; row.style.pointerEvents = val ? 'auto' : 'none'; }
 };
-window._trTogglePQuiz = function(val) {
+export function _trTogglePQuiz(val) {
     const inspOn = localStorage.getItem('trainingEnableInspection') === 'true';
     if (!inspOn) { const cb = document.getElementById('tr_pquiz'); if (cb) cb.checked = false; return; }
     if (typeof trainingEnableParityQuiz !== 'undefined') trainingEnableParityQuiz = val;
@@ -602,7 +605,7 @@ export function _renderAnimateTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Animation Speed: <span id="aa_speedVal">${speed.toFixed(1)}x</span></label>
             </div>
             <input type="range" id="aa_speed" min="0.2" max="2" step="0.1" value="${speed}"
-                style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AnimSpeed',this.value,'aa_speedVal',v=>parseFloat(v).toFixed(1)+'x')">
+                data-action="settings-aa-speed" style="width:100%;cursor:pointer;">
         </div>
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -613,7 +616,7 @@ export function _renderAnimateTab(panel) {
                 </span>
             </div>
             <input type="range" id="aa_delay" min="0" max="1000" step="50" value="${delay}"
-                style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AutoDelay',this.value,'aa_delayVal',v=>v+'ms')">
+                data-action="settings-aa-delay" style="width:100%;cursor:pointer;">
         </div>
 
         ${_sectionTitle('Display')}
@@ -622,23 +625,90 @@ export function _renderAnimateTab(panel) {
                 <label style="font-weight:500;color:var(--text-secondary);font-size:0.92rem;">Image Size: <span id="aa_imgSizeVal">${imgSize}px</span></label>
             </div>
             <input type="range" id="aa_imgSize" min="100" max="400" step="10" value="${imgSize}"
-                style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AnimImageSize',this.value,'aa_imgSizeVal',v=>v+'px')">
+                data-action="settings-aa-img-size" style="width:100%;cursor:pointer;">
         </div>
         ${_row('Animate Both Layers Together',
-            _toggle('aa_bothLayers', bothLay, "_aaSaveBool('sq1AnimBothLayers',this.checked)"),
+            _toggle('aa_bothLayers', bothLay, 'settings-aa-both-layers'),
             null)}
         ${_row('Vertical Stack Display',
-            _toggle('aa_vertDisplay', vertDis, "_aaSaveBool('sq1AnimVerticalDisplay',this.checked)"),
+            _toggle('aa_vertDisplay', vertDis, 'settings-aa-vertical-display'),
             'When ON, the top and bottom layer images stack vertically instead of side-by-side.')}
     `;
 }
 
-window._aaSave = function(key, val, displayId, fmt) {
+export function _aaSave(key, val, displayId, fmt) {
     localStorage.setItem(key, val);
     const el = document.getElementById(displayId);
     if (el) el.textContent = fmt ? fmt(val) : val;
 };
-window._aaSaveBool = function(key, val) { localStorage.setItem(key, val.toString()); };
+export function _aaSaveBool(key, val) { localStorage.setItem(key, val.toString()); };
+
+const settingsClickActions = {
+    'settings-close': () => _closeSettingsModal(),
+    'settings-open-color-scheme': () => openColorSchemeModal(),
+    'settings-open-quick-edit': () => openQuickEditModal(),
+    'settings-open-svg-editor': () => openCustomizeSVGsModal(),
+    'settings-open-parity-personalization': () => {
+        _closeSettingsModal();
+        setTimeout(() => openParityTracingPersonalization(), 200);
+    },
+    'settings-open-evilness-cases': () => {
+        _closeSettingsModal();
+        setTimeout(() => _openEvilnessCasesFromSettings(), 200);
+    },
+};
+
+const settingsChangeActions = {
+    'settings-theme': (_event, target) => toggleTheme(target.checked),
+    'settings-hints': (_event, target) => toggleHints(target.checked),
+    'settings-hide-instructions': (_event, target) => toggleHideInstructions(target.checked),
+    'settings-hide-parenthesis': (_event, target) => toggleHideParenthesis(target.checked),
+    'settings-enhanced-access': (_event, target) => toggleEnhancedAccess(target.checked),
+    'settings-pt-corner-sticker': (_event, target) => _ptSaveCornerSticker(target.value),
+    'settings-pt-z2': (_event, target) => _ptSaveZ2(target.checked),
+    'settings-pt-arrow': (_event, target) => _ptSaveArrow(target.checked),
+    'settings-pt-evilness': (_event, target) => _ptToggleEvilness(target),
+    'settings-pt-evil-str': (_event, target) => _ptToggleEvilStr(target),
+    'settings-tr-show-prev': (_event, target) => {
+        _trSaveBool('trainingShowPrevScramble', target.checked);
+        _trApplyPrevBar();
+    },
+    'settings-tr-inspection': (_event, target) => _trToggleInspection(target.checked),
+    'settings-tr-parity-quiz': (_event, target) => _trTogglePQuiz(target.checked),
+    'settings-aa-both-layers': (_event, target) => _aaSaveBool('sq1AnimBothLayers', target.checked),
+    'settings-aa-vertical-display': (_event, target) => _aaSaveBool('sq1AnimVerticalDisplay', target.checked),
+};
+
+const settingsInputActions = {
+    'settings-alg-font-size': (_event, target) => updateAlgFontSizePreview(target.value),
+    'settings-pt-img-size': (_event, target) => _ptSaveImgSize(target.value),
+    'settings-pt-arrow-prop': (_event, target) => {
+        const raw = parseFloat(target.value);
+        _ptSaveArrowProp(target.dataset.prop, target.dataset.prop === 'opacity' ? raw / 100 : raw);
+    },
+    'settings-tr-img-size': (_event, target) => _trSaveImgSize(target.value),
+    'settings-tr-text-size': (_event, target) => {
+        _trSave('trainingScrambleTextSize', target.value, 'tr_txtSizeVal', v => `${v}px`);
+        _trApplyTextSize(target.value);
+    },
+    'settings-tr-timer-size': (_event, target) => {
+        _trSave('trainingTimerSize', target.value, 'tr_tmrSizeVal', v => `${v}px`);
+        _trApplyTimerSize();
+    },
+    'settings-tr-hold': (_event, target) => {
+        _trSave('trainingHoldToStart', target.value, 'tr_holdVal', v => `${parseFloat(v).toFixed(2)}s`);
+        _trApplyHold(target.value);
+    },
+    'settings-aa-speed': (_event, target) => _aaSave('sq1AnimSpeed', target.value, 'aa_speedVal', v => `${parseFloat(v).toFixed(1)}x`),
+    'settings-aa-delay': (_event, target) => _aaSave('sq1AutoDelay', target.value, 'aa_delayVal', v => `${v}ms`),
+    'settings-aa-img-size': (_event, target) => _aaSave('sq1AnimImageSize', target.value, 'aa_imgSizeVal', v => `${v}px`),
+};
+
+export function _wireSettingsActions(overlay) {
+    bindDelegatedActions(overlay, settingsClickActions);
+    bindDelegatedActions(overlay, settingsChangeActions, { eventType: 'change' });
+    bindDelegatedActions(overlay, settingsInputActions, { eventType: 'input' });
+}
 
 // ── Utility: confirm expensive operation ──────────────────────────────────────
 
@@ -659,35 +729,6 @@ export function _confirmExpensiveOp(title, message, onConfirm) {
     document.getElementById('_ceo_confirm').onclick = () => { overlay.remove(); onConfirm(); };
 }
 
-// ── Wire up sidebar settings button ──────────────────────────────────────────
-// The sidebar already calls openSettingsModal() which is now shimmed above.
-// Nothing extra needed.
-
-// ESM live global compatibility bridge
-for (const [name, descriptor] of Object.entries({
-    "SETTINGS_TABS": { get: () => SETTINGS_TABS, set: value => { Object.defineProperty(window, "SETTINGS_TABS", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_settingsActiveTab": { get: () => _settingsActiveTab, set: value => { _settingsActiveTab = value; } },
-    "_buildSettingsModal": { get: () => _buildSettingsModal, set: value => { Object.defineProperty(window, "_buildSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_switchTab": { get: () => _switchTab, set: value => { Object.defineProperty(window, "_switchTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_renderTab": { get: () => _renderTab, set: value => { Object.defineProperty(window, "_renderTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_closeSettingsModal": { get: () => _closeSettingsModal, set: value => { Object.defineProperty(window, "_closeSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_row": { get: () => _row, set: value => { Object.defineProperty(window, "_row", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_toggle": { get: () => _toggle, set: value => { Object.defineProperty(window, "_toggle", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_slider": { get: () => _slider, set: value => { Object.defineProperty(window, "_slider", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_sectionTitle": { get: () => _sectionTitle, set: value => { Object.defineProperty(window, "_sectionTitle", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_actionBtn": { get: () => _actionBtn, set: value => { Object.defineProperty(window, "_actionBtn", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_renderHomescreenTab": { get: () => _renderHomescreenTab, set: value => { Object.defineProperty(window, "_renderHomescreenTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_buildParityConfig": { get: () => _buildParityConfig, set: value => { Object.defineProperty(window, "_buildParityConfig", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_renderParityTab": { get: () => _renderParityTab, set: value => { Object.defineProperty(window, "_renderParityTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_triggerParityLiveUpdate": { get: () => _triggerParityLiveUpdate, set: value => { Object.defineProperty(window, "_triggerParityLiveUpdate", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_renderTrainerTab": { get: () => _renderTrainerTab, set: value => { Object.defineProperty(window, "_renderTrainerTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_renderAnimateTab": { get: () => _renderAnimateTab, set: value => { Object.defineProperty(window, "_renderAnimateTab", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_confirmExpensiveOp": { get: () => _confirmExpensiveOp, set: value => { Object.defineProperty(window, "_confirmExpensiveOp", { configurable: true, enumerable: true, writable: true, value }); } },
-})) {
-    Object.defineProperty(window, name, {
-        configurable: true,
-        enumerable: true,
-        get: descriptor.get,
-        set: descriptor.set
-    });
-}
+registerAction('openUnifiedSettings', openUnifiedSettings);
+registerAction('openSettingsModal', openSettingsModal);
+registerAction('openParityTracingPersonalization', openParityTracingPersonalization);

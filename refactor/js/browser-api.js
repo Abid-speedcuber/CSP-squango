@@ -46,6 +46,33 @@ export function exposeLegacyGlobal(name, descriptor) {
     });
 }
 
+export function getActionTarget(event, root = document) {
+    if (!event || !event.target || typeof event.target.closest !== 'function') return null;
+    if (event.target.closest('[data-action-stop]')) return null;
+    const target = event.target.closest('[data-action]');
+    if (!target) return null;
+    if (root && root !== document && !root.contains(target)) return null;
+    return target;
+}
+
+export function bindDelegatedActions(root, actionMap, { eventType = 'click' } = {}) {
+    if (!root || !actionMap) return () => {};
+
+    const handler = (event) => {
+        const target = getActionTarget(event, root);
+        if (!target) return;
+
+        const action = target.dataset.action;
+        const fn = actionMap[action];
+        if (typeof fn !== 'function') return;
+
+        fn(event, target);
+    };
+
+    root.addEventListener(eventType, handler);
+    return () => root.removeEventListener(eventType, handler);
+}
+
 SQG.call = function callRegisteredAction(name, ...args) {
     const action = SQG.actions && SQG.actions[name];
     if (typeof action !== 'function') {

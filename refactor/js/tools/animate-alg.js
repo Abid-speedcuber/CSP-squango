@@ -471,7 +471,7 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
 
         const html = `
         ${css}
-        <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { document.getElementById('${modalId}').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); } })(event)">
+        <div id="${modalId}">
             <div class="modal-content">
                 <div class="modal-header">
     <div style="display: flex; align-items: center; gap: 12px;">
@@ -683,15 +683,19 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
 
             // Close button
             const closeBtn = document.getElementById(`${modalId}-close-btn`);
+            const modalRoot = document.getElementById(modalId);
             const close = () => {
                 closeModalWithHistory(() => {
-                    document.getElementById(modalId).remove();
+                    modalRoot.remove();
                     document.body.classList.remove('modal-open');
                     document.body.style.top = '';
                     window.scrollTo(0, window.modalScrollY || 0);
                 });
             };
             closeBtn.onclick = close;
+            modalRoot.addEventListener('click', (event) => {
+                if (event.target === modalRoot) close();
+            });
             pushModalState(modalId, close);
 
             // Sidebar speed slider

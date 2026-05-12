@@ -2,7 +2,7 @@
 
 ﻿// ╔══════════════════════════════════════════════════════════════════════════╗
 import { CSPData } from './data-store.js?v=esm-20260511-2';
-import { registerAction } from './browser-api.js?v=esm-20260511-2';
+import { bindDelegatedActions, registerAction } from './browser-api.js?v=esm-20260511-2';
 
 // ║                        MULTI-CASE TRAINING SELECTOR                     ║
 // ╚══════════════════════════════════════════════════════════════════════════╝
@@ -10,17 +10,19 @@ import { registerAction } from './browser-api.js?v=esm-20260511-2';
 export let selectorSelectedCases = new Set();
 export let selectorSearchTerm = '';
 export let selectorFilteredData = [];
+export let selectorStorageKey = 'sq1-selector-cases';
+export let selectorCloseCallback = null;
 
 // ─── Persistence ──────────────────────────────────────────────────────────────
 
 export function saveSelectorSelection(key) {
-    const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
+    const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
     localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
 }
 
 export function loadSelectorSelection(key) {
     try {
-        const storageKey = key || window._selectorStorageKey || 'sq1-selector-cases';
+        const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
         const raw = localStorage.getItem(storageKey);
         if (raw) {
             const arr = JSON.parse(raw);
@@ -41,20 +43,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // ─── Open selector as a modal overlay (not fullscreen) ───────────────────────
 
-window.openTrainingSelector = function () {
-    window._selectorStorageKey = 'sq1-selector-cases';
+export function openTrainingSelector() {
+    selectorStorageKey = 'sq1-selector-cases';
     if (selectorSelectedCases.size === 0) loadSelectorSelection('sq1-selector-cases');
     openMultiCaseTrainingModal([...selectorSelectedCases]);
-};
+}
+registerAction('openTrainingSelector', openTrainingSelector);
 
 export function openSelectorModal(storageKey, onCloseCallback) {
-    if (storageKey) window._selectorStorageKey = storageKey;
-    else if (!window._selectorStorageKey) window._selectorStorageKey = 'sq1-selector-cases';
+    if (storageKey) selectorStorageKey = storageKey;
+    else if (!selectorStorageKey) selectorStorageKey = 'sq1-selector-cases';
 
-    if (onCloseCallback) window._selectorCloseCallback = onCloseCallback;
-    else window._selectorCloseCallback = null;
+    selectorCloseCallback = onCloseCallback || null;
 
-    loadSelectorSelection(window._selectorStorageKey);
+    loadSelectorSelection(selectorStorageKey);
 
     createSelectorModal();
     const modal = document.getElementById('trainingSelectorModal');
@@ -70,14 +72,14 @@ export function openSelectorModal(storageKey, onCloseCallback) {
     if (inp) inp.value = selectorSearchTerm;
 }
 
-window.closeSelectorModal = function () {
+export function closeSelectorModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('trainingSelectorModal');
         if (!modal) return;
         modal.style.display = 'none';
         document.body.classList.remove('modal-open');
     });
-};
+}
 
 // ─── Modal Creation ───────────────────────────────────────────────────────────
 
@@ -114,7 +116,7 @@ export function createSelectorModal() {
                     <span style="font-size:1.15rem; font-weight:700; color: var(--text-primary);">Select Cases</span>
                     <span id="selectorCountBar" style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;"></span>
                 </div>
-                <button onclick="closeSelectorModal()" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
+                <button data-action="selector-close" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
             </div>
 
             <!-- Search + Custom Select bar -->
@@ -123,16 +125,14 @@ export function createSelectorModal() {
                     <input type="text" id="selectorSearchInput"
                         placeholder="Search cases..."
                         autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
-                        style="width:100%; padding:7px 10px 7px 32px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;"
-                        oninput="onSelectorSearch(this.value)">
+                        style="width:100%; padding:7px 10px 7px 32px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.88rem; outline:none; box-sizing:border-box;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                         style="position:absolute; left:9px; top:50%; transform:translateY(-50%); width:15px; height:15px; pointer-events:none;">
                         <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                     </svg>
                 </div>
                 <select id="selectorBulkAction"
-                    style="padding:7px 8px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-secondary); flex-shrink:0;"
-                    onchange="applySelectorBulkAction(this.value); this.value='';">
+                    style="padding:7px 8px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-secondary); flex-shrink:0;">
                     <option value="" disabled selected>Select…</option>
                     <option value="select_all">Select All</option>
                     <option value="select_learning">Select Learning</option>
@@ -158,16 +158,25 @@ export function createSelectorModal() {
 
     // Close on backdrop click
     modal.addEventListener('click', e => { if (e.target === modal) closeSelectorModal(); });
+    bindDelegatedActions(modal, {
+        'selector-close': () => closeSelectorModal(),
+        'selector-toggle-case': (_event, target) => toggleSelectorCase(target.dataset.case)
+    });
+    modal.querySelector('#selectorSearchInput')?.addEventListener('input', event => onSelectorSearch(event.target.value));
+    modal.querySelector('#selectorBulkAction')?.addEventListener('change', event => {
+        applySelectorBulkAction(event.target.value);
+        event.target.value = '';
+    });
 
     document.body.appendChild(modal);
 }
 
 // ─── Search ───────────────────────────────────────────────────────────────────
 
-window.onSelectorSearch = function (val) {
+export function onSelectorSearch(val) {
     selectorSearchTerm = val.toLowerCase().trim();
     renderSelectorCases();
-};
+}
 
 export function getSelectorSorted(arr) {
     return [...arr].sort((a, b) => {
@@ -236,7 +245,7 @@ export function renderSelectorCases() {
         }
 
         return `
-            <div onclick="toggleSelectorCase('${item.name.replace(/'/g, "\\'")}')"
+            <div data-action="selector-toggle-case" data-case="${item.name.replace(/"/g, '&quot;')}"
                 style="
                     padding: 7px 8px;
                     background: ${bgColor};
@@ -273,13 +282,13 @@ export function renderSelectorCases() {
 
 // ─── Toggle Case ──────────────────────────────────────────────────────────────
 
-window.toggleSelectorCase = function (caseName) {
+export function toggleSelectorCase(caseName) {
     if (selectorSelectedCases.has(caseName)) {
         selectorSelectedCases.delete(caseName);
     } else {
         selectorSelectedCases.add(caseName);
     }
-    saveSelectorSelection(window._selectorStorageKey);
+    saveSelectorSelection(selectorStorageKey);
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
@@ -290,11 +299,11 @@ window.toggleSelectorCase = function (caseName) {
             regenerateMultiScrambleLookahead();
         }
     }
-};
+}
 
 // ─── Bulk Actions ─────────────────────────────────────────────────────────────
 
-window.applySelectorBulkAction = function (action) {
+export function applySelectorBulkAction(action) {
     switch (action) {
         case 'select_all':
             selectorSelectedCases.clear();
@@ -328,7 +337,7 @@ window.applySelectorBulkAction = function (action) {
             selectorSelectedCases.clear();
             break;
     }
-    saveSelectorSelection(window._selectorStorageKey);
+    saveSelectorSelection(selectorStorageKey);
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
@@ -339,7 +348,7 @@ window.applySelectorBulkAction = function (action) {
             regenerateMultiScrambleLookahead();
         }
     }
-};
+}
 
 // ─── Multi-Case Training Modal ────────────────────────────────────────────────
 

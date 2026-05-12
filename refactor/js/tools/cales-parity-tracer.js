@@ -900,8 +900,7 @@
                     </svg>
                 </div>
                 <select id="evilBulkAction"
-                    style="padding:7px 8px; border:1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;"
-                    onchange="this.value && (() => { window._evilBulkHandler && window._evilBulkHandler(this.value); this.value=''; })()">
+                    style="padding:7px 8px; border:1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;">
                     <option value="" disabled selected>Select…</option>
                     <option value="mark_all_evil">Mark All Evil</option>
                     <option value="mark_all_good">Mark All Good</option>
@@ -926,6 +925,8 @@
 
         evilModalDiv.appendChild(evilInner);
         document.body.appendChild(evilModalDiv);
+
+        const escapeAttr = value => String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
 
         function renderEvilGrid() {
             const grid = evilInner.querySelector('#evilCaseGrid');
@@ -958,8 +959,7 @@
                 const textCol = isEvil ? '#7b1c1c' : '#1a4731';
 
                 return `<div
-                    data-case="${cn.replace(/'/g, "\\'")}"
-                    onclick="window._evilToggleCase && window._evilToggleCase('${cn.replace(/'/g, "\\'")}')"
+                    data-case="${escapeAttr(cn)}"
                     style="
                         padding:7px 8px; background:${bgColor};
                         border:2px solid ${borderColor2}; border-radius:7px;
@@ -986,13 +986,13 @@
             if (dot) dot.style.display = 'inline';
         }
 
-        window._evilToggleCase = (cn) => {
+        const toggleEvilCase = (cn) => {
             localEvilMap[cn] = !localEvilMap[cn];
             renderEvilGrid();
             markChanged();
         };
 
-        window._evilBulkHandler = (action) => {
+        const applyEvilBulkAction = (action) => {
             switch (action) {
                 case 'mark_all_evil':
                     allCases.forEach(cn => { localEvilMap[cn] = true; }); break;
@@ -1053,8 +1053,6 @@
                 box.querySelector('.s-btn').onclick = () => { overlay.remove(); performSave(); };
                 return;
             }
-            delete window._evilToggleCase;
-            delete window._evilBulkHandler;
             closeModalWithHistory(() => {
                 evilModalDiv.remove();
                 if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
@@ -1065,6 +1063,16 @@
         evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
         evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
         evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
+        evilInner.querySelector('#evilBulkAction').addEventListener('change', (event) => {
+            if (!event.target.value) return;
+            applyEvilBulkAction(event.target.value);
+            event.target.value = '';
+        });
+        evilInner.querySelector('#evilCaseGrid').addEventListener('click', (event) => {
+            const card = event.target.closest('[data-case]');
+            if (!card || !evilInner.contains(card)) return;
+            toggleEvilCase(card.dataset.case);
+        });
         evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
         pushModalState('evilModal', () => closeEvilModal(false));
 

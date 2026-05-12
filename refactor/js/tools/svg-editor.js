@@ -1,7 +1,7 @@
 /* ==== FILE: js/tools/svg-editor.js ==== */
 
 import { DEFAULT_SVGS } from '../../res/shapeImages/svg.js?v=esm-20260511-2';
-import { exposeLegacyGlobal } from '../browser-api.js?v=esm-20260511-2';
+import { bindDelegatedActions, exposeLegacyGlobal } from '../browser-api.js?v=esm-20260511-2';
 import { setSVGDataItem, svgData } from '../restoftheapp.js?v=esm-20260511-2';
 
 /*
@@ -46,14 +46,14 @@ export const SVGEditor = {
                             <button id="svgEditorInfo" class="svg-editor-btn" title="Help"><img src="res/info.svg"></button>
                             <button id="svgEditorResetAll" class="svg-editor-btn" title="Reset All to Preset"><img src="res/reset.svg"></button>
                             <button id="svgEditorSaveAll" class="svg-editor-btn" title="Save All"><img src="res/save.svg"></button>
-                            <button class="svg-editor-close" onclick="SVGEditor.close()">&times;</button>
+                            <button class="svg-editor-close" data-action="svg-close">&times;</button>
                         </div>
                     </div>
                     <div class="svg-editor-container">
                         <div id="svgEditorSidebar" class="svg-editor-sidebar">
                             <div id="svgEditorList" class="svg-editor-sidebar-list"></div>
                         </div>
-                        <div class="svg-editor-overlay" onclick="SVGEditor.closeSidebar()"></div>
+                        <div class="svg-editor-overlay" data-action="svg-close-sidebar"></div>
                         <div class="svg-editor-main">
                             <div class="svg-editor-toolbar">
                                 <div class="svg-editor-toolbar-left">
@@ -110,6 +110,12 @@ export const SVGEditor = {
         if (zoomSlider) {
             zoomSlider.oninput = (e) => this.updateZoom(e.target.value);
         }
+
+        const modal = document.getElementById('svgEditorModal');
+        bindDelegatedActions(modal, {
+            'svg-close': () => this.close(),
+            'svg-close-sidebar': () => this.closeSidebar()
+        });
 
         // Setup zoom controls on canvas
         this.setupZoomControls();
@@ -898,7 +904,7 @@ export const SVGEditor = {
                 <div class="training-info-content">
                     <div class="training-info-header">
                         <span class="training-info-title">Tracing Guide Editor Instructions</span>
-                        <button class="training-info-close" onclick="document.getElementById('svgEditorInfoModal').classList.remove('active')">&times;</button>
+                        <button class="training-info-close" data-action="svg-info-close">&times;</button>
                     </div>
                     <div class="training-info-body">
                         <div class="training-info-item">
@@ -939,6 +945,9 @@ export const SVGEditor = {
         }
 
         infoModal.classList.add('active');
+        bindDelegatedActions(infoModal, {
+            'svg-info-close': () => infoModal.classList.remove('active')
+        });
     },
 
     resetAll() {

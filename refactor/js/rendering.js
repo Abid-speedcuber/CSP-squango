@@ -272,9 +272,7 @@ export function renderAlgorithmWithPopup(algArray, caseName, parityType, fontFam
                      data-alg="${alg.replace(/"/g, '&quot;')}"
                      data-case="${caseName.replace(/"/g, '&quot;')}"
                      data-parity="${parityType}"
-                     onmouseenter="showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', false)"
-                     onmouseleave="hideAlgPopup(false)"
-                     onclick="event.stopPropagation(); showAlgPopup(this, '${alg.replace(/'/g, "\\'")}', true)"
+                     data-action="show-alg-popup"
                      style="${wrapStyle} ${colorStyle} ${fontStyle}">${prefix}${styleAlgorithmWithGrayMoves(alg)}</div>`;
     }).join('');
 }
@@ -283,7 +281,7 @@ export let activePopup = null;
 export let activePopupElement = null;
 export let popupHoverTimeout = null;
 
-window.showAlgPopup = function(element, alg, isPermanent) {
+export function showAlgPopup(element, alg, isPermanent) {
     // Clear any pending hide timeout
     if (popupHoverTimeout) {
         clearTimeout(popupHoverTimeout);
@@ -292,7 +290,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
 
     // If clicking on already active popup element, close it
     if (isPermanent && activePopupElement === element) {
-        window.hideAlgPopup(true);
+        hideAlgPopup(true);
         return;
     }
 
@@ -348,7 +346,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
     if (setupElement) {
         setupElement.onclick = (e) => {
             e.stopPropagation();
-            window.hideAlgPopup(isPermanent);
+            hideAlgPopup(isPermanent);
             openNewParityAnalysis(setup);
         };
         setupElement.onmouseenter = () => {
@@ -364,7 +362,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
     if (shapePathElement) {
         shapePathElement.onclick = (e) => {
             e.stopPropagation();
-            window.hideAlgPopup(isPermanent);
+            hideAlgPopup(isPermanent);
 
             // Get case name and parity from the element
             const caseName = element.getAttribute('data-case') || '';
@@ -430,7 +428,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
 
     // Add scroll handler - immediate close for all popups
     const scrollHandler = () => {
-        window.hideAlgPopup(isPermanent);
+        hideAlgPopup(isPermanent);
         window.removeEventListener('scroll', scrollHandler, true);
         if (clickHandler) document.removeEventListener('mousedown', clickHandler);
     };
@@ -445,7 +443,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
         setTimeout(() => {
             clickHandler = (e) => {
                 if (!popup.contains(e.target) && e.target !== element) {
-                    window.hideAlgPopup(true);
+                    hideAlgPopup(true);
                     document.removeEventListener('mousedown', clickHandler);
                     window.removeEventListener('scroll', scrollHandler, true);
                 }
@@ -456,7 +454,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
         // For hover popups, hide when mouse leaves the popup or element
         popup.onmouseleave = () => {
             popupHoverTimeout = setTimeout(() => {
-                window.hideAlgPopup(false);
+                hideAlgPopup(false);
                 popupHoverTimeout = null;
             }, 100);
         };
@@ -473,7 +471,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
             element._popupHandlersSet = true;
             element.addEventListener('mouseleave', () => {
                 popupHoverTimeout = setTimeout(() => {
-                    window.hideAlgPopup(false);
+                    hideAlgPopup(false);
                     popupHoverTimeout = null;
                 }, 100);
             });
@@ -487,7 +485,7 @@ window.showAlgPopup = function(element, alg, isPermanent) {
     }
 }
 
-window.hideAlgPopup = function(isPermanent) {
+export function hideAlgPopup(isPermanent) {
     if (isPermanent) {
         if (activePopup) {
             activePopup.remove();
@@ -507,7 +505,7 @@ window.hideAlgPopup = function(isPermanent) {
     }
 }
 
-window.showContextMenu = function(caseName, event) {
+export function showContextMenu(caseName, event) {
     event.stopPropagation();
 
     // Close any existing context menu
@@ -742,7 +740,7 @@ window.showContextMenu = function(caseName, event) {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-window.toggleLearned = function(name, event = null) {
+export function toggleLearned(name, event = null) {
     // Close any open context menu
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
@@ -813,6 +811,47 @@ export function adjustPriority(name, delta) {
         showReorderButton();
     }
 }
+
+document.addEventListener('mouseover', (event) => {
+    const algLine = event.target.closest('.alg-interactive[data-action="show-alg-popup"]');
+    if (!algLine || !algLine.contains(event.target)) return;
+    if (algLine.contains(event.relatedTarget)) return;
+    showAlgPopup(algLine, algLine.dataset.alg || '', false);
+});
+
+document.addEventListener('mouseout', (event) => {
+    const algLine = event.target.closest('.alg-interactive[data-action="show-alg-popup"]');
+    if (!algLine || algLine.contains(event.relatedTarget)) return;
+    hideAlgPopup(false);
+});
+
+document.addEventListener('click', (event) => {
+    const algLine = event.target.closest('.alg-interactive[data-action="show-alg-popup"]');
+    if (algLine) {
+        event.stopPropagation();
+        showAlgPopup(algLine, algLine.dataset.alg || '', true);
+        return;
+    }
+
+    const contextButton = event.target.closest('[data-action="show-context-menu"]');
+    if (contextButton) {
+        event.stopPropagation();
+        showContextMenu(contextButton.dataset.case || '', event);
+    }
+});
+
+document.addEventListener('mousedown', (event) => {
+    const learnedButton = event.target.closest('[data-action="toggle-learned"]');
+    if (!learnedButton) return;
+    event.stopPropagation();
+    toggleLearned(learnedButton.dataset.case || '', event);
+});
+
+document.addEventListener('contextmenu', (event) => {
+    if (event.target.closest('[data-action="toggle-learned"]')) {
+        event.preventDefault();
+    }
+});
 
 /*
 ╔════════════════════════════════════════════════════════════════════════════╗
@@ -901,10 +940,10 @@ export function renderCard(item) {
                     <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
                         <div class="probability">${prob}%</div>
                         <div class="card-header-actions">
-                            <div class="icon-btn" onmousedown="event.stopPropagation(); toggleLearned('${item.name.replace(/'/g, "\\'")}', event)" oncontextmenu="event.preventDefault();">
+                            <div class="icon-btn" data-action="toggle-learned" data-case="${item.name.replace(/"/g, '&quot;')}">
                                 ${learnedIcon}
                             </div>
-                            <div class="icon-btn" onclick="event.stopPropagation(); showContextMenu('${item.name.replace(/'/g, "\\'")}', event)" style="color: var(--text-secondary);">
+                            <div class="icon-btn" data-action="show-context-menu" data-case="${item.name.replace(/"/g, '&quot;')}" style="color: var(--text-secondary);">
                                 ${threeDotsIcon}
                             </div>
                         </div>

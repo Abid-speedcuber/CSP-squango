@@ -8,6 +8,7 @@ import { algToShapeIndex } from './tools/alg_to_index.js?v=esm-20260511-2';
 import { caleTracer } from './tools/cales-parity-tracer.js?v=esm-20260511-2';
 import { normalizeScramble } from './tools/scrambleNormalizer.js?v=esm-20260511-2';
 import { invertScramble } from './utils.js?v=esm-20260511-2';
+import { bindDelegatedActions, registerAction } from './browser-api.js?v=esm-20260511-2';
 import {
     algVariables,
     colorScheme,
@@ -41,6 +42,7 @@ export let quickEditState = {
 
 // Load auto-select setting from localStorage
 export let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
+export let quickEditInitialState = null;
 
 // Expand :varName: tokens in an alg string using algVariables map
 export function expandAlgVariables(alg) {
@@ -87,7 +89,7 @@ export function hydrateGeneralRow(row) {
         <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
         <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
         <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
-        ${evilnessFactor ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked;saveState();const k=this.nextElementSibling;k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)';k.querySelector('span').style.left=this.checked?'18px':'2px';"><span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span></label></td>` : ''}
+        ${evilnessFactor ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${isEvil ? 'checked' : ''} style="opacity:0;width:0;height:0;"><span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'};border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${isEvil ? '18px' : '2px'};bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span></label></td>` : ''}
     `;
     setupRowHandlers(row, 'general');
 }
@@ -171,7 +173,7 @@ export function openQuickEditModal() {
     closeSettingsModal();
 
     // Store initial state for reverting
-    window.quickEditInitialState = {
+    quickEditInitialState = {
         displayNames: { ...displayNames },
         perCaseSubtitles: new Map(perCaseSubtitles),
         comments: new Map(comments),
@@ -187,31 +189,31 @@ export function openQuickEditModal() {
             <div class="quick-edit-header">
                 <div class="quick-edit-header-left">
                     <div class="quick-edit-title-wrapper">
-                        <h2 onclick="toggleQuickEditTab()">Quick Edit</h2>
-                        <button class="quick-edit-icon-btn instruction-btn" onclick="showQuickEditInfoModal()" title="Help">
+                        <h2 data-action="toggle-tab">Quick Edit</h2>
+                        <button class="quick-edit-icon-btn instruction-btn" data-action="show-info" title="Help">
                             <img src="res/info.svg" alt="Help">
                         </button>
                     </div>
                     <div class="quick-edit-subtitle" id="quickEditSubtitle">General Info</div>
                     <div class="quick-edit-tabs">
-                        <button class="quick-edit-tab active" data-tab="general" onclick="switchQuickEditTab('general')">General Info</button>
-                        <button class="quick-edit-tab" data-tab="algorithms" onclick="switchQuickEditTab('algorithms')">Algorithms</button>
+                        <button class="quick-edit-tab active" data-tab="general" data-action="switch-tab">General Info</button>
+                        <button class="quick-edit-tab" data-tab="algorithms" data-action="switch-tab">Algorithms</button>
                     </div>
                 </div>
                 <div class="quick-edit-header-right">
-                    <button class="quick-edit-icon-btn add-columns-btn-header" onclick="addAlgorithmColumns()" title="Show 2 more columns" style="display: none;">
+                    <button class="quick-edit-icon-btn add-columns-btn-header" data-action="add-columns" title="Show 2 more columns" style="display: none;">
                         +2
                     </button>
-                    <button class="quick-edit-icon-btn alg-variables-btn-header" onclick="openAlgVariablesModal()" title="Algorithm Variables" style="display: none;">
+                    <button class="quick-edit-icon-btn alg-variables-btn-header" data-action="open-variables" title="Algorithm Variables" style="display: none;">
                         <img src="res/var.svg" alt="Variables">
                     </button>
-                    <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
+                    <button class="quick-edit-icon-btn" data-action="open-find" title="Find and Replace (Ctrl+F)">
                         <img src="res/search.svg" alt="Find">
                     </button>
-                    <button class="quick-edit-icon-btn" onclick="saveQuickEditChanges()" title="Save changes">
+                    <button class="quick-edit-icon-btn" data-action="save" title="Save changes">
                         <img src="res/save.svg" alt="Save">
                     </button>
-                    <button class="quick-edit-icon-btn" onclick="closeQuickEditModal()" title="Exit">
+                    <button class="quick-edit-icon-btn" data-action="close" title="Exit">
                         <img src="res/exit.svg" alt="Exit">
                     </button>
                 </div>
@@ -220,32 +222,32 @@ export function openQuickEditModal() {
  <div class="quick-edit-find-replace-popup" id="quickEditFindReplace" style="display: none;">
     <div class="find-replace-header">
         <span>Find and Replace</span>
-        <button class="close-find-btn" onclick="closeQuickEditFindReplace()" title="Close (Esc)">×</button>
+        <button class="close-find-btn" data-action="close-find" title="Close (Esc)">×</button>
     </div>
     <div class="find-replace-inputs">
         <div class="find-input-row">
-            <input type="text" id="quickEditFindInput" placeholder="Find" oninput="liveSearchQuickEdit()">
+            <input type="text" id="quickEditFindInput" placeholder="Find">
             <div class="find-nav-buttons">
-                <button onclick="findPreviousQuickEdit()" title="Previous match">
+                <button data-action="find-previous" title="Previous match">
                     <img src="res/previous.svg" alt="Previous">
                 </button>
-                <button onclick="findNextQuickEdit()" title="Next match">
+                <button data-action="find-next" title="Next match">
                     <img src="res/next.svg" alt="Next">
                 </button>
             </div>
         </div>
         <div class="replace-input-row">
-            <input type="text" id="quickEditReplaceInput" placeholder="Replace" onkeypress="handleReplaceEnter(event)">
+            <input type="text" id="quickEditReplaceInput" placeholder="Replace">
             <div class="replace-buttons">
-                <button onclick="replaceQuickEdit()" title="Replace (Enter)">Replace</button>
-                <button onclick="replaceAllQuickEdit()" title="Replace All">Replace All</button>
+                <button data-action="replace" title="Replace (Enter)">Replace</button>
+                <button data-action="replace-all" title="Replace All">Replace All</button>
             </div>
         </div>
     </div>
     <div class="find-replace-footer">
         <div class="scope-selector">
             <label>Scope:</label>
-            <select id="quickEditScopeSelector" onchange="changeFindScope()">
+            <select id="quickEditScopeSelector">
                 <option value="name">Display Name</option>
                 <option value="subtitle">Subtitle</option>
                 <option value="notes">Notes</option>
@@ -294,6 +296,7 @@ export function openQuickEditModal() {
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('quickEditModal', closeQuickEditModal);
+    wireQuickEditActions(modal);
 
     // Keep modal in sync with theme changes
     modal._themeObserver = new MutationObserver(() => {
@@ -307,6 +310,46 @@ export function openQuickEditModal() {
 
     // Lazy load rows
     initQuickEditLazyLoad();
+}
+
+export function wireQuickEditActions(modal) {
+    bindDelegatedActions(modal, {
+        'toggle-tab': () => toggleQuickEditTab(),
+        'show-info': () => showQuickEditInfoModal(),
+        'switch-tab': (_event, target) => switchQuickEditTab(target.dataset.tab),
+        'add-columns': () => addAlgorithmColumns(),
+        'open-variables': () => openAlgVariablesModal(),
+        'open-find': () => openQuickEditFindReplace(),
+        'save': () => saveQuickEditChanges(),
+        'close': () => closeQuickEditModal(),
+        'close-find': () => closeQuickEditFindReplace(),
+        'find-previous': () => findPreviousQuickEdit(),
+        'find-next': () => findNextQuickEdit(),
+        'replace': () => replaceQuickEdit(),
+        'replace-all': () => replaceAllQuickEdit()
+    });
+
+    const findInput = modal.querySelector('#quickEditFindInput');
+    if (findInput) findInput.addEventListener('input', liveSearchQuickEdit);
+
+    const replaceInput = modal.querySelector('#quickEditReplaceInput');
+    if (replaceInput) replaceInput.addEventListener('keypress', handleReplaceEnter);
+
+    const scopeSelector = modal.querySelector('#quickEditScopeSelector');
+    if (scopeSelector) scopeSelector.addEventListener('change', changeFindScope);
+
+    modal.addEventListener('change', event => {
+        const toggle = event.target.closest('.evil-qe-toggle');
+        if (!toggle) return;
+        evilnessMap[toggle.dataset.case] = toggle.checked;
+        saveState();
+        const track = toggle.nextElementSibling;
+        if (track) {
+            track.style.background = toggle.checked ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)';
+            const knob = track.querySelector('span');
+            if (knob) knob.style.left = toggle.checked ? '18px' : '2px';
+        }
+    });
 }
 
 export function addAlgorithmColumns() {
@@ -1108,7 +1151,7 @@ export function saveQuickEditChanges() {
     });
 
     // Update initial state checkpoint
-    window.quickEditInitialState = {
+    quickEditInitialState = {
         displayNames: { ...displayNames },
         perCaseSubtitles: new Map(perCaseSubtitles),
         comments: new Map(comments),
@@ -1215,15 +1258,15 @@ export function forceCloseQuickEditModal() {
 }
 
 export function revertQuickEditChanges() {
-    if (!window.quickEditInitialState) return;
+    if (!quickEditInitialState) return;
 
     showConfirmation('Are you sure you want to revert all changes to the last save point?', () => {
         // Restore initial state
         updateAppState({
-            displayNames: { ...window.quickEditInitialState.displayNames },
-            perCaseSubtitles: new Map(window.quickEditInitialState.perCaseSubtitles),
-            comments: new Map(window.quickEditInitialState.comments),
-            customAlgorithms: new Map(window.quickEditInitialState.customAlgorithms)
+            displayNames: { ...quickEditInitialState.displayNames },
+            perCaseSubtitles: new Map(quickEditInitialState.perCaseSubtitles),
+            comments: new Map(quickEditInitialState.comments),
+            customAlgorithms: new Map(quickEditInitialState.customAlgorithms)
         });
 
         // Close and reopen modal to refresh
@@ -1234,7 +1277,7 @@ export function revertQuickEditChanges() {
     });
 }
 
-window.showQuickEditInfoModal = function () {
+export function showQuickEditInfoModal() {
     let infoModal = document.getElementById('quickEditInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1244,7 +1287,7 @@ window.showQuickEditInfoModal = function () {
             <div class="training-info-content">
                 <div class="training-info-header">
                     <span class="training-info-title">Quick Edit Guide</span>
-                    <button class="training-info-close" onclick="closeQuickEditInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="close-quick-edit-info">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
@@ -1286,20 +1329,23 @@ window.showQuickEditInfoModal = function () {
             </div>
         `;
         document.body.appendChild(infoModal);
+        bindDelegatedActions(infoModal, {
+            'close-quick-edit-info': () => closeQuickEditInfoModal()
+        });
     }
 
     infoModal.classList.add('active');
     if (typeof pushModalState === 'function') pushModalState('quickEditInfoModal', closeQuickEditInfoModal);
-};
+}
 
-window.closeQuickEditInfoModal = function () {
+export function closeQuickEditInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('quickEditInfoModal');
         if (modal) {
             modal.classList.remove('active');
         }
     });
-};
+}
 
 // REPLACE:
 export function openAlgVariablesModal() {
@@ -1333,11 +1379,11 @@ export function openAlgVariablesModal() {
             ">
                 <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-ui);">Algorithm Variables</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button onclick="saveAlgVariables()" style="
+                    <button data-action="save-alg-vars" style="
                         padding: 7px 18px; background: var(--accent); color: white;
                         border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
                     ">Save</button>
-                    <button onclick="closeAlgVariablesModal()" style="
+                    <button data-action="close-alg-vars" style="
                         background: none; border: none; cursor: pointer; font-size: 1.5rem;
                         color: var(--sidebar-close-color); line-height: 1; padding: 2px 6px;
                     ">&times;</button>
@@ -1360,18 +1406,30 @@ export function openAlgVariablesModal() {
                         ${renderAlgVarRows()}
                     </tbody>
                 </table>
-                <button onclick="addAlgVarRow()" style="
+                <button data-action="add-alg-var-row" class="alg-var-add-btn" style="
                     margin-top: 12px; padding: 7px 16px; background: var(--surface2);
                     border: 1px dashed var(--border-color); border-radius: 7px;
                     cursor: pointer; font-size: 0.9rem; color: var(--text-ui);
                     width: 100%; transition: background 0.15s;
-                " onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">+ Add Variable</button>
+                ">+ Add Variable</button>
             </div>
         </div>
     `;
 
     document.body.appendChild(modal);
     modal.addEventListener('mousedown', e => { if (e.target === modal) closeAlgVariablesModal(); });
+    bindDelegatedActions(modal, {
+        'save-alg-vars': () => saveAlgVariables(),
+        'close-alg-vars': () => closeAlgVariablesModal(),
+        'add-alg-var-row': () => addAlgVarRow(),
+        'delete-alg-var-row': (_event, target) => target.closest('tr')?.remove()
+    });
+    modal.addEventListener('blur', event => {
+        const input = event.target.closest('.alg-var-value');
+        if (!input) return;
+        const value = input.value.trim();
+        input.value = value && value !== 'Done!' ? normalizeScramble(value) : value;
+    }, true);
     if (typeof pushModalState === 'function') pushModalState('algVariablesModal', closeAlgVariablesModal);
 }
 
@@ -1396,11 +1454,10 @@ export function algVarRowHTML(name, value) {
             </td>
             <td style="padding: 6px 6px;">
                 <input class="alg-var-value" type="text" value="${value}" placeholder="e.g. /(3,0)/(2,2)/"
-                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;"
-                    onblur="this.value = this.value.trim() && this.value.trim() !== 'Done!' && window.ScrambleNormalizer ? window.ScrambleNormalizer.normalizeScramble(this.value.trim()) : this.value.trim()">
+                    style="width:100%; padding:6px 8px; border:1px solid var(--border-color); border-radius:6px; background:var(--surface2); color:var(--text-ui); font-size:0.9rem; font-family: monospace;">
             </td>
             <td style="padding: 6px 4px; text-align:center;">
-                <button onclick="this.closest('tr').remove()" style="
+                <button data-action="delete-alg-var-row" style="
                     background: var(--delete-btn-bg); border: none; border-radius: 5px;
                     cursor: pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
                 "><img src="res/delete.svg" style="width:14px;height:14px;" alt="Delete"></button>
@@ -1433,32 +1490,12 @@ export function saveAlgVariables() {
     showToast('Variables saved!', 2000, 'success');
 }
 
-// Make functions globally accessible
-window.openQuickEditModal = openQuickEditModal;
-window.revertQuickEditChanges = revertQuickEditChanges;
-window.closeQuickEditModal = closeQuickEditModal;
-window.switchQuickEditTab = switchQuickEditTab;
-window.toggleQuickEditTab = toggleQuickEditTab;
-window.findNextQuickEdit = findNextQuickEdit;
-window.replaceQuickEdit = replaceQuickEdit;
-window.replaceAllQuickEdit = replaceAllQuickEdit;
-window.saveQuickEditChanges = saveQuickEditChanges;
-window.openQuickEditFindReplace = openQuickEditFindReplace;
-window.closeQuickEditFindReplace = closeQuickEditFindReplace;
-window.findPreviousQuickEdit = findPreviousQuickEdit;
-window.liveSearchQuickEdit = liveSearchQuickEdit;
-window.handleReplaceEnter = handleReplaceEnter;
-window.changeFindScope = changeFindScope;
-window.addAlgorithmColumns = addAlgorithmColumns;
-window.openAlgVariablesModal = openAlgVariablesModal;
-window.saveAlgVariables = saveAlgVariables;
-window.addAlgVarRow = addAlgVarRow;
-
-// Global function to toggle auto-select text on focus
-window.setAutoSelectTextOnFocus = function (enabled) {
+export function setAutoSelectTextOnFocus(enabled) {
     autoSelectTextOnFocus = enabled;
     localStorage.setItem('autoSelectTextOnFocus', enabled.toString());
-};
+}
+registerAction('openQuickEditModal', openQuickEditModal);
+registerAction('setAutoSelectTextOnFocus', setAutoSelectTextOnFocus);
 
 // Drag functionality for find/replace popup
 export function initializeFindReplaceDrag(popup) {

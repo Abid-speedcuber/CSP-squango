@@ -807,7 +807,7 @@ export function openShapeIndexSelector() {
             <div class="shape-index-selector-content">
                 <div class="shape-index-selector-header">
                     <span class="shape-index-selector-title">Select Angles to Train</span>
-                    <button class="shape-index-selector-close" onclick="closeShapeIndexSelector()">&times;</button>
+                    <button class="shape-index-selector-close" data-action="shape-index-close">&times;</button>
                 </div>
                 <div class="shape-index-selector-body" id="shapeIndexSelectorBody"></div>
             </div>
@@ -828,7 +828,6 @@ export function openShapeIndexSelector() {
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
                     data-type="org"
-                    onclick="toggleShapeIndex(${idx})"
                     style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
@@ -842,7 +841,6 @@ export function openShapeIndexSelector() {
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
                     data-type="mir"
-                    onclick="toggleShapeIndex(${idx})"
                     style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
                 ${shapeHTML}
             </button>
@@ -854,8 +852,8 @@ export function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Original Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('org')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button data-action="shape-index-select-all" data-type="org" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button data-action="shape-index-deselect-all" data-type="org" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="orgToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -866,8 +864,8 @@ export function openShapeIndexSelector() {
             <div class="shape-index-section-header">
                 <span style="font-weight: 600;">Mirror Orientation</span>
                 <div>
-                    <button onclick="selectAllIndices('mir')" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
-                    <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
+                    <button data-action="shape-index-select-all" data-type="mir" style="padding: 3px 10px; margin-right: 5px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Select All</button>
+                    <button data-action="shape-index-deselect-all" data-type="mir" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
             <div class="shape-index-toggles" id="mirToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
@@ -877,17 +875,21 @@ export function openShapeIndexSelector() {
     `;
 
     selectorModal.classList.add('active');
+    wireShapeIndexSelector(selectorModal);
 }
 
-window.toggleShapeIndex = function(index) {
-    const selectedKey = `training_selected_${currentTrainingCase}`;
+function ensureTrainingSelection(selectedKey) {
     if (!window.trainingSelections) window.trainingSelections = {};
     if (!window.trainingSelections[selectedKey]) {
         const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
         window.trainingSelections[selectedKey] = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
     }
+    return window.trainingSelections[selectedKey];
+}
 
-    const currentSelection = window.trainingSelections[selectedKey];
+export function toggleShapeIndex(index) {
+    const selectedKey = `training_selected_${currentTrainingCase}`;
+    const currentSelection = ensureTrainingSelection(selectedKey);
     const indexPos = currentSelection.indexOf(index);
 
     if (indexPos > -1) {
@@ -913,19 +915,19 @@ window.toggleShapeIndex = function(index) {
     }
 }
 
-window.selectAllIndices = function(type) {
+export function selectAllIndices(type) {
     const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
 
     const selectedKey = `training_selected_${currentTrainingCase}`;
-    if (!window.trainingSelections) window.trainingSelections = {};
+    const currentSelection = ensureTrainingSelection(selectedKey);
 
     const indices = type === 'org' ? (shapeIndexItem.org || []) : (shapeIndexItem.mir || []);
 
     // Add all indices of this type to selection
     indices.forEach(idx => {
-        if (!window.trainingSelections[selectedKey].includes(idx)) {
-            window.trainingSelections[selectedKey].push(idx);
+        if (!currentSelection.includes(idx)) {
+            currentSelection.push(idx);
         }
     });
 
@@ -936,16 +938,16 @@ window.selectAllIndices = function(type) {
         btn.style.background = 'var(--surface-border)';
     });
 
-    trainingScrambles = window.trainingSelections[selectedKey];
+    trainingScrambles = currentSelection;
     regenerateScrambleLookahead();
 }
 
-window.deselectAllIndices = function(type) {
+export function deselectAllIndices(type) {
     const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     if (!shapeIndexItem) return;
 
     const selectedKey = `training_selected_${currentTrainingCase}`;
-    if (!window.trainingSelections) window.trainingSelections = {};
+    ensureTrainingSelection(selectedKey);
 
     const indices = type === 'org' ? (shapeIndexItem.org || []) : (shapeIndexItem.mir || []);
 
@@ -961,6 +963,29 @@ window.deselectAllIndices = function(type) {
 
     trainingScrambles = window.trainingSelections[selectedKey];
     regenerateScrambleLookahead();
+}
+
+function wireShapeIndexSelector(selectorModal) {
+    if (selectorModal.dataset.wired === 'true') return;
+    selectorModal.dataset.wired = 'true';
+    selectorModal.addEventListener('click', (event) => {
+        const actionTarget = event.target.closest('[data-action]');
+        if (actionTarget && selectorModal.contains(actionTarget)) {
+            switch (actionTarget.dataset.action) {
+                case 'shape-index-close':
+                    closeShapeIndexSelector();
+                    return;
+                case 'shape-index-select-all':
+                    selectAllIndices(actionTarget.dataset.type);
+                    return;
+                case 'shape-index-deselect-all':
+                    deselectAllIndices(actionTarget.dataset.type);
+                    return;
+            }
+        }
+        const toggle = event.target.closest('.shape-index-toggle[data-index]');
+        if (toggle && selectorModal.contains(toggle)) toggleShapeIndex(parseInt(toggle.dataset.index, 10));
+    });
 }
 
 export function closeShapeIndexSelector() {
@@ -1206,7 +1231,7 @@ export function openTrainingInfoModal() {
             <div class="training-info-content">
                 <div class="training-info-header">
                     <span class="training-info-title">Training Guides</span>
-                    <button class="training-info-close" onclick="closeTrainingInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="training-info-close">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
@@ -1254,6 +1279,7 @@ export function openTrainingInfoModal() {
             </div>
         `;
         document.body.appendChild(infoModal);
+        infoModal.querySelector('[data-action="training-info-close"]').addEventListener('click', closeTrainingInfoModal);
     }
 
     infoModal.classList.add('active');
@@ -2075,7 +2101,7 @@ export function startColorRecognitionPractice() {
 // TRAINER PICKER
 // ============================================================
 
-window.openTrainerPickerModal = function () {
+export function openTrainerPickerModal() {
     let picker = document.getElementById('trainerPickerModal');
     if (picker) picker.remove();
 
@@ -2085,7 +2111,7 @@ window.openTrainerPickerModal = function () {
 
     const evilnessEnabled = typeof evilnessFactor !== 'undefined' && evilnessFactor;
     const evilnessBtn = evilnessEnabled
-        ? `<button onclick="trainerPickerLaunch('evilness')" class="trainer-pick-btn">Evilness Quiz</button>`
+        ? `<button data-trainer-type="evilness" class="trainer-pick-btn">Evilness Quiz</button>`
         : '';
 
     picker.innerHTML = `
@@ -2095,9 +2121,9 @@ window.openTrainerPickerModal = function () {
                 <button class="shape-index-selector-close" id="trainerPickerClose">&times;</button>
             </div>
             <div class="shape-index-selector-body" style="display:flex;flex-direction:column;gap:10px;">
-                <button onclick="trainerPickerLaunch('timer')" class="trainer-pick-btn">Timer Training</button>
+                <button data-trainer-type="timer" class="trainer-pick-btn">Timer Training</button>
                 ${evilnessBtn}
-                <button onclick="trainerPickerLaunch('color')" class="trainer-pick-btn">Parity Quiz</button>
+                <button data-trainer-type="color" class="trainer-pick-btn">Parity Quiz</button>
             </div>
         </div>
     `;
@@ -2110,8 +2136,15 @@ window.openTrainerPickerModal = function () {
     document.body.appendChild(picker);
     pushModalState('trainerPickerModal', closeTrainerPickerModal);
     document.getElementById('trainerPickerClose').addEventListener('click', closeTrainerPickerModal);
-    picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
-};
+    picker.addEventListener('click', e => {
+        if (e.target === picker) {
+            closeTrainerPickerModal();
+            return;
+        }
+        const launchBtn = e.target.closest('[data-trainer-type]');
+        if (launchBtn && picker.contains(launchBtn)) trainerPickerLaunch(launchBtn.dataset.trainerType);
+    });
+}
 
 export function closeTrainerPickerModal() {
     closeModalWithHistory(() => {
@@ -2120,7 +2153,7 @@ export function closeTrainerPickerModal() {
     });
 }
 
-window.trainerPickerLaunch = function (type) {
+export function trainerPickerLaunch(type) {
     const picker = document.getElementById('trainerPickerModal');
     if (picker) picker.remove();
 
@@ -2146,7 +2179,7 @@ window.trainerPickerLaunch = function (type) {
     } else if (type === 'color') {
         startColorRecognitionPractice();
     }
-};
+}
 
 // ESM live global compatibility bridge
 for (const [name, descriptor] of Object.entries({

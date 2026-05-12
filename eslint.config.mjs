@@ -137,6 +137,31 @@ export default defineConfig([
     }
   },
   {
+    files: [
+      "refactor/js/multi-trainer.js",
+      "refactor/js/quick-edit.js",
+      "refactor/js/rendering.js",
+      "refactor/js/settings.js",
+      "refactor/js/tools/animate-alg.js",
+      "refactor/js/tools/cales-parity-tracer.js",
+      "refactor/js/tools/svg-editor.js",
+      "refactor/js/training-modal.js"
+    ],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/\\bon(?:click|change|input|mouseover|mouseout|mouseenter|mouseleave|mousedown|mouseup|keydown|keypress|blur)\\s*=/]",
+          message: "Use delegated event listeners and data-action attributes instead of inline event handlers."
+        },
+        {
+          selector: "TemplateElement[value.raw=/\\bon(?:click|change|input|mouseover|mouseout|mouseenter|mouseleave|mousedown|mouseup|keydown|keypress|blur)\\s*=/]",
+          message: "Use delegated event listeners and data-action attributes instead of inline event handlers."
+        }
+      ]
+    }
+  },
+  {
     files: ["refactor/database/**/*.js", "refactor/res/shapeImages/**/*.js"],
     rules: {
       "no-unused-vars": "off"
