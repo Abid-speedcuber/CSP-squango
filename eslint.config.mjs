@@ -139,6 +139,7 @@ export default defineConfig([
   {
     files: [
       "refactor/js/multi-trainer.js",
+      "refactor/js/modals.js",
       "refactor/js/quick-edit.js",
       "refactor/js/rendering.js",
       "refactor/js/settings.js",

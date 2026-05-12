@@ -11,7 +11,7 @@ import {
     setEnhancedAccess,
     updateAppState
 } from './restoftheapp.js?v=esm-20260511-2';
-import { registerAction } from './browser-api.js?v=esm-20260511-2';
+import { bindDelegatedActions, registerAction } from './browser-api.js?v=esm-20260511-2';
 
 ﻿/*
 ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -30,9 +30,6 @@ export function getColorName(hexColor) {
     return colorMap[hexColor.toUpperCase()] || 'Top';
 }
 
-// Make getColorName globally accessible for training modal
-window.getColorName = getColorName;
-
 // Generate all modal HTML dynamically for lazy loading
 export function generateModalHTML() {
     const modalContainer = document.createElement('div');
@@ -43,7 +40,7 @@ export function generateModalHTML() {
             <div class="modal-content" style="max-width: 500px; max-height: 80vh; min-height: 20vh;">
                 <div class="modal-header">
                     <span class="modal-title">Color Scheme Settings</span>
-                    <button class="close-btn" onclick="closeColorSchemeModal()">&times;</button>
+                    <button class="close-btn" data-action="close-color-scheme">&times;</button>
                 </div>
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div style="margin-bottom: 20px;">
@@ -111,7 +108,7 @@ export function generateModalHTML() {
                         <img id="profileAvatarDesktop" src="res/avatar.svg" style="width: 56px; height: 56px; margin-bottom: 10px; border-radius: 50%; border: 3px solid var(--avatar-border-idle);">
                         <div style="display: flex; align-items: center; justify-content: center; gap: 6px;">
                             <h3 id="profileNameDesktop" style="margin: 0; font-size: 1.2rem; color: var(--text-ui); font-weight: 600;">Profile</h3>
-                            <button onclick="switchToEditProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
+                            <button data-action="profile-edit" data-mode="Desktop" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
                         </div>
@@ -150,7 +147,7 @@ export function generateModalHTML() {
                 <!-- Edit Mode -->
                 <div id="profileEditDesktop" style="display: none;">
                     <div style="padding: 15px 20px; border-bottom: 1px solid var(--surface-border); display: flex; align-items: center; gap: 10px;">
-                        <button onclick="switchToViewProfile('Desktop')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
+                        <button data-action="profile-view" data-mode="Desktop" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                         </button>
                         <span style="font-size: 1rem; font-weight: 600; color: var(--text-ui);">Edit Profile</span>
@@ -160,7 +157,7 @@ export function generateModalHTML() {
                         <input id="profileNameInputDesktop" type="text" maxlength="24" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; margin-bottom: 14px;" placeholder="Your name">
                         <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Choose Avatar</label>
                         <div id="avatarGridDesktop" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;"></div>
-                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
+                        <button data-action="profile-save" data-mode="Desktop" style="width: 100%; padding: 9px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -174,11 +171,11 @@ export function generateModalHTML() {
                     <div class="modal-header">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <span id="profileNameMobileTitle" class="modal-title">Profile</span>
-                            <button onclick="switchToEditProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
+                            <button data-action="profile-edit" data-mode="Mobile" style="background: none; border: none; cursor: pointer; padding: 2px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Edit Profile">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 16px; height: 16px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
                         </div>
-                        <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
+                        <button class="close-btn" data-action="profile-close-mobile">&times;</button>
                     </div>
                     <div class="modal-body" style="padding: 20px;">
                         <div style="text-align: center; margin-bottom: 20px;">
@@ -218,19 +215,19 @@ export function generateModalHTML() {
                 <div id="profileEditMobile" style="display: none;">
                     <div class="modal-header">
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <button onclick="switchToViewProfile('Mobile')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
+                            <button data-action="profile-view" data-mode="Mobile" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; color: var(--sidebar-close-color);" title="Back">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;"><polyline points="15 18 9 12 15 6"></polyline></svg>
                             </button>
                             <span class="modal-title">Edit Profile</span>
                         </div>
-                        <button class="close-btn" onclick="closeProfileModalMobile()">&times;</button>
+                        <button class="close-btn" data-action="profile-close-mobile">&times;</button>
                     </div>
                     <div class="modal-body" style="padding: 20px;">
                         <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px;">Name</label>
                         <input id="profileNameInputMobile" type="text" maxlength="24" style="width: 100%; padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; margin-bottom: 16px;" placeholder="Your name">
                         <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">Choose Avatar</label>
                         <div id="avatarGridMobile" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;"></div>
-                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
+                        <button data-action="profile-save" data-mode="Mobile" style="width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -256,7 +253,7 @@ export function generateModalHTML() {
                 <span style="font-size: 1.5rem; font-weight: 600;">
                     About SquanGo CSP
                 </span>
-                <button class="close-btn" onclick="closeAboutModal()" style="
+                <button class="close-btn" data-action="about-close" style="
                     color: white;
                     font-size: 1.6rem;
                     opacity: 0.9;
@@ -372,6 +369,14 @@ export function generateModalHTML() {
     `;
 
     document.body.appendChild(modalContainer);
+    bindDelegatedActions(modalContainer, {
+        'close-color-scheme': () => closeColorSchemeModal(),
+        'profile-edit': (_event, target) => switchToEditProfile(target.dataset.mode),
+        'profile-view': (_event, target) => switchToViewProfile(target.dataset.mode),
+        'profile-save': (_event, target) => saveProfileEdit(target.dataset.mode),
+        'profile-close-mobile': () => closeProfileModalMobile(),
+        'about-close': () => closeAboutModal(),
+    });
 
     // Setup color button handlers after modals are created
     document.querySelectorAll('.color-btn').forEach(btn => {
@@ -411,7 +416,7 @@ export function generateModalHTML() {
 ╚════════════════════════════════════════════════════════════════════════════╝
 */
 
-window.openSettingsModal = function() {
+export function openSettingsModal() {
     window.openUnifiedSettings('homescreen');
 }
 
@@ -441,9 +446,9 @@ export function handlePresetChange(presetName) {
                         We recommend exporting your data before reloading.
                     </p> <br>
                     <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                        <button onclick="exportData(); showToast('Data exported! You can now safely reload.', 3000, 'success');" style="padding: 10px 20px; background: transparent; color: var(--bar-learned); border: 2px solid var(--bar-learned); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='var(--bar-learned)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--bar-learned)'">Export First</button>
-                        <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); });" style="padding: 10px 20px; background: transparent; color: var(--parity-invalid); border: 2px solid var(--parity-invalid); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='var(--parity-invalid)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--parity-invalid)'">Reload Anyway</button>
-                        <button onclick="this.closest('.modal').remove();" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='transparent'">Cancel</button>
+                        <button data-action="preset-export-reload" style="padding: 10px 20px; background: transparent; color: var(--bar-learned); border: 2px solid var(--bar-learned); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">Export First</button>
+                        <button data-action="preset-reload-anyway" style="padding: 10px 20px; background: transparent; color: var(--parity-invalid); border: 2px solid var(--parity-invalid); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">Reload Anyway</button>
+                        <button data-action="modal-close-self" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s;">Cancel</button>
                     </div>
                 </div>
             </div>
@@ -453,6 +458,21 @@ export function handlePresetChange(presetName) {
             removeCloseModalFromStack(close);
         }
         reloadModal.querySelector(".close-btn").onclick = close;
+        bindDelegatedActions(reloadModal, {
+            'preset-export-reload': () => {
+                exportData();
+                showToast('Data exported! You can now safely reload.', 3000, 'success');
+            },
+            'preset-reload-anyway': () => {
+                close();
+                document.documentElement.classList.remove('scroll-locked');
+                closeSidebar();
+                applyPreset(presetName, false, false).then(() => {
+                    if (typeof initializePresetSelector === 'function') initializePresetSelector();
+                });
+            },
+            'modal-close-self': close,
+        });
         pushModalState('reloadPresetModal', close);
         document.body.appendChild(reloadModal);
         return;
@@ -484,13 +504,13 @@ export function handlePresetChange(presetName) {
                     We recommend exporting your data before reloading.
                 </p> <br>
                 <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-                    <button onclick="exportData(); showToast('Data exported! You can now safely switch presets.', 3000, 'success');" style="padding: 10px 20px; background: transparent; color: var(--bar-learned); border: 2px solid var(--bar-learned); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--bar-learned)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--bar-learned)'">
+                    <button data-action="preset-export-switch" style="padding: 10px 20px; background: transparent; color: var(--bar-learned); border: 2px solid var(--bar-learned); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
                         Export Data First
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked'); closeSidebar(); applyPreset(\`${presetName}\`, false, false).then(() => { if(typeof initializePresetSelector === 'function') initializePresetSelector(); setTimeout(() => openGeneralNotesModal(), 800); });" style="padding: 10px 20px; background: transparent; color: var(--parity-invalid); border: 2px solid var(--parity-invalid); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--parity-invalid)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--parity-invalid)'">
+                    <button data-action="preset-switch-anyway" style="padding: 10px 20px; background: transparent; color: var(--parity-invalid); border: 2px solid var(--parity-invalid); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
                         Switch Anyway
                     </button>
-                    <button onclick="this.closest('.modal').remove(); document.documentElement.classList.remove('scroll-locked');" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='transparent'">
+                    <button data-action="modal-close-self-unlock" style="padding: 10px 20px; background: transparent; color: var(--text-secondary); border: 2px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; transition: all 0.2s;">
                         Cancel
                     </button>
                 </div>
@@ -503,12 +523,31 @@ export function handlePresetChange(presetName) {
         removeCloseModalFromStack(close);
     }
     warningModal.querySelector(".close-btn").onclick = close;
+    bindDelegatedActions(warningModal, {
+        'preset-export-switch': () => {
+            exportData();
+            showToast('Data exported! You can now safely switch presets.', 3000, 'success');
+        },
+        'preset-switch-anyway': () => {
+            close();
+            document.documentElement.classList.remove('scroll-locked');
+            closeSidebar();
+            applyPreset(presetName, false, false).then(() => {
+                if (typeof initializePresetSelector === 'function') initializePresetSelector();
+                setTimeout(() => openGeneralNotesModal(), 800);
+            });
+        },
+        'modal-close-self-unlock': () => {
+            close();
+            document.documentElement.classList.remove('scroll-locked');
+        },
+    });
     pushModalState('presetWarningModal', close);
     document.body.appendChild(warningModal);
     document.documentElement.classList.add('scroll-locked');
 }
 
-window.toggleHints = function(isChecked) {
+export function toggleHints(isChecked) {
     updateAppState({ showHints: isChecked });
     localStorage.setItem('showHints', isChecked);
     applyHintVisibility();
@@ -522,7 +561,7 @@ export function applyHintVisibility() {
     }
 }
 
-window.toggleHideInstructions = function(isChecked) {
+export function toggleHideInstructions(isChecked) {
     updateAppState({ hideInstructions: isChecked });
     saveState();
     applyInstructionVisibility();
@@ -535,13 +574,13 @@ export function applyInstructionVisibility() {
     });
 }
 
-window.toggleHideParenthesis = function(isChecked) {
+export function toggleHideParenthesis(isChecked) {
     updateAppState({ hideParenthesis: isChecked });
     saveState();
     render();
 }
 
-window.toggleEnhancedAccess = function(isChecked) {
+export function toggleEnhancedAccess(isChecked) {
     setEnhancedAccess(isChecked);
 }
 
@@ -573,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Color Scheme Modal Functions
-window.openColorSchemeModal = function() {
+export function openColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
 
     window.modalScrollY = window.scrollY;
@@ -601,13 +640,13 @@ export function closeColorSchemeModal() {
     });
 }
 
-window.updateImageSizePreview = function(value) {
+export function updateImageSizePreview(value) {
     document.getElementById('sizeValue').textContent = value;
     updateAppState({ scrambleImageSize: parseInt(value) });
     saveState();
 }
 
-window.updateAlgFontSizePreview = function(value) {
+export function updateAlgFontSizePreview(value) {
     document.getElementById('algFontSizeValue').textContent = value;
     updateAppState({ algorithmFontSize: parseInt(value) });
     localStorage.setItem('algorithmFontSize', value);
@@ -660,7 +699,7 @@ export function openNewParityAnalysis(scramble) {
 }
 
 // Homepage Info Modal
-window.showHomepageInfoModal = function() {
+export function showHomepageInfoModal() {
     pushModalState('homepageInfoModal', closeHomepageInfoModal);
 
     let infoModal = document.getElementById('homepageInfoModal');
@@ -672,7 +711,7 @@ window.showHomepageInfoModal = function() {
             <div class="training-info-content">
                 <div class="training-info-header">
                     <span class="training-info-title">App Guide</span>
-                    <button class="training-info-close" onclick="closeHomepageInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="homepage-info-close">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
@@ -711,6 +750,9 @@ window.showHomepageInfoModal = function() {
             </div>
         `;
         document.body.appendChild(infoModal);
+        bindDelegatedActions(infoModal, {
+            'homepage-info-close': () => closeHomepageInfoModal(),
+        });
     }
 
     document.documentElement.classList.add('scroll-locked');
@@ -750,10 +792,10 @@ export function openEditCaseModal(caseName) {
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="modal-title" id="editCaseTitle">${getDisplayName(caseName)}</span>
-                        <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}', '${customSubtitle.replace(/'/g, "\\'")}' )" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                        <button data-action="edit-case-rename" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
                             <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
                         </button>
-                        <button onclick="showEditCaseInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
+                        <button data-action="edit-case-info" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -763,7 +805,7 @@ export function openEditCaseModal(caseName) {
                     </div>
                     ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseName)}</div>` : '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
                 </div>
-                <button class="close-btn" onclick="attemptCloseEditCaseModal()">&times;</button>
+                <button class="close-btn" data-action="edit-case-attempt-close">&times;</button>
             </div>
             <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                 <div style="margin-bottom: 15px;" id="algorithmsSection">
@@ -772,20 +814,20 @@ export function openEditCaseModal(caseName) {
                         ${allAlgs.map((alg, idx) => `
                             <div style="display: flex; gap: 8px; align-items: center;" data-alg-index="${idx}">
                                 <input type="text" class="alg-input" value="${alg}" data-original="${alg}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
-                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                <button data-action="edit-case-remove-alg" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
                                     <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
                                 </button>
                             </div>
                         `).join('')}
                     </div>
-                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
+                    <button id="addAlgorithmBtn" data-action="edit-case-add-alg" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
 
                 ${evilnessFactor ? `
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--surface-border);">
                     <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Mark as Evil</label>
                     <label class="evil-switch" style="position:relative;display:inline-block;width:42px;height:24px;">
-                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseName] ? 'checked' : ''} onchange="evilnessMap['${caseName.replace(/'/g, "\\'")}'] = this.checked; saveState();" style="opacity:0;width:0;height:0;">
+                        <input type="checkbox" id="evilCaseToggle" data-action="edit-case-evil-toggle" ${evilnessMap[caseName] ? 'checked' : ''} style="opacity:0;width:0;height:0;">
                         <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseName] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
                             <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseName] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
                         </span>
@@ -793,8 +835,8 @@ export function openEditCaseModal(caseName) {
                 </div>
                 ` : ''}
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--surface-border);">
-                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
-                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button data-action="edit-case-save" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
+                    <button data-action="edit-case-close" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -802,6 +844,21 @@ export function openEditCaseModal(caseName) {
 
     document.body.appendChild(modal);
     modal.dataset.caseName = caseName;
+    bindDelegatedActions(modal, {
+        'edit-case-rename': () => openCaseRenameModal(caseName, customName, customSubtitle),
+        'edit-case-info': () => showEditCaseInfoModal(),
+        'edit-case-attempt-close': () => attemptCloseEditCaseModal(),
+        'edit-case-remove-alg': (_event, target) => target.parentElement.remove(),
+        'edit-case-add-alg': () => addNewAlgorithmField(),
+        'edit-case-save': () => saveEditedCase(caseName),
+        'edit-case-close': () => closeEditCaseModal(),
+    });
+    bindDelegatedActions(modal, {
+        'edit-case-evil-toggle': (_event, target) => {
+            evilnessMap[caseName] = target.checked;
+            saveState();
+        },
+    }, { eventType: 'change' });
     window.modalScrollY = window.scrollY;
     document.body.style.top = `-${window.modalScrollY}px`;
     document.documentElement.classList.add('scroll-locked');
@@ -949,7 +1006,7 @@ export function _getEditModalCaseName(modal) {
 }
 
 // Function to add new algorithm field
-window.addNewAlgorithmField = function () {
+export function addNewAlgorithmField() {
     const algsList = document.getElementById('editAlgsList');
     if (!algsList) return;
 
@@ -957,7 +1014,7 @@ window.addNewAlgorithmField = function () {
     newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
     newField.innerHTML = `
         <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
-        <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+        <button data-action="edit-case-remove-alg" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
             <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
         </button>
     `;
@@ -992,7 +1049,7 @@ window.addNewAlgorithmField = function () {
 };
 
 // Function to open case rename modal
-window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = '') {
+export function openCaseRenameModal(caseName, currentName, currentSubtitle = '') {
     const renameModal = document.createElement('div');
     renameModal.className = 'modal active';
     renameModal.id = 'caseRenameModal';
@@ -1002,7 +1059,7 @@ window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = 
         ">
             <div class="modal-header">
                 <span class="modal-title">Edit Case Name & Subtitle</span>
-                <button class="close-btn" onclick="closeCaseRenameModal()">&times;</button>
+                <button class="close-btn" data-action="case-rename-close">&times;</button>
             </div>
             <div class="modal-body">
                 <div style="margin-bottom: 15px;">
@@ -1014,14 +1071,18 @@ window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = 
                     <input type="text" id="caseSubtitleRenameInput" value="${currentSubtitle}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="applyCaseRename('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
-                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button data-action="case-rename-apply" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
+                    <button data-action="case-rename-close" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
     `;
 
     document.body.appendChild(renameModal);
+    bindDelegatedActions(renameModal, {
+        'case-rename-close': () => closeCaseRenameModal(),
+        'case-rename-apply': () => applyCaseRename(caseName),
+    });
 
     setTimeout(() => {
         const input = document.getElementById('caseRenameInput');
@@ -1030,14 +1091,14 @@ window.openCaseRenameModal = function (caseName, currentName, currentSubtitle = 
             input.select();
         }
     }, 100);
-};
+}
 
-window.closeCaseRenameModal = function () {
+export function closeCaseRenameModal() {
     const modal = document.getElementById('caseRenameModal');
     if (modal) modal.remove();
-};
+}
 
-window.applyCaseRename = function (caseName) {
+export function applyCaseRename(caseName) {
     const nameInput = document.getElementById('caseRenameInput');
     const subtitleInput = document.getElementById('caseSubtitleRenameInput');
     if (!nameInput || !subtitleInput) return;
@@ -1071,9 +1132,9 @@ window.applyCaseRename = function (caseName) {
     }
 
     closeCaseRenameModal();
-};
+}
 
-window.saveCaseRename = function (caseName) {
+export function saveCaseRename(caseName) {
     // This function is now called from saveEditedCase
     if (window.tempCaseRename && window.tempCaseRename.caseName === caseName) {
         const newName = window.tempCaseRename.newName;
@@ -1093,7 +1154,7 @@ window.saveCaseRename = function (caseName) {
 
         window.tempCaseRename = null;
     }
-};
+}
 
 export function closeEditCaseModal() {
     closeModalWithHistory(() => {
@@ -1105,7 +1166,7 @@ export function closeEditCaseModal() {
     });
 }
 
-window.attemptCloseEditCaseModal = function () {
+export function attemptCloseEditCaseModal() {
     const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
     const originalAlgs = [];
     const modal = document.getElementById('editCaseModal');
@@ -1165,9 +1226,9 @@ window.attemptCloseEditCaseModal = function () {
         window.tempCaseRename = null;
         closeEditCaseModal();
     }
-};
+}
 
-window.showEditCaseInfoModal = function () {
+export function showEditCaseInfoModal() {
     let infoModal = document.getElementById('editCaseInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1177,7 +1238,7 @@ window.showEditCaseInfoModal = function () {
             <div class="training-info-content">
                 <div class="training-info-header">
                     <span class="training-info-title">Edit Case Guide</span>
-                    <button class="training-info-close" onclick="closeEditCaseInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="edit-case-info-close">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
@@ -1196,20 +1257,23 @@ window.showEditCaseInfoModal = function () {
             </div>
         `;
         document.body.appendChild(infoModal);
+        bindDelegatedActions(infoModal, {
+            'edit-case-info-close': () => closeEditCaseInfoModal(),
+        });
     }
 
     pushModalState('editCaseInfoModal', closeEditCaseInfoModal);
     infoModal.classList.add('active');
-};
+}
 
-window.closeEditCaseInfoModal = function () {
+export function closeEditCaseInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('editCaseInfoModal');
         if (modal) {
             modal.classList.remove('active');
         }
     });
-};
+}
 
 export function saveEditedCase(caseName) {
     // Save name and subtitle from temp rename
@@ -1261,7 +1325,7 @@ export function openNotesModal(caseName) {
             <div class="modal-header">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
-                    <button onclick="showNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
+                    <button data-action="notes-info-open" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -1269,13 +1333,13 @@ export function openNotesModal(caseName) {
                         </svg>
                     </button>
                 </div>
-                <button class="close-btn" onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )">&times;</button>
+                <button class="close-btn" data-action="notes-attempt-close">&times;</button>
             </div>
             <div class="modal-body">
                 <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
                 <div style="text-align: center; margin-top: 15px;">
-                    <button onclick="saveNotes('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
-                    <button onclick="attemptCloseNotesModal('${caseName.replace(/'/g, "\\'")}' )" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button data-action="notes-save" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button data-action="notes-attempt-close" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -1290,9 +1354,15 @@ export function openNotesModal(caseName) {
     document.body.style.top = `-${window.modalScrollY}px`;
     document.documentElement.classList.add('scroll-locked');
     document.body.appendChild(modal);
+    modal.dataset.caseName = caseName;
+    bindDelegatedActions(modal, {
+        'notes-info-open': () => showNotesInfoModal(),
+        'notes-attempt-close': () => attemptCloseNotesModal(caseName),
+        'notes-save': () => saveNotes(caseName),
+    });
 }
 
-window.attemptCloseNotesModal = function (caseName) {
+export function attemptCloseNotesModal(caseName) {
     const textarea = document.getElementById('notesTextarea');
     const currentContent = textarea ? textarea.value.trim() : '';
     const originalContent = window.originalNoteContent || '';
@@ -1310,9 +1380,9 @@ window.attemptCloseNotesModal = function (caseName) {
     } else {
         closeNotesModal();
     }
-};
+}
 
-window.showNotesInfoModal = function () {
+export function showNotesInfoModal() {
     let infoModal = document.getElementById('notesInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1322,7 +1392,7 @@ window.showNotesInfoModal = function () {
             <div class="training-info-content">
                 <div class="training-info-header">
                     <span class="training-info-title">Notes Guide</span>
-                    <button class="training-info-close" onclick="closeNotesInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="notes-info-close">&times;</button>
                 </div>
                 <div class="training-info-body">
                     <div class="training-info-item">
@@ -1334,7 +1404,7 @@ window.showNotesInfoModal = function () {
                         • <s>Strikethrough</s>: <code>&lt;s&gt;strikethrough&lt;/s&gt;</code><br>
                         • <span style="color:red;">Colored Text</span>: <code>&lt;font color="red"&gt;colored text&lt;/font&gt;</code><br>
                         • <code>&lt;br&gt;</code> for line breaks<br>
-                        • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for <span role="button" tabindex="0" onclick="return false" onkeydown="return false" onmousedown="this.style.color='purple'" onmouseup="this.style.color='#00f'" onmouseleave="this.style.color='#00f'" style="color:#00f;text-decoration:underline;cursor:pointer;user-select:none;">links</span><br> <br>
+                        • <code>&lt;a href="url"&gt;link&lt;/a&gt;</code> for <span style="color:#00f;text-decoration:underline;cursor:pointer;user-select:none;">links</span><br> <br>
                     <strong>Preset makers, write notes with text formattings!! It's so much easier to read.</strong></div>
 
                     </div>
@@ -1353,20 +1423,23 @@ window.showNotesInfoModal = function () {
             </div>
         `;
         document.body.appendChild(infoModal);
+        bindDelegatedActions(infoModal, {
+            'notes-info-close': () => closeNotesInfoModal(),
+        });
     }
 
     pushModalState('notesInfoModal', closeNotesInfoModal);
     infoModal.classList.add('active');
-};
+}
 
-window.closeNotesInfoModal = function () {
+export function closeNotesInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('notesInfoModal');
         if (modal) {
             modal.classList.remove('active');
         }
     });
-};
+}
 
 export function closeNotesModal() {
     closeModalWithHistory(() => {
@@ -1395,7 +1468,7 @@ export function saveNotes(caseName) {
 }
 
 // General Notes Modal Functions
-window.openGeneralNotesModal = function() {
+export function openGeneralNotesModal() {
     const existingMenu = document.getElementById('caseContextMenu');
     if (existingMenu) existingMenu.remove();
 
@@ -1413,16 +1486,16 @@ window.openGeneralNotesModal = function() {
             <div class="modal-header" style="flex-shrink: 0;">
                 <span class="modal-title">General Notes</span>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
-                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
-                    <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
+                    <button id="editGeneralNotesBtn" data-action="general-notes-edit" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
+                    <button id="saveGeneralNotesBtn" data-action="general-notes-save" style="padding: 6px 16px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
+                    <button id="generalNotesInfoBtn" data-action="general-notes-info-open" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                     </button>
-                    <button class="close-btn" onclick="attemptCloseGeneralNotesModal()">&times;</button>
+                    <button class="close-btn" data-action="general-notes-attempt-close">&times;</button>
                 </div>
             </div>
             <div class="modal-body" style="flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 0;">
@@ -1433,6 +1506,12 @@ window.openGeneralNotesModal = function() {
             </div>
         </div>
     `;
+    bindDelegatedActions(modal, {
+        'general-notes-edit': () => toggleEditGeneralNotes(),
+        'general-notes-save': () => saveGeneralNotes(),
+        'general-notes-info-open': () => showGeneralNotesInfoModal(),
+        'general-notes-attempt-close': () => attemptCloseGeneralNotesModal(),
+    });
     // Render the saved content
     renderGeneralNotes();
 }
@@ -1495,7 +1574,7 @@ export function renderGeneralNotes() {
     }
 }
 
-window.toggleEditGeneralNotes = function() {
+export function toggleEditGeneralNotes() {
     const viewDiv = document.getElementById('generalNotesView');
     const editDiv = document.getElementById('generalNotesEdit');
     const textarea = document.getElementById('generalNotesTextarea');
@@ -1513,7 +1592,7 @@ window.toggleEditGeneralNotes = function() {
     if (infoBtn) infoBtn.style.display = 'flex';
 }
 
-window.attemptSwitchToViewMode = function() {
+export function attemptSwitchToViewMode() {
     const textarea = document.getElementById('generalNotesTextarea');
     const currentContent = textarea ? textarea.value : '';
     const originalContent = window.originalGeneralNotes || '';
@@ -1560,7 +1639,7 @@ export function saveGeneralNotes() {
     showToast('Notes saved!', 2000, 'success');
 }
 
-window.attemptCloseGeneralNotesModal = function () {
+export function attemptCloseGeneralNotesModal() {
     const viewDiv = document.getElementById('generalNotesView');
     if (viewDiv && viewDiv.style.display === 'none') {
         // In edit mode
@@ -1587,9 +1666,9 @@ window.attemptCloseGeneralNotesModal = function () {
     } else {
         closeGeneralNotesModal();
     }
-};
+}
 
-window.showGeneralNotesInfoModal = function () {
+export function showGeneralNotesInfoModal() {
     let infoModal = document.getElementById('generalNotesInfoModal');
     if (!infoModal) {
         infoModal = document.createElement('div');
@@ -1599,7 +1678,7 @@ window.showGeneralNotesInfoModal = function () {
             <div class="training-info-content" style="max-width: 600px;">
                 <div class="training-info-header">
                     <span class="training-info-title">General Notes Edit Guild</span>
-                    <button class="training-info-close" onclick="closeGeneralNotesInfoModal()">&times;</button>
+                    <button class="training-info-close" data-action="general-notes-info-close">&times;</button>
                 </div>
                 <div class="training-info-body" style="max-height: 70vh; overflow-y: auto;">
                     <p>This editor supports <strong>HTML, CSS, Javascript &amp; SVG</strong>. If you are not sure what you are doing, Write plain text instead.</p><br>
@@ -1648,20 +1727,23 @@ window.showGeneralNotesInfoModal = function () {
             </div>
         `;
         document.body.appendChild(infoModal);
+        bindDelegatedActions(infoModal, {
+            'general-notes-info-close': () => closeGeneralNotesInfoModal(),
+        });
     }
 
     pushModalState('generalNotesInfoModal', closeGeneralNotesInfoModal);
     infoModal.classList.add('active');
-};
+}
 
-window.closeGeneralNotesInfoModal = function () {
+export function closeGeneralNotesInfoModal() {
     closeModalWithHistory(() => {
         const modal = document.getElementById('generalNotesInfoModal');
         if (modal) {
             modal.classList.remove('active');
         }
     });
-};
+}
 
 // Info button click handlers with fixed positioning - use CAPTURE phase to intercept before parent buttons
 document.addEventListener("mousedown", (e) => {
@@ -1797,10 +1879,8 @@ export function showToast(message, duration = 3000, type = 'info') {
     }, duration);
 }
 
-window.showToast = showToast;
-
 // Confirmation modal
-window.showConfirmation = function (message, onConfirm, onCancel) {
+export function showConfirmation(message, onConfirm, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
@@ -1836,7 +1916,7 @@ window.showConfirmation = function (message, onConfirm, onCancel) {
 };
 
 // Three-button confirmation modal (Save/Discard/Cancel)
-window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCancel) {
+export function showSaveDiscardConfirmation(message, onSave, onDiscard, onCancel) {
     const modal = document.createElement('div');
     modal.className = 'modal active';
     modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
@@ -2017,13 +2097,6 @@ export function openProfileModal() {
     }
 }
 
-// Make functions globally accessible
-window.openProfileModal = openProfileModal;
-window.openProfileModalDesktop = openProfileModalDesktop;
-window.closeProfileModalDesktop = closeProfileModalDesktop;
-window.openProfileModalMobile = openProfileModalMobile;
-window.closeProfileModalMobile = closeProfileModalMobile;
-
 export const AVATARS = [
     'res/avatar.svg',
     'res/avatar/1.svg',
@@ -2071,7 +2144,7 @@ export function buildAvatarGrid(mode) {
     });
 }
 
-window.switchToEditProfile = function(mode) {
+export function switchToEditProfile(mode) {
     tempSelectedAvatar = profileAvatar;
     document.getElementById(`profileView${mode}`).style.display = 'none';
     document.getElementById(`profileEdit${mode}`).style.display = 'block';
@@ -2080,13 +2153,13 @@ window.switchToEditProfile = function(mode) {
     buildAvatarGrid(mode);
 };
 
-window.switchToViewProfile = function(mode) {
+export function switchToViewProfile(mode) {
     tempSelectedAvatar = null;
     document.getElementById(`profileEdit${mode}`).style.display = 'none';
     document.getElementById(`profileView${mode}`).style.display = 'block';
 };
 
-window.saveProfileEdit = function(mode) {
+export function saveProfileEdit(mode) {
     const nameInput = document.getElementById(`profileNameInput${mode}`);
     const newName = nameInput ? nameInput.value.trim() : '';
     const nextProfileName = newName || 'Profile';
@@ -2160,7 +2233,7 @@ export function updateProfileStats() {
 }
 
 // About Modal Functions
-window.openAboutModal = function() {
+export function openAboutModal() {
     const modal = document.getElementById('aboutModal');
 
     window.modalScrollY = window.scrollY;
@@ -2219,19 +2292,19 @@ export function generateSidebarHTML() {
     sidebar.id = 'appSidebar';
     sidebar.className = 'app-sidebar';
     sidebar.innerHTML = `
-        <div class="sidebar-overlay" onclick="closeSidebar()"></div>
+        <div class="sidebar-overlay" data-action="sidebar-close"></div>
         <div class="sidebar-content">
             <div class="sidebar-header">
                 <h2 style="margin: 0; font-size: 1.3rem; font-weight: 700; color: var(--text-ui);">Menu</h2>
                 <div style="display: flex; gap: 8px; align-items: center;">
-                    <button class="sidebar-close-btn instruction-btn" onclick="event.stopPropagation(); showHomepageInfoModal();" aria-label="Instructions" style="color: var(--text-secondary);">
+                    <button class="sidebar-close-btn instruction-btn" data-action="sidebar-homepage-info" aria-label="Instructions" style="color: var(--text-secondary);">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 20px; height: 20px;">
                             <circle cx="12" cy="12" r="10"></circle>
                             <line x1="12" y1="16" x2="12" y2="12"></line>
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                     </button>
-                    <button class="sidebar-close-btn" onclick="closeSidebar()" aria-label="Close">
+                    <button class="sidebar-close-btn" data-action="sidebar-close" aria-label="Close">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
                             <line x1="18" y1="6" x2="6" y2="18"></line>
                             <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -2240,29 +2313,29 @@ export function generateSidebarHTML() {
                 </div>
             </div>
             <div class="sidebar-body">
-                <button class="sidebar-item sidebar-mobile-only" onclick="openProfileModal(); closeSidebar();">
+                <button class="sidebar-item sidebar-mobile-only" data-action="sidebar-profile">
                     <img src="res/avatar.svg" alt="Profile">
                     <span>Profile</span>
                 </button>
-                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openGeneralNotesModal(), 350);">
+                <button class="sidebar-item" data-action="sidebar-general-notes">
                     <img src="res/notes.svg" alt="Notes">
                     <span>General Notes</span>
                 </button>
-                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openTrainerPickerModal(), 350);">
+                <button class="sidebar-item" data-action="sidebar-trainer">
                     <img src="res/training.svg" alt="Trainer">
                     <span>Trainer</span>
                 </button>
-                <button class="sidebar-item" onclick="openNewParityAnalysis(null); closeSidebar();">
+                <button class="sidebar-item" data-action="sidebar-parity-tracer">
                     <img src="res/tracing.svg" alt="Parity Tracer">
                     <span>Parity Tracer</span>
                 </button>
-                <button class="sidebar-item" onclick="closeSidebar(); setTimeout(()=>window.openUnifiedSettings('homescreen'),350);">
+                <button class="sidebar-item" data-action="sidebar-settings">
                     <img src="res/training-settings.svg" alt="Settings">
                     <span>Settings</span>
                 </button>
                 <div class="sidebar-divider"></div>
                 <div style="padding: 0;">
-                    <div id="presetExpandBtn" onclick="togglePresetExpand()" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: var(--text-ui); font-weight: 500;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background='transparent'">
+                    <div id="presetExpandBtn" data-action="sidebar-toggle-presets" style="padding: 14px 20px; background: transparent; border: none; width: 100%; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: background 0.2s; font-size: 0.95rem; color: var(--text-ui); font-weight: 500;">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; flex-shrink: 0;">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
                         </svg>
@@ -2274,7 +2347,7 @@ export function generateSidebarHTML() {
                     <div id="presetOptions" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease;"></div>
                 </div>
                 <div class="sidebar-divider"></div>
-                <button class="sidebar-item" onclick="exportData(); closeSidebar();">
+                <button class="sidebar-item" data-action="sidebar-export">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
                         <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                         <polyline points="7 10 12 15 17 10"></polyline>
@@ -2289,9 +2362,9 @@ export function generateSidebarHTML() {
                         <line x1="12" y1="3" x2="12" y2="15"></line>
                     </svg>
                     <span>Import Data</span>
-                    <input type="file" id="sidebarImportFile" accept=".json" style="display: none;" onchange="handleFileImport(this.files[0]); closeSidebar();">
+                    <input type="file" id="sidebarImportFile" accept=".json" style="display: none;">
                 </label>
-                <button class="sidebar-item" onclick="openAboutModal(); closeSidebar();">
+                <button class="sidebar-item" data-action="sidebar-about">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px;">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="12" y1="16" x2="12" y2="12"></line>
@@ -2304,6 +2377,7 @@ export function generateSidebarHTML() {
     `;
 
     document.body.appendChild(sidebar);
+    wireSidebarActions(sidebar);
 
     // Populate preset dropdown
     populatePresetDropdown('sidebarPresetSelector');
@@ -2313,6 +2387,46 @@ export function generateSidebarHTML() {
 
     // Initialize preset selector
     initializePresetSelector();
+}
+
+function closeSidebarThen(callback, delay = 350) {
+    closeSidebar();
+    if (typeof callback === 'function') setTimeout(callback, delay);
+}
+
+function wireSidebarActions(sidebar) {
+    bindDelegatedActions(sidebar, {
+        'sidebar-close': () => closeSidebar(),
+        'sidebar-homepage-info': () => showHomepageInfoModal(),
+        'sidebar-profile': () => {
+            openProfileModal();
+            closeSidebar();
+        },
+        'sidebar-general-notes': () => closeSidebarThen(() => openGeneralNotesModal()),
+        'sidebar-trainer': () => closeSidebarThen(() => openTrainerPickerModal()),
+        'sidebar-parity-tracer': () => {
+            openNewParityAnalysis(null);
+            closeSidebar();
+        },
+        'sidebar-settings': () => closeSidebarThen(() => window.openUnifiedSettings('homescreen')),
+        'sidebar-toggle-presets': () => togglePresetExpand(),
+        'sidebar-export': () => {
+            exportData();
+            closeSidebar();
+        },
+        'sidebar-about': () => {
+            openAboutModal();
+            closeSidebar();
+        },
+    });
+
+    const importInput = sidebar.querySelector('#sidebarImportFile');
+    if (importInput) {
+        importInput.addEventListener('change', () => {
+            handleFileImport(importInput.files[0]);
+            closeSidebar();
+        });
+    }
 }
 
 export function initializePresetSelector() {
@@ -2346,7 +2460,7 @@ export function initializePresetSelector() {
 
 registerAction('initializePresetSelector', initializePresetSelector);
 
-window.togglePresetExpand = function () {
+export function togglePresetExpand() {
     const presetOptions = document.getElementById('presetOptions');
     const expandIcon = document.getElementById('presetExpandIcon');
 
@@ -2362,7 +2476,7 @@ window.togglePresetExpand = function () {
         presetOptions.style.maxHeight = '0px';
         expandIcon.style.transform = 'rotate(0deg)';
     }
-};
+}
 
 export function toggleSidebar() {
     generateSidebarHTML();
@@ -2380,9 +2494,7 @@ export function toggleSidebar() {
     }
 }
 
-window.toggleSidebar = toggleSidebar;
-
-window.closeSidebar = function () {
+export function closeSidebar() {
     const sidebar = document.getElementById('appSidebar');
     if (sidebar) {
         sidebar.classList.remove('active');
@@ -2396,10 +2508,10 @@ window.closeSidebar = function () {
         if (presetOptions) presetOptions.style.maxHeight = '0px';
         if (expandIcon) expandIcon.style.transform = 'rotate(0deg)';
     }
-};
+}
 
 // Quick info popup function
-window.showQuickInfo = function (message) {
+export function showQuickInfo(message) {
     const existing = document.getElementById('quickInfoPopup');
     if (existing) existing.remove();
 
@@ -2409,32 +2521,40 @@ window.showQuickInfo = function (message) {
     popup.innerHTML = `
         <div class="quick-info-box">
             <div>${message}</div>
-            <button class="quick-info-btn" onclick="document.getElementById('quickInfoPopup').remove()">Got it</button>
+            <button class="quick-info-btn" data-action="quick-info-close">Got it</button>
         </div>
     `;
 
-    popup.onclick = (e) => { if (e.target === popup) popup.remove(); };
+    const close = () => popup.remove();
+    popup.addEventListener('click', (e) => { if (e.target === popup) close(); });
+    bindDelegatedActions(popup, {
+        'quick-info-close': close,
+    });
 
     const escHandler = (e) => {
         if (e.key === 'Escape') {
-            popup.remove();
+            close();
             document.removeEventListener('keydown', escHandler);
         }
     };
     document.addEventListener('keydown', escHandler);
 
     document.body.appendChild(popup);
-};
+}
 
 // Handle outside clicks for all modals
 document.addEventListener('click', (e) => {
     // Training info modals
-    const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
-    infoModals.forEach(modalId => {
+    const infoModalClosers = {
+        homepageInfoModal: closeHomepageInfoModal,
+        editCaseInfoModal: closeEditCaseInfoModal,
+        notesInfoModal: closeNotesInfoModal,
+        generalNotesInfoModal: closeGeneralNotesInfoModal,
+    };
+    Object.entries(infoModalClosers).forEach(([modalId, closeFunc]) => {
         const modal = document.getElementById(modalId);
         if (modal && modal.classList.contains('active') && e.target === modal) {
-            const closeFunc = window[`close${modalId.charAt(0).toUpperCase() + modalId.slice(1).replace('Modal', '')}Modal`];
-            if (closeFunc) closeFunc();
+            closeFunc();
         }
     });
 
@@ -2457,56 +2577,80 @@ window.addEventListener('scroll', () => {
     document.querySelectorAll(".info-box.show").forEach(box => box.classList.remove("show"));
 }, true);
 
-// ESM live global compatibility bridge
-for (const [name, descriptor] of Object.entries({
-    "getColorName": { get: () => getColorName, set: value => { Object.defineProperty(window, "getColorName", { configurable: true, enumerable: true, writable: true, value }); } },
-    "generateModalHTML": { get: () => generateModalHTML, set: value => { Object.defineProperty(window, "generateModalHTML", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeSettingsModal": { get: () => closeSettingsModal, set: value => { Object.defineProperty(window, "closeSettingsModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "handlePresetChange": { get: () => handlePresetChange, set: value => { Object.defineProperty(window, "handlePresetChange", { configurable: true, enumerable: true, writable: true, value }); } },
-    "applyHintVisibility": { get: () => applyHintVisibility, set: value => { Object.defineProperty(window, "applyHintVisibility", { configurable: true, enumerable: true, writable: true, value }); } },
-    "applyInstructionVisibility": { get: () => applyInstructionVisibility, set: value => { Object.defineProperty(window, "applyInstructionVisibility", { configurable: true, enumerable: true, writable: true, value }); } },
-    "populatePresetDropdown": { get: () => populatePresetDropdown, set: value => { Object.defineProperty(window, "populatePresetDropdown", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeColorSchemeModal": { get: () => closeColorSchemeModal, set: value => { Object.defineProperty(window, "closeColorSchemeModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "applyAlgorithmFontSize": { get: () => applyAlgorithmFontSize, set: value => { Object.defineProperty(window, "applyAlgorithmFontSize", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openNewParityAnalysis": { get: () => openNewParityAnalysis, set: value => { Object.defineProperty(window, "openNewParityAnalysis", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeHomepageInfoModal": { get: () => closeHomepageInfoModal, set: value => { Object.defineProperty(window, "closeHomepageInfoModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openEditCaseModal": { get: () => openEditCaseModal, set: value => { Object.defineProperty(window, "openEditCaseModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "getModalCaseShapeData": { get: () => getModalCaseShapeData, set: value => { Object.defineProperty(window, "getModalCaseShapeData", { configurable: true, enumerable: true, writable: true, value }); } },
-    "updateInputColor": { get: () => updateInputColor, set: value => { Object.defineProperty(window, "updateInputColor", { configurable: true, enumerable: true, writable: true, value }); } },
-    "_getEditModalCaseName": { get: () => _getEditModalCaseName, set: value => { Object.defineProperty(window, "_getEditModalCaseName", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeEditCaseModal": { get: () => closeEditCaseModal, set: value => { Object.defineProperty(window, "closeEditCaseModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "saveEditedCase": { get: () => saveEditedCase, set: value => { Object.defineProperty(window, "saveEditedCase", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openCustomizeSVGsModal": { get: () => openCustomizeSVGsModal, set: value => { Object.defineProperty(window, "openCustomizeSVGsModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openNotesModal": { get: () => openNotesModal, set: value => { Object.defineProperty(window, "openNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeNotesModal": { get: () => closeNotesModal, set: value => { Object.defineProperty(window, "closeNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "saveNotes": { get: () => saveNotes, set: value => { Object.defineProperty(window, "saveNotes", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeGeneralNotesModal": { get: () => closeGeneralNotesModal, set: value => { Object.defineProperty(window, "closeGeneralNotesModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "renderGeneralNotes": { get: () => renderGeneralNotes, set: value => { Object.defineProperty(window, "renderGeneralNotes", { configurable: true, enumerable: true, writable: true, value }); } },
-    "switchToViewMode": { get: () => switchToViewMode, set: value => { Object.defineProperty(window, "switchToViewMode", { configurable: true, enumerable: true, writable: true, value }); } },
-    "saveGeneralNotes": { get: () => saveGeneralNotes, set: value => { Object.defineProperty(window, "saveGeneralNotes", { configurable: true, enumerable: true, writable: true, value }); } },
-    "activeProfilePopup": { get: () => activeProfilePopup, set: value => { activeProfilePopup = value; } },
-    "activeProfilePopupElement": { get: () => activeProfilePopupElement, set: value => { activeProfilePopupElement = value; } },
-    "showProfilePopup": { get: () => showProfilePopup, set: value => { Object.defineProperty(window, "showProfilePopup", { configurable: true, enumerable: true, writable: true, value }); } },
-    "hideProfilePopup": { get: () => hideProfilePopup, set: value => { Object.defineProperty(window, "hideProfilePopup", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openProfileModalDesktop": { get: () => openProfileModalDesktop, set: value => { Object.defineProperty(window, "openProfileModalDesktop", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeProfileModalDesktop": { get: () => closeProfileModalDesktop, set: value => { Object.defineProperty(window, "closeProfileModalDesktop", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openProfileModalMobile": { get: () => openProfileModalMobile, set: value => { Object.defineProperty(window, "openProfileModalMobile", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeProfileModalMobile": { get: () => closeProfileModalMobile, set: value => { Object.defineProperty(window, "closeProfileModalMobile", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openProfileModal": { get: () => openProfileModal, set: value => { Object.defineProperty(window, "openProfileModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "AVATARS": { get: () => AVATARS, set: value => { Object.defineProperty(window, "AVATARS", { configurable: true, enumerable: true, writable: true, value }); } },
-    "tempSelectedAvatar": { get: () => tempSelectedAvatar, set: value => { tempSelectedAvatar = value; } },
-    "applyProfileUI": { get: () => applyProfileUI, set: value => { Object.defineProperty(window, "applyProfileUI", { configurable: true, enumerable: true, writable: true, value }); } },
-    "buildAvatarGrid": { get: () => buildAvatarGrid, set: value => { Object.defineProperty(window, "buildAvatarGrid", { configurable: true, enumerable: true, writable: true, value }); } },
-    "updateProfileStats": { get: () => updateProfileStats, set: value => { Object.defineProperty(window, "updateProfileStats", { configurable: true, enumerable: true, writable: true, value }); } },
-    "closeAboutModal": { get: () => closeAboutModal, set: value => { Object.defineProperty(window, "closeAboutModal", { configurable: true, enumerable: true, writable: true, value }); } },
-    "openParityTracingPersonalization": { get: () => openParityTracingPersonalization, set: value => { Object.defineProperty(window, "openParityTracingPersonalization", { configurable: true, enumerable: true, writable: true, value }); } },
-    "generateSidebarHTML": { get: () => generateSidebarHTML, set: value => { Object.defineProperty(window, "generateSidebarHTML", { configurable: true, enumerable: true, writable: true, value }); } },
-    "initializePresetSelector": { get: () => initializePresetSelector, set: value => { Object.defineProperty(window, "initializePresetSelector", { configurable: true, enumerable: true, writable: true, value }); } },
-})) {
-    Object.defineProperty(window, name, {
-        configurable: true,
-        enumerable: true,
-        get: descriptor.get,
-        set: descriptor.set
-    });
-}
+Object.entries({
+    getColorName,
+    generateModalHTML,
+    openSettingsModal,
+    closeSettingsModal,
+    handlePresetChange,
+    toggleHints,
+    toggleHideInstructions,
+    toggleHideParenthesis,
+    toggleEnhancedAccess,
+    applyHintVisibility,
+    applyInstructionVisibility,
+    populatePresetDropdown,
+    openColorSchemeModal,
+    closeColorSchemeModal,
+    updateImageSizePreview,
+    updateAlgFontSizePreview,
+    applyAlgorithmFontSize,
+    openNewParityAnalysis,
+    showHomepageInfoModal,
+    closeHomepageInfoModal,
+    openEditCaseModal,
+    openCaseRenameModal,
+    closeCaseRenameModal,
+    applyCaseRename,
+    saveCaseRename,
+    getModalCaseShapeData,
+    updateInputColor,
+    addNewAlgorithmField,
+    closeEditCaseModal,
+    attemptCloseEditCaseModal,
+    showEditCaseInfoModal,
+    closeEditCaseInfoModal,
+    saveEditedCase,
+    openCustomizeSVGsModal,
+    openNotesModal,
+    attemptCloseNotesModal,
+    showNotesInfoModal,
+    closeNotesInfoModal,
+    closeNotesModal,
+    saveNotes,
+    openGeneralNotesModal,
+    closeGeneralNotesModal,
+    renderGeneralNotes,
+    toggleEditGeneralNotes,
+    attemptSwitchToViewMode,
+    switchToViewMode,
+    saveGeneralNotes,
+    attemptCloseGeneralNotesModal,
+    showGeneralNotesInfoModal,
+    closeGeneralNotesInfoModal,
+    showToast,
+    showConfirmation,
+    showSaveDiscardConfirmation,
+    showProfilePopup,
+    hideProfilePopup,
+    openProfileModalDesktop,
+    closeProfileModalDesktop,
+    openProfileModalMobile,
+    closeProfileModalMobile,
+    openProfileModal,
+    switchToEditProfile,
+    switchToViewProfile,
+    saveProfileEdit,
+    applyProfileUI,
+    buildAvatarGrid,
+    updateProfileStats,
+    openAboutModal,
+    closeAboutModal,
+    openParityTracingPersonalization,
+    generateSidebarHTML,
+    initializePresetSelector,
+    togglePresetExpand,
+    toggleSidebar,
+    closeSidebar,
+    showQuickInfo,
+}).forEach(([name, fn]) => registerAction(name, fn));
