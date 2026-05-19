@@ -45,8 +45,8 @@
     const { top, bot } = getTheShapePatternsForTopAndBottomLayersPls(state);
 
     let color = null;
-    if (top === 'CECECECE' && bot === 'ECECECEC') color = 'blue';
-    else if (top === 'ECECECEC' && bot === 'CECECECE') color = 'red';
+    if (top === 'CECECECE' && bot === 'ECECECEC') color = 'var(--double-align-color)';
+    else if (top === 'ECECECEC' && bot === 'CECECECE') color = 'var(--double-misalign-color)';
 
     const before = scramble.substring(0, slashIndex);
     const after = scramble.substring(slashIndex + 3);

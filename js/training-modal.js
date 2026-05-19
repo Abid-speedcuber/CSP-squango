@@ -1244,7 +1244,7 @@ function openTrainingInfoModal() {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text">The <b>out-of-cubeshape</b> part of the scramble is colored. <span style="color: #2196F3; font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: #f44336; font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
+                        <div class="training-info-text">The <b>out-of-cubeshape</b> part of the scramble is colored. <span style="color: var(--double-align-color); font-weight: 600;">Blue</span> means the scramble goes out of CS from (0,0) alignment, <span style="color: var(--double-misalign-color); font-weight: 600;">red</span> means it goes out at (1,-1) alignment.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>

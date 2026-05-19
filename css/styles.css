@@ -129,6 +129,9 @@
     /* ── Search highlight ── */
     --search-highlight-bg:    #ffeb3b;
     --search-highlight-color: #000000;
+
+    --double-align-color:    #007afc;
+    --double-misalign-color: #dc3545;
 }
 
 /* ═══════════════════════════════════════════════════════════
@@ -240,6 +243,9 @@
 
     --search-highlight-bg:    #6b5a00;
     --search-highlight-color: #ffe680;
+
+    --double-align-color:    #6a9ef8;
+    --double-misalign-color: #ff6b6b;
 }
 
 /* ═══════════════════════════════════════════════════════════
