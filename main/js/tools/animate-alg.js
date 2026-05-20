@@ -86,6 +86,22 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
         }
     }
 
+    function getSvgOrigin(svg, fallbackSize) {
+        const originX = parseFloat(svg.getAttribute('data-origin-x'));
+        const originY = parseFloat(svg.getAttribute('data-origin-y'));
+        if (Number.isFinite(originX) && Number.isFinite(originY)) {
+            return { x: originX, y: originY };
+        }
+
+        const viewBox = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+        if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+            return { x: viewBox[0] + viewBox[2] / 2, y: viewBox[1] + viewBox[3] / 2 };
+        }
+
+        const size = parseFloat(svg.getAttribute('width')) || fallbackSize;
+        return { x: size / 2, y: size / 2 };
+    }
+
     // ========================================
     // MAIN VIEWER CREATION FUNCTION
     // ========================================
@@ -93,12 +109,12 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
         const modalId = 'sq1-viewer-modal-' + Date.now();
 
         const colorScheme = {
-            topColor: colors.topColor || '#000000',
+            topColor: colors.topColor || '#474747',
             bottomColor: colors.bottomColor || '#FFFFFF',
             frontColor: colors.frontColor || '#CC0000',
             rightColor: colors.rightColor || '#00AA00',
             backColor: colors.backColor || '#FF8C00',
-            leftColor: colors.leftColor || '#0066CC'
+            leftColor: colors.leftColor || '#0080FF'
         };
 
         // Initialize state
@@ -956,11 +972,12 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
                             const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
                             const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
 
-                            const svgSize = state.imageSize;
-                            const topCenterX = svgSize / 2;
-                            const topCenterY = svgSize / 2;
-                            const bottomCenterX = svgSize / 2;
-                            const bottomCenterY = svgSize / 2;
+                            const topOrigin = getSvgOrigin(topSvg, state.imageSize);
+                            const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
+                            const topCenterX = topOrigin.x;
+                            const topCenterY = topOrigin.y;
+                            const bottomCenterX = bottomOrigin.x;
+                            const bottomCenterY = bottomOrigin.y;
 
                             const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
                             const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
@@ -1099,11 +1116,12 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
                     const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
                     const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
 
-                    const svgSize = state.imageSize;
-                    const topCenterX = svgSize / 2;
-                    const topCenterY = svgSize / 2;
-                    const bottomCenterX = svgSize / 2;
-                    const bottomCenterY = svgSize / 2;
+                    const topOrigin = getSvgOrigin(topSvg, state.imageSize);
+                    const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
+                    const topCenterX = topOrigin.x;
+                    const topCenterY = topOrigin.y;
+                    const bottomCenterX = bottomOrigin.x;
+                    const bottomCenterY = bottomOrigin.y;
 
                     if (isSlashToken) {
                         const duration = 500 / state.animationSpeed;

@@ -23,11 +23,46 @@ import { bindDelegatedActions, registerAction } from './browser-api.js?v=esm-202
 export function getColorName(hexColor) {
     const colorMap = {
         '#000000': 'Black',
+        '#474747': 'Gray',
         '#FFFFFF': 'White',
         '#FFFF00': 'Yellow',
-        '#FFD700': 'Yellow'
+        '#FFD700': 'Yellow',
+        '#CC0000': 'Red',
+        '#00AA00': 'Green',
+        '#FF8C00': 'Orange',
+        '#0080FF': 'Blue',
+        '#0066CC': 'Blue'
     };
     return colorMap[hexColor.toUpperCase()] || 'Top';
+}
+
+const DRAW_SQUAN_COLOR_DEFAULTS = [
+    { face: 'top', label: 'Top', value: '#474747' },
+    { face: 'bottom', label: 'Bottom', value: '#FFFFFF' },
+    { face: 'front', label: 'Front', value: '#CC0000' },
+    { face: 'right', label: 'Right', value: '#00AA00' },
+    { face: 'back', label: 'Back', value: '#FF8C00' },
+    { face: 'left', label: 'Left', value: '#0080FF' },
+];
+
+function getColorSchemeValue(face) {
+    return colorScheme[face + 'Color'] || DRAW_SQUAN_COLOR_DEFAULTS.find(item => item.face === face)?.value || '#000000';
+}
+
+function renderColorSchemeControls() {
+    return DRAW_SQUAN_COLOR_DEFAULTS.map(({ face, label }) => {
+        const value = getColorSchemeValue(face);
+        return `
+            <div class="color-swatch-row" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid var(--surface-border);">
+                <label for="color-${face}" style="font-weight:600;color:var(--text-primary);">${label}</label>
+                <div style="display:flex;align-items:center;gap:10px;">
+                    <input id="color-${face}" class="color-swatch-input" type="color" data-face="${face}" value="${value}"
+                        style="width:44px;height:34px;border:1px solid var(--border-color);border-radius:6px;background:var(--surface);padding:2px;cursor:pointer;">
+                    <span class="color-swatch-value" data-face-value="${face}" style="min-width:72px;font-family:monospace;font-size:0.85rem;color:var(--text-secondary);text-transform:uppercase;">${value}</span>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 // Generate all modal HTML dynamically for lazy loading
@@ -43,58 +78,13 @@ export function generateModalHTML() {
                     <button class="close-btn" data-action="close-color-scheme">&times;</button>
                 </div>
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Top Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="top" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="top" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
-                            <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; color: #000000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
-                        </div>
+                    <div style="padding: 2px 0 10px;">
+                        ${renderColorSchemeControls()}
                     </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Bottom Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="bottom" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="bottom" data-color="#000000" style="background: #000000; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
-                            <button class="color-btn" data-face="bottom" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Front Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="front" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="front" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="front" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="front" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Right Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="right" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="right" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="right" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="right" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Back Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="back" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="back" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="back" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="back" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
-                        </div>
-                    </div>
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Left Color:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <button class="color-btn" data-face="left" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
-                            <button class="color-btn" data-face="left" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
-                            <button class="color-btn" data-face="left" data-color="#0066CC" style="background: #0066CC; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Blue</button>
-                            <button class="color-btn" data-face="left" data-color="#FF8C00" style="background: #FF8C00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Orange</button>
-                        </div>
-                    </div>
+                    <button type="button" data-action="reset-color-scheme"
+                        style="margin-top:12px;padding:8px 12px;border:1px solid var(--border-color);border-radius:6px;background:var(--surface2);color:var(--text-primary);font-weight:600;cursor:pointer;">
+                        Reset to Draw-a-Squan Defaults
+                    </button>
                 </div>
             </div>
         </div>
@@ -371,6 +361,7 @@ export function generateModalHTML() {
     document.body.appendChild(modalContainer);
     bindDelegatedActions(modalContainer, {
         'close-color-scheme': () => closeColorSchemeModal(),
+        'reset-color-scheme': () => resetColorSchemeToDefaults(),
         'profile-edit': (_event, target) => switchToEditProfile(target.dataset.mode),
         'profile-view': (_event, target) => switchToViewProfile(target.dataset.mode),
         'profile-save': (_event, target) => saveProfileEdit(target.dataset.mode),
@@ -378,35 +369,8 @@ export function generateModalHTML() {
         'about-close': () => closeAboutModal(),
     });
 
-    // Setup color button handlers after modals are created
-    document.querySelectorAll('.color-btn').forEach(btn => {
-        // Set contrast-aware text color on load
-        const bg = btn.getAttribute('data-color');
-        if (bg) {
-            const r = parseInt(bg.substr(1,2),16), g = parseInt(bg.substr(3,2),16), b = parseInt(bg.substr(5,2),16);
-            btn.style.color = (0.299*r + 0.587*g + 0.114*b) > 128 ? '#000000' : '#ffffff';
-        }
-        btn.addEventListener('click', function () {
-            const face = this.getAttribute('data-face');
-            const color = this.getAttribute('data-color');
-
-            colorScheme[face + 'Color'] = color;
-
-            const sameFaceButtons = document.querySelectorAll(`.color-btn[data-face="${face}"]`);
-            sameFaceButtons.forEach(b => {
-                b.classList.toggle('selected', b === this);
-            });
-
-            // Auto-save
-            markParityAlgorithmsDirty();
-            saveState();
-
-            // Recalculate parity if needed
-            if (needsParityRecalculation()) {
-                calculateAndCacheAllParity();
-                render();
-            }
-        });
+    document.querySelectorAll('.color-swatch-input').forEach(input => {
+        input.addEventListener('input', () => updateColorSchemeFace(input.dataset.face, input.value));
     });
 }
 
@@ -612,6 +576,44 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Color Scheme Modal Functions
+function refreshColorSchemeControls() {
+    document.querySelectorAll('.color-swatch-input').forEach(input => {
+        const value = getColorSchemeValue(input.dataset.face).toUpperCase();
+        input.value = value;
+        const label = document.querySelector(`.color-swatch-value[data-face-value="${input.dataset.face}"]`);
+        if (label) label.textContent = value;
+    });
+}
+
+function persistColorSchemeChange() {
+    markParityAlgorithmsDirty();
+    saveState();
+
+    if (needsParityRecalculation()) {
+        calculateAndCacheAllParity();
+        render();
+    }
+}
+
+function updateColorSchemeFace(face, color) {
+    if (!face || !color) return;
+    const normalized = color.toUpperCase();
+    colorScheme[face + 'Color'] = normalized;
+    const label = document.querySelector(`.color-swatch-value[data-face-value="${face}"]`);
+    if (label) label.textContent = normalized;
+    persistColorSchemeChange();
+}
+
+function resetColorSchemeToDefaults() {
+    DRAW_SQUAN_COLOR_DEFAULTS.forEach(({ face, value }) => {
+        colorScheme[face + 'Color'] = value;
+    });
+    colorScheme.dividerColor = '#5E5E5E';
+    colorScheme.circleColor = 'transparent';
+    refreshColorSchemeControls();
+    persistColorSchemeChange();
+}
+
 export function openColorSchemeModal() {
     const modal = document.getElementById('colorSchemeModal');
 
@@ -623,13 +625,7 @@ export function openColorSchemeModal() {
 
     pushModalState('colorSchemeModal', closeColorSchemeModal);
 
-    // Highlight currently selected colors
-    document.querySelectorAll('.color-btn').forEach(btn => {
-        const face = btn.getAttribute('data-face');
-        const color = btn.getAttribute('data-color');
-        const currentColor = colorScheme[face + 'Color'];
-        btn.classList.toggle('selected', color === currentColor);
-    });
+    refreshColorSchemeControls();
 }
 
 export function closeColorSchemeModal() {

@@ -146,13 +146,13 @@ export let showHints = localStorage.getItem('showHints') !== null ? localStorage
 export let currentSortMode = localStorage.getItem('sortMode') || 'probability';
 export let svgData = { ...DEFAULT_SVGS };
 export let colorScheme = {
-    topColor: '#000000',
+    topColor: '#474747',
     bottomColor: '#FFFFFF',
     frontColor: '#CC0000',
     rightColor: '#00AA00',
     backColor: '#FF8C00',
-    leftColor: '#0066CC',
-    dividerColor: '#7a0000',
+    leftColor: '#0080FF',
+    dividerColor: '#5E5E5E',
     circleColor: 'transparent'
 };
 

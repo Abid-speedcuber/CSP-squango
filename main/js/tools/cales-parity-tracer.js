@@ -35,7 +35,7 @@
         frontCol: '#CC0000',
         rightCol: '#00AA00',
         backCol: '#FF8C00',
-        leftCol: '#0066CC'
+        leftCol: '#0080FF'
     });
 
     let C_Colors = { ...defaultTracerColors };
@@ -620,6 +620,31 @@
                      fill="${arrowColor}" stroke="none"/>
         </g>
     `;
+    }
+
+    function getSvgGeometry(svg, fallbackSize) {
+        const originX = parseFloat(svg.getAttribute('data-origin-x'));
+        const originY = parseFloat(svg.getAttribute('data-origin-y'));
+        const puzzleSize = parseFloat(svg.getAttribute('data-puzzle-size'));
+
+        if (Number.isFinite(originX) && Number.isFinite(originY)) {
+            return {
+                centerX: originX,
+                centerY: originY,
+                puzzleSize: Number.isFinite(puzzleSize) ? puzzleSize : fallbackSize,
+            };
+        }
+
+        const viewBox = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+        if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+            return {
+                centerX: viewBox[0] + viewBox[2] / 2,
+                centerY: viewBox[1] + viewBox[3] / 2,
+                puzzleSize: Number.isFinite(puzzleSize) ? puzzleSize : Math.min(viewBox[2], viewBox[3]),
+            };
+        }
+
+        return { centerX: fallbackSize / 2, centerY: fallbackSize / 2, puzzleSize: fallbackSize };
     }
 
     function displayResults(container, sixStepParity, config) {
@@ -1765,18 +1790,18 @@
             hideInstructionButton: options.hideInstructionButton || false,
             instructionText1: options.instructionText1 || 'Enter your scramble in the top input bar and press Analyze to trace parity.',
             instructionText2: options.instructionText2 || 'You can change the color scheme from Settings.',
-            instructionText2: options.instructionText3 || 'For symmetric case, click on the very middle of the image to trace from the other symmetry.',
-            instructionText3: options.instructionText4 || 'Personalize your tracing methods and tracing positions from the settings button.',
-            tlMainCol: options.topColor || '#000000',
-            tlColName: options.topColorName || 'Black',
-            tlColAbb: options.topColorShort || 'B',
+            instructionText3: options.instructionText3 || 'For symmetric case, click on the very middle of the image to trace from the other symmetry.',
+            instructionText4: options.instructionText4 || 'Personalize your tracing methods and tracing positions from the settings button.',
+            tlMainCol: options.topColor || '#474747',
+            tlColName: options.topColorName || 'Gray',
+            tlColAbb: options.topColorShort || 'G',
             blMainCol: options.bottomColor || '#FFFFFF',
             blColName: options.bottomColorName || 'White',
             blColAbb: options.bottomColorShort || 'W',
             frontCol: options.frontColor || '#CC0000',
             rightCol: options.rightColor || '#00AA00',
             backCol: options.backColor || '#FF8C00',
-            leftCol: options.leftColor || '#0066CC',
+            leftCol: options.leftColor || '#0080FF',
             scrambleTextInput: options.scrambleText || '',
             shouldGenerateImage: options.generateImage !== false,
             imageSizeInPixels: options.imageSize || 200,
@@ -2178,11 +2203,6 @@
                             // unrotated units for arrow calculation
                             const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
 
-                            const unit10vh = imageSize * 0.4;
-                            const radiusOuter = unit10vh * 0.7;
-                            const ringRadius = radiusOuter + (unit10vh * 0.4);
-                            const centerX = imageSize / 2, centerY = imageSize / 2;
-
                             const topArrowData = getArrowStartAngle(parity.topTraceRotation, topRawU, 'TOP', topBits);
                             const botArrowData = getArrowStartAngle(parity.botTraceRotation, botRawU, 'BOTTOM', botBits);
 
@@ -2190,8 +2210,14 @@
                             tempDiv.innerHTML = svgContent;
                             const svgs = tempDiv.querySelectorAll('svg');
                             if (svgs.length >= 2) {
-                                svgs[0].insertAdjacentHTML('beforeend', generateArrow(centerX, centerY, ringRadius, topArrowData.startAngle, topArrowData.arcDegrees, imageSize));
-                                svgs[1].insertAdjacentHTML('beforeend', generateArrow(centerX, centerY, ringRadius, botArrowData.startAngle, botArrowData.arcDegrees, imageSize));
+                                const topGeometry = getSvgGeometry(svgs[0], imageSize);
+                                const botGeometry = getSvgGeometry(svgs[1], imageSize);
+                                const topUnit10vh = topGeometry.puzzleSize * 0.4;
+                                const botUnit10vh = botGeometry.puzzleSize * 0.4;
+                                const topRingRadius = topUnit10vh * 0.7 + topUnit10vh * 0.4;
+                                const botRingRadius = botUnit10vh * 0.7 + botUnit10vh * 0.4;
+                                svgs[0].insertAdjacentHTML('beforeend', generateArrow(topGeometry.centerX, topGeometry.centerY, topRingRadius, topArrowData.startAngle, topArrowData.arcDegrees, topGeometry.puzzleSize));
+                                svgs[1].insertAdjacentHTML('beforeend', generateArrow(botGeometry.centerX, botGeometry.centerY, botRingRadius, botArrowData.startAngle, botArrowData.arcDegrees, botGeometry.puzzleSize));
                             }
                             vizContainer.innerHTML = tempDiv.innerHTML;
 
@@ -2199,9 +2225,12 @@
                             if (svgsInContainer.length >= 2) {
                                 const addSymBtn = (svg, layerType, match) => {
                                     if (match.symmetryDegree <= 1) return;
+                                    const geometry = getSvgGeometry(svg, imageSize);
+                                    const unit10vh = geometry.puzzleSize * 0.4;
+                                    const ringRadius = unit10vh * 0.7 + unit10vh * 0.4;
                                     const svgNS = "http://www.w3.org/2000/svg";
                                     const btn = document.createElementNS(svgNS, 'circle');
-                                    btn.setAttribute('cx', centerX); btn.setAttribute('cy', centerY);
+                                    btn.setAttribute('cx', geometry.centerX); btn.setAttribute('cy', geometry.centerY);
                                     btn.setAttribute('r', ringRadius * 0.3);
                                     btn.setAttribute('fill', 'transparent');
                                     btn.setAttribute('pointer-events', 'all');

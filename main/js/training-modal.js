@@ -1768,7 +1768,7 @@ export function startColorRecognitionPractice() {
         F: typeof colorScheme !== 'undefined' ? colorScheme.frontColor : '#CC0000',
         R: typeof colorScheme !== 'undefined' ? colorScheme.rightColor : '#00AA00',
         B: typeof colorScheme !== 'undefined' ? colorScheme.backColor : '#FF8C00',
-        L: typeof colorScheme !== 'undefined' ? colorScheme.leftColor : '#0066CC'
+        L: typeof colorScheme !== 'undefined' ? colorScheme.leftColor : '#0080FF'
     };
     const faceCodenames = { F: 'R', R: 'G', B: 'O', L: 'B' };
     const opposites = { R: 'O', O: 'R', G: 'B', B: 'G' };

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DRAW-A-SQUAN</title>
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/pickr.css" />
+  <link rel="icon" href="./favicon.ico">
+</head>
+
+<body>
+
+  <!-- ═══ HEADER ═══ -->
+  <header>
+    <button class="hamburger-btn" id="hamburger-btn" title="Toggle sidebar">
+      <img src="./img/menu.svg">
+    </button>
+    <div class="logo">DRAW-A-SQUAN <span class="logo-by">by Matt &amp; Abid</span></div>
+  </header>
+  <!-- ═══ CUSTOM TOOLBAR BAR ═══ -->
+  <div class="custom-toolbar" id="custom-toolbar" style="display:none;">
+    <script>
+      // prevent toolbar flashing
+      (function () {
+        try {
+          var s = JSON.parse(localStorage.getItem('sq1vis_settings'));
+          if (s && s.schemeMode === 'custom') {
+            document.getElementById('custom-toolbar').style.display = '';
+          }
+        } catch (e) { }
+      })();
+    </script>
+    <div class="ctb-inner">
+
+      <!-- Undo / Redo -->
+      <div class="ctb-group">
+        <button class="ctb-btn" id="ctb-undo" title="Undo (Ctrl+Z)" disabled>
+          <svg class="ctb-icon" viewBox="0 0 16 16" fill="none">
+            <path d="M2.5 6H9.5C11.7 6 13.5 7.8 13.5 10C13.5 12.2 11.7 14 9.5 14H5" stroke="currentColor"
+              stroke-width="1.3" stroke-linecap="round" />
+            <path d="M5 3L2 6L5 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Undo
+        </button>
+        <button class="ctb-btn" id="ctb-redo" title="Redo (Ctrl+Y)" disabled>
+          <svg class="ctb-icon" viewBox="0 0 16 16" fill="none">
+            <path d="M13.5 6H6.5C4.3 6 2.5 7.8 2.5 10C2.5 12.2 4.3 14 6.5 14H11" stroke="currentColor"
+              stroke-width="1.3" stroke-linecap="round" />
+            <path d="M11 3L14 6L11 9" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"
+              stroke-linejoin="round" />
+          </svg>
+          Redo
+        </button>
+      </div>
+
+      <div class="ctb-divider"></div>
+
+      <!-- Color picker — original fill mode style -->
+      <div class="ctb-group">
+        <button class="ctb-btn ctb-fill-toggle" id="fill-mode-btn" title="Fill mode">
+          <svg class="ctb-icon" viewBox="0 0 16 16" fill="none">
+            <path d="M2 12.5L5.5 3L10.5 8L4.5 13.5L2 12.5Z" fill="currentColor" opacity=".2" />
+            <path d="M2 12.5L5.5 3L10.5 8L4.5 13.5L2 12.5Z" stroke="currentColor" stroke-width="1.2"
+              stroke-linejoin="round" />
+            <path d="M5.5 3L7.5 1L11.5 5L10.5 8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+            <circle cx="13.5" cy="12.5" r="1.5" fill="currentColor" />
+            <path d="M12 11L9 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          </svg>
+          Fill Piece
+        </button>
+        <div class="ctb-color-wrap">
+          <div id="fill-pickr-el"></div>
+        </div>
+      </div>
+
+      <div class="ctb-divider"></div>
+
+      <!-- Recently used colors -->
+      <div class="ctb-group ctb-recents" id="ctb-recents">
+        <span class="ctb-group-label">Recents</span>
+        <div class="ctb-recent-slot empty" id="ctb-recent-0" title="Recent 1 (press 1)"><span
+            class="ctb-recent-key">1</span></div>
+        <div class="ctb-recent-slot empty" id="ctb-recent-1" title="Recent 2 (press 2)"><span
+            class="ctb-recent-key">2</span></div>
+        <div class="ctb-recent-slot empty" id="ctb-recent-2" title="Recent 3 (press 3)"><span
+            class="ctb-recent-key">3</span></div>
+      </div>
+
+      <div class="ctb-divider"></div>
+
+      <!-- Unfill, Clear, Reset -->
+      <div class="ctb-group">
+        <button class="ctb-btn ctb-text-btn" id="fill-unfill-btn" title="Reset one sticker to its default color">Unfill
+          Piece</button>
+        <button class="ctb-btn ctb-text-btn" id="fill-reset-btn" title="Reset all custom colors">Reset All</button>
+        <button class="ctb-btn ctb-text-btn" id="fill-mute-btn" title="Show muted colors">Mute Colors</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ APP SHELL ═══ -->
+  <div class="app">
+
+    <!-- ══ SIDEBAR (built dynamically in JS) ══ -->
+    <aside class="sidebar hidden" id="sidebar"></aside>
+
+    <!-- ══ VIEWPORT ══ -->
+    <main class="viewport">
+      <div class="input-bar">
+        <div class="mode-toggle-wrap" id="mode-toggle-wrap">
+          <button class="mode-toggle-btn" id="mode-toggle-btn"
+            title="Left-click: next mode | Right-click: previous mode">SCRAMBLE</button>
+          <button class="mode-dropdown-btn" id="mode-dropdown-btn">▾</button>
+          <div class="mode-dropdown-menu" id="mode-dropdown-menu">
+            <div class="mode-dropdown-item active" data-mode="scramble">Scramble</div>
+            <div class="mode-dropdown-item" data-mode="inverse">Alg</div>
+            <div class="mode-dropdown-item" data-mode="hex">Hex</div>
+          </div>
+        </div>
+        <input type="text" class="topbar-input" id="scramble-input" placeholder="1,0 / 3,3 / 0,-3 / ... (supports karn)"
+          autocomplete="off" />
+        <button class="bulk-export-open-btn" id="bulk-export-btn" title="Bulk Export">BULK</button>
+      </div>
+      <div class="viewport-canvas" id="viewport-canvas">
+        <div class="canvas-inner" id="canvas-inner">
+          <div class="placeholder loading-placeholder" id="placeholder">
+            <div class="placeholder-title">Loading...</div>
+            <div class="placeholder-text">Tip: right-click the mode button to cycle backward.</div>
+          </div>
+          <script>
+            window.SQ1_LOADING_TIPS = [
+              /*
+                'Tip: right-click the mode button to cycle backward.',
+                'Fun fact: Draw-a-Squan understands karn notation too.',
+                'Hidden feature: Ctrl+S downloads the current image.',
+                'Hidden feature: press Ctrl+C outside the input to copy the image.',
+                'Tip: double-click the floating export button to switch between copy and download.',
+                'Fun fact: bulk export can place squans directly into an XLSX file.',
+                'Tip: turn on Fill Piece, then click stickers to recolor individual pieces.',
+                'Hidden feature: recent fill colors can be reused with the 1, 2, and 3 keys.',
+                */
+              ''
+            ];
+            (function () {
+              var tips = window.SQ1_LOADING_TIPS;
+              var el = document.currentScript.previousElementSibling.querySelector('.placeholder-text');
+              if (el) el.textContent = tips[Math.floor(Math.random() * tips.length)];
+            })();
+          </script>
+        </div>
+      </div>
+    </main>
+
+  </div>
+
+  <!-- ═══ BULK EXPORT MODAL ═══ -->
+  <div class="modal-overlay" id="bulk-modal-overlay">
+    <div class="modal-box" id="bulk-modal">
+      <div class="modal-header">
+        <span class="modal-title">Bulk Export</span>
+        <button class="modal-close-btn" id="bulk-modal-close">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="text">Text Input</button>
+        <button class="modal-tab" data-tab="xlsx">XLSX Input</button>
+      </div>
+
+      <!-- Text tab -->
+      <div class="modal-tab-panel" id="bulk-tab-text">
+        <p class="modal-hint">All the settings from the homescreen apply.</p>
+        <p class="modal-hint">Enter all the inputs below, one input per line.</p>
+        <textarea class="bulk-textarea" id="bulk-text-input"
+          placeholder="1,0 / 3,3 / 0,-3&#10;0,3 / 3,0 / ...&#10;..."></textarea>
+        <div class="modal-actions">
+          <button class="btn btn-primary modal-action-btn" id="bulk-text-export">Export as .zip</button>
+        </div>
+      </div>
+
+      <!-- XLSX tab -->
+      <div class="modal-tab-panel" id="bulk-tab-xlsx" style="display:none;">
+        <p class="modal-hint">All the settings from the homescreen apply.</p>
+        <p class="modal-hint">Every cell counts. Put the scramble/input for each image in the desired cell. The cell
+          contents will be replaced by the generated image in the exported file.</p>
+        <div class="bulk-dropzone" id="bulk-dropzone">
+          <input type="file" id="bulk-xlsx-file" accept=".xlsx,.xls" style="display:none;" />
+          <span class="bulk-dropzone-icon">📄</span>
+          <span class="bulk-dropzone-label" id="bulk-dropzone-label">Select, drag or drop your .xlsx file</span>
+        </div>
+        <div class="modal-actions">
+          <button class="btn btn-secondary modal-action-btn" id="bulk-xlsx-export-zip">Export as .zip</button>
+          <button class="btn btn-primary modal-action-btn" id="bulk-xlsx-export-xlsx">Export as .xlsx</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ BULK WARN MODAL ═══ -->
+  <div class="modal-overlay" id="bulk-warn-overlay">
+    <div class="modal-box modal-box--warn" id="bulk-warn-modal">
+      <div class="modal-header">
+        <span class="modal-title">⚠ Invalid Inputs</span>
+        <button class="modal-close-btn" id="bulk-warn-close">✕</button>
+      </div>
+      <p class="modal-hint">The following inputs could not be parsed and will be skipped (or kept as-is in xlsx):</p>
+      <ul class="bulk-warn-list" id="bulk-warn-list"></ul>
+      <div class="modal-actions">
+        <button class="btn btn-secondary modal-action-btn" id="bulk-warn-cancel">Cancel</button>
+        <button class="btn btn-primary modal-action-btn" id="bulk-warn-proceed">Export Anyway</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="ctx-menu">
+    <div class="ctx-section ctx-format-row">
+      <span class="ctx-label">Format</span>
+      <select class="ctx-format-select" id="ctx-format-select">
+        <option value="svg">SVG</option>
+        <option value="png">PNG</option>
+        <option value="jpeg">JPEG</option>
+        <option value="bmp">BMP</option>
+      </select>
+    </div>
+    <div class="ctx-divider"></div>
+    <button class="ctx-btn" id="ctx-download">
+      <svg viewBox="0 0 16 16" fill="none" class="ctx-icon">
+        <path d="M8 2v8M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"
+          stroke-linejoin="round" />
+        <path d="M3 13h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+      </svg>
+      Download
+    </button>
+    <button class="ctx-btn" id="ctx-copy">
+      <svg viewBox="0 0 16 16" fill="none" class="ctx-icon">
+        <rect x="5" y="5" width="8" height="8" rx="1.2" stroke="currentColor" stroke-width="1.3" />
+        <path d="M3 11V3h8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
+      Copy to Clipboard
+    </button>
+  </div>
+  <div id="toast" class="toast"></div>
+  <div class="floating-export-btn" id="floating-export-btn" style="display:none;">
+    <button class="feb-action" id="feb-action-btn" title="Export">
+      <img id="feb-action-icon" src="./img/download.svg" width="18" height="18" style="display:block;" />
+    </button>
+    <button class="feb-split" id="feb-split-btn" title="Switch mode">▾</button>
+    <div class="feb-dropdown" id="feb-dropdown" style="display:none;">
+      <div class="feb-option" data-mode="download">
+        <img src="./img/download.svg" width="14" height="14" /> Download
+      </div>
+      <div class="feb-option" data-mode="copy">
+        <img src="./img/copy.svg" width="14" height="14" /> Copy
+      </div>
+    </div>
+  </div>
+  <script src="./scripts/pickr.js"></script>
+  <script type="module" src="./scripts/script.js"></script>
+  <script>
+    (function () {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has('input')) return;
+
+      // Parse params
+      const rawInput = params.get('input');          // may contain slashes
+      const mode = params.get('mode') || 'scramble'; // scramble | inverse | hex
+      const size = parseInt(params.get('size') || '400', 10);
+      const gap = parseInt(params.get('gap') || '100', 10);
+      const layer = params.get('layer') || 'both';   // both | top | bottom
+      const fmt = params.get('fmt') || 'png';    // png | jpeg | bmp | svg
+      const vert = params.get('orient') === 'vertical';
+
+      // Build hex from input+mode
+      function inputToHex(input, mode) {
+        if (mode === 'hex') return input;
+        if (mode === 'inverse') {
+          const { tlHex, blHex } = sq1vis.algToHex(sq1vis.invertScramble(sq1vis.unkarnify(input)));
+          return `${tlHex}|${blHex}`;
+        }
+        const { tlHex, blHex } = sq1vis.algToHex(sq1vis.unkarnify(input));
+        return `${tlHex}|${blHex}`;
+      }
+
+      function getDeeplinkSVGString(hex, layer) {
+        const sc = Math.round(size * (220 / 400));
+        const PAD = Math.round(sc * 0.28);
+        const tmp = document.createElement('div');
+        tmp.innerHTML = sq1vis.getSVG(hex, size, gap, false, vert, true, true, PAD);
+        const svgs = tmp.querySelectorAll('svg');
+        const svg0 = svgs[0], svg1 = svgs[1];
+
+        if (layer !== 'both') {
+          const svgEl = layer === 'top' ? svg0 : svg1;
+          svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+          return svgEl.outerHTML;
+        }
+
+        const vb = svg0.getAttribute('viewBox').split(' ').map(parseFloat);
+        const vbX = vb[0], vbY = vb[1], vbW = vb[2], vbH = vb[3];
+        const padT = -vbY, padO = -vbX;
+        const margin = sc * (0.44 * (2 + gap / 100) - 1);
+        const g0shift = `translate(${padO},${padT})`;
+        const g1shift = vert
+          ? `translate(${padO},${padT + sc + margin})`
+          : `translate(${padO + sc + margin},${padT})`;
+        const totalW = vert ? vbW : padO + sc + margin + sc + padO;
+        const totalH = vert ? padT + sc + margin + sc + padO : vbH;
+
+        return `<svg xmlns="http://www.w3.org/2000/svg" width="${totalW}" height="${totalH}" viewBox="0 0 ${totalW} ${totalH}">` +
+          `<g transform="${g0shift}">${svg0.innerHTML}</g>` +
+          `<g transform="${g1shift}">${svg1.innerHTML}</g></svg>`;
+      }
+
+      async function rasterize(svgStr, fmt) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(new Blob([svgStr], { type: 'image/svg+xml' }));
+          const img = new Image();
+          img.onload = () => {
+            setTimeout(() => {
+              const canvas = document.createElement('canvas');
+              canvas.width = img.naturalWidth || img.width || 800;
+              canvas.height = img.naturalHeight || img.height || 400;
+              const ctx = canvas.getContext('2d');
+              if (fmt === 'jpeg') { ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height); }
+              ctx.drawImage(img, 0, 0);
+              URL.revokeObjectURL(url);
+              resolve(canvas);
+            }, 100);
+          };
+          img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img load failed')); };
+          img.src = url;
+        });
+      }
+
+      async function run() {
+        try {
+          const hex = inputToHex(rawInput, mode);
+          const svgStr = getDeeplinkSVGString(hex, layer);
+          const fname = `sq1-${layer}`;
+
+          let blob;
+          if (fmt === 'svg') {
+            blob = new Blob([svgStr], { type: 'image/svg+xml' });
+          } else {
+            const canvas = await rasterize(svgStr, fmt);
+            if (fmt === 'bmp') {
+              blob = createBMP32(canvas);
+            } else {
+              const mime = fmt === 'jpeg' ? 'image/jpeg' : 'image/png';
+              blob = await new Promise(res => canvas.toBlob(res, mime));
+            }
+          }
+
+          // Trigger download
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `${fname}.${fmt === 'jpeg' ? 'jpg' : fmt}`;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(() => {
+            URL.revokeObjectURL(a.href);
+            a.remove();
+            // Redirect away — back to browser homepage equivalent
+            window.location.replace('about:blank');
+          }, 1000);
+
+        } catch (err) {
+          console.error('Deeplink export failed:', err);
+          window.location.replace('about:blank');
+        }
+      }
+
+      // Wait for scripts to finish initializing then run
+      window.addEventListener('load', run);
+    })();
+
+    //usage example
+    // squan-go.web.app/draw/?input=(4,-3)/(0,3)/(-1,-4)/(0,-3)/(0,-3)/(3,0)/(-2,0)/(-3,-3)/(5,0)/(-4,-4)/(0,-4)/(4,0)/&size=400&gap=100&layer=both&fmt=png
+  </script>
+</body>
+
+</html>

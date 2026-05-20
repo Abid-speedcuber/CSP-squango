@@ -1,539 +1,254 @@
-/* ==== FILE: js/tools/draw-scramble.js ==== */
+import { createSquare1Core } from './drawScrambleCore.js';
 
-// ========================================
-// Square-1 Scramble Visualizer Library
-// ========================================
+const DRAW_SQUAN_DEFAULT_COLORS = {
+  topColor: '#474747',
+  bottomColor: '#FFFFFF',
+  frontColor: '#CC0000',
+  rightColor: '#00AA00',
+  backColor: '#FF8C00',
+  leftColor: '#0080FF',
+  borderColor: '#000000',
+  dividerColor: '#5E5E5E',
+  circleColor: 'transparent'
+};
 
-// === SHAPE BUILDING ===
-export function clusterify(shapeArray) {
-  const slots = [];
-  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWX'.split('');
+function normalizeColorScheme(colors = {}) {
+  return {
+    top: colors.top ?? colors.topColor ?? DRAW_SQUAN_DEFAULT_COLORS.topColor,
+    bottom: colors.bottom ?? colors.bottomColor ?? DRAW_SQUAN_DEFAULT_COLORS.bottomColor,
+    front: colors.front ?? colors.frontColor ?? DRAW_SQUAN_DEFAULT_COLORS.frontColor,
+    right: colors.right ?? colors.rightColor ?? DRAW_SQUAN_DEFAULT_COLORS.rightColor,
+    back: colors.back ?? colors.backColor ?? DRAW_SQUAN_DEFAULT_COLORS.backColor,
+    left: colors.left ?? colors.leftColor ?? DRAW_SQUAN_DEFAULT_COLORS.leftColor,
+    border: colors.border ?? colors.borderColor ?? DRAW_SQUAN_DEFAULT_COLORS.borderColor,
+    'slice-indicator': colors['slice-indicator'] ?? colors.sliceIndicator ?? colors.dividerColor ?? DRAW_SQUAN_DEFAULT_COLORS.dividerColor
+  };
+}
 
-  function processOneLayer(startIdx, endIdx) {
-    let i = startIdx;
-    while (i < endIdx) {
-      const isThisACorner = shapeArray[i] === 1;
+function normalizeHexCode(hexCode) {
+  const hex = String(hexCode ?? '').replace(/[|/]/g, '');
+  if (hex.length !== 24) throw new Error('Hex must be 24 data characters, plus an optional separator.');
+  return `${hex.slice(0, 12)}|${hex.slice(12)}`;
+}
 
-      if (isThisACorner) {
-        const nextIdx = (i - startIdx + 1) % 12 + startIdx;
-        if (nextIdx < endIdx && shapeArray[nextIdx] === 1) {
-          slots.push({
-            type: 'corner',
-            startLetter: i,
-            lettersCount: 2,
-            label: letters[i] + letters[nextIdx]
-          });
-          i += 2;
-        } else {
-          slots.push({
-            type: 'half-corner',
-            startLetter: i,
-            lettersCount: 1,
-            label: letters[i]
-          });
-          i += 1;
-        }
-      } else {
-        slots.push({
-          type: 'edge',
-          startLetter: i,
-          lettersCount: 1,
-          label: letters[i]
-        });
-        i += 1;
+function createConfiguredCore(colors = {}, options = {}) {
+  const core = createSquare1Core({ piecesColors: options.piecesColors });
+  if (options.showSideColors != null) core.setShowSideColors(options.showSideColors);
+  if (options.styleIndex != null) core.setActiveStyle(options.styleIndex);
+  if (options.styleSettings) core.setStyleSettings(options.styleSettings);
+  core.setColorScheme(normalizeColorScheme(colors));
+  return core;
+}
+
+function renderHex(hexCode, size = 200, colors = {}, ringDistance = 16, options = {}) {
+  const core = createConfiguredCore(colors, options);
+  return core.getSVG(
+    normalizeHexCode(hexCode),
+    size,
+    ringDistance,
+    options.muted ?? false,
+    options.isVertical ?? false,
+    options.showSlice ?? true,
+    options.showSideColors ?? true,
+    options.exportPad ?? 0
+  );
+}
+
+export function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 16) {
+  return renderHex(hexCode, size, colors, ringDistance);
+}
+
+export function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDistance = 16) {
+  const { tlHex, blHex } = algToHex(unkarnify(scramble));
+  return renderHex(`${tlHex}|${blHex}`, size, colors, ringDistance);
+}
+
+export function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 16) {
+  return visualizeFromScrambleNotation(invertScramble(solution), size, colors, ringDistance);
+}
+
+export function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 16) {
+  let hexCode;
+  if (typeof input === 'number') {
+    hexCode = shapeIndexToHex(input);
+  } else if (typeof input === 'string' && input.includes('|')) {
+    hexCode = input;
+  } else if (typeof input === 'string') {
+    const { tlHex, blHex } = algToHex(unkarnify(input));
+    hexCode = `${tlHex}|${blHex}`;
+  } else {
+    return '<div style="color:#e53e3e;font-family:monospace;padding:1rem;">Error: Invalid input type</div>';
+  }
+
+  return renderHex(hexCode, size, {
+    topColor: cornerFill,
+    bottomColor: cornerFill,
+    frontColor: edgeFill,
+    rightColor: edgeFill,
+    backColor: edgeFill,
+    leftColor: edgeFill,
+    borderColor: '#333333'
+  }, ringDistance, {
+    showSideColors: false,
+    showSlice: true,
+    styleSettings: { borderWidth: strokeWidth }
+  });
+}
+
+export function algToHex(scramble) {
+  let tlHex = '011233455677';
+  let blHex = '998bbaddcffe';
+  for (const move of parseScramble(scramble)) {
+    if (move.type === 'twist') {
+      ({ tlHex, blHex } = twist(tlHex, blHex));
+    } else {
+      tlHex = cycleLeft(tlHex, move.top);
+      blHex = cycleLeft(blHex, move.bottom);
+    }
+  }
+  return { tlHex, blHex };
+}
+
+function parseScramble(scramble) {
+  const moves = [];
+  const parts = String(scramble ?? '').replace(/\//g, ' / ').trim().split(/\s+/).filter(Boolean);
+  for (const part of parts) {
+    if (part === '/') {
+      moves.push({ type: 'twist' });
+    } else if (part.includes(',')) {
+      const [top, bottom] = part.replace(/[()]/g, '').split(',').map(n => parseInt(n.trim()));
+      if (!isNaN(top) && !isNaN(bottom)) moves.push({ type: 'turn', top, bottom });
+    }
+  }
+  return moves;
+}
+
+function twist(tlHex, blHex) {
+  return { tlHex: tlHex.slice(0, 6) + blHex.slice(0, 6), blHex: tlHex.slice(6) + blHex.slice(6) };
+}
+
+function cycleLeft(hex, places) {
+  const n = ((places % 12) + 12) % 12;
+  return hex.slice(n) + hex.slice(0, n);
+}
+
+export function invertScramble(str) {
+  if (!str) return str;
+  return String(str).trim().split('/').reverse().map(part => {
+    part = part.trim();
+    const src = part.includes('(') ? part.match(/\(([^)]+)\)/)?.[1] : part.includes(',') ? part : null;
+    if (!src) return part;
+    const inverted = src.split(',').map(v => {
+      const n = parseInt(v.trim());
+      return isNaN(n) ? v.trim() : String(-n);
+    }).join(',');
+    return part.includes('(') ? `(${inverted})` : inverted;
+  }).join('/');
+}
+
+function dictReplace(str, dict) {
+  const pattern = new RegExp(Object.keys(dict).map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'g');
+  let prev;
+  do {
+    prev = str;
+    str = str.replace(pattern, m => dict[m]);
+  } while (str !== prev);
+  return str;
+}
+
+const karnToWCA = {
+  " U4 ": " U U' U U' ", " U4' ": " U' U U' U ", " D4 ": " D D' D D' ", " D4' ": " D' D D' D ",
+  " u4 ": " u u' u u' ", " u4' ": " u' u u' u ", " d4 ": " d d' d d' ", " d4' ": " d' d d' d ",
+  " U3 ": " U U' U ", " U3' ": " U' U U' ", " D3 ": " D D' D ", " D3' ": " D' D D' ",
+  " u3 ": " u u' u ", " u3' ": " u' u u' ", " d3 ": " d d' d ", " d3' ": " d' d d' ",
+  " F3 ": " F F' F ", " F3' ": " F' F F' ", " f3 ": " f f' f ", " f3' ": " f' f f' ",
+  " W ": " U U' ", " W' ": " U' U ", " B ": " D D' ", " B' ": " D' D ",
+  " w ": " u u' ", " w' ": " u' u ", " b ": " d d' ", " b' ": " d' d ",
+  " F2 ": " F F' ", " F2' ": " F' F ", " f2 ": " f f' ", " f2' ": " f' f ",
+  " UU ": " U U ", " UU' ": " U' U' ", " DD ": " D D ", " DD' ": " D' D' ",
+  " U2 ": " 6,0 ", " U2D ": " 6,3 ", " U2D' ": " 6,-3 ", " U2D2 ": " 6,6 ",
+  " D2 ": " 0,6 ", " UD2 ": " 3,6 ", " U'D2 ": " -3,6 ",
+  " U ": " 3,0 ", " U' ": " -3,0 ", " D ": " 0,3 ", " D' ": " 0,-3 ",
+  " E ": " 3,-3 ", " E' ": " -3,3 ", " e ": " 3,3 ", " e' ": " -3,-3 ",
+  " u ": " 2,-1 ", " u' ": " -2,1 ", " d ": " -1,2 ", " d' ": " 1,-2 ",
+  " F' ": " -4,-1 ", " F ": " 4,1 ", " f' ": " -1,-4 ", " f ": " 1,4 ",
+  " T ": " 2,-4 ", " T' ": " -2,4 ", " t' ": " -4,2 ", " t ": " 4,-2 ",
+  " m ": " 2,2 ", " m' ": " -2,-2 ", " M' ": " -1,-1 ", " M ": " 1,1 ",
+  " u2 ": " 5,-1 ", " u2' ": " -5,1 ", " d2 ": " -1,5 ", " d2' ": " 1,-5 ",
+  " K' ": " -5,-2 ", " K ": " 5,2 ", " k ": " 2,5 ", " k' ": " -2,-5 "
+};
+
+const shorthandToKarn = {
+  bjj: "/U' e D'/", fjj: "/U e' D/", bpj10: "/d m' U/", "bpj0-1": "/u' m D'/",
+  fpj10: "/u m' D/", "fpj0-1": "/d' m U'/", nn: "/E E'/", aa10: "/u m' u T'/",
+  "aa0-1": "/U m' U t'/", fadj10: "/D M' d'/", dadj10: "/D M' d'/", "fadj0-1": "/U' M u/",
+  "u'adj0-1": "/U' M u/", badj10: "/U M u'/", uadj10: "/U M u'/", "badj0-1": "/D' M d/",
+  "d'adj0-1": "/D' M d/", bb10: "/T u' e U'/", "bb0-1": "/t d e' D/",
+  fdd10: "/D e' d t/", "fdd0-1": "/U' e u' T/", bdd10: "/U e' u T'/", "bdd0-1": "/D' e d' t'/",
+  ff10: "/d m' d M E/", fv10: "/d4/", "fv0-1": "/d4'/", vf10: "/u4/", "vf0-1": "/u4'/",
+  jf10: "/w D' u T'/", "jf0-1": "/w' D u' T/", fj10: "/b U' d t/", "fj0-1": "/b' U d' t'/",
+  jr00: "/e' w e/", jr10: "/e' b e/", "jr0-1": "/e' w' e/", "jr1-1": "/e' b' e/",
+  rj00: "/e b' e'/", rj10: "/e w e'/", "rj0-1": "/e b' e'/", "rj1-1": "/e w e'/",
+  jv10: "/b D d d2'/", "jv0-1": "/b' D' d' d2/", vj10: "/w U u u2'/", "vj0-1": "/w' U' u' u2/",
+  kk10: "/u m' U E'/", "kk0-1": "/U m' u E'/", opp10: "/u2 u2'/", "opp0-1": "/u2' u2/",
+  pn10: "/T T'/", "pn0-1": "/t t'/", px10: "/f' d3' f'/", "px0-1": "/f d3 f/",
+  xp10: "/F' u3' F'/", "xp0-1": "/F u3 F/", tt10: "/d m' F' u2'/",
+  fss10: "/u M D' E'/", "fss0-1": "/D' M u E'/", bss10: "/D M' u' E/", "bss0-1": "/U' M d E/",
+  vv10: "/u M u m' E'/", zz10: "/u M t' M D'/", "zz0-1": "/D' M t' M u/"
+};
+
+export function unkarnify(scramble) {
+  scramble = String(scramble ?? '').replaceAll(/[\/\\]/g, ' ').replaceAll(/[()]/g, '').replaceAll(/ +/g, ' ');
+  scramble = addCommas(scramble);
+  return replaceShorthands(dictReplace(` ${scramble} `, karnToWCA).slice(1, -1));
+}
+
+function replaceShorthands(scramble) {
+  const moves = scramble.split(' ');
+  const allKnown = moves.every(m => !m || !isNaN(Number(m.charAt(0))) || (` ${m} ` in karnToWCA));
+  if (allKnown) return dictReplace(` ${scramble} `, karnToWCA).slice(1, -1).replaceAll(' ', '/');
+
+  let topA = false;
+  let bottomA = false;
+  for (const move of moves) {
+    if (!move) continue;
+    if (move.includes(',')) {
+      const [u, d] = move.split(',');
+      if (parseInt(u, 10) % 3 !== 0) topA = !topA;
+      if (parseInt(d, 10) % 3 !== 0) bottomA = !bottomA;
+    } else {
+      const key = ['bjj', 'fjj', 'nn'].includes(move.toLowerCase())
+        ? move.toLowerCase()
+        : move.toLowerCase() + getAlignment(topA, bottomA);
+      const replacement = shorthandToKarn[key];
+      if (replacement === undefined) throw new Error(`${move} with ${getAlignment(topA, bottomA)} alignment is not a thing.`);
+      scramble = scramble.replace(move, replacement);
+      for (const sub of dictReplace(` ${replacement} `, karnToWCA).split(' ')) {
+        const [u, d] = sub.split(',');
+        if (parseInt(u, 10) % 3 !== 0) topA = !topA;
+        if (parseInt(d, 10) % 3 !== 0) bottomA = !bottomA;
       }
     }
   }
-
-  processOneLayer(0, 12);
-  processOneLayer(12, 24);
-
-  return slots;
+  return dictReplace(` ${scramble.replaceAll(/ *\/ */g, '/').replaceAll(/\/\//g, '/0,0/').replaceAll(/\//g, ' ')} `, karnToWCA)
+    .slice(1, -1).replaceAll(' ', '/');
 }
 
-export function parseHexToDraw(hexScramble, slotsList) {
-  const assignments = {};
-  for (let i = 0; i < slotsList.length; i++) {
-    const slot = slotsList[i];
-    const letterIndex = slot.startLetter;
-
-    const scrambleIdx = (letterIndex < 12)
-      ? letterIndex
-      : 13 + (letterIndex - 12);
-
-    assignments[slot.label] = hexScramble[scrambleIdx];
-  }
-
-  return assignments;
+function getAlignment(topA, bottomA) {
+  return (topA ? '1' : '0') + (bottomA ? '-1' : '0');
 }
 
-// === GEOMETRY HELPERS ===
-export function polarToCartesian(centerX, centerY, radius, angleDegrees) {
-  const angleRadians = angleDegrees * Math.PI / 180;
-  return {
-    x: centerX + radius * Math.cos(angleRadians),
-    y: centerY - radius * Math.sin(angleRadians)
-  };
-}
-
-export function pointArrayToSVGString(pointsArray) {
-  return pointsArray.map(p => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-}
-
-export function lerpBetweenTwoPoints(pointA, pointB, interpolationAmount) {
-  return {
-    x: pointA.x + (pointB.x - pointA.x) * interpolationAmount,
-    y: pointA.y + (pointB.y - pointA.y) * interpolationAmount
-  };
-}
-
-export function gimmeTheAngleForThisSlot(slot, angleArray) {
-  const angles = [];
-  for (let k = 0; k < slot.lettersCount; k++) {
-    const globalIdx = slot.startLetter + k;
-    const localIdx = globalIdx >= 12 ? globalIdx - 12 : globalIdx;
-    angles.push(angleArray[localIdx]);
-  }
-  return angles.reduce((sum, angle) => sum + angle, 0) / angles.length;
-}
-
-// === COLOR MAPPING ===
-export function whatColorIsThisEdgePiece(hexChar, colorScheme) {
-  const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
-
-  switch (hexChar.toLowerCase()) {
-    case '0': return { inner: topColor, outer: backColor };
-    case '2': return { inner: topColor, outer: leftColor };
-    case '4': return { inner: topColor, outer: frontColor };
-    case '6': return { inner: topColor, outer: rightColor };
-    case '8': return { inner: bottomColor, outer: rightColor };
-    case 'a': return { inner: bottomColor, outer: frontColor };
-    case 'c': return { inner: bottomColor, outer: leftColor };
-    case 'e': return { inner: bottomColor, outer: backColor };
-    case 'E': return { inner: '#888888', outer: '#888888' };
-    case 'R': return { inner: 'transparent', outer: 'transparent' };
-    default: return { inner: '#4ecdc4', outer: '#4ecdc4' };
-  }
-}
-
-export function whatAreTheCornerColorLetters(hexChar) {
-  switch ((hexChar || '').toLowerCase()) {
-    case '1': return { top: 'y', left: 'b', right: 'o' };
-    case '3': return { top: 'y', left: 'r', right: 'b' };
-    case '5': return { top: 'y', left: 'g', right: 'r' };
-    case '7': return { top: 'y', left: 'o', right: 'g' };
-    case '9': return { top: 'w', left: 'g', right: 'o' };
-    case 'b': return { top: 'w', left: 'r', right: 'g' };
-    case 'd': return { top: 'w', left: 'b', right: 'r' };
-    case 'f': return { top: 'w', left: 'o', right: 'b' };
-    case 'C': return { top: '#888888', left: '#888888', right: '#888888' };
-    default: return { top: '#4ecdc4', left: '#4ecdc4', right: '#4ecdc4' };
-  }
-}
-
-export function convertColorLetterToHexCode(colorLetter, colorScheme) {
-  if (!colorLetter) return '#cccccc';
-  const { topColor, bottomColor, frontColor, rightColor, backColor, leftColor } = colorScheme;
-
-  switch (colorLetter.toLowerCase()) {
-    case 'y': return topColor;
-    case 'w': return bottomColor;
-    case 'o': return backColor;
-    case 'b': return leftColor;
-    case 'r': return frontColor;
-    case 'g': return rightColor;
-    default: return '#cccccc';
-  }
-}
-
-export function gimmeCornerColorsAsHexCodes(hexChar, isThisBottomLayer, colorScheme) {
-  const colorTriplet = whatAreTheCornerColorLetters(hexChar);
-  let leftColor = convertColorLetterToHexCode(colorTriplet.left, colorScheme);
-  let rightColor = convertColorLetterToHexCode(colorTriplet.right, colorScheme);
-  const topColor = convertColorLetterToHexCode(colorTriplet.top, colorScheme);
-
-  if (isThisBottomLayer) {
-    [leftColor, rightColor] = [leftColor, rightColor];
-  }
-
-  return { top: topColor, left: leftColor, right: rightColor };
-}
-
-export function whatColorIsThisHalfCorner() {
-  return 'fill="#ff9999"';
-}
-
-// === SVG GENERATION FOR INDIVIDUAL PIECES ===
-export function CreateOnePieceSVG(slot, pieceHex, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, isBottomLayer, strokeThin, strokeMedium, colorScheme) {
-  isBottomLayer = !!(slot && typeof slot.startLetter === 'number' && slot.startLetter >= 12);
-
-  let svgMarkup = '';
-  const halfAngle = slot.type === 'corner' ? 30 : 15;
-
-  if (slot.type === 'edge') {
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
-
-    const midRadius = radiusInner + (radiusOuter - radiusInner) * 0.8;
-    const pointMidA = polarToCartesian(centerX, centerY, midRadius, centerAngle - halfAngle);
-    const pointMidB = polarToCartesian(centerX, centerY, midRadius, centerAngle + halfAngle);
-
-    const edgeColors = whatColorIsThisEdgePiece(pieceHex, colorScheme);
-
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointMidA, pointA, pointB, pointMidB])}" fill="${edgeColors.outer}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointMidA, pointMidB])}" fill="${edgeColors.inner}" stroke="#333" stroke-width="${strokeThin}"/>`;
-
-  } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
-
-    const scaleFactor = 0.80;
-    const pointSmallLeft = lerpBetweenTwoPoints(pointInner, pointOuterLeft, scaleFactor);
-    const pointSmallRight = lerpBetweenTwoPoints(pointInner, pointOuterRight, scaleFactor);
-    const pointSmallBottom = lerpBetweenTwoPoints(pointInner, pointApex, scaleFactor);
-
-    const colors = gimmeCornerColorsAsHexCodes(pieceHex, isBottomLayer, colorScheme);
-
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointSmallBottom, pointSmallLeft])}" fill="${colors.left}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointSmallRight, pointSmallBottom, pointApex, pointOuterRight])}" fill="${colors.right}" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointSmallLeft, pointSmallBottom, pointSmallRight])}" fill="${colors.top}" stroke="#333" stroke-width="${strokeThin}"/>`;
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="none" stroke="#333" stroke-width="${strokeMedium}"/>`;
-    svgMarkup += `<line x1="${pointApex.x.toFixed(2)}" y1="${pointApex.y.toFixed(2)}" x2="${pointSmallBottom.x.toFixed(2)}" y2="${pointSmallBottom.y.toFixed(2)}" stroke="#333" stroke-width="${strokeMedium}" stroke-linecap="round" class="corner-detail"/>`;
-
-  } else if (slot.type === 'half-corner') {
-    const halfInnerAngle = 15;
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
-
-    const fillAttribute = whatColorIsThisHalfCorner(pieceHex);
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" ${fillAttribute} stroke="#333" stroke-width="${strokeThin}"/>`;
-  }
-
-  return svgMarkup;
-}
-
-// === MAIN SVG GENERATION ===
-export function GenerateTheFullSVGFromHexNotation(hexScrambleCode, desiredSize, colorScheme, ringDistance = 5) {
-  if (hexScrambleCode.length !== 25) {
-    throw new Error('Invalid scramble format - needs 25 characters!');
-  }
-
-  const shapeArray = new Array(24);
-  let scrambleIdx = 0;
-
-  // Determine shape for top layer (0-11)
-  for (let i = 0; i < 12; i++) {
-    if (scrambleIdx === 12) scrambleIdx++;
-    const piece = hexScrambleCode[scrambleIdx];
-    const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-    shapeArray[i] = isCorner ? 1 : 0;
-    scrambleIdx++;
-  }
-
-  // Determine shape for bottom layer (12-23)
-  scrambleIdx = 13;
-  for (let i = 12; i < 24; i++) {
-    const piece = hexScrambleCode[scrambleIdx];
-    const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-    shapeArray[i] = isCorner ? 1 : 0;
-    scrambleIdx++;
-  }
-
-  const slots = clusterify(shapeArray);
-  const pieceAssignments = parseHexToDraw(hexScrambleCode, slots);
-
-  // Calculate dimensions
-  const svgSize = desiredSize;
-  const unit10vh = desiredSize * 0.4;
-  const centerX = svgSize / 2;
-  const centerY = svgSize / 2;
-
-  const radiusInner = 0;
-  const radiusOuter = unit10vh * 0.7;
-  const radiusApex = radiusOuter * 1.366025404;
-  const ringRadius = radiusOuter + (unit10vh * 0.4);
-
-  const strokeThin = desiredSize * 0.003;
-  const strokeMedium = desiredSize * 0.004;
-  const strokeRing = 0;
-  const strokeLine = desiredSize * 0.008;
-  const sliceTrim = 0.70;
-
-  const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
-  const marginLeft = centerToCenterDistance - svgSize;
-  let htmlOutput = `<div style="display: flex; align-items: center;">`;
-
-  // LEFT SVG (top layer)
-  htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
-
-  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
-  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
-  htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
-
-  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
-
-  slots.forEach(slot => {
-    if (slot.startLetter < 12) {
-      const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
-      htmlOutput += CreateOnePieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, false, strokeThin, strokeMedium, colorScheme);
+function addCommas(scramble) {
+  return scramble.split(' ').map(move => {
+    if (!move || isNaN(Number(move.replace(/-/g, '')))) return move;
+    switch (move.length) {
+      case 1: return `${move},0`;
+      case 2: return move.charAt(0) === '-' ? `${move},0` : `${move[0]},${move[1]}`;
+      case 3: return move.charAt(0) === '-' ? `${move.slice(0, 2)},${move[2]}` : `${move[0]},${move.slice(1)}`;
+      case 4: return `${move.slice(0, 2)},${move.slice(2)}`;
+      default: throw new Error(`${move} is not a valid move`);
     }
-  });
-
-  htmlOutput += `</svg>`;
-
-  // RIGHT SVG (bottom layer)
-  htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="${colorScheme.circleColor}" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
-
-  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
-  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
-  htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="${colorScheme.dividerColor}" stroke-width="${strokeLine}"/>`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
-
-  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
-
-  slots.forEach(slot => {
-    if (slot.startLetter >= 12) {
-      const piece = pieceAssignments[slot.label];
-      const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
-      htmlOutput += CreateOnePieceSVG(slot, piece, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, true, strokeThin, strokeMedium, colorScheme);
-    }
-  });
-
-  htmlOutput += `</svg></div>`;
-
-  return htmlOutput;
-}
-
-// ========================================
-// === CUBE SHAPE VISUALIZER ===
-// ========================================
-
-export function CreateOneShapeOutlineSVG(slot, centerX, centerY, centerAngle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth) {
-  let svgMarkup = '';
-  const halfAngle = slot.type === 'corner' ? 30 : 15;
-
-  if (slot.type === 'edge') {
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointA = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointB = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
-
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointA, pointB])}" fill="${edgeFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
-
-  } else if (slot.type === 'corner') {
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfAngle);
-    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfAngle);
-
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterLeft, pointApex, pointOuterRight])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
-
-  } else if (slot.type === 'half-corner') {
-    const halfInnerAngle = 15;
-    const pointInner = polarToCartesian(centerX, centerY, radiusInner, centerAngle);
-    const pointOuterRight = polarToCartesian(centerX, centerY, radiusOuter, centerAngle - halfInnerAngle);
-    const pointApex = polarToCartesian(centerX, centerY, radiusApex, centerAngle);
-    const pointOuterLeft = polarToCartesian(centerX, centerY, radiusOuter, centerAngle + halfInnerAngle);
-
-    svgMarkup += `<polygon points="${pointArrayToSVGString([pointInner, pointOuterRight, pointApex, pointOuterLeft])}" fill="${cornerFill}" stroke="#333" stroke-width="${strokeWidth}"/>`;
-  }
-
-  return svgMarkup;
-}
-
-export function GenerateShapeVisualizationSVG(hexScrambleCode, size, edgeFill, cornerFill, strokeWidthBase, ringDistance = 5) {
-  if (hexScrambleCode.length !== 25) {
-    throw new Error('Invalid scramble format - needs 25 characters!');
-  }
-
-  const shapeArray = new Array(24);
-  let scrambleIdx = 0;
-
-  // Determine shape for top layer (0-11)
-  for (let i = 0; i < 12; i++) {
-    if (scrambleIdx === 12) scrambleIdx++;
-    const piece = hexScrambleCode[scrambleIdx];
-    const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-    shapeArray[i] = isCorner ? 1 : 0;
-    scrambleIdx++;
-  }
-
-  // Determine shape for bottom layer (12-23)
-  scrambleIdx = 13;
-  for (let i = 12; i < 24; i++) {
-    const piece = hexScrambleCode[scrambleIdx];
-    const isCorner = ['1', '3', '5', '7', '9', 'b', 'd', 'f'].includes(piece.toLowerCase());
-    shapeArray[i] = isCorner ? 1 : 0;
-    scrambleIdx++;
-  }
-
-  const slots = clusterify(shapeArray);
-
-  // Calculate dimensions
-  const svgSize = size;
-  const unit10vh = size * 0.4;
-  const centerX = svgSize / 2;
-  const centerY = svgSize / 2;
-
-  const radiusInner = 0;
-  const radiusOuter = unit10vh * 0.7;
-  const radiusApex = radiusOuter * 1.366025404;
-  const ringRadius = radiusOuter + (unit10vh * 0.4);
-
-  const strokeWidth = (size / 200) * strokeWidthBase;
-  const strokeRing = 0;
-  const strokeLine = size * 0.008;
-  const sliceTrim = 0.70;
-
-  const centerToCenterDistance = ringRadius * (2 + ringDistance / 100);
-  const marginLeft = centerToCenterDistance - svgSize;
-  let htmlOutput = `<div style="display: flex; align-items: center;">`;
-
-  // LEFT SVG (top layer)
-  htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}">`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
-
-  const linePoint1Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 75);
-  const linePoint2Left = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 255);
-  htmlOutput += `<line x1="${linePoint1Left.x}" y1="${linePoint1Left.y}" x2="${linePoint2Left.x}" y2="${linePoint2Left.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
-
-  const leftLayerAngles = Array.from({ length: 12 }, (_, j) => 90 + j * 30);
-
-  slots.forEach(slot => {
-    if (slot.startLetter < 12) {
-      const angle = gimmeTheAngleForThisSlot(slot, leftLayerAngles);
-      htmlOutput += CreateOneShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
-    }
-  });
-
-  htmlOutput += `</svg>`;
-
-  // RIGHT SVG (bottom layer)
-  htmlOutput += `<svg width="${svgSize}" height="${svgSize}" viewBox="0 0 ${svgSize} ${svgSize}" style="margin-left: ${marginLeft}px;">`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${ringRadius}" fill="transparent" stroke="rgba(0,0,0,0.08)" stroke-width="${strokeRing}"/>`;
-
-  const linePoint1Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 105);
-  const linePoint2Right = polarToCartesian(centerX, centerY, (ringRadius + 6) * sliceTrim, 285);
-  htmlOutput += `<line x1="${linePoint1Right.x}" y1="${linePoint1Right.y}" x2="${linePoint2Right.x}" y2="${linePoint2Right.y}" stroke="#7a0000" stroke-width="${strokeLine}"/>`;
-  htmlOutput += `<circle cx="${centerX}" cy="${centerY}" r="${unit10vh * 0.05}" fill="rgba(0,0,0,0.06)"/>`;
-
-  const rightLayerAngles = Array.from({ length: 12 }, (_, j) => 300 + j * 30);
-
-  slots.forEach(slot => {
-    if (slot.startLetter >= 12) {
-      const angle = gimmeTheAngleForThisSlot(slot, rightLayerAngles);
-      htmlOutput += CreateOneShapeOutlineSVG(slot, centerX, centerY, angle, radiusInner, radiusOuter, radiusApex, edgeFill, cornerFill, strokeWidth);
-    }
-  });
-
-  htmlOutput += `</svg></div>`;
-
-  return htmlOutput;
-}
-
-/**
- * Visualize cube shape outlines only
- * @param {string|number} input - Can be: shapeIndex (number), hex code (string), or scramble notation (string)
- * @param {number} size - Desired size in pixels (default: 200)
- * @param {string} edgeFill - Fill color for edges (default: 'transparent')
- * @param {string} cornerFill - Fill color for corners (default: 'transparent')
- * @param {number} strokeWidth - Base stroke width (default: 2, scales with size)
- * @returns {string} HTML string containing the SVG visualization
- */
-
-export function visualizeCubeShapeOutlines(input, size = 200, edgeFill = 'transparent', cornerFill = 'transparent', strokeWidth = 2, ringDistance = 5) {
-  let hexCode;
-
-  // Check if input is a shape index (number)
-  if (typeof input === 'number') {
-    hexCode = shapeIndexToHex(input);
-  }
-  // Check if input looks like hex code (contains |)
-  else if (typeof input === 'string' && input.includes('|')) {
-    hexCode = input;
-  }
-  // Otherwise treat as scramble notation
-  else if (typeof input === 'string') {
-    const { tlHex, blHex } = scrambleToHex(input);
-    hexCode = `${tlHex}|${blHex}`;
-  }
-  else {
-    return `<div style="color: #e53e3e; font-family: monospace; padding: 1rem;">Error: Invalid input type</div>`;
-  }
-
-  return GenerateShapeVisualizationSVG(hexCode, size, edgeFill, cornerFill, strokeWidth, ringDistance);
-}
-
-// ========================================
-// === THE THREE MAGICAL FUNCTIONS!!! ===
-// ========================================
-
-/**
- * Option 1: You already have the 25-character hex code
- * @param {string} hexCode - The 25-character scramble code (e.g., "6e0cc804a2a6|0e8c64ee20c4")
- * @param {number} size - Desired size in pixels (default: 200)
- * @param {object} colors - Color customization object with defaults
- * @returns {string} HTML string containing the SVG visualization
- */
-export function visualizeFromHexCode(hexCode, size = 200, colors = {}, ringDistance = 5) {
-  const colorScheme = {
-    topColor: colors.topColor || '#000000',
-    bottomColor: colors.bottomColor || '#FFFFFF',
-    frontColor: colors.frontColor || '#CC0000',
-    rightColor: colors.rightColor || '#00AA00',
-    backColor: colors.backColor || '#FF8C00',
-    leftColor: colors.leftColor || '#0066CC',
-    dividerColor: colors.dividerColor || '#7a0000',
-    circleColor: colors.circleColor || 'transparent'
-  };
-
-  return GenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
-}
-
-/**
- * Option 2: You have a scramble notation
- * @param {string} scramble - Scramble notation (e.g., "(1,0) / (3,3) / (1,0) / ...")
- * @param {number} size - Desired size in pixels (default: 200)
- * @param {object} colors - Color customization object
- * @returns {string} HTML string containing the SVG visualization
- */
-export function visualizeFromScrambleNotation(scramble, size = 200, colors = {}, ringDistance = 5) {
-  const colorScheme = {
-    topColor: colors.topColor || '#000000',
-    bottomColor: colors.bottomColor || '#FFFFFF',
-    frontColor: colors.frontColor || '#CC0000',
-    rightColor: colors.rightColor || '#00AA00',
-    backColor: colors.backColor || '#FF8C00',
-    leftColor: colors.leftColor || '#0066CC',
-    dividerColor: colors.dividerColor || '#7a0000',
-    circleColor: colors.circleColor || 'transparent'
-  };
-
-  const { tlHex, blHex } = scrambleToHex(scramble);
-  const hexCode = `${tlHex}|${blHex}`;
-
-  return GenerateTheFullSVGFromHexNotation(hexCode, size, colorScheme, ringDistance);
-}
-
-/**
- * Option 3: You have a solution notation (will be inverted to show the state)
- * @param {string} solution - Solution notation (e.g., "(1,0) / (3,3) / (1,0) / ...")
- * @param {number} size - Desired size in pixels (default: 200)
- * @param {object} colors - Color customization object
- * @returns {string} HTML string containing the SVG visualization
- */
-export function visualizeFromSolutionNotation(solution, size = 200, colors = {}, ringDistance = 5) {
-  const invertedScramble = invertScramble(solution);
-  return visualizeFromScrambleNotation(invertedScramble, size, colors, ringDistance);
+  }).join(' ');
 }
 
 if (typeof window !== 'undefined') {
@@ -544,34 +259,20 @@ if (typeof window !== 'undefined') {
     visualizeCubeShapeOutlines
   };
   window.Square1VisualizerLibraryWithSillyNames = window.Square1Visualizer;
-}
 
-// ESM live global compatibility bridge
-for (const [name, descriptor] of Object.entries({
-    "clusterify": { get: () => clusterify, set: value => { Object.defineProperty(window, "clusterify", { configurable: true, enumerable: true, writable: true, value }); } },
-    "parseHexToDraw": { get: () => parseHexToDraw, set: value => { Object.defineProperty(window, "parseHexToDraw", { configurable: true, enumerable: true, writable: true, value }); } },
-    "polarToCartesian": { get: () => polarToCartesian, set: value => { Object.defineProperty(window, "polarToCartesian", { configurable: true, enumerable: true, writable: true, value }); } },
-    "pointArrayToSVGString": { get: () => pointArrayToSVGString, set: value => { Object.defineProperty(window, "pointArrayToSVGString", { configurable: true, enumerable: true, writable: true, value }); } },
-    "lerpBetweenTwoPoints": { get: () => lerpBetweenTwoPoints, set: value => { Object.defineProperty(window, "lerpBetweenTwoPoints", { configurable: true, enumerable: true, writable: true, value }); } },
-    "gimmeTheAngleForThisSlot": { get: () => gimmeTheAngleForThisSlot, set: value => { Object.defineProperty(window, "gimmeTheAngleForThisSlot", { configurable: true, enumerable: true, writable: true, value }); } },
-    "whatColorIsThisEdgePiece": { get: () => whatColorIsThisEdgePiece, set: value => { Object.defineProperty(window, "whatColorIsThisEdgePiece", { configurable: true, enumerable: true, writable: true, value }); } },
-    "whatAreTheCornerColorLetters": { get: () => whatAreTheCornerColorLetters, set: value => { Object.defineProperty(window, "whatAreTheCornerColorLetters", { configurable: true, enumerable: true, writable: true, value }); } },
-    "convertColorLetterToHexCode": { get: () => convertColorLetterToHexCode, set: value => { Object.defineProperty(window, "convertColorLetterToHexCode", { configurable: true, enumerable: true, writable: true, value }); } },
-    "gimmeCornerColorsAsHexCodes": { get: () => gimmeCornerColorsAsHexCodes, set: value => { Object.defineProperty(window, "gimmeCornerColorsAsHexCodes", { configurable: true, enumerable: true, writable: true, value }); } },
-    "whatColorIsThisHalfCorner": { get: () => whatColorIsThisHalfCorner, set: value => { Object.defineProperty(window, "whatColorIsThisHalfCorner", { configurable: true, enumerable: true, writable: true, value }); } },
-    "CreateOnePieceSVG": { get: () => CreateOnePieceSVG, set: value => { Object.defineProperty(window, "CreateOnePieceSVG", { configurable: true, enumerable: true, writable: true, value }); } },
-    "GenerateTheFullSVGFromHexNotation": { get: () => GenerateTheFullSVGFromHexNotation, set: value => { Object.defineProperty(window, "GenerateTheFullSVGFromHexNotation", { configurable: true, enumerable: true, writable: true, value }); } },
-    "CreateOneShapeOutlineSVG": { get: () => CreateOneShapeOutlineSVG, set: value => { Object.defineProperty(window, "CreateOneShapeOutlineSVG", { configurable: true, enumerable: true, writable: true, value }); } },
-    "GenerateShapeVisualizationSVG": { get: () => GenerateShapeVisualizationSVG, set: value => { Object.defineProperty(window, "GenerateShapeVisualizationSVG", { configurable: true, enumerable: true, writable: true, value }); } },
-    "visualizeCubeShapeOutlines": { get: () => visualizeCubeShapeOutlines, set: value => { Object.defineProperty(window, "visualizeCubeShapeOutlines", { configurable: true, enumerable: true, writable: true, value }); } },
-    "visualizeFromHexCode": { get: () => visualizeFromHexCode, set: value => { Object.defineProperty(window, "visualizeFromHexCode", { configurable: true, enumerable: true, writable: true, value }); } },
-    "visualizeFromScrambleNotation": { get: () => visualizeFromScrambleNotation, set: value => { Object.defineProperty(window, "visualizeFromScrambleNotation", { configurable: true, enumerable: true, writable: true, value }); } },
-    "visualizeFromSolutionNotation": { get: () => visualizeFromSolutionNotation, set: value => { Object.defineProperty(window, "visualizeFromSolutionNotation", { configurable: true, enumerable: true, writable: true, value }); } },
-})) {
+  for (const [name, value] of Object.entries({
+    visualizeFromHexCode,
+    visualizeFromScrambleNotation,
+    visualizeFromSolutionNotation,
+    visualizeCubeShapeOutlines,
+    algToHex,
+    invertScramble,
+    unkarnify
+  })) {
     Object.defineProperty(window, name, {
-        configurable: true,
-        enumerable: true,
-        get: descriptor.get,
-        set: descriptor.set
+      configurable: true,
+      enumerable: true,
+      get: () => value
     });
+  }
 }
