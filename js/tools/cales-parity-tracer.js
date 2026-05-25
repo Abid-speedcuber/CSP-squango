@@ -771,7 +771,7 @@
 
         const initialAngle = layerType === 'TOP' ? 90 : 120;
 
-        // Check if tracing scheme ends with corner or edge
+        // Check if last piece traced is a corner or edge
         const endsWithCorner = patternTypes.endsWith('C');
         const arcDegrees = endsWithCorner ? 300 : 330;
 
@@ -1023,7 +1023,7 @@
                                 <li><b>z2 tracing for 6 and 8 edge cases</b> means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped.</li>
                                 <li><b>Image size</b> determine how big the image of the square 1 appear on the parity tracer screen.</li>
                                 <li><b>Tracing arrow</b> shows where your tracing starts on each layer. You can customize its appearance or hide it completely.</li>
-                                <li><b>Set your tracing scheme</b> for each shape to have fully personalized parity tracing. This affets the parity of the <span style="font-weight:600; font-style:italic;">Algorithms on the Homescreen</span>, <span style="font-weight:600; font-style:italic;">Case in Trainer</span>, basically the <span style="font-weight:650; font-style:italic;">entire app</span>!</li>
+                                <li><b>Set your tracing position</b> for each shape to have fully personalized parity tracing. This affets the parity of the <span style="font-weight:600; font-style:italic;">Algorithms on the Homescreen</span>, <span style="font-weight:600; font-style:italic;">Case in Trainer</span>, basically the <span style="font-weight:650; font-style:italic;">entire app</span>!</li>
                                 <li><span style="font-weight:600; font-style:italic;">Evilness</span> refers to a special tracing technique where you add 1 to your tracing for certain cases to force good alg for even parity all the time. If you are a practitioner of this technique, toggle <b>Evilness Factor</b> on from the settings. If you don't want evilness factor affects the parity of an algorithm on the homescreen, you can toggle <b>Evilness Affects Homescreen</b> off.</li>
                             </ol>
                         </div>
@@ -1077,7 +1077,7 @@
         instructionModal.innerHTML = `
             <div class="training-info-content" style="background: ${config.backgroundColor};">
                 <div class="training-info-header" style="background: ${cardBgColor}; color: ${textColor};">
-                    <span class="training-info-title">Setting Tracing Scheme Guide</span>
+                    <span class="training-info-title">Setting Tracing Positions Guide</span>
                     <button class="training-info-close" style="color: ${textColor};">&times;</button>
                 </div>
                 <div class="training-info-body">
@@ -1345,7 +1345,7 @@
         renderEvilGrid();
     }
 
-    function showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
+    function showTracingPositionSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn) {
         // Calculate contrasting colors based on background
         function getContrastColor(hexColor) {
             const r = parseInt(hexColor.substr(1, 2), 16);
@@ -1410,7 +1410,7 @@
         const headerTitle = document.createElement('div');
         headerTitle.style.cssText = 'display: flex; align-items: center; gap: 10px;';
         headerTitle.innerHTML = `
-            <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Tracing Scheme Settings</h2>
+            <h2 style="font-size: 1.5rem; color: ${textColor}; margin: 0;">Tracing Position Settings</h2>
             <button class="config-info-btn" style="background: rgba(255, 255, 255, 0.1); border: none; color: ${textColor}; cursor: pointer; padding: 6px; border-radius: 6px; display: ${config.hideInstructionButton ? 'none' : 'flex'}; align-items: center; justify-content: center; transition: background 0.2s; width: 32px; height: 32px;" title="Configuration Guide">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                     <circle cx="12" cy="12" r="10"></circle>
@@ -1601,7 +1601,7 @@
             configModalDiv.remove();
             configFloatingCloseBtn.remove();
             configStyle.remove();
-            showTracingSchemeSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
+            showTracingPositionSettingsModal(modalElement, config, mainCloseBtn, mainInstructionBtn, mainSettingsBtn);
         };
 
         buttonsDiv.appendChild(saveBtn);
@@ -2849,7 +2849,7 @@
     // Export the single function
     lib.ParityTracerLibrary = {
         createModal: createSquareOneParityTracerModalWithAllParametersIncluded,
-        openConfigModal: showTracingSchemeSettingsModal,
+        openConfigModal: showTracingPositionSettingsModal,
         openEvilnessCasesModal: function(config) { showEvilnessCasesModal(null, config, null, null, null); },
         reloadShapesFromStorage: function () {
             // Force reload shape patterns from localStorage

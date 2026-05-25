@@ -344,7 +344,7 @@ function _renderParityTab(panel) {
         </div>
 
         ${_sectionTitle('Tools')}
-        ${_actionBtn('Set Tracing Scheme',
+        ${_actionBtn('Set Tracing Positions',
                     '_closeSettingsModal();setTimeout(()=>openParityTracingPersonalization(),200)',
                     'Set the starting piece (edge or corner) for each shape. This determines the order in which pieces are traced and therefore the odds/evens assigned to your algs.')}
 
