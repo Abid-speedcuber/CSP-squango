@@ -385,6 +385,7 @@ window.openMultiCaseTrainingModal = function (caseNames) {
     trainingHoldToStart = savedTrainingHoldToStart ? parseFloat(savedTrainingHoldToStart) : 0.22;
     trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
     trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+    trainingHideScrambleImage = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
     timerElapsed = 0;
     scrambleHistory = [];

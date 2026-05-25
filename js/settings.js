@@ -5,10 +5,10 @@
 */
 
 const SETTINGS_TABS = [
-    { id: 'homescreen',    label: 'Personalization',    icon: 'res/settings.svg' },
-    { id: 'parity',        label: 'Parity Tracer Settings', icon: 'res/tracing.svg' },
-    { id: 'trainer',       label: 'Trainer Settings',       icon: 'res/training.svg' },
-    { id: 'animate',       label: 'Animate Algs Settings',  icon: 'res/animate_alg_settings.svg' },
+    { id: 'homescreen', label: 'Personalization', icon: 'res/settings.svg' },
+    { id: 'parity', label: 'Parity Tracer Settings', icon: 'res/tracing.svg' },
+    { id: 'trainer', label: 'Trainer Settings', icon: 'res/training.svg' },
+    { id: 'animate', label: 'Animate Algs Settings', icon: 'res/animate_alg_settings.svg' },
 ];
 
 let _settingsActiveTab = 'homescreen';
@@ -95,7 +95,7 @@ function _buildSettingsModal() {
             transition: all 0.15s; width: 100%;
         `;
         const isAnimate = tab.id === 'animate';
-btn.innerHTML = `<img src="${tab.icon}" width="${isAnimate ? 30 : 24}" height="${isAnimate ? 30 : 24}" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.55'}">`;
+        btn.innerHTML = `<img src="${tab.icon}" width="${isAnimate ? 30 : 24}" height="${isAnimate ? 30 : 24}" style="opacity:${_settingsActiveTab === tab.id ? '1' : '0.55'}">`;
         btn.addEventListener('click', () => _switchTab(tab.id));
         sidebar.appendChild(btn);
     });
@@ -138,9 +138,9 @@ function _renderTab(tabId) {
     </div>`;
     switch (tabId) {
         case 'homescreen': _renderHomescreenTab(panel); break;
-        case 'parity':     _renderParityTab(panel);     break;
-        case 'trainer':    _renderTrainerTab(panel);    break;
-        case 'animate':    _renderAnimateTab(panel);    break;
+        case 'parity': _renderParityTab(panel); break;
+        case 'trainer': _renderTrainerTab(panel); break;
+        case 'animate': _renderAnimateTab(panel); break;
     }
     // Restore info-box click behavior for the new panel content
     if (typeof applyInstructionVisibility === 'function') applyInstructionVisibility();
@@ -212,22 +212,22 @@ function _renderHomescreenTab(panel) {
     panel.innerHTML += `
         ${_sectionTitle('Display')}
         ${_row('Dark Mode',
-            _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'toggleTheme(this.checked)'),
-            'Switch between light and dark mode.')}
+        _toggle('hs_themeToggle', document.documentElement.getAttribute('data-theme') === 'dark', 'toggleTheme(this.checked)'),
+        'Switch between light and dark mode.')}
         ${_row('Show Tracing Guides',
             _toggle('hs_hintToggle', showHints, 'toggleHints(this.checked)'),
             'Show/hide the numbered tracing guide overlays on case images. The numbers indicate tracing order.<br><br><strong>Keyboard shortcut:</strong> Alt+T')}
         ${_row('Hide Instruction Buttons',
-            _toggle('hs_hideInstructionsToggle', hideInstructions, 'toggleHideInstructions(this.checked)'),
-            'Hide all ⓘ instruction buttons across the app.<br><br><strong>Keyboard shortcut:</strong> Alt+H')}
+                _toggle('hs_hideInstructionsToggle', hideInstructions, 'toggleHideInstructions(this.checked)'),
+                'Hide all ⓘ instruction buttons across the app.<br><br><strong>Keyboard shortcut:</strong> Alt+H')}
         ${_row('Hide Parentheses',
-            _toggle('hs_hideParenthesisToggle', hideParenthesis, 'toggleHideParenthesis(this.checked)'),
-            'Removes parentheses and switches the alg font from monospace to Arial for a cleaner look.<br><br><strong>Keyboard shortcut:</strong> Alt+P')}
+                    _toggle('hs_hideParenthesisToggle', hideParenthesis, 'toggleHideParenthesis(this.checked)'),
+                    'Removes parentheses and switches the alg font from monospace to Arial for a cleaner look.<br><br><strong>Keyboard shortcut:</strong> Alt+P')}
 
         ${_sectionTitle('Algorithm Font Size')}
         <div style="margin-bottom:18px;">
             ${_slider('hs_algFontSizeSlider', 10, 20, 1, algorithmFontSize,
-                'updateAlgFontSizePreview(this.value)', 'hs_algFontSizeValue')}
+                        'updateAlgFontSizePreview(this.value)', 'hs_algFontSizeValue')}
             <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--text-secondary);margin-top:2px;">
                 <span>Small</span><span>Large</span>
             </div>
@@ -235,19 +235,19 @@ function _renderHomescreenTab(panel) {
 
         ${_sectionTitle('Tools')}
         ${_actionBtn('Color Scheme Settings',
-            'openColorSchemeModal()',
-            'Change your Square-1 colour scheme. This affects parity tracing and draw-scramble visualizations.')}
+                            'openColorSchemeModal()',
+                            'Change your Square-1 colour scheme. This affects parity tracing and draw-scramble visualizations.')}
         ${_actionBtn('Quick Edit',
-            'openQuickEditModal()',
-            'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q')}
+                                'openQuickEditModal()',
+                                'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q')}
         ${_actionBtn('Customize Tracing Guides',
-            'openCustomizeSVGsModal()',
-            'Drag the numbered labels to your preferred positions on each shape image.<br><br><strong>Keyboard shortcut:</strong> Alt+G')}
+                                    'openCustomizeSVGsModal()',
+                                    'Drag the numbered labels to your preferred positions on each shape image.<br><br><strong>Keyboard shortcut:</strong> Alt+G')}
 
         ${_sectionTitle('Access')}
         ${_row('Enable Enhanced Access',
-            _toggle('hs_enhancedAccessToggle', window.enhancedAccess, 'toggleEnhancedAccess(this.checked)'),
-            'Unlocks alg editing inside Edit Case and Quick Edit. Keep off unless you are building a preset.')}
+                                        _toggle('hs_enhancedAccessToggle', window.enhancedAccess, 'toggleEnhancedAccess(this.checked)'),
+                                        'Unlocks alg editing inside Edit Case and Quick Edit. Keep off unless you are building a preset.')}
     `;
 
     // Sync slider display
@@ -284,7 +284,7 @@ function _renderParityTab(panel) {
     try {
         const s = localStorage.getItem('parityTracerArrowSettings');
         if (s) arrowSettings = JSON.parse(s);
-    } catch (_) {}
+    } catch (_) { }
 
     const cornerMode = typeof cornerStickerMode !== 'undefined' ? cornerStickerMode : 'counterclockwise';
     const evilOn = typeof evilnessFactor !== 'undefined' && evilnessFactor;
@@ -293,12 +293,12 @@ function _renderParityTab(panel) {
     panel.innerHTML += `
         ${_sectionTitle('Tracing Method')}
         ${_row('Corner Sticker for Tracing',
-            `<select id="pt_cornerSticker" onchange="_ptSaveCornerSticker(this.value)"
+        `<select id="pt_cornerSticker" onchange="_ptSaveCornerSticker(this.value)"
                 style="padding:5px 8px;border:1px solid var(--border-color);border-radius:6px;background:var(--surface);color:var(--text-ui);">
-                <option value="counterclockwise" ${cornerMode==='counterclockwise'?'selected':''}>Counter-clockwise sticker</option>
-                <option value="clockwise" ${cornerMode==='clockwise'?'selected':''}>Clockwise sticker</option>
+                <option value="counterclockwise" ${cornerMode === 'counterclockwise' ? 'selected' : ''}>Counter-clockwise sticker</option>
+                <option value="clockwise" ${cornerMode === 'clockwise' ? 'selected' : ''}>Clockwise sticker</option>
             </select>`,
-            'Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn not affect parity calculations, just your personal preference.')}
+        'Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn not affect parity calculations, just your personal preference.')}
         ${_row('z2 Tracing for 6/8-Edge Cases',
             _toggle('pt_z2', z2On, '_ptSaveZ2(this.checked)'),
             'z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it is on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped')}
@@ -316,15 +316,15 @@ function _renderParityTab(panel) {
                 style="width:100%;cursor:pointer;" oninput="_ptSaveImgSize(this.value)">
         </div>
         ${_row('Show Tracing Arrow',
-            _toggle('pt_showArrow', showArrow, '_ptSaveArrow(this.checked)'),
-            'The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.')}
+                _toggle('pt_showArrow', showArrow, '_ptSaveArrow(this.checked)'),
+                'The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.')}
 
-        <div id="pt_arrowSettings" style="opacity:${showArrow?'1':'0.4'};pointer-events:${showArrow?'auto':'none'};">
+        <div id="pt_arrowSettings" style="opacity:${showArrow ? '1' : '0.4'};pointer-events:${showArrow ? 'auto' : 'none'};">
             <div style="margin-bottom:12px;">
                 <div style="display:flex;align-items:center;gap:7px;margin-bottom:4px;">
-                    <label style="font-size:0.88rem;font-weight:500;color:var(--text-secondary);">Arrow Opacity: <span id="pt_opacityVal">${Math.round(arrowSettings.opacity*100)}%</span></label>
+                    <label style="font-size:0.88rem;font-weight:500;color:var(--text-secondary);">Arrow Opacity: <span id="pt_opacityVal">${Math.round(arrowSettings.opacity * 100)}%</span></label>
                 </div>
-                <input type="range" id="pt_opacity" min="0" max="100" value="${Math.round(arrowSettings.opacity*100)}"
+                <input type="range" id="pt_opacity" min="0" max="100" value="${Math.round(arrowSettings.opacity * 100)}"
                     style="width:100%;cursor:pointer;" oninput="_ptSaveArrowProp('opacity',this.value/100,this)">
             </div>
             <div style="margin-bottom:12px;">
@@ -345,60 +345,62 @@ function _renderParityTab(panel) {
 
         ${_sectionTitle('Tools')}
         ${_actionBtn('Set Tracing Scheme',
-            '_closeSettingsModal();setTimeout(()=>openParityTracingPersonalization(),200)',
-            'Set the starting piece (edge or corner) for each shape. This determines the order in which pieces are traced and therefore the odds/evens assigned to your algs.')}
+                    '_closeSettingsModal();setTimeout(()=>openParityTracingPersonalization(),200)',
+                    'Set the starting piece (edge or corner) for each shape. This determines the order in which pieces are traced and therefore the odds/evens assigned to your algs.')}
 
         ${_sectionTitle('Evilness')}
         ${_row('Enable Evilness Factor',
-            _toggle('pt_evilness', evilOn, '_ptToggleEvilness(this)'),
-            'When enabled, each case can be flagged as "evil". Evil cases add +1 to the parity total, flipping the result.')}
-        <div id="pt_evilSubSettings" style="opacity:${evilOn?'1':'0.4'};pointer-events:${evilOn?'auto':'none'};">
+                        _toggle('pt_evilness', evilOn, '_ptToggleEvilness(this)'),
+                        'When enabled, each case can be flagged as "evil". Evil cases add +1 to the parity total, flipping the result.')}
+        <div id="pt_evilSubSettings" style="opacity:${evilOn ? '1' : '0.4'};pointer-events:${evilOn ? 'auto' : 'none'};">
             ${_row('Evilness Affects Homescreen',
-                _toggle('pt_evilStr', evilStrOn, '_ptToggleEvilStr(this)'),
-                'When ON, the parity tags (Odd/Even) shown on algs on the homescreen also factor in the evilness of each case.')}
+                            _toggle('pt_evilStr', evilStrOn, '_ptToggleEvilStr(this)'),
+                            'When ON, the parity tags (Odd/Even) shown on algs on the homescreen also factor in the evilness of each case.')}
             ${_actionBtn('Per-case Evilness Settings',
-                '_closeSettingsModal();setTimeout(()=>_openEvilnessCasesFromSettings(),200)',
-                'Mark individual cases as evil or good.')}
+                                '_closeSettingsModal();setTimeout(()=>_openEvilnessCasesFromSettings(),200)',
+                                'Mark individual cases as evil or good.')}
         </div>
     `;
 }
 
-window._ptSaveCornerSticker = function(val) {
+window._ptSaveCornerSticker = function (val) {
     cornerStickerMode = val;
     if (typeof saveState === 'function') saveState();
     _triggerParityLiveUpdate();
 };
-window._ptSaveZ2 = function(val) {
+window._ptSaveZ2 = function (val) {
     localStorage.setItem('z2TracingModeForParityTracerLibrary', val.toString());
     _triggerParityLiveUpdate();
 };
-window._ptSaveImgSize = function(val) {
+window._ptSaveImgSize = function (val) {
     document.getElementById('pt_imgSizeVal').textContent = val + 'px';
     localStorage.setItem('parityTracerImageSize', val);
     _triggerParityLiveUpdate();
 };
-window._ptSaveArrow = function(val) {
+window._ptSaveArrow = function (val) {
     localStorage.setItem('parityTracerShowArrow', val.toString());
     const container = document.getElementById('pt_arrowSettings');
     if (container) { container.style.opacity = val ? '1' : '0.4'; container.style.pointerEvents = val ? 'auto' : 'none'; }
     _triggerParityLiveUpdate();
 };
-window._ptSaveArrowProp = function(prop, val, input) {
+window._ptSaveArrowProp = function (prop, val, input) {
     let settings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
-    try { const s = localStorage.getItem('parityTracerArrowSettings'); if (s) settings = JSON.parse(s); } catch(_){}
+    try { const s = localStorage.getItem('parityTracerArrowSettings'); if (s) settings = JSON.parse(s); } catch (_) { }
     settings[prop] = val;
     localStorage.setItem('parityTracerArrowSettings', JSON.stringify(settings));
     // Update display span
-    const displayMap = { opacity: ['pt_opacityVal', v => Math.round(v*100)+'%'],
-                         strokeWidth: ['pt_strokeVal', v => parseFloat(v).toFixed(1)],
-                         radius: ['pt_radiusVal', v => parseFloat(v).toFixed(2)] };
+    const displayMap = {
+        opacity: ['pt_opacityVal', v => Math.round(v * 100) + '%'],
+        strokeWidth: ['pt_strokeVal', v => parseFloat(v).toFixed(1)],
+        radius: ['pt_radiusVal', v => parseFloat(v).toFixed(2)]
+    };
     if (displayMap[prop]) {
         const el = document.getElementById(displayMap[prop][0]);
         if (el) el.textContent = displayMap[prop][1](val);
     }
     _triggerParityLiveUpdate();
 };
-window._ptToggleEvilness = function(checkbox) {
+window._ptToggleEvilness = function (checkbox) {
     const newVal = checkbox.checked;
     checkbox.checked = !newVal; // revert until confirmed
     _confirmExpensiveOp(
@@ -417,7 +419,7 @@ window._ptToggleEvilness = function(checkbox) {
         }
     );
 };
-window._ptToggleEvilStr = function(checkbox) {
+window._ptToggleEvilStr = function (checkbox) {
     const newVal = checkbox.checked;
     checkbox.checked = !newVal;
     _confirmExpensiveOp(
@@ -433,7 +435,7 @@ window._ptToggleEvilStr = function(checkbox) {
         }
     );
 };
-window._openEvilnessCasesFromSettings = function() {
+window._openEvilnessCasesFromSettings = function () {
     const config = _buildParityConfig();
     if (window.ParityTracerLibrary && window.ParityTracerLibrary.openEvilnessCasesModal) {
         window.ParityTracerLibrary.openEvilnessCasesModal(config);
@@ -446,7 +448,7 @@ function _triggerParityLiveUpdate() {
     if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-window.toggleTheme = function(isDark) {
+window.toggleTheme = function (isDark) {
     const next = isDark ? 'dark' : 'light';
     document.documentElement.setAttribute('data-theme', next);
     localStorage.setItem('sqg-csp-theme', next);
@@ -457,15 +459,21 @@ window.toggleTheme = function(isDark) {
 // ── TAB: Trainer ──────────────────────────────────────────────────────────────
 
 function _renderTrainerTab(panel) {
-    const imgSize  = parseInt(localStorage.getItem('trainingScrambleImageSize') || '200');
-    const txtSize  = parseInt(localStorage.getItem('trainingScrambleTextSize')  || '16');
-    const tmrSize  = parseInt(localStorage.getItem('trainingTimerSize')         || '80');
-    const holdVal  = parseFloat(localStorage.getItem('trainingHoldToStart')     || '0.22');
+    const imgSize = parseInt(localStorage.getItem('trainingScrambleImageSize') || '200');
+    const txtSize = parseInt(localStorage.getItem('trainingScrambleTextSize') || '16');
+    const tmrSize = parseInt(localStorage.getItem('trainingTimerSize') || '80');
+    const holdVal = parseFloat(localStorage.getItem('trainingHoldToStart') || '0.22');
     const showPrev = localStorage.getItem('trainingShowPrevScramble') === 'true';
-    const insp     = localStorage.getItem('trainingEnableInspection') === 'true';
-    const pquiz    = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+    const insp = localStorage.getItem('trainingEnableInspection') === 'true';
+    const pquiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+
+    const hideImg = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
     panel.innerHTML += `
+        ${_row('Hide Scramble Image',
+        _toggle('tr_hideImg', hideImg, "_trToggleHideScrambleImage(this.checked)"),
+        'Hides the scramble image and centers the timer.')}
+
         ${_sectionTitle('Scramble Display')}
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -509,22 +517,22 @@ function _renderTrainerTab(panel) {
 
         ${_sectionTitle('Inspection')}
         ${_row('Enable Inspection',
-            _toggle('tr_insp', insp, '_trToggleInspection(this.checked)'))}
-        <div id="tr_pquizRow" style="opacity:${insp?'1':'0.4'};pointer-events:${insp?'auto':'none'};">
+                _toggle('tr_insp', insp, '_trToggleInspection(this.checked)'))}
+        <div id="tr_pquizRow" style="opacity:${insp ? '1' : '0.4'};pointer-events:${insp ? 'auto' : 'none'};">
             ${_row('Parity Quiz During Inspection',
-                _toggle('tr_pquiz', pquiz, '_trTogglePQuiz(this.checked)'),
-                'During inspection, the trainer will quiz you about the parity state of the current scramble')}
+                    _toggle('tr_pquiz', pquiz, '_trTogglePQuiz(this.checked)'),
+                    'During inspection, the trainer will quiz you about the parity state of the current scramble')}
         </div>
     `;
 }
 
-window._trSave = function(key, val, displayId, fmt) {
+window._trSave = function (key, val, displayId, fmt) {
     localStorage.setItem(key, val);
     const el = document.getElementById(displayId);
     if (el) el.textContent = fmt ? fmt(val) : val;
 };
-window._trSaveBool = function(key, val) { localStorage.setItem(key, val.toString()); };
-window._trSaveImgSize = function(val) {
+window._trSaveBool = function (key, val) { localStorage.setItem(key, val.toString()); };
+window._trSaveImgSize = function (val) {
     localStorage.setItem('trainingScrambleImageSize', val);
     const el = document.getElementById('tr_imgSizeVal');
     if (el) el.textContent = val + 'px';
@@ -547,26 +555,26 @@ window._trSaveImgSize = function(val) {
                 const state = parseHexFormat(window._evilCurrentHexCode);
                 const notation = window.sq1Tools.scrambleFromState(state);
                 imgEl.innerHTML = visualizeFromScramble(notation, parseInt(val), typeof colorScheme !== 'undefined' ? colorScheme : {});
-            } catch(e) {}
+            } catch (e) { }
         }
     }
 };
-window._trApplyTextSize = function(val) {
+window._trApplyTextSize = function (val) {
     const el = document.getElementById('trainingScramble');
     if (el) { el.style.fontSize = val + 'px'; if (typeof trainingScrambleTextSize !== 'undefined') trainingScrambleTextSize = parseInt(val); }
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
-window._trApplyTimerSize = function(val) {
-    if (typeof trainingScrambleTextSize !== 'undefined') {}
+window._trApplyTimerSize = function (val) {
+    if (typeof trainingScrambleTextSize !== 'undefined') { }
     if (typeof applyTimerSize === 'function') applyTimerSize();
 };
-window._trApplyHold = function(val) {
+window._trApplyHold = function (val) {
     if (typeof trainingHoldToStart !== 'undefined') trainingHoldToStart = parseFloat(val);
 };
-window._trApplyPrevBar = function() {
+window._trApplyPrevBar = function () {
     if (typeof applyPrevScrambleBar === 'function') applyPrevScrambleBar();
 };
-window._trToggleInspection = function(val) {
+window._trToggleInspection = function (val) {
     if (typeof trainingEnableInspection !== 'undefined') trainingEnableInspection = val;
     localStorage.setItem('trainingEnableInspection', val.toString());
     if (!val) {
@@ -578,19 +586,24 @@ window._trToggleInspection = function(val) {
     const row = document.getElementById('tr_pquizRow');
     if (row) { row.style.opacity = val ? '1' : '0.4'; row.style.pointerEvents = val ? 'auto' : 'none'; }
 };
-window._trTogglePQuiz = function(val) {
+window._trTogglePQuiz = function (val) {
     const inspOn = localStorage.getItem('trainingEnableInspection') === 'true';
     if (!inspOn) { const cb = document.getElementById('tr_pquiz'); if (cb) cb.checked = false; return; }
     if (typeof trainingEnableParityQuiz !== 'undefined') trainingEnableParityQuiz = val;
     localStorage.setItem('trainingEnableParityQuiz', val.toString());
 };
+window._trToggleHideScrambleImage = function (val) {
+    localStorage.setItem('trainingHideScrambleImage', val.toString());
+    if (typeof trainingHideScrambleImage !== 'undefined') trainingHideScrambleImage = val;
+    if (typeof applyHideScrambleImage === 'function') applyHideScrambleImage();
+};
 
 // ── TAB: Alg Animator ────────────────────────────────────────────────────────
 
 function _renderAnimateTab(panel) {
-    const speed   = parseFloat(localStorage.getItem('sq1AnimSpeed')          || '0.9');
-    const delay   = parseInt(localStorage.getItem('sq1AutoDelay')            || '500');
-    const imgSize = parseInt(localStorage.getItem('sq1AnimImageSize')        || '200');
+    const speed = parseFloat(localStorage.getItem('sq1AnimSpeed') || '0.9');
+    const delay = parseInt(localStorage.getItem('sq1AutoDelay') || '500');
+    const imgSize = parseInt(localStorage.getItem('sq1AnimImageSize') || '200');
     const bothLay = localStorage.getItem('sq1AnimBothLayers') !== null
         ? localStorage.getItem('sq1AnimBothLayers') === 'true' : true;
     const vertDis = localStorage.getItem('sq1AnimVerticalDisplay') !== null
@@ -626,20 +639,20 @@ function _renderAnimateTab(panel) {
                 style="width:100%;cursor:pointer;" oninput="_aaSave('sq1AnimImageSize',this.value,'aa_imgSizeVal',v=>v+'px')">
         </div>
         ${_row('Animate Both Layers Together',
-            _toggle('aa_bothLayers', bothLay, "_aaSaveBool('sq1AnimBothLayers',this.checked)"),
-            null)}
+        _toggle('aa_bothLayers', bothLay, "_aaSaveBool('sq1AnimBothLayers',this.checked)"),
+        null)}
         ${_row('Vertical Stack Display',
             _toggle('aa_vertDisplay', vertDis, "_aaSaveBool('sq1AnimVerticalDisplay',this.checked)"),
             'When ON, the top and bottom layer images stack vertically instead of side-by-side.')}
     `;
 }
 
-window._aaSave = function(key, val, displayId, fmt) {
+window._aaSave = function (key, val, displayId, fmt) {
     localStorage.setItem(key, val);
     const el = document.getElementById(displayId);
     if (el) el.textContent = fmt ? fmt(val) : val;
 };
-window._aaSaveBool = function(key, val) { localStorage.setItem(key, val.toString()); };
+window._aaSaveBool = function (key, val) { localStorage.setItem(key, val.toString()); };
 
 // ── Utility: confirm expensive operation ──────────────────────────────────────
 

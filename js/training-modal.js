@@ -29,6 +29,7 @@ let parityQuizAnswer = null;
 let parityQuizCorrect = false;
 let trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
 let trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+let trainingHideScrambleImage = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
 // Create the training modal dynamically
 function createTrainingModal() {
@@ -194,6 +195,7 @@ function openTrainingModal(caseName) {
     trainingHoldToStart = savedTrainingHoldToStart ? parseFloat(savedTrainingHoldToStart) : 0.22;
     trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
     trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+    trainingHideScrambleImage = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
     // Pre-generate 3 scrambles
     for (let i = 0; i < 3; i++) {
@@ -313,7 +315,13 @@ function displayNextScramble() {
         const scrambleEl = document.getElementById('trainingScramble');
         scrambleEl.innerHTML = scrambleData.text;
         scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
-        document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
+        const imgEl = document.getElementById('trainingScrambleImage');
+        if (!trainingHideScrambleImage) {
+            imgEl.innerHTML = scrambleData.image;
+        } else {
+            imgEl.innerHTML = '';
+        }
+        applyHideScrambleImage();
 
         // Add to history
         scrambleHistory.push(scrambleData);
@@ -345,7 +353,12 @@ function previousScramble() {
     const scrambleEl = document.getElementById('trainingScramble');
     scrambleEl.innerHTML = scrambleData.text;
     scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
-    document.getElementById('trainingScrambleImage').innerHTML = scrambleData.image;
+    const imgEl = document.getElementById('trainingScrambleImage');
+    if (!trainingHideScrambleImage) {
+        imgEl.innerHTML = scrambleData.image;
+    } else {
+        imgEl.innerHTML = '';
+    }
     applyPrevScrambleBar();
 }
 
@@ -358,6 +371,12 @@ function applyTimerSize() {
     const size = parseInt(localStorage.getItem('trainingTimerSize') || 80);
     const el = document.getElementById('trainingTimer');
     if (el) el.style.fontSize = size + 'px';
+}
+
+window.applyHideScrambleImage = applyHideScrambleImage;
+function applyHideScrambleImage() {
+    const modal = document.getElementById('trainingModal');
+    if (modal) modal.classList.toggle('hide-scramble-image', trainingHideScrambleImage);
 }
 
 function applyPrevScrambleBar() {
