@@ -2398,7 +2398,7 @@
   "trainingScrambleTextSize": null,
   "trainingHoldToStart": null,
   "trainingTimerSize": null,
-  "trainingShowPrevScramble": null,
+  "trainingShowPrevScramble": "true",
   "profileName": "Profile",
   "profileAvatar": "res/avatar.svg",
   "selectorSelectedCases": [

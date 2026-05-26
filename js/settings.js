@@ -470,10 +470,6 @@ function _renderTrainerTab(panel) {
     const hideImg = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
     panel.innerHTML += `
-        ${_row('Hide Scramble Image',
-        _toggle('tr_hideImg', hideImg, "_trToggleHideScrambleImage(this.checked)"),
-        'Hides the scramble image and centers the timer.')}
-
         ${_sectionTitle('Scramble Display')}
         <div style="margin-bottom:18px;">
             <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
@@ -511,6 +507,10 @@ function _renderTrainerTab(panel) {
         </div>
 
         ${_sectionTitle('Display')}
+        ${_row('Hide Scramble Image',
+        _toggle('tr_hideImg', hideImg, "_trToggleHideScrambleImage(this.checked)"),
+        'Hides the scramble image and centers the timer.')}
+
         ${_row('Show Previous Scramble',
             _toggle('tr_showPrev', showPrev, "_trSaveBool('trainingShowPrevScramble',this.checked);_trApplyPrevBar()"),
             'Shows the previous scramble at the very bottom of the screen.')}
