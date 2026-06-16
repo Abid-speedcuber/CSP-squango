@@ -1,7 +1,7 @@
 // Modular preset configuration - add new presets here
 window.PRESET_CONFIG = {
-    'Default_Preset': 'presets/Default_Preset.json',
-    'Matt\'s_Preset': 'presets/Matt\'s_Preset.json'
+    'Matt\'s_Preset': 'presets/Matt\'s_Preset.json',
+    'Empty_Preset': 'presets/Empty_Preset.json'
     // Add more presets here:
     // 'Preset_Name': 'presets/preset_file.json',
 };
@@ -151,7 +151,7 @@ let colorScheme = {
 let scrambleImageSize = 200; // Default size
 let profileName = localStorage.getItem('profileName') || 'Profile';
 let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
-let currentPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
+let currentPreset = localStorage.getItem('currentPreset') || 'Matt\'s_Preset';
 let presetData = null; // Will store loaded preset data
 
 // Check if this is first load BEFORE loading state
@@ -598,11 +598,14 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
 
 // Initialize preset on load (just loads as defaults, doesn't overwrite user data)
 window.initializePreset = async function () {
-    const savedPreset = localStorage.getItem('currentPreset') || 'Default_Preset';
-    const success = await loadPresetAsDefaults(savedPreset);
-    if (!success) {
-        // Fallback to default if saved preset doesn't exist
-        await loadPresetAsDefaults('Default_Preset');
+    const savedPreset = localStorage.getItem('currentPreset') || 'Matt\'s_Preset';
+    // Only load the preset's defaults if it still exists in the config. If a user
+    // is on a preset that has since been renamed/removed (e.g. an old, customized
+    // "Default Preset"), we intentionally leave them on that preset name with no
+    // preset defaults loaded. All of their data lives in localStorage, so nothing
+    // is lost — and we avoid silently switching them onto a different preset.
+    if (window.PRESET_CONFIG && window.PRESET_CONFIG[savedPreset]) {
+        await loadPresetAsDefaults(savedPreset);
     }
 }
 
@@ -831,7 +834,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Apply default preset silently on first load
     if (isFirstLoad) {
-        await applyPreset('Default_Preset', true, true);
+        await applyPreset('Matt\'s_Preset', true, true);
     }
 
     // Apply algorithm font size
