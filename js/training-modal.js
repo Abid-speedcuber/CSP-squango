@@ -235,8 +235,8 @@ function closeTrainingModal() {
         parityQuizPhase = false;
         clearInterval(inspectionInterval);
 
-        // Soft render when coming back from training
-        filterAndSort(true);
+        // No re-render needed: training never mutates any list-affecting state
+        // (learned/learning/planned/comments/sort), so the grid is already correct.
     });
 }
 

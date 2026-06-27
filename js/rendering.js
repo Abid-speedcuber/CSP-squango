@@ -1142,7 +1142,89 @@ function render(softRender = false) {
     }, 50);
 }
 
+/**
+ * Keyed, in-place reconcile of the grid against `filteredData`.
+ *
+ * Used for *soft* renders (search/sort/filter, modal saves, etc.) when the grid
+ * is already populated. Instead of `grid.innerHTML = ...` (which tears the whole
+ * list down and re-paints from the top — the source of the multi-second "flash
+ * from top" when scrolled down), this:
+ *   - reuses existing card DOM nodes keyed by data-case-name,
+ *   - only replaces a node when its freshly-generated HTML actually differs,
+ *   - removes nodes no longer in the result set,
+ *   - and re-orders nodes to match the new sort order.
+ *
+ * Untouched cards keep their identity, so no repaint/flash and scroll position
+ * is preserved. renderCard() is the single source of truth for card content, so
+ * comparing normalized outerHTML reliably catches every per-card change
+ * (learned/learning/planned class, priority, probability, evilness color,
+ * search highlight, subtitle, comment, cached algos).
+ */
+function _reconcileRender(items) {
+    // Cancel any in-flight progressive trickle from a prior hard render.
+    ++_progressiveRenderToken;
+
+    const ph = document.getElementById('_render_placeholder');
+    if (ph) ph.remove();
+
+    // Index existing cards by case name; drop anything unexpected.
+    const existing = new Map();
+    Array.from(grid.children).forEach(node => {
+        const name = node.getAttribute && node.getAttribute('data-case-name');
+        if (name) existing.set(name, node);
+        else node.remove();
+    });
+
+    // Remove cards that are no longer in the result set.
+    const desired = new Set(items.map(i => i.name));
+    existing.forEach((node, name) => {
+        if (!desired.has(name)) {
+            node.remove();
+            existing.delete(name);
+        }
+    });
+
+    // Walk items in target order, reusing/updating/creating + positioning nodes.
+    let prev = null;
+    for (const item of items) {
+        const tmp = document.createElement('div');
+        tmp.innerHTML = renderCard(item);
+        const fresh = tmp.firstElementChild;
+
+        let node = existing.get(item.name);
+        if (node) {
+            // Compare browser-normalized serializations so identical cards are
+            // left in place (no DOM mutation, no repaint).
+            if (node.outerHTML !== fresh.outerHTML) {
+                node.replaceWith(fresh);
+                node = fresh;
+            }
+        } else {
+            node = fresh;
+        }
+        existing.set(item.name, node);
+
+        // Ensure node sits immediately after the previously placed node.
+        const ref = prev ? prev.nextSibling : grid.firstChild;
+        if (node !== ref) grid.insertBefore(node, ref);
+        prev = node;
+    }
+}
+
 function _doProgressiveRender() {
+    // Whenever the grid is already populated — soft OR hard render — reconcile in
+    // place instead of tearing down with grid.innerHTML. The teardown is what
+    // causes the "flash from the top" when the user is scrolled down, so we avoid
+    // it for every re-render. Hard renders have already recalculated parity (in
+    // render()) before reaching here, so the reconciled cards are up to date.
+    //
+    // The progressive trickle below is reserved for the *initial* paint (empty
+    // grid), where its only real job is a non-blocking first render.
+    if (grid.querySelector('[data-case-name]')) {
+        _reconcileRender(filteredData);
+        return;
+    }
+
     const token = ++_progressiveRenderToken;
     const items = filteredData;
 

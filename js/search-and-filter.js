@@ -1,7 +1,10 @@
 ﻿// Store search matches for highlighting
 window.searchMatches = new Map();
 
-function filterAndSort(softRender = false) {
+// Always a soft render: filterAndSort only handles search/sort/filter changes,
+// which never alter parity. Callers that change parity recalc it first, then
+// call this (or call render() directly for a hard render).
+function filterAndSort() {
     const searchTerm    = searchInput.value.toLowerCase().trim();
     const sortType      = sortSelect.value;
     const learnFilter   = learnFilterSelect.value;
@@ -97,7 +100,7 @@ function filterAndSort(softRender = false) {
         if (sortType === 'antiProbability') filteredData.reverse();
     }
 
-    render(softRender);
+    render(true);
 }
 
 // ── Responsive select labels ─────────────────────────────────

@@ -1287,10 +1287,13 @@
             if (useEvilInCalc) {
                 if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
                 if (typeof calculateAndCacheAllParity === 'function') calculateAndCacheAllParity();
-                if (typeof render === 'function') render();
-                if (typeof filterAndSort === 'function') filterAndSort();
+                // Soft render: parity is already recalculated above, and the
+                // reconciler picks up changed evilness colors / algos per-card
+                // via the outerHTML diff — no teardown/flash.
+                if (typeof filterAndSort === 'function') filterAndSort(true);
+                else if (typeof render === 'function') render(true);
             } else {
-                if (typeof render === 'function') render();
+                if (typeof render === 'function') render(true);
             }
             if (modalElement) {
                 const si = modalElement.querySelector('input[type="text"]');
@@ -1556,12 +1559,12 @@
                 }
             }
 
-            // Re-render cards and modals
-            if (typeof render === 'function') {
-                render();
-            }
+            // Re-render cards (soft: parity already recalculated above; the
+            // reconciler updates changed cards in place without a teardown/flash).
             if (typeof filterAndSort === 'function') {
-                filterAndSort();
+                filterAndSort(true);
+            } else if (typeof render === 'function') {
+                render(true);
             }
 
             if (typeof showToast === 'function') {

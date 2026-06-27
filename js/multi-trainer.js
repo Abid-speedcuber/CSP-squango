@@ -505,7 +505,8 @@ window.closeTrainingModal = function () {
     isHoldReady = false;
     window._multiCaseMode = false;
 
-    filterAndSort(true);
+    // No re-render needed: training never mutates any list-affecting state,
+    // so the grid is already correct (avoids the teardown/flash on close).
 };
 
 // ─── Export / Import hooks ────────────────────────────────────────────────────
