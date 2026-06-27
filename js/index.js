@@ -369,7 +369,7 @@ window.addEventListener('load', async () => {
 
         // Initialize just enough to open the tracer
         await initializePreset();
-        if (isFirstLoad) await applyPreset('Matt\'s_Preset', true, true);
+        if (isFirstLoad) await applyPreset('Matt\'s_Preset', true, true, true);
         initializeSVGData();
 
         // Open tracer immediately
@@ -388,7 +388,7 @@ window.addEventListener('load', async () => {
     } else {
         // Normal load flow
         await initializePreset();
-        if (isFirstLoad) await applyPreset('Matt\'s_Preset', true, true);
+        if (isFirstLoad) await applyPreset('Matt\'s_Preset', true, true, true);
         initializeSVGData();
 
         const sortSelect = document.getElementById('sort');

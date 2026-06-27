@@ -486,7 +486,7 @@ async function loadPresetAsDefaults(presetName) {
 }
 
 // Apply preset (overwrites all user data - only used on first load or explicit switch)
-window.applyPreset = async function (presetName, skipWarning = false, silent = false) {
+window.applyPreset = async function (presetName, skipWarning = false, silent = false, applyFull = false) {
     const data = await loadPresetData(presetName);
     if (!data) return;
 
@@ -553,6 +553,30 @@ window.applyPreset = async function (presetName, skipWarning = false, silent = f
     // - scrambleImageSize (keep user's preference)
     // - showHints (keep user's preference from localStorage)
     // - enhancedAccess (keep user's preference from localStorage)
+
+    // First-load only: apply the preset's personal/UI settings verbatim so a
+    // fresh profile's exported state matches the preset exactly. These are the
+    // localStorage-backed preferences that exportData() reads. Switching presets
+    // later intentionally preserves the user's own values, hence the flag.
+    if (applyFull) {
+        if (data.scrambleImageSize != null) scrambleImageSize = data.scrambleImageSize;
+        if (data.hideInstructions !== undefined) hideInstructions = data.hideInstructions;
+        if (data.showHints !== undefined) {
+            showHints = data.showHints;
+            localStorage.setItem('showHints', showHints);
+            if (typeof applyHintVisibility === 'function') applyHintVisibility();
+        }
+        if (data.profileName) { profileName = data.profileName; localStorage.setItem('profileName', profileName); }
+        if (data.profileAvatar) { profileAvatar = data.profileAvatar; localStorage.setItem('profileAvatar', profileAvatar); }
+        const personalLsKeys = [
+            'parityTracerImageSize', 'parityTracerShowArrow', 'parityTracerArrowSettings',
+            'trainingScrambleImageSize', 'trainingScrambleTextSize', 'trainingHoldToStart',
+            'trainingTimerSize', 'trainingShowPrevScramble'
+        ];
+        for (const k of personalLsKeys) {
+            if (data[k] != null) localStorage.setItem(k, data[k]);
+        }
+    }
 
     currentPreset = presetName;
     presetData = data;
@@ -834,7 +858,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Apply default preset silently on first load
     if (isFirstLoad) {
-        await applyPreset('Matt\'s_Preset', true, true);
+        await applyPreset('Matt\'s_Preset', true, true, true);
     }
 
     // Apply algorithm font size
