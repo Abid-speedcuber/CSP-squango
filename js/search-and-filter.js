@@ -4,7 +4,8 @@ window.searchMatches = new Map();
 // Always a soft render: filterAndSort only handles search/sort/filter changes,
 // which never alter parity. Callers that change parity recalc it first, then
 // call this (or call render() directly for a hard render).
-function filterAndSort() {
+// onComplete (optional) fires after the resulting DOM render finishes.
+function filterAndSort(onComplete = null) {
     const searchTerm    = searchInput.value.toLowerCase().trim();
     const sortType      = sortSelect.value;
     const learnFilter   = learnFilterSelect.value;
@@ -100,7 +101,7 @@ function filterAndSort() {
         if (sortType === 'antiProbability') filteredData.reverse();
     }
 
-    render(true);
+    render(true, onComplete);
 }
 
 // ── Responsive select labels ─────────────────────────────────
@@ -144,7 +145,7 @@ function attachSearchListeners() {
         searchInputEl.setAttribute('spellcheck',     'false');
 
         searchInputEl.addEventListener('input', () => {
-            filterAndSort(true);
+            filterAndSort();
             // Keep search bar open while there is text
             if (searchInputEl.value !== '' && controlsEl) {
                 controlsEl.classList.add('search-expanded');
@@ -154,13 +155,13 @@ function attachSearchListeners() {
 
     if (sortSelectEl) {
         sortSelectEl.addEventListener('change', () => {
-            filterAndSort(true);
+            filterAndSort();
             hideReorderButton();
         });
     }
 
     if (learnFilterSelectEl) {
-        learnFilterSelectEl.addEventListener('change', () => filterAndSort(true));
+        learnFilterSelectEl.addEventListener('change', () => filterAndSort());
     }
 
     if (searchToggleEl && controlsEl) {

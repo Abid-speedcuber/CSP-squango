@@ -330,7 +330,7 @@ function finalizeInitialization() {
     // These need to run after modal generation
     setTimeout(() => {
         if (typeof updateProgress === 'function') updateProgress();
-        filterAndSort(true); // Soft render on initialization
+        filterAndSort(); // Soft render on initialization
         if (typeof applyProfileUI === 'function') applyProfileUI();
     }, 100);
 }

@@ -1283,6 +1283,10 @@
         function performSave() {
             if (typeof evilnessMap !== 'undefined') Object.assign(evilnessMap, localEvilMap);
             if (typeof saveState === 'function') saveState();
+            // Fire the success toast only once the resulting render has completed.
+            const notify = () => {
+                if (typeof showToast === 'function') showToast('Evilness settings saved!', 3000, 'success');
+            };
             const useEvilInCalc = typeof evilnessStringReturn !== 'undefined' && evilnessStringReturn;
             if (useEvilInCalc) {
                 if (typeof lastParityCalculationSettings !== 'undefined') lastParityCalculationSettings = null;
@@ -1290,16 +1294,15 @@
                 // Soft render: parity is already recalculated above, and the
                 // reconciler picks up changed evilness colors / algos per-card
                 // via the outerHTML diff — no teardown/flash.
-                if (typeof filterAndSort === 'function') filterAndSort(true);
-                else if (typeof render === 'function') render(true);
+                if (typeof filterAndSort === 'function') filterAndSort(notify);
+                else if (typeof render === 'function') render(true, notify);
             } else {
-                if (typeof render === 'function') render(true);
+                if (typeof render === 'function') render(true, notify);
             }
             if (modalElement) {
                 const si = modalElement.querySelector('input[type="text"]');
                 if (si) si.dispatchEvent(new Event('input', { bubbles: true }));
             }
-            if (typeof showToast === 'function') showToast('Evilness settings saved!', 3000, 'success');
             closeEvilModal(true);
         }
 
@@ -1561,14 +1564,18 @@
 
             // Re-render cards (soft: parity already recalculated above; the
             // reconciler updates changed cards in place without a teardown/flash).
+            // Toast fires only after the render completes.
+            const notifySaved = () => {
+                if (typeof showToast === 'function') {
+                    showToast('Settings saved! All parity calculations have been updated.', 3000, 'success');
+                }
+            };
             if (typeof filterAndSort === 'function') {
-                filterAndSort(true);
+                filterAndSort(notifySaved);
             } else if (typeof render === 'function') {
-                render(true);
-            }
-
-            if (typeof showToast === 'function') {
-                showToast('Settings saved! All parity calculations have been updated.', 3000, 'success');
+                render(true, notifySaved);
+            } else {
+                notifySaved();
             }
         };
 

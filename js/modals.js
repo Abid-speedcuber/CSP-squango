@@ -1406,9 +1406,9 @@ function saveEditedCase(caseName, originalName) {
     // Recalculate parity
     calculateAndCacheAllParity();
 
-    render();
     closeEditCaseModal();
-    showToast('Case updated successfully!', 2000, 'success');
+    // Toast fires only after the render actually completes.
+    render(false, () => showToast('Case updated successfully!', 2000, 'success'));
 }
 
 function openCustomizeSVGsModal() {
@@ -1563,8 +1563,9 @@ function saveNotes(caseName) {
     }
 
     saveState();
-    render();
     closeNotesModal();
+    // Toast fires only after the render completes (matches the other save paths).
+    render(false, () => showToast('Notes saved!', 2000, 'success'));
 }
 
 // General Notes Modal Functions

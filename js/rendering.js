@@ -1124,7 +1124,19 @@ let renderTimeout = null;
 
 let _progressiveRenderToken = 0;
 
-function render(softRender = false) {
+// Callbacks to fire once the DOM update for the pending render actually
+// completes (used so success toasts appear after the render, not after the
+// request is queued). Collected across coalesced render() calls in one debounce.
+let _renderCompleteCallbacks = [];
+
+function _flushRenderCompleteCallbacks() {
+    const callbacks = _renderCompleteCallbacks;
+    _renderCompleteCallbacks = [];
+    callbacks.forEach(cb => { try { cb(); } catch (e) { console.error(e); } });
+}
+
+function render(softRender = false, onComplete = null) {
+    if (onComplete) _renderCompleteCallbacks.push(onComplete);
     if (renderTimeout) clearTimeout(renderTimeout);
 
     renderTimeout = setTimeout(() => {
@@ -1134,9 +1146,11 @@ function render(softRender = false) {
                 calculateAndCacheAllParity();
                 hideRenderLoading();
                 _doProgressiveRender();
+                _flushRenderCompleteCallbacks();
             });
         } else {
             _doProgressiveRender();
+            _flushRenderCompleteCallbacks();
         }
         renderTimeout = null;
     }, 50);
@@ -1322,7 +1336,7 @@ function showReorderButton() {
     reorderBtn.textContent = 'Re-order Cases';
 
     reorderBtn.onclick = () => {
-        filterAndSort(true);
+        filterAndSort();
         hideReorderButton();
         needsReorder = false;
     };
