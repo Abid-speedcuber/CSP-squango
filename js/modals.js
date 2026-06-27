@@ -630,7 +630,8 @@ function updateImageSizePreview(value) {
 }
 
 function updateAlgFontSizePreview(value) {
-    document.getElementById('algFontSizeValue').textContent = value;
+    const display = document.getElementById('hs_algFontSizeValue');
+    if (display) display.textContent = value + 'px';
     algorithmFontSize = parseInt(value);
     localStorage.setItem('algorithmFontSize', value);
     applyAlgorithmFontSize();
@@ -648,6 +649,22 @@ function applyAlgorithmFontSize() {
         document.head.appendChild(style);
     }
 }
+
+// Dismiss transient overlays (parity tracer, algorithm popups, context/priority
+// menus) before opening a fullscreen modal, so nothing lingers behind or over it.
+// Only closes the tracer when one is actually open, to avoid stray scroll/unlock
+// side effects from its close routine.
+window.closeTransientOverlays = function () {
+    if (document.querySelector('.parity-tracer-backdrop') &&
+        typeof window.closeParityTracerModalSilent === 'function') {
+        window.closeParityTracerModalSilent();
+    }
+    document.querySelectorAll('.algo-popup').forEach(p => p.remove());
+    ['caseContextMenu', 'priorityMenu'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+    });
+};
 
 // Apply initial hint visibility state on load
 applyHintVisibility();
@@ -1413,6 +1430,7 @@ function saveEditedCase(caseName, originalName) {
 
 function openCustomizeSVGsModal() {
     closeSettingsModal();
+    if (typeof window.closeTransientOverlays === 'function') window.closeTransientOverlays();
     SVGEditor.open();
 }
 

@@ -2779,21 +2779,39 @@
                 performAnalysis();
             });
 
-            const closeMainModal = () => {
-                closeModalWithHistory(() => {
-                    // Reset utility states when closing
-                    utilityZ2Enabled = false;
-                    utilityY2Enabled = false;
-                    utilityFlipColorEnabled = false;
+            const doCloseMainModalCleanup = () => {
+                // Reset utility states when closing
+                utilityZ2Enabled = false;
+                utilityY2Enabled = false;
+                utilityFlipColorEnabled = false;
 
-                    window.removeEventListener('resize', updateButtonPositions);
-                    backdrop.remove();
-                    closeBtnElement.remove();
-                    settingsBtnElement.remove();
-                    document.body.classList.remove('modal-open');
-                    document.body.style.top = '';
-                    window.scrollTo(0, window.modalScrollY || 0);
-                });
+                window.removeEventListener('resize', updateButtonPositions);
+                backdrop.remove();
+                closeBtnElement.remove();
+                settingsBtnElement.remove();
+                document.body.classList.remove('modal-open');
+                document.body.style.top = '';
+                window.scrollTo(0, window.modalScrollY || 0);
+            };
+
+            const closeMainModal = () => {
+                closeModalWithHistory(doCloseMainModalCleanup);
+            };
+
+            // Expose so other fullscreen modals (Quick Edit, SVG editor) can
+            // dismiss the tracer before opening, instead of leaving it behind.
+            window.closeParityTracerModal = closeMainModal;
+
+            // Silent variant: clean up the DOM + modal stack WITHOUT a
+            // history.back(). Used when programmatically swapping into another
+            // fullscreen modal — each closeModalWithHistory() fires one
+            // history.back(), but the popstate skip flag only absorbs one, so
+            // chaining two would pop (and close) the newly opened modal.
+            window.closeParityTracerModalSilent = () => {
+                if (typeof removeCloseModalFromStack === 'function') {
+                    removeCloseModalFromStack(closeMainModal);
+                }
+                doCloseMainModalCleanup();
             };
 
             // Use unified back button handler

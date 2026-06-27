@@ -144,6 +144,9 @@ function openQuickEditModal() {
     // Close settings modal if open
     closeSettingsModal();
 
+    // Dismiss any lingering overlays (e.g. the parity tracer opened underneath)
+    if (typeof window.closeTransientOverlays === 'function') window.closeTransientOverlays();
+
     // Store initial state for reverting
     window.quickEditInitialState = {
         displayNames: { ...displayNames },
