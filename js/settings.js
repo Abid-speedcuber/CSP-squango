@@ -470,6 +470,7 @@ function _renderTrainerTab(panel) {
     const showPrev = localStorage.getItem('trainingShowPrevScramble') === 'true';
     const insp = localStorage.getItem('trainingEnableInspection') === 'true';
     const pquiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
+    const beep = localStorage.getItem('trainingInspectionBeep') === 'true';
 
     const hideImg = localStorage.getItem('trainingHideScrambleImage') === 'true';
 
@@ -526,6 +527,9 @@ function _renderTrainerTab(panel) {
             ${_row('Parity Quiz During Inspection',
                     _toggle('tr_pquiz', pquiz, '_trTogglePQuiz(this.checked)'),
                     'During inspection, the trainer will quiz you about the parity state of the current scramble')}
+            ${_row('Inspection Beep (8s / 12s)',
+                    _toggle('tr_beep', beep, "_trSaveBool('trainingInspectionBeep',this.checked)"),
+                    'Play a beep once at 8 seconds, a double beep at 12 seconds, and a triple beep at 15 seconds.')}
         </div>
     `;
 }

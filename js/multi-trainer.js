@@ -150,6 +150,19 @@ function createSelectorModal() {
                 gap:7px;
                 align-content:start;
             "></div>
+
+            <!-- Footer: Go through each case once -->
+            <div style="flex-shrink:0; padding:10px 16px; background:var(--surface2); border-top:1px solid var(--surface-border); display:flex; align-items:center; gap:9px;">
+                <input type="checkbox" id="selectorGoThrough" ${localStorage.getItem('trainingGoThroughEachCase') === 'true' ? 'checked' : ''}
+                    onchange="_toggleGoThroughFromSelector(this.checked)" style="transform:scale(1.2); cursor:pointer;">
+                <label for="selectorGoThrough" style="font-size:0.88rem; color:var(--text-secondary); cursor:pointer;">
+                    Go through each case once
+                    <span class="info-wrapper">
+                        <button class="settings-info-btn" aria-label="More info" onclick="event.preventDefault();event.stopPropagation();"><img src="res/info.svg"></button>
+                        <span class="info-box">Go through each selected case once, and show a message after a full pass.</span>
+                    </span>
+                </label>
+            </div>
         </div>
     `;
 
@@ -165,6 +178,20 @@ function createSelectorModal() {
 window.onSelectorSearch = function (val) {
     selectorSearchTerm = val.toLowerCase().trim();
     renderSelectorCases();
+};
+
+// Toggle "go through each case once" from the selector. Saving + refreshing the
+// remaining array (a fresh shuffled pass) on every check/uncheck, and rebuilding
+// the live lookahead so the change takes effect immediately if training is open.
+window._toggleGoThroughFromSelector = function (checked) {
+    localStorage.setItem('trainingGoThroughEachCase', checked.toString());
+    window._resetGoThroughPool();
+    if (window._multiCaseMode && typeof regenerateMultiScrambleLookahead === 'function') {
+        regenerateMultiScrambleLookahead();
+    }
+    // Keep the settings-tab checkbox (if present) in sync.
+    const s = document.getElementById('tr_goThrough');
+    if (s) s.checked = checked;
 };
 
 function getSelectorSorted(arr) {
@@ -295,6 +322,7 @@ window.toggleSelectorCase = function (caseName) {
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
+        window._resetGoThroughPool();
         updateMultiTrainingTitle();
         // Only regenerate if the currently showing scramble's case was deselected
         const current = scrambleHistory[currentHistoryIndex];
@@ -344,6 +372,7 @@ window.applySelectorBulkAction = function (action) {
     renderSelectorCases();
     if (window._multiCaseMode) {
         multiTrainingCases = [...selectorSelectedCases];
+        window._resetGoThroughPool();
         updateMultiTrainingTitle();
         // Only regenerate if the currently showing scramble's case is no longer selected
         const current = scrambleHistory[currentHistoryIndex];
@@ -357,8 +386,46 @@ window.applySelectorBulkAction = function (action) {
 
 let multiTrainingCases = [];
 
+// "Go through each case once" mode: a shuffled array of the cases still to do this
+// pass. The FRONT case is peeked for each scramble (so regenerating keeps the same
+// case) and only removed when a solve is actually TIMED (see _goThroughConsume).
+// The array refreshes on selection change, on toggle, and when fully depleted.
+let _goThroughRemaining = [];
+window._resetGoThroughPool = function (avoidFirst = null) {
+    _goThroughRemaining = [...multiTrainingCases];
+    for (let i = _goThroughRemaining.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [_goThroughRemaining[i], _goThroughRemaining[j]] = [_goThroughRemaining[j], _goThroughRemaining[i]];
+    }
+    // Don't start a fresh pass with the case we just finished (avoids back-to-back).
+    if (avoidFirst && _goThroughRemaining.length > 1 && _goThroughRemaining[0] === avoidFirst) {
+        const k = 1 + Math.floor(Math.random() * (_goThroughRemaining.length - 1));
+        [_goThroughRemaining[0], _goThroughRemaining[k]] = [_goThroughRemaining[k], _goThroughRemaining[0]];
+    }
+};
+
+// Called when a scramble is actually timed: remove the just-solved case from the
+// remaining pass, announce completion of a full pass, and rebuild the lookahead so
+// the next scramble targets the new front case.
+window._goThroughConsume = function () {
+    if (!window._multiCaseMode || localStorage.getItem('trainingGoThroughEachCase') !== 'true') return;
+    const done = (typeof scrambleHistory !== 'undefined' && scrambleHistory[currentHistoryIndex])
+        ? scrambleHistory[currentHistoryIndex].caseName : null;
+    if (!done) return;
+    const idx = _goThroughRemaining.indexOf(done);
+    if (idx !== -1) _goThroughRemaining.splice(idx, 1);
+    if (_goThroughRemaining.length === 0) {
+        if (typeof showToast === 'function') showToast('Gone through each case!', 3000, 'success');
+        window._resetGoThroughPool(done);
+    }
+    // Rebuild the lookahead queue so the next scramble is for the new front case.
+    preGeneratedScrambles = [];
+    for (let i = 0; i < 3; i++) preGeneratedScrambles.push(window.generateNextScrambleData());
+};
+
 window.openMultiCaseTrainingModal = function (caseNames) {
     multiTrainingCases = caseNames;
+    window._resetGoThroughPool();
 
     createTrainingModal();
 
@@ -371,6 +438,7 @@ window.openMultiCaseTrainingModal = function (caseNames) {
         e.stopPropagation();
         openSelectorModal(window._selectorStorageKey || 'sq1-selector-cases', (chosen) => {
             multiTrainingCases = chosen;
+            window._resetGoThroughPool();
             updateMultiTrainingTitle();
             regenerateMultiScrambleLookahead();
         });
@@ -434,7 +502,18 @@ function regenerateMultiScrambleLookahead() {
 function generateMultiCaseScrambleData() {
     if (!multiTrainingCases || multiTrainingCases.length === 0) return null;
 
-    const caseName = multiTrainingCases[Math.floor(Math.random() * multiTrainingCases.length)];
+    // Pick the case: either random, or PEEK the front of the "go through each"
+    // remaining array. We don't remove it here — only a timed solve consumes it
+    // (see _goThroughConsume), so regenerating keeps you on the same case.
+    let caseName;
+    if (localStorage.getItem('trainingGoThroughEachCase') === 'true') {
+        if (_goThroughRemaining.length === 0) window._resetGoThroughPool();
+        caseName = _goThroughRemaining[0];
+    } else {
+        caseName = multiTrainingCases[Math.floor(Math.random() * multiTrainingCases.length)];
+    }
+    if (!caseName) return null;
+
     const shapeIndexItem = shapeIndex.find(s => s.name === caseName);
     if (!shapeIndexItem) return null;
 

@@ -507,6 +507,7 @@ function handleTimerMouseDown() {
 function handleTimerMouseUp() {
     if (timerRunning) {
         stopTimerOnly();
+        if (window._goThroughConsume) window._goThroughConsume();
         displayNextScramble();
         return;
     }
@@ -599,6 +600,7 @@ function handleTimerTouchEnd(e) {
     e.preventDefault();
     if (timerRunning) {
         stopTimerOnly();
+        if (window._goThroughConsume) window._goThroughConsume();
         displayNextScramble();
         return;
     }
@@ -629,10 +631,56 @@ function handleTimerTouchEnd(e) {
     }
 }
 
+// ── Inspection beep (Web Audio, no asset needed) ──────────────────────────────
+let _trainingAudioCtx = null;
+let _inspBeep8Fired = false;
+let _inspBeep12Fired = false;
+let _inspBeep15Fired = false;
+
+// Short pleasant beep via an oscillator with a quick attack/decay envelope so it
+// doesn't click. count>1 plays a quick sequence (more beeps = more urgent); vol is
+// the peak gain (kept low so nothing is intrusive).
+function playInspectionBeep(freq = 800, count = 1, vol = 0.15, gap = 0.13) {
+    try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) return;
+        if (!_trainingAudioCtx) _trainingAudioCtx = new Ctx();
+        const ctx = _trainingAudioCtx;
+        if (ctx.state === 'suspended') ctx.resume();
+        for (let i = 0; i < count; i++) {
+            const t = ctx.currentTime + i * gap;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.0001, t);
+            gain.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.10);
+            osc.connect(gain).connect(ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.12);
+        }
+    } catch (e) { /* audio not available */ }
+}
+
+// Called each inspection tick. Three escalating cues (time ELAPSED, not remaining):
+//   8s  — slight nudge   (one soft, low beep)
+//   12s — gentle warning (two beeps, a little higher/louder)
+//   15s — warning        (three quicker, higher beeps) — urgent but not harsh.
+function _checkInspectionBeeps() {
+    if (localStorage.getItem('trainingInspectionBeep') !== 'true') return;
+    if (!_inspBeep8Fired && inspectionElapsed >= 8000) { _inspBeep8Fired = true; playInspectionBeep(660, 1, 0.10, 0.13); }
+    if (!_inspBeep12Fired && inspectionElapsed >= 12000) { _inspBeep12Fired = true; playInspectionBeep(820, 2, 0.15, 0.14); }
+    if (!_inspBeep15Fired && inspectionElapsed >= 15000) { _inspBeep15Fired = true; playInspectionBeep(980, 3, 0.20, 0.10); }
+}
+
 function startInspection() {
     isInspectionPhase = true;
     inspectionRunning = true;
     inspectionElapsed = 0;
+    _inspBeep8Fired = false;
+    _inspBeep12Fired = false;
+    _inspBeep15Fired = false;
     inspectionStartTime = Date.now();
     const timerEl = document.getElementById('trainingTimer');
     timerEl.style.color = 'var(--accent)';
@@ -647,6 +695,7 @@ function startInspection() {
     inspectionInterval = setInterval(() => {
         inspectionElapsed = Date.now() - inspectionStartTime;
         timerEl.textContent = (inspectionElapsed / 1000).toFixed(3);
+        _checkInspectionBeeps();
     }, 10);
 }
 
@@ -681,6 +730,9 @@ function startParityQuizInspection() {
     isInspectionPhase = true;
     inspectionRunning = true;
     inspectionElapsed = 0;
+    _inspBeep8Fired = false;
+    _inspBeep12Fired = false;
+    _inspBeep15Fired = false;
     inspectionStartTime = Date.now();
 
     const timerEl = document.getElementById('trainingTimer');
@@ -747,6 +799,7 @@ function startParityQuizInspection() {
     inspectionInterval = setInterval(() => {
         inspectionElapsed = Date.now() - inspectionStartTime;
         timerEl.textContent = (inspectionElapsed / 1000).toFixed(3);
+        _checkInspectionBeeps();
     }, 10);
 
     let firstAnswerWrong = false;
@@ -1106,6 +1159,7 @@ document.addEventListener('keydown', (e) => {
         e.preventDefault();
         if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') return;
         stopTimerOnly();
+        if (window._goThroughConsume) window._goThroughConsume();
         displayNextScramble();
         spacePressed = false;
         return;
@@ -1186,6 +1240,7 @@ document.addEventListener('keyup', (e) => {
         e.preventDefault();
         if (timerRunning) {
             stopTimerOnly();
+            if (window._goThroughConsume) window._goThroughConsume();
             displayNextScramble();
         } else {
             nextScrambleManual();
@@ -1197,6 +1252,7 @@ document.addEventListener('keyup', (e) => {
         e.preventDefault();
         if (timerRunning) {
             stopTimerOnly();
+            if (window._goThroughConsume) window._goThroughConsume();
             displayNextScramble();
         } else {
             previousScramble();
