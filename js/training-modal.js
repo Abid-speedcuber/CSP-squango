@@ -405,6 +405,26 @@ function regenerateScrambleLookaheadLegacy() {
     }
 }
 
+// Resize the currently-displayed scramble image in place WITHOUT advancing to a
+// new scramble. Used when the user changes the training image-size setting — only
+// the picture should rescale; the scramble itself must stay put.
+window.resizeCurrentTrainingScramble = function () {
+    const imgEl = document.getElementById('trainingScrambleImage');
+    if (imgEl && !trainingHideScrambleImage && currentScrambleText &&
+        typeof visualizeFromScramble !== 'undefined') {
+        try {
+            const img = visualizeFromScramble(currentScrambleText, trainingScrambleImageSize, colorScheme);
+            imgEl.innerHTML = img;
+            // Keep the cached history image in sync so prev/next nav shows the new size.
+            if (scrambleHistory[currentHistoryIndex]) scrambleHistory[currentHistoryIndex].image = img;
+        } catch (e) { /* keep existing image on failure */ }
+    }
+    // Drop the stale-sized lookahead so upcoming scrambles render at the new size
+    // (mode-aware via the window dispatcher), without changing what's on screen.
+    preGeneratedScrambles = [];
+    for (let i = 0; i < 3; i++) preGeneratedScrambles.push(window.generateNextScrambleData());
+};
+
 function copyScrambleToClipboard() {
     navigator.clipboard.writeText(currentScrambleText).catch(err => {
         console.error('Failed to copy scramble:', err);

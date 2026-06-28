@@ -149,6 +149,9 @@ function _renderTab(tabId) {
 window.closeUnifiedSettingsModal = _closeSettingsModal;
 function _closeSettingsModal() {
     closeModalWithHistory(() => {
+        // Remove our own pushed stack entry (pushModalState used _closeSettingsModal),
+        // otherwise it orphans and costs an extra Esc to drain later.
+        if (typeof removeCloseModalFromStack === 'function') removeCloseModalFromStack(_closeSettingsModal);
         const modal = document.getElementById('unifiedSettingsModal');
         if (!modal) return;
         modal.remove();
@@ -536,15 +539,12 @@ window._trSaveImgSize = function (val) {
     localStorage.setItem('trainingScrambleImageSize', val);
     const el = document.getElementById('tr_imgSizeVal');
     if (el) el.textContent = val + 'px';
-    // Live update: if trainer is open, regenerate the scramble image
+    // Live update: if trainer is open, rescale the CURRENT scramble image only —
+    // do not generate a new scramble.
     if (typeof trainingScrambleImageSize !== 'undefined') trainingScrambleImageSize = parseInt(val);
     const modal = document.getElementById('trainingModal');
     if (modal && modal.classList.contains('active')) {
-        if (typeof window._multiCaseMode !== 'undefined' && window._multiCaseMode) {
-            if (typeof regenerateMultiScrambleLookahead === 'function') regenerateMultiScrambleLookahead();
-        } else {
-            if (typeof regenerateScrambleLookaheadLegacy === 'function') regenerateScrambleLookaheadLegacy();
-        }
+        if (typeof window.resizeCurrentTrainingScramble === 'function') window.resizeCurrentTrainingScramble();
     }
     // Live update evilness quiz if open
     const evilModal = document.getElementById('evilnessQuizModal');

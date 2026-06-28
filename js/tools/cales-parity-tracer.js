@@ -1329,17 +1329,22 @@
             delete window._evilToggleCase;
             delete window._evilBulkHandler;
             closeModalWithHistory(() => {
+                // Remove the entry we pushed (evilStackCloser) so it doesn't orphan
+                // and cost an extra Esc to drain later.
+                if (typeof removeCloseModalFromStack === 'function') removeCloseModalFromStack(evilStackCloser);
                 evilModalDiv.remove();
                 if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
                 if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
             });
         }
 
+        const evilStackCloser = () => closeEvilModal(false);
+
         evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
         evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
         evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
         evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
-        pushModalState('evilModal', () => closeEvilModal(false));
+        pushModalState('evilModal', evilStackCloser);
 
         evilInner.querySelector('#evilResetBtn').addEventListener('click', () => {
             const presetEvil = (typeof presetData !== 'undefined' && presetData && presetData.evilnessMap) ? presetData.evilnessMap : {};
@@ -1546,9 +1551,12 @@
             if (mainCloseBtn) mainCloseBtn.style.display = 'flex';
             if (mainSettingsBtn) mainSettingsBtn.style.display = 'flex';
 
-            // Trigger live update in the parity modal
-            if (modalElement) {
-                const scrambleInput = modalElement.querySelector('input[type="text"]');
+            // Trigger live update in the parity modal so the current scramble is
+            // re-analyzed with the new tracing positions. Fall back to the live
+            // tracer in the DOM, since when opened from Settings modalElement is null.
+            const liveTracer = modalElement || document.querySelector('.parity-tracer-backdrop');
+            if (liveTracer) {
+                const scrambleInput = liveTracer.querySelector('input[type="text"]');
                 if (scrambleInput) {
                     const event = new Event('input', { bubbles: true });
                     scrambleInput.dispatchEvent(event);
