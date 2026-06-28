@@ -1104,6 +1104,10 @@ document.addEventListener('keydown', (e) => {
 
     if (e.code === 'Escape') {
         e.preventDefault();
+        // Claim the Esc here so the global handler (index.js) doesn't ALSO pop the
+        // modal stack and close the training modal. While the trainer is open, Esc
+        // is handled exclusively below (close sub-modal / reset timer / close).
+        e.stopImmediatePropagation();
         const infoModal = document.getElementById('trainingInfoModal');
         const settingsModal = document.getElementById('trainingSettingsModal');
         const shapeModal = document.getElementById('shapeIndexSelectorModal');
@@ -1112,34 +1116,43 @@ document.addEventListener('keydown', (e) => {
         if (settingsModal && settingsModal.classList.contains('active')) { closeTrainingSettingsModal(); return; }
         if (shapeModal && shapeModal.classList.contains('active')) { closeShapeIndexSelector(); return; }
         if (selectorModal && selectorModal.style.display !== 'none') { closeSelectorModal(); return; }
-        // Cancel inspection without wiping last solve display
-        if (isInspectionPhase || parityQuizPhase) {
+        // Esc RESETS any in-progress timing (inspection, a held space waiting on
+        // hold-to-start, or a running solve) back to the inactive state — without
+        // closing the modal and without recording the solve. The modal only closes
+        // when nothing is in progress. After a reset, releasing the spacebar must
+        // NOT start the timer, so all hold/space flags are cleared.
+        const wasTimerRunning = timerRunning;
+        if (isInspectionPhase || parityQuizPhase || timerRunning || isHolding || spacePressed) {
             clearInterval(inspectionInterval);
+            if (timerRunning) { clearInterval(timerInterval); timerRunning = false; }
             inspectionRunning = false;
             isInspectionPhase = false;
             parityQuizPhase = false;
             isHolding = false;
             isHoldReady = false;
+            spacePressed = false;
             inspectionElapsed = 0;
+            _inspBeep8Fired = _inspBeep12Fired = _inspBeep15Fired = false;
             const overlay = document.getElementById('parityQuizOverlay');
             if (overlay) overlay.remove();
             const insLabel = document.getElementById('trainingInspectionLabel');
             if (insLabel) insLabel.style.display = 'none';
-            // Restore previous solve display
+
             const timerEl = document.getElementById('trainingTimer');
-            timerEl.style.color = 'var(--text-primary)';
-            if (timerElapsed > 0) {
-                timerEl.textContent = (timerElapsed / 1000).toFixed(3);
-            } else {
-                timerEl.textContent = '0.000';
+            if (timerEl) {
+                timerEl.style.color = 'var(--text-primary)';
+                if (wasTimerRunning) {
+                    // Discard the in-progress solve, return to 0.000.
+                    timerElapsed = 0;
+                    timerEl.textContent = '0.000';
+                } else {
+                    // Cancelled inspection/hold: keep the previous solve's time visible.
+                    timerEl.textContent = (timerElapsed > 0) ? (timerElapsed / 1000).toFixed(3) : '0.000';
+                }
             }
             const subInfo = document.getElementById('trainingTimerSubInfo');
             if (subInfo) {
-                if (trainingEnableInspection && lastInspectionElapsed > 0) {
-                    subInfo.style.display = 'block';
-                } else {
-                    subInfo.style.display = 'none';
-                }
+                subInfo.style.display = (!wasTimerRunning && trainingEnableInspection && lastInspectionElapsed > 0) ? 'block' : 'none';
             }
             return;
         }
@@ -1272,11 +1285,12 @@ document.addEventListener('keyup', (e) => {
             stopInspectionAndStartTimer();
             return;
         }
-        // During inspection (non-quiz): release but not ready → cancel hold, stay in inspection
+        // During inspection (non-quiz): release but not ready → cancel hold, stay in
+        // inspection. Revert to the inspection colour (not black) since we're still inspecting.
         if (isInspectionPhase && !parityQuizPhase && isHolding) {
             isHolding = false;
             isHoldReady = false;
-            timerEl.style.color = 'var(--text-primary)';
+            timerEl.style.color = 'var(--accent)';
             return;
         }
         // Normal mode: release after hold-ready → start solve
@@ -1577,19 +1591,47 @@ window.openEvilnessQuiz = function () {
 };
 
 function startEvilnessQuiz(chosenCaseNames) {
-    const allIndices = [];
-    function rebuildIndices(names) {
-        allIndices.length = 0;
-        names.forEach(cn => {
-            const entry = shapeIndex.find(e => e.name === cn);
-            if (entry) {
-                (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-            }
-        });
+    // Live case selection (same mechanism as timer training): the array of selected
+    // case names, kept in sync via window._evilQuizOnSelectionChange below.
+    let evilCaseNames = chosenCaseNames.filter(cn => shapeIndex.some(e => e.name === cn));
+    if (evilCaseNames.length === 0) return;
+
+    // "Go through each case once" for the quiz. Since there's no downtime here,
+    // a case is consumed the moment it's SHOWN; the array refreshes on selection
+    // change, when fully depleted, and when the quiz is stopped with Esc.
+    let evilRemaining = [];
+    let evilSawFirstPass = false;
+    function resetEvilRemaining() {
+        evilRemaining = [...evilCaseNames];
+        for (let i = evilRemaining.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [evilRemaining[i], evilRemaining[j]] = [evilRemaining[j], evilRemaining[i]];
+        }
+        evilSawFirstPass = false;
     }
-    rebuildIndices(chosenCaseNames);
-    if (allIndices.length === 0) return;
+    resetEvilRemaining();
+
+    // Pick the next { idx, caseName }: a case (random, or depleting "go through
+    // each" pool), then a random shape index of that case.
+    function pickEvilItem() {
+        if (evilCaseNames.length === 0) return null;
+        let caseName;
+        if (window._isGoThroughEnabled && window._isGoThroughEnabled('sq1-selector-evilness')) {
+            if (evilRemaining.length === 0) {
+                if (evilSawFirstPass && typeof showToast === 'function') showToast('Gone through each case!', 3000, 'success');
+                resetEvilRemaining();
+                evilSawFirstPass = true;
+            }
+            caseName = evilRemaining.shift(); // consumed on show
+        } else {
+            caseName = evilCaseNames[Math.floor(Math.random() * evilCaseNames.length)];
+        }
+        const entry = shapeIndex.find(e => e.name === caseName);
+        if (!entry) return null;
+        const idxs = [...(entry.org || []), ...(entry.mir || [])];
+        if (idxs.length === 0) return null;
+        return { idx: idxs[Math.floor(Math.random() * idxs.length)], caseName };
+    }
 
     let quizLog = [];
     let quizStartTime = 0;
@@ -1659,12 +1701,22 @@ function startEvilnessQuiz(chosenCaseNames) {
             modal.remove();
             setTimeout(() => obs.disconnect(), 500);
             document.body.classList.remove('modal-open');
+            window._evilQuizOnSelectionChange = null;
         });
     };
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('evilnessQuizModal', closeQuiz);
+
+    // Live selection hook: the case selector calls this on every change (same as
+    // the timer trainer updating multiTrainingCases live).
+    window._evilQuizOnSelectionChange = function (selectedArray) {
+        evilCaseNames = (selectedArray || []).filter(cn => shapeIndex.some(e => e.name === cn));
+        resetEvilRemaining();
+        const countEl = document.getElementById('evilQuizCaseCount');
+        if (countEl) countEl.textContent = `${evilCaseNames.length} cases selected`;
+    };
 
     // Settings modal
     function openEvilQuizSettings() {
@@ -1715,7 +1767,9 @@ function startEvilnessQuiz(chosenCaseNames) {
 
     function nextQuestion() {
         clearInterval(timerInt);
-        currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
+        const picked = pickEvilItem();
+        if (!picked) return;
+        currentItem = picked;
         questionCount++;
 
         currentHexCode = shapeIndexToHex(currentItem.idx);
@@ -1791,10 +1845,7 @@ function startEvilnessQuiz(chosenCaseNames) {
     document.getElementById('evilQuizClose').addEventListener('click', closeQuiz);
     document.getElementById('evilQuizNextBtn').addEventListener('click', () => { if (quizRunning) nextQuestion(); });
     document.getElementById('evilQuizCaseCount').addEventListener('click', () => {
-        openSelectorModal('sq1-selector-evilness', (chosen) => {
-            rebuildIndices(chosen);
-            document.getElementById('evilQuizCaseCount').textContent = `${chosen.length} cases selected`;
-        });
+        openSelectorModal('sq1-selector-evilness');
     });
     document.getElementById('evilQuizSettingsBtn').addEventListener('click', openEvilQuizSettings);
     document.getElementById('evilQuizSidebarClose').addEventListener('click', () => { sidebarOpen = false; document.getElementById('evilQuizSidebar').style.display = 'none'; });
@@ -1828,6 +1879,8 @@ function startEvilnessQuiz(chosenCaseNames) {
             if (quizRunning) {
                 quizRunning = false;
                 clearInterval(timerInt);
+                // Stopping the quiz refreshes the "go through each case" pass.
+                resetEvilRemaining();
                 const existing = document.getElementById('evilQuizAnswerOverlay');
                 if (existing) existing.remove();
                 const timerZone = document.getElementById('evilQuizTimerZone');
@@ -1887,14 +1940,18 @@ window.openParityQuiz = function () {
 };
 
 function startParityQuiz(chosenCaseNames) {
-    const allIndices = [];
-    chosenCaseNames.forEach(cn => {
-        const entry = shapeIndex.find(e => e.name === cn);
-        if (entry) {
-            (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-            (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-        }
-    });
+    let allIndices = [];
+    function rebuildParityIndices(names) {
+        allIndices = [];
+        (names || []).forEach(cn => {
+            const entry = shapeIndex.find(e => e.name === cn);
+            if (entry) {
+                (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
+                (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
+            }
+        });
+    }
+    rebuildParityIndices(chosenCaseNames);
     if (allIndices.length === 0) return;
 
     let quizLog = [];
@@ -1941,12 +1998,18 @@ function startParityQuiz(chosenCaseNames) {
             clearInterval(timerInt);
             modal.remove();
             document.body.classList.remove('modal-open');
+            window._parityQuizOnSelectionChange = null;
         });
     };
 
     document.body.appendChild(modal);
     document.body.classList.add('modal-open');
     pushModalState('parityQuizModal', closeQuiz);
+
+    // Live selection hook: the case selector calls this on every change.
+    window._parityQuizOnSelectionChange = function (selectedArray) {
+        rebuildParityIndices(selectedArray);
+    };
 
     function nextQuestion() {
         currentItem = allIndices[Math.floor(Math.random() * allIndices.length)];
@@ -2004,28 +2067,7 @@ function startParityQuiz(chosenCaseNames) {
     document.getElementById('parityQuizBad').addEventListener('click', () => handleAnswer(false));
     document.getElementById('parityQuizClose').addEventListener('click', closeQuiz);
     document.getElementById('parityQuizSelectCases').addEventListener('click', () => {
-        openSelectorModal('sq1-selector-parity', (chosen) => {
-            allIndices.length = 0;
-            chosen.forEach(cn => {
-                const entry = shapeIndex.find(e => e.name === cn);
-                if (entry) {
-                    (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                    (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                }
-            });
-        });
-    });
-    document.getElementById('parityQuizSelectCases').addEventListener('click', () => {
-        openSelectorModal('sq1-selector-parity', (chosen) => {
-            allIndices.length = 0;
-            chosen.forEach(cn => {
-                const entry = shapeIndex.find(e => e.name === cn);
-                if (entry) {
-                    (entry.org || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                    (entry.mir || []).forEach(idx => allIndices.push({ idx, caseName: cn }));
-                }
-            });
-        });
+        openSelectorModal('sq1-selector-parity');
     });
 
     nextQuestion();

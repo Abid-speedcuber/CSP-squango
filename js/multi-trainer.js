@@ -36,6 +36,20 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(loadSelectorSelection, 0);
 });
 
+// ─── Per-trainer "go through each case" setting ──────────────────────────────
+// Keyed by each trainer's selector storage key so the timer and evilness trainers
+// keep independent toggles (just like their independent case selections).
+const TIMER_SELECTOR_KEY = 'sq1-selector-cases';
+function _goThroughKey(selectorKey) {
+    return 'goThroughEachCase:' + (selectorKey || window._selectorStorageKey || TIMER_SELECTOR_KEY);
+}
+window._isGoThroughEnabled = function (selectorKey) {
+    const v = localStorage.getItem(_goThroughKey(selectorKey));
+    if (v !== null) return v === 'true';
+    // Legacy fallback to the old shared key so existing users keep their setting.
+    return localStorage.getItem('trainingGoThroughEachCase') === 'true';
+};
+
 // ─── Open selector as a modal overlay (not fullscreen) ───────────────────────
 
 window.openTrainingSelector = function () {
@@ -65,6 +79,10 @@ function openSelectorModal(storageKey, onCloseCallback) {
 
     const inp = document.getElementById('selectorSearchInput');
     if (inp) inp.value = selectorSearchTerm;
+
+    // Reflect THIS trainer's go-through setting (the modal is cached/reused).
+    const gt = document.getElementById('selectorGoThrough');
+    if (gt) gt.checked = window._isGoThroughEnabled(window._selectorStorageKey);
 }
 
 window.closeSelectorModal = function () {
@@ -153,7 +171,7 @@ function createSelectorModal() {
 
             <!-- Footer: Go through each case once -->
             <div style="flex-shrink:0; padding:10px 16px; background:var(--surface2); border-top:1px solid var(--surface-border); display:flex; align-items:center; gap:9px;">
-                <input type="checkbox" id="selectorGoThrough" ${localStorage.getItem('trainingGoThroughEachCase') === 'true' ? 'checked' : ''}
+                <input type="checkbox" id="selectorGoThrough" ${window._isGoThroughEnabled && window._isGoThroughEnabled(window._selectorStorageKey) ? 'checked' : ''}
                     onchange="_toggleGoThroughFromSelector(this.checked)" style="transform:scale(1.2); cursor:pointer;">
                 <label for="selectorGoThrough" style="font-size:0.88rem; color:var(--text-secondary); cursor:pointer;">
                     Go through each case once
@@ -184,10 +202,18 @@ window.onSelectorSearch = function (val) {
 // remaining array (a fresh shuffled pass) on every check/uncheck, and rebuilding
 // the live lookahead so the change takes effect immediately if training is open.
 window._toggleGoThroughFromSelector = function (checked) {
-    localStorage.setItem('trainingGoThroughEachCase', checked.toString());
+    // Save against the CURRENT trainer's selector key (per-trainer setting).
+    localStorage.setItem(_goThroughKey(window._selectorStorageKey), checked.toString());
     window._resetGoThroughPool();
     if (window._multiCaseMode && typeof regenerateMultiScrambleLookahead === 'function') {
         regenerateMultiScrambleLookahead();
+    }
+    // Refresh the evilness trainer's pass too (shares the same setting).
+    if (typeof window._evilQuizOnSelectionChange === 'function') {
+        window._evilQuizOnSelectionChange([...selectorSelectedCases]);
+    }
+    if (typeof window._parityQuizOnSelectionChange === "function") {
+        window._parityQuizOnSelectionChange([...selectorSelectedCases]);
     }
     // Keep the settings-tab checkbox (if present) in sync.
     const s = document.getElementById('tr_goThrough');
@@ -330,6 +356,13 @@ window.toggleSelectorCase = function (caseName) {
             regenerateMultiScrambleLookahead();
         }
     }
+    // Notify the evilness trainer (same live-update mechanism) if it's listening.
+    if (typeof window._evilQuizOnSelectionChange === 'function') {
+        window._evilQuizOnSelectionChange([...selectorSelectedCases]);
+    }
+    if (typeof window._parityQuizOnSelectionChange === "function") {
+        window._parityQuizOnSelectionChange([...selectorSelectedCases]);
+    }
 };
 
 // ─── Bulk Actions ─────────────────────────────────────────────────────────────
@@ -380,6 +413,12 @@ window.applySelectorBulkAction = function (action) {
             regenerateMultiScrambleLookahead();
         }
     }
+    if (typeof window._evilQuizOnSelectionChange === 'function') {
+        window._evilQuizOnSelectionChange([...selectorSelectedCases]);
+    }
+    if (typeof window._parityQuizOnSelectionChange === "function") {
+        window._parityQuizOnSelectionChange([...selectorSelectedCases]);
+    }
 };
 
 // ─── Multi-Case Training Modal ────────────────────────────────────────────────
@@ -408,7 +447,7 @@ window._resetGoThroughPool = function (avoidFirst = null) {
 // remaining pass, announce completion of a full pass, and rebuild the lookahead so
 // the next scramble targets the new front case.
 window._goThroughConsume = function () {
-    if (!window._multiCaseMode || localStorage.getItem('trainingGoThroughEachCase') !== 'true') return;
+    if (!window._multiCaseMode || !window._isGoThroughEnabled(TIMER_SELECTOR_KEY)) return;
     const done = (typeof scrambleHistory !== 'undefined' && scrambleHistory[currentHistoryIndex])
         ? scrambleHistory[currentHistoryIndex].caseName : null;
     if (!done) return;
@@ -506,7 +545,7 @@ function generateMultiCaseScrambleData() {
     // remaining array. We don't remove it here — only a timed solve consumes it
     // (see _goThroughConsume), so regenerating keeps you on the same case.
     let caseName;
-    if (localStorage.getItem('trainingGoThroughEachCase') === 'true') {
+    if (window._isGoThroughEnabled(TIMER_SELECTOR_KEY)) {
         if (_goThroughRemaining.length === 0) window._resetGoThroughPool();
         caseName = _goThroughRemaining[0];
     } else {
