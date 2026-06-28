@@ -1023,6 +1023,26 @@ const SVGEditor = {
             document.body.style.overflow = '';
         }
 
+        // Clear the canvas so a stale (possibly discarded) SVG isn't left on
+        // screen the next time the editor is opened. open() only rebuilds the
+        // sidebar, not the canvas, so without this the old DOM lingers until the
+        // user re-selects a case.
+        const canvas = document.getElementById('svgEditorCanvas');
+        if (canvas) {
+            canvas.innerHTML = `
+                <div class="svg-editor-empty">
+                    <h2>Select an SVG to Edit</h2>
+                    <p>Choose a tracing guide from the list on the left</p>
+                    <p style="margin-top: 15px; font-size: 14px; color: #999;">
+                        Click on labels to select • Drag to move • Arrow keys for fine adjustments<br>
+                        Tab/Shift+Tab to cycle through labels
+                    </p>
+                </div>
+            `;
+        }
+        const currentCaseEl = document.getElementById('svgEditorCurrentCase');
+        if (currentCaseEl) currentCaseEl.textContent = '';
+
         // Clean up keyboard movement
         if (this.state.keyMoveInterval) {
             clearInterval(this.state.keyMoveInterval);
