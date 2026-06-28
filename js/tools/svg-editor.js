@@ -984,7 +984,7 @@ const SVGEditor = {
                     },
                     () => {
                         // Discard
-                        this.forceClose();
+                        this.forceClose(true);
                     },
                     () => {
                         // Cancel - do nothing
@@ -997,9 +997,22 @@ const SVGEditor = {
         });
     },
 
-    forceClose() {
-        // Save current before closing
-        if (this.state.currentSvg !== null) {
+    forceClose(discard = false) {
+        if (discard) {
+            // Throw away every unsaved edit (including the current canvas and any
+            // cases that were pushed to window.svgData while navigating) by
+            // restoring svgData from the last saved state in localStorage.
+            try {
+                const saved = JSON.parse(localStorage.getItem('sq1-parity-progress'));
+                if (saved && saved.svgData) {
+                    window.svgData = saved.svgData;
+                    render(true);
+                }
+            } catch (e) {
+                console.error('Error discarding tracing guide changes:', e);
+            }
+        } else if (this.state.currentSvg !== null) {
+            // Save current before closing
             this.saveToMemory();
         }
 

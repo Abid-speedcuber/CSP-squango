@@ -1476,16 +1476,21 @@ window.showQuickEditInfoModal = function () {
     }
 
     infoModal.classList.add('active');
-    if (typeof pushModalState === 'function') pushModalState('quickEditInfoModal', closeQuickEditInfoModal);
+    // Register the same reference we hand to closeModalWithHistory, so the stack
+    // entry can actually be removed when closing via the X / outside click.
+    // Otherwise the stale entry strands and costs an extra Esc to clear.
+    if (typeof pushModalState === 'function') pushModalState('quickEditInfoModal', _hideQuickEditInfoModal);
 };
 
+function _hideQuickEditInfoModal() {
+    const modal = document.getElementById('quickEditInfoModal');
+    if (modal) {
+        modal.classList.remove('active');
+    }
+}
+
 window.closeQuickEditInfoModal = function () {
-    closeModalWithHistory(() => {
-        const modal = document.getElementById('quickEditInfoModal');
-        if (modal) {
-            modal.classList.remove('active');
-        }
-    });
+    closeModalWithHistory(_hideQuickEditInfoModal);
 };
 
 // REPLACE:

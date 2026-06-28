@@ -2616,7 +2616,7 @@ let _modalMouseDownTarget = null;
 document.addEventListener('mousedown', (e) => { _modalMouseDownTarget = e.target; });
 document.addEventListener('click', (e) => {
     // Training info modals
-    const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
+    const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal', 'quickEditInfoModal'];
     infoModals.forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal && modal.classList.contains('active') && e.target === modal && _modalMouseDownTarget === modal) {
