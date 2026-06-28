@@ -1343,7 +1343,8 @@
         evilInner.querySelector('#evilSaveBtn').addEventListener('click', performSave);
         evilInner.querySelector('#evilCancelBtn').addEventListener('click', () => closeEvilModal(false));
         evilInner.querySelector('#evilModalCloseBtn').addEventListener('click', () => closeEvilModal(false));
-        evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
+        if (window.attachOverlayClose) window.attachOverlayClose(evilModalDiv, () => closeEvilModal(false));
+        else evilModalDiv.addEventListener('click', e => { if (e.target === evilModalDiv) closeEvilModal(false); });
         pushModalState('evilModal', evilStackCloser);
 
         evilInner.querySelector('#evilResetBtn').addEventListener('click', () => {
@@ -1970,11 +1971,13 @@
 
         configFloatingCloseBtn.onclick = () => closeConfigModal();
 
-        configModalDiv.onclick = (e) => {
-            if (e.target === configModalDiv) {
-                closeConfigModal();
-            }
-        };
+        if (window.attachOverlayClose) {
+            window.attachOverlayClose(configModalDiv, closeConfigModal);
+        } else {
+            configModalDiv.onclick = (e) => {
+                if (e.target === configModalDiv) closeConfigModal();
+            };
+        }
 
         // Handle shape piece clicks for rotation - COMPLETE LOGIC RESTORED
         setTimeout(() => {
@@ -2841,12 +2844,14 @@
                 window.openUnifiedSettings('parity');
             });
 
-            // Close on backdrop click
-            backdrop.addEventListener('click', (e) => {
-                if (e.target === backdrop) {
-                    closeMainModal();
-                }
-            });
+            // Close on backdrop click (drag-safe: press + release must be on backdrop)
+            if (window.attachOverlayClose) {
+                window.attachOverlayClose(backdrop, closeMainModal);
+            } else {
+                backdrop.addEventListener('click', (e) => {
+                    if (e.target === backdrop) closeMainModal();
+                });
+            }
 
             // Auto-analyze if scramble is provided, otherwise use (0,0)
             if (config.scrambleTextInput) {

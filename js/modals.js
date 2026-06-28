@@ -2030,11 +2030,13 @@ window.showConfirmation = function (message, onConfirm, onCancel) {
         if (onConfirm) onConfirm();
     };
 
-    document.getElementById('confirmCancel').onclick = () => {
+    const cancel = () => {
         modal.remove();
         document.documentElement.classList.remove('scroll-locked');
         if (onCancel) onCancel();
     };
+    document.getElementById('confirmCancel').onclick = cancel;
+    if (window.attachOverlayClose) window.attachOverlayClose(modal, cancel);
 };
 
 // Three-button confirmation modal (Save/Discard/Cancel)
@@ -2051,8 +2053,8 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
                 <p style="margin: 0; font-size: 1rem; line-height: 1.6;">${message}</p>
                 <div style="display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end;">
                     <button id="confirmCancel"  class="confirm-btn confirm-btn--neutral">Cancel</button>
-                    <button id="confirmDiscard" class="confirm-btn confirm-btn--neutral">Discard</button>
-                    <button id="confirmSave"    class="confirm-btn confirm-btn--neutral">Save</button>
+                    <button id="confirmDiscard" class="confirm-btn confirm-btn--danger">Discard</button>
+                    <button id="confirmSave"    class="confirm-btn confirm-btn--primary">Save</button>
                 </div>
             </div>
         </div>
@@ -2073,11 +2075,13 @@ window.showSaveDiscardConfirmation = function (message, onSave, onDiscard, onCan
         if (onDiscard) onDiscard();
     };
 
-    document.getElementById('confirmCancel').onclick = () => {
+    const cancel = () => {
         modal.remove();
         document.documentElement.classList.remove('scroll-locked');
         if (onCancel) onCancel();
     };
+    document.getElementById('confirmCancel').onclick = cancel;
+    if (window.attachOverlayClose) window.attachOverlayClose(modal, cancel);
 };
 
 // Desktop Profile Modal Functions (Popup style - same logic as algorithm popup)
@@ -2592,13 +2596,30 @@ window.showQuickInfo = function (message) {
     document.body.appendChild(popup);
 };
 
-// Handle outside clicks for all modals
+// Shared backdrop-close helper: closes only on a genuine outside click — the
+// press AND release must both land on the overlay itself. This prevents a drag
+// that STARTS inside the modal (e.g. selecting text) and ends on the backdrop
+// from closing the modal.
+window.attachOverlayClose = function (overlay, closeFn) {
+    let downOnSelf = false;
+    overlay.addEventListener('mousedown', e => { downOnSelf = (e.target === overlay); });
+    overlay.addEventListener('mouseup', e => {
+        const isOutsideClick = downOnSelf && e.target === overlay;
+        downOnSelf = false;
+        if (isOutsideClick) closeFn(e);
+    });
+};
+
+// Handle outside clicks for all modals. Track where the press started so a drag
+// out of the modal body (e.g. text selection) doesn't count as an outside click.
+let _modalMouseDownTarget = null;
+document.addEventListener('mousedown', (e) => { _modalMouseDownTarget = e.target; });
 document.addEventListener('click', (e) => {
     // Training info modals
     const infoModals = ['settingsInfoModal', 'homepageInfoModal', 'editCaseInfoModal', 'notesInfoModal', 'generalNotesInfoModal'];
     infoModals.forEach(modalId => {
         const modal = document.getElementById(modalId);
-        if (modal && modal.classList.contains('active') && e.target === modal) {
+        if (modal && modal.classList.contains('active') && e.target === modal && _modalMouseDownTarget === modal) {
             const closeFunc = window[`close${modalId.charAt(0).toUpperCase() + modalId.slice(1).replace('Modal', '')}Modal`];
             if (closeFunc) closeFunc();
         }
@@ -2606,14 +2627,14 @@ document.addEventListener('click', (e) => {
 
     // Notes modal
     const notesModal = document.getElementById('notesModal');
-    if (notesModal && notesModal.classList.contains('active') && e.target === notesModal) {
+    if (notesModal && notesModal.classList.contains('active') && e.target === notesModal && _modalMouseDownTarget === notesModal) {
         const caseName = notesModal.querySelector('.modal-title').textContent.replace('Notes: ', '');
         attemptCloseNotesModal(caseName);
     }
 
     // General notes modal
     const generalNotesModal = document.getElementById('generalNotesModal');
-    if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal) {
+    if (generalNotesModal && generalNotesModal.classList.contains('active') && e.target === generalNotesModal && _modalMouseDownTarget === generalNotesModal) {
         attemptCloseGeneralNotesModal();
     }
 });

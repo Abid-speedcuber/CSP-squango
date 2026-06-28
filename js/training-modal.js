@@ -1491,9 +1491,8 @@ function quizBuildCaseSelector(modalId, title, storageKey, onConfirm) {
 
     // Close
     document.getElementById(modalId + '_selClose').addEventListener('click', closeSelector);
-    selectorModal.addEventListener('click', (e) => {
-        if (e.target === selectorModal) closeSelector();
-    });
+    if (window.attachOverlayClose) window.attachOverlayClose(selectorModal, closeSelector);
+    else selectorModal.addEventListener('click', (e) => { if (e.target === selectorModal) closeSelector(); });
 
     // Confirm
     document.getElementById(modalId + '_selConfirm').addEventListener('click', () => {
@@ -2359,7 +2358,8 @@ window.openTrainerPickerModal = function () {
     document.body.appendChild(picker);
     pushModalState('trainerPickerModal', closeTrainerPickerModal);
     document.getElementById('trainerPickerClose').addEventListener('click', closeTrainerPickerModal);
-    picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
+    if (window.attachOverlayClose) window.attachOverlayClose(picker, closeTrainerPickerModal);
+    else picker.addEventListener('click', e => { if (e.target === picker) closeTrainerPickerModal(); });
 };
 
 function closeTrainerPickerModal() {

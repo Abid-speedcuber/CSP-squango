@@ -154,7 +154,8 @@ function createSelectorModal() {
     `;
 
     // Close on backdrop click
-    modal.addEventListener('click', e => { if (e.target === modal) closeSelectorModal(); });
+    if (window.attachOverlayClose) window.attachOverlayClose(modal, closeSelectorModal);
+    else modal.addEventListener('click', e => { if (e.target === modal) closeSelectorModal(); });
 
     document.body.appendChild(modal);
 }
