@@ -73,7 +73,7 @@ const data = [
     { name: "3-1-2/Perpendicular Edges", top: "svg_3_1_2", bottom: "Perpendicular_edges", odd: ["(-2,2)/(0,-4)/(-2,0)/(0,1)/(3,0)/"], even: ["(4,0)/(0,2)/(0,-1)/(0,-3)/(-1,1)"], probability: 48 },
     { name: "3-2-1/Perpendicular Edges", top: "svg_3_2_1", bottom: "Perpendicular_edges", odd: ["(-1,0)/(0,4)/(2,0)/(0,-1)/(-3,0)/(-1,1)"], even: ["(-1,-4)/(-2,0)/(0,1)/(3,0)/"], probability: 48 },
     { name: "2-2-2/Paired Edges", top: "svg_2_2_2", bottom: "Paired_edges", odd: ["(-2,0)/(0,2)/(0,-1)/(3,3)/"], even: ["(0,-2)/(-2,0)/(0,1)/(3,3)/"], probability: 24 },
-    { name: "Scallop/Barrel", top: "Scallop_bottom", bottom: "Barrel_bottom", odd: ["(4,2)/(-4,0)/(2,0)/(-1,-2)/(-3,-3)/"], even: ["/(4,0)/(-1,0)/(-3,-3)/"], probability: 48 },
+    { name: "Scallop/Barrel", top: "Scallop_top", bottom: "Barrel_bottom", odd: ["(4,2)/(-4,0)/(2,0)/(-1,-2)/(-3,-3)/"], even: ["/(4,0)/(-1,0)/(-3,-3)/"], probability: 48 },
     { name: "Right Pawn/Left Fist", top: "Right_pawn_top", bottom: "Left_fist_bottom", odd: ["/(0,1)/(-1,0)/(-3,0)/"], even: ["(-2,-2)/(4,0)/(-4,0)/(4,-1)/(-3,0)/(-1,1)"], probability: 48 },
     { name: "Left Pawn/Right Fist", top: "Left_pawn_top", bottom: "Right_fist_bottom", odd: ["(2,2)/(0,-4)/(4,0)/(4,-1)/(0,-3)/(-1,1)"], even: ["/(-1,0)/(1,0)/(0,3)/(-1,1)"], probability: 48 },
     { name: "Shield/Muffin", top: "Shield_top", bottom: "Mushroom_bottom", odd: ["(-2,1)/(4,0)/(2,0)/(0,-3)/(2,1)/(3,0)/"], even: ["(0,6)/(0,-3)/(2,1)/(3,0)/"], probability: 48 },
