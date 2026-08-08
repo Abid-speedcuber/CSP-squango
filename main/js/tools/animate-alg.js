@@ -86,6 +86,39 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
         }
     }
 
+    function getVisualizationFlex(container) {
+        if (!container) return null;
+        return container.querySelector('div[style*="display:flex"], div[style*="display: flex"]');
+    }
+
+    function getLayerSvgs(container) {
+        if (!container) return { topSvg: null, bottomSvg: null };
+        const flex = getVisualizationFlex(container);
+        const scope = flex || container;
+        const svgs = scope.querySelectorAll(':scope > svg');
+        return {
+            topSvg: svgs[0] || null,
+            bottomSvg: svgs[1] || null
+        };
+    }
+
+    function applyVerticalDisplayToElement(container, enabled) {
+        if (!enabled) return;
+
+        const flexDiv = getVisualizationFlex(container);
+        if (!flexDiv) return;
+
+        flexDiv.style.flexDirection = 'column';
+
+        const svgs = flexDiv.querySelectorAll(':scope > svg');
+        svgs.forEach((svg, index) => {
+            if (index === 1) {
+                svg.style.marginLeft = '';
+                svg.style.marginTop = '-40px';
+            }
+        });
+    }
+
     function getSvgOrigin(svg, fallbackSize) {
         const originX = parseFloat(svg.getAttribute('data-origin-x'));
         const originY = parseFloat(svg.getAttribute('data-origin-y'));
@@ -100,6 +133,68 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
 
         const size = parseFloat(svg.getAttribute('width')) || fallbackSize;
         return { x: size / 2, y: size / 2 };
+    }
+
+    function getTurnPieces(svg) {
+        const layerGroup = svg.querySelector('.sq1-pieces');
+        if (layerGroup) return [layerGroup];
+
+        const pieceGroups = svg.querySelectorAll('.sq1-piece');
+        if (pieceGroups.length) return Array.from(pieceGroups);
+
+        return Array.from(svg.querySelectorAll('polygon, line.corner-detail'));
+    }
+
+    function easeInOut(t) {
+        return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    }
+
+    function applyTurnAnimation(pieces, centerX, centerY, duration, degrees) {
+        const targets = Array.from(pieces);
+        const baseTransforms = targets.map(piece => piece.getAttribute('transform') || '');
+        const startTime = performance.now();
+        let frameId = 0;
+
+        function renderFrame(now) {
+            const progress = duration <= 0 ? 1 : Math.min((now - startTime) / duration, 1);
+            const angle = degrees * easeInOut(progress);
+
+            targets.forEach((piece, index) => {
+                const baseTransform = baseTransforms[index];
+                const rotation = `rotate(${angle} ${centerX} ${centerY})`;
+                piece.setAttribute('transform', baseTransform ? `${rotation} ${baseTransform}` : rotation);
+            });
+
+            if (progress < 1) {
+                frameId = requestAnimationFrame(renderFrame);
+            }
+        }
+
+        frameId = requestAnimationFrame(renderFrame);
+
+        return {
+            cancel() {
+                cancelAnimationFrame(frameId);
+            },
+            clear() {
+                targets.forEach((piece, index) => {
+                    const baseTransform = baseTransforms[index];
+                    if (baseTransform) {
+                        piece.setAttribute('transform', baseTransform);
+                    } else {
+                        piece.removeAttribute('transform');
+                    }
+                });
+            }
+        };
+    }
+
+    function clearTurnAnimation(animations) {
+        animations.forEach(animation => {
+            if (!animation) return;
+            animation.cancel();
+            animation.clear();
+        });
     }
 
     // ========================================
@@ -565,19 +660,7 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
             if (state.verticalDisplay) {
                 const wrapper = document.createElement('div');
                 wrapper.innerHTML = visualization;
-                const flexContainer = wrapper.querySelector('div[style*="display: flex"]');
-                if (flexContainer) {
-                    const currentStyle = flexContainer.getAttribute('style');
-                    flexContainer.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-                    const svgs = flexContainer.querySelectorAll('svg');
-                    svgs.forEach((svg, index) => {
-                        if (index === 1) {
-                            const svgStyle = svg.getAttribute('style') || '';
-                            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
-                            svg.setAttribute('style', newStyle);
-                        }
-                    });
-                }
+                applyVerticalDisplayToElement(wrapper, state.verticalDisplay);
                 visualization = wrapper.innerHTML;
             }
             const highlightedAlg = renderAlgorithm(state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
@@ -615,22 +698,7 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
         }
 
         function applyVerticalDisplayIfEnabled(container) {
-            if (!state.verticalDisplay) return;
-
-            const flexDiv = container.querySelector('div[style*="display: flex"]');
-            if (!flexDiv) return;
-
-            const currentStyle = flexDiv.getAttribute('style');
-            flexDiv.setAttribute('style', currentStyle.replace('display: flex', 'display: flex; flex-direction: column'));
-
-            const svgs = flexDiv.querySelectorAll('svg');
-            svgs.forEach((svg, index) => {
-                if (index === 1) {
-                    const svgStyle = svg.getAttribute('style') || '';
-                    const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
-                    svg.setAttribute('style', newStyle);
-                }
-            });
+            applyVerticalDisplayToElement(container, state.verticalDisplay);
         }
 
         function attachEventListeners() {
@@ -965,12 +1033,12 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
                         const topRotation = parseInt(match[1]);
                         const bottomRotation = parseInt(match[2]);
 
-                        const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
-                        const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
+                        const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
+                        const { topSvg, bottomSvg } = getLayerSvgs(visualizationDiv);
 
                         if (topSvg && bottomSvg) {
-                            const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
-                            const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
+                            const topPieces = getTurnPieces(topSvg);
+                            const bottomPieces = getTurnPieces(bottomSvg);
 
                             const topOrigin = getSvgOrigin(topSvg, state.imageSize);
                             const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
@@ -984,27 +1052,11 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
 
                             const rotationMultiplier = direction === 'prev' ? -1 : 1;
 
-                            topPieces.forEach(piece => {
-                                piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-                                piece.style.transition = `transform ${duration}ms ease-in-out`;
-                                piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-                            });
-
-                            bottomPieces.forEach(piece => {
-                                piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-                                piece.style.transition = `transform ${duration}ms ease-in-out`;
-                                piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-                            });
+                            const topAnimation = applyTurnAnimation(topPieces, topCenterX, topCenterY, duration, topRotation * 30 * rotationMultiplier);
+                            const bottomAnimation = applyTurnAnimation(bottomPieces, bottomCenterX, bottomCenterY, duration, bottomRotation * 30 * rotationMultiplier);
 
                             setTimeout(() => {
-                                topPieces.forEach(piece => {
-                                    piece.style.transform = '';
-                                    piece.style.transition = '';
-                                });
-                                bottomPieces.forEach(piece => {
-                                    piece.style.transform = '';
-                                    piece.style.transition = '';
-                                });
+                                clearTurnAnimation([topAnimation, bottomAnimation]);
 
                                 state.isAnimating = false;
                                 render();
@@ -1107,14 +1159,14 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
                     }
                 }
 
-                const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
-                const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
+                const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
+                const { topSvg, bottomSvg } = getLayerSvgs(visualizationDiv);
 
                 const maxRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
 
                 if (topSvg && bottomSvg) {
-                    const topPieces = topSvg.querySelectorAll('polygon, line.corner-detail');
-                    const bottomPieces = bottomSvg.querySelectorAll('polygon, line.corner-detail');
+                    const topPieces = getTurnPieces(topSvg);
+                    const bottomPieces = getTurnPieces(bottomSvg);
 
                     const topOrigin = getSvgOrigin(topSvg, state.imageSize);
                     const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
@@ -1241,27 +1293,11 @@ import { SQG } from '../browser-api.js?v=esm-20260511-2';
 
                         const rotationMultiplier = direction === 'prev' ? -1 : 1;
 
-                        topPieces.forEach(piece => {
-                            piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-                            piece.style.transition = `transform ${duration}ms ease-in-out`;
-                            piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-                        });
-
-                        bottomPieces.forEach(piece => {
-                            piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-                            piece.style.transition = `transform ${duration}ms ease-in-out`;
-                            piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-                        });
+                        const topAnimation = applyTurnAnimation(topPieces, topCenterX, topCenterY, duration, topRotation * 30 * rotationMultiplier);
+                        const bottomAnimation = applyTurnAnimation(bottomPieces, bottomCenterX, bottomCenterY, duration, bottomRotation * 30 * rotationMultiplier);
 
                         setTimeout(() => {
-                            topPieces.forEach(piece => {
-                                piece.style.transform = '';
-                                piece.style.transition = '';
-                            });
-                            bottomPieces.forEach(piece => {
-                                piece.style.transform = '';
-                                piece.style.transition = '';
-                            });
+                            clearTurnAnimation([topAnimation, bottomAnimation]);
 
                             state.isAnimating = false;
                             render();

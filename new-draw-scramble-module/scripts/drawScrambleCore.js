@@ -704,10 +704,12 @@ export function createSquare1Core(initialState = {}) {
                 ? variant.drawEdge(token.piece, colors, size, muted, ph, settings)
                 : variant.drawCorner(token.piece, colors, size, muted, ph, settings);
             const transform = `translate(${cx},${cy}) rotate(${angle.toFixed(2)})`;
-            svg += `<g transform="${transform}">${pieceInner}</g>`;
+            svg += `<g class="sq1-piece" transform="${transform}">${pieceInner}</g>`;
         }
         if (layerScale !== 1) {
-            svg = `<g transform="translate(${cx},${cy}) scale(${layerScale}) translate(${-cx},${-cy})">${svg}</g>`;
+            svg = `<g class="sq1-pieces" transform="translate(${cx},${cy}) scale(${layerScale}) translate(${-cx},${-cy})">${svg}</g>`;
+        } else {
+            svg = `<g class="sq1-pieces">${svg}</g>`;
         }
         return svg;
     }
