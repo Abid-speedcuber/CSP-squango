@@ -8,6 +8,7 @@ import {
   initializeSVGData,
   isFirstLoad,
   needsParityRecalculation,
+  profileAvatar,
   setSortMode,
   updateProgress,
   type SortMode,
@@ -190,9 +191,12 @@ export default function App(): React.ReactNode {
             id="profileBtn"
             className="floating-profile-btn"
             aria-label="Profile"
-            onClick={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              (window as unknown as { openProfileModal?: () => void }).openProfileModal?.();
+            }}
           >
-            <img id="profileBtnAvatar" src="res/avatar.svg" height={24} width={24} alt="Profile" />
+            <img id="profileBtnAvatar" src={profileAvatar} height={24} width={24} alt="Profile" />
           </button>
         </header>
 

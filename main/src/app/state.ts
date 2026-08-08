@@ -460,6 +460,20 @@ function loadSavedState(): void {
       enhancedAccess = enhancedAccessSaved === 'true';
     }
 
+    const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
+    if (storedEvilnessFactor !== null) {
+      evilnessFactor = storedEvilnessFactor === 'true';
+    }
+
+    const storedEvilnessMap = localStorage.getItem('evilnessMap');
+    if (storedEvilnessMap !== null) {
+      try {
+        evilnessMap = JSON.parse(storedEvilnessMap) as Record<string, boolean>;
+      } catch {
+        // ignore malformed stored map
+      }
+    }
+
     ensureAllCasesHaveState();
     saveState();
   } catch (e) {
@@ -914,6 +928,10 @@ export function setPlannedLevel(name: string, level: number): void {
 // ── Display names & misc helpers ────────────────────────────────────────────
 export function getDisplayName(caseName: string): string {
   return displayNames[caseName] || caseName;
+}
+
+export function getDefaultDisplayName(caseName: string): string {
+  return defaultDisplayNames[caseName] || caseName;
 }
 
 export function getShortDisplayName(fullName: string): string {

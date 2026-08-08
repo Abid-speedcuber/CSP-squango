@@ -5,13 +5,18 @@
  * `window.*` bridge.
  */
 import { getShapePath, stripParenthesisIfNeeded } from './algDisplay';
-import { invertScramble } from '../lib/cube';
+import { algToShapeIndex, invertScramble } from '../lib/cube';
+import { normalizeScramble } from '../lib/normalizer';
+import { getParityText } from '../lib/parityAnalyzer';
 import {
   adjustPriority,
+  enhancedAccess,
+  evilnessMap,
   hideParenthesis,
   learnedCases,
   learningCases,
   plannedLevels,
+  saveState,
   toggleLearned,
 } from './state';
 import {
@@ -28,6 +33,8 @@ import {
 } from './notes';
 import { showToast } from './toast';
 import { openUnifiedSettings } from './settingsUI';
+import { installSidebarShims } from './sidebar';
+import { installEditCaseShims, openEditCaseModal } from './editCase';
 
 // ── Algo popup (legacy rendering.js showAlgoPopup/hideAlgoPopup) ─────────────
 let activePopup: HTMLElement | null = null;
@@ -404,10 +411,6 @@ function openTrainingModal(caseName: string): void {
   showToast(`Train This Case ("${caseName}") not yet ported`, 3000, 'info');
 }
 
-function openEditCaseModal(caseName: string): void {
-  showToast(`Edit Case ("${caseName}") not yet ported`, 3000, 'info');
-}
-
 function openAnimateAlgModal(): void {
   showToast('Animate Algs not yet ported', 3000, 'info');
 }
@@ -415,6 +418,19 @@ function openAnimateAlgModal(): void {
 // ── Install all shims ────────────────────────────────────────────────────────
 export function installWindowShims(): void {
   const w = window as unknown as Record<string, unknown>;
+
+  installSidebarShims();
+  installEditCaseShims();
+
+  // Algorithm-analysis bridges used by edit-case, quick-edit, trainer, tracer.
+  w.algToShapeIndex = algToShapeIndex;
+  w.ScrambleNormalizer = { normalizeScramble };
+  w.ParityAnalyzerLib = { getParityText };
+
+  // Edit-case modal state bridges referenced by inline HTML.
+  Object.defineProperty(w, 'enhancedAccess', { get: () => enhancedAccess, configurable: true });
+  w.evilnessMap = evilnessMap;
+  w.saveState = saveState;
 
   w.toggleLearned = (name: string, event: MouseEvent) => {
     event.stopPropagation();
@@ -435,9 +451,6 @@ export function installWindowShims(): void {
   w.showGeneralNotesInfoModal = showGeneralNotesInfoModal;
   w.closeGeneralNotesInfoModal = closeGeneralNotesInfoModal;
 
-  w.openColorSchemeModal = () => {
-    showToast('Color Scheme Settings not yet ported', 3000, 'info');
-  };
   w.openQuickEditModal = () => {
     showToast('Quick Edit not yet ported', 3000, 'info');
   };
