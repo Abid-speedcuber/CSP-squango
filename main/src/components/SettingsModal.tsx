@@ -37,6 +37,16 @@ import {
 } from '../app/state';
 import { applyAlgorithmFontSize, applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
+import {
+  applyHideImgLive,
+  applyHoldLive,
+  applyImageSizeLive,
+  applyPrevBarLive,
+  applyTextSizeLive,
+  applyTimerSizeLive,
+  setEnableInspectionLive,
+  setEnableParityQuizLive,
+} from '../app/training';
 
 function _row(labelHtml: string, controlHtml: React.ReactNode, tipHtml?: string): React.ReactNode {
   return (
@@ -519,6 +529,7 @@ function TrainerTab(): React.ReactNode {
             const val = parseInt(e.target.value, 10);
             setImgSize(val);
             localStorage.setItem('trainingScrambleImageSize', String(val));
+            applyImageSizeLive(val);
           }}
         />
       </div>
@@ -540,6 +551,7 @@ function TrainerTab(): React.ReactNode {
             const val = parseInt(e.target.value, 10);
             setTxtSize(val);
             localStorage.setItem('trainingScrambleTextSize', String(val));
+            applyTextSizeLive(val);
           }}
         />
       </div>
@@ -563,6 +575,7 @@ function TrainerTab(): React.ReactNode {
             const val = parseInt(e.target.value, 10);
             setTmrSize(val);
             localStorage.setItem('trainingTimerSize', String(val));
+            applyTimerSizeLive(val);
           }}
         />
       </div>
@@ -592,6 +605,7 @@ function TrainerTab(): React.ReactNode {
             const val = parseFloat(e.target.value);
             setHoldVal(val);
             localStorage.setItem('trainingHoldToStart', String(val));
+            applyHoldLive(val);
           }}
         />
       </div>
@@ -602,6 +616,7 @@ function TrainerTab(): React.ReactNode {
         _toggle('tr_hideImg', hideImg, (v) => {
           setHideImg(v);
           localStorage.setItem('trainingHideScrambleImage', v.toString());
+          applyHideImgLive(v);
         }),
         'Hides the scramble image and centers the timer.',
       )}
@@ -611,6 +626,7 @@ function TrainerTab(): React.ReactNode {
         _toggle('tr_showPrev', showPrev, (v) => {
           setShowPrev(v);
           localStorage.setItem('trainingShowPrevScramble', v.toString());
+          applyPrevBarLive();
         }),
         'Shows the previous scramble at the very bottom of the screen.',
       )}
@@ -619,9 +635,11 @@ function TrainerTab(): React.ReactNode {
       {_row('Enable Inspection', _toggle('tr_insp', insp, (v) => {
         setInsp(v);
         localStorage.setItem('trainingEnableInspection', v.toString());
+        setEnableInspectionLive(v);
         if (!v) {
           setPquiz(false);
           localStorage.setItem('trainingEnableParityQuiz', 'false');
+          setEnableParityQuizLive(false);
         }
       }))}
       <div id="tr_pquizRow" style={{ opacity: insp ? '1' : '0.4', pointerEvents: insp ? 'auto' : 'none' }}>
@@ -635,6 +653,7 @@ function TrainerTab(): React.ReactNode {
             }
             setPquiz(v);
             localStorage.setItem('trainingEnableParityQuiz', v.toString());
+            setEnableParityQuizLive(v);
           }),
           'During inspection, the trainer will quiz you about the parity state of the current scramble',
         )}

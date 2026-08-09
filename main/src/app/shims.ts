@@ -9,6 +9,12 @@ import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
 import {
+  visualizeFromHex,
+  visualizeFromScramble,
+  visualizeFromSolution,
+  visualizeShapes,
+} from '../lib/drawScramble';
+import {
   adjustPriority,
   enhancedAccess,
   evilnessMap,
@@ -35,6 +41,10 @@ import { showToast } from './toast';
 import { openUnifiedSettings } from './settingsUI';
 import { installSidebarShims } from './sidebar';
 import { installEditCaseShims, openEditCaseModal } from './editCase';
+import { installSVGEditorShims, SVGEditor } from './svgEditor';
+import { installTrainingShims, openTrainingModal } from './training';
+import { installParityTracerShims } from './parityTracer';
+import { scrambleFromState } from '../lib/solver';
 
 // ── Algo popup (legacy rendering.js showAlgoPopup/hideAlgoPopup) ─────────────
 let activePopup: HTMLElement | null = null;
@@ -120,7 +130,8 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
     setupElement.onclick = (e) => {
       e.stopPropagation();
       closeAlgoPopup(isPermanent);
-      openNewParityAnalysis(setup);
+      const opener = (window as unknown as Record<string, unknown>).openNewParityAnalysis;
+      if (typeof opener === 'function') (opener as (s: string) => void)(setup);
     };
     setupElement.onmouseenter = () => {
       setupElement.style.background = 'var(--hover-bg)';
@@ -403,14 +414,6 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
 }
 
 // ── Placeholder bridges for modals not yet ported ────────────────────────────
-function openNewParityAnalysis(setup: string): void {
-  showToast(`Parity analysis for "${setup}" not yet ported`, 3000, 'info');
-}
-
-function openTrainingModal(caseName: string): void {
-  showToast(`Train This Case ("${caseName}") not yet ported`, 3000, 'info');
-}
-
 function openAnimateAlgModal(): void {
   showToast('Animate Algs not yet ported', 3000, 'info');
 }
@@ -421,11 +424,24 @@ export function installWindowShims(): void {
 
   installSidebarShims();
   installEditCaseShims();
+  installSVGEditorShims();
+  installTrainingShims();
+  installParityTracerShims();
 
   // Algorithm-analysis bridges used by edit-case, quick-edit, trainer, tracer.
   w.algToShapeIndex = algToShapeIndex;
   w.ScrambleNormalizer = { normalizeScramble };
   w.ParityAnalyzerLib = { getParityText };
+
+  // Training / scramble-generation bridge (legacy sq1Tools).
+  w.sq1Tools = { scrambleFromState };
+
+  // Scramble visualizer bridges (training modal, tracer, animate-alg, settings).
+  w.Square1Visualizer = { visualizeFromHex, visualizeFromScramble, visualizeFromSolution, visualizeShapes };
+  w.visualizeFromHex = visualizeFromHex;
+  w.visualizeFromScramble = visualizeFromScramble;
+  w.visualizeFromSolution = visualizeFromSolution;
+  w.visualizeShapes = visualizeShapes;
 
   // Edit-case modal state bridges referenced by inline HTML.
   Object.defineProperty(w, 'enhancedAccess', { get: () => enhancedAccess, configurable: true });
@@ -455,7 +471,7 @@ export function installWindowShims(): void {
     showToast('Quick Edit not yet ported', 3000, 'info');
   };
   w.openCustomizeSVGsModal = () => {
-    showToast('Customize Tracing Guides not yet ported', 3000, 'info');
+    SVGEditor.open();
   };
 
   w.openUnifiedSettings = (tab: string) => {
