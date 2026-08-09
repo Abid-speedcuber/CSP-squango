@@ -18,6 +18,7 @@ import {
   adjustPriority,
   enhancedAccess,
   evilnessMap,
+  getDisplayName,
   hideParenthesis,
   learnedCases,
   learningCases,
@@ -37,7 +38,6 @@ import {
   showNotesInfoModal,
   toggleEditGeneralNotes,
 } from './notes';
-import { showToast } from './toast';
 import { openUnifiedSettings } from './settingsUI';
 import { installSidebarShims } from './sidebar';
 import { installEditCaseShims, openEditCaseModal } from './editCase';
@@ -45,6 +45,8 @@ import { installSVGEditorShims, SVGEditor } from './svgEditor';
 import { installTrainingShims, openTrainingModal } from './training';
 import { installParityTracerShims } from './parityTracer';
 import { scrambleFromState } from '../lib/solver';
+import { installAnimateAlgShims, openAnimateAlgModal } from './animateAlg';
+import { installQuickEditShims } from './quickEdit';
 
 // ── Algo popup (legacy rendering.js showAlgoPopup/hideAlgoPopup) ─────────────
 let activePopup: HTMLElement | null = null;
@@ -147,7 +149,11 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
       e.stopPropagation();
       closeAlgoPopup(isPermanent);
 
-      openAnimateAlgModal();
+      const caseName = element.getAttribute('data-case') || '';
+      const parityType = element.getAttribute('data-parity') || '';
+      const displayName = getDisplayName(caseName);
+
+      openAnimateAlgModal(algo, displayName, parityType);
     };
     shapePathElement.onmouseenter = () => {
       shapePathElement.style.background = 'var(--hover-bg)';
@@ -413,11 +419,6 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
   }, 100);
 }
 
-// ── Placeholder bridges for modals not yet ported ────────────────────────────
-function openAnimateAlgModal(): void {
-  showToast('Animate Algs not yet ported', 3000, 'info');
-}
-
 // ── Install all shims ────────────────────────────────────────────────────────
 export function installWindowShims(): void {
   const w = window as unknown as Record<string, unknown>;
@@ -427,6 +428,8 @@ export function installWindowShims(): void {
   installSVGEditorShims();
   installTrainingShims();
   installParityTracerShims();
+  installAnimateAlgShims();
+  installQuickEditShims();
 
   // Algorithm-analysis bridges used by edit-case, quick-edit, trainer, tracer.
   w.algToShapeIndex = algToShapeIndex;
@@ -467,9 +470,6 @@ export function installWindowShims(): void {
   w.showGeneralNotesInfoModal = showGeneralNotesInfoModal;
   w.closeGeneralNotesInfoModal = closeGeneralNotesInfoModal;
 
-  w.openQuickEditModal = () => {
-    showToast('Quick Edit not yet ported', 3000, 'info');
-  };
   w.openCustomizeSVGsModal = () => {
     SVGEditor.open();
   };
