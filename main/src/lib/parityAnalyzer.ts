@@ -840,7 +840,7 @@ export function calculateArrowAngle(
   layerType: 'TOP' | 'BOTTOM',
   patternTypes: string,
 ): ArrowAngle {
-  const initialAngle = layerType === 'TOP' ? 90 : 120;
+  const initialAngle = layerType === 'TOP' ? 90 : 300;
   const endsWithCorner = patternTypes.endsWith('C');
   const arcDegrees = endsWithCorner ? 300 : 330;
 

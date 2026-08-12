@@ -17,10 +17,9 @@ import {
   getDisplayName,
   perCaseSubtitles,
   saveState,
-  shapeIndex,
-  shapeIndexMap,
 } from './state';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
+import { CSPData } from '../lib/dataStore';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
 import { closeModalWithHistory, pushModalState } from './modal';
@@ -48,20 +47,14 @@ function expandForColorCheck(alg: string): string {
 
 // ── Shape / parity helpers ────────────────────────────────────────────────────
 function getModalCaseShapeData(caseName: string) {
-  const canonicalIdx = parseInt(String(shapeIndexMap[caseName]), 10);
-  if (isNaN(canonicalIdx)) return null;
-  for (const shapeData of shapeIndex) {
-    if (shapeData.org && shapeData.org.includes(canonicalIdx)) return shapeData;
-  }
-  return null;
+  return CSPData.getShapeEntry(caseName);
 }
 
 function getParityColorsForInput(alg: string): { color: string } | null {
   const modal = document.getElementById('editCaseModal');
   if (!modal) return null;
   const caseName = getEditModalCaseName(modal);
-  const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : undefined;
-  const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(String(canonicalIdxStr), 10) : null;
+  const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
   const caseShapeData = caseName ? getModalCaseShapeData(caseName) : null;
   const expanded = expandForColorCheck(alg);
   const normalized = normalizeScramble(expanded);
@@ -315,7 +308,7 @@ function saveCaseRename(caseName: string): void {
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 export function openEditCaseModal(caseName: string): void {
-  const item = data.find((d) => d.name === caseName);
+  const item = CSPData.getCase(caseName);
   if (!item) return;
 
   const customAlgs = customAlgorithms.get(caseName);

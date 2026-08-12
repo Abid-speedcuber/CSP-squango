@@ -13,7 +13,6 @@
  */
 import {
   data,
-  shapeIndex,
   colorScheme,
   cornerStickerMode,
   evilnessFactor,
@@ -26,6 +25,7 @@ import {
   plannedLevels,
 } from './state';
 import type { AlgCase } from '../data/types';
+import { CSPData } from '../lib/dataStore';
 import { parseHexFormat } from '../lib/scramble';
 import { scrambleFromState } from '../lib/solver';
 import { processScramble } from '../lib/colorizer';
@@ -143,7 +143,7 @@ function generateMultiCaseScrambleData(): ScrambleData | null {
   }
   if (!caseName) return null;
 
-  const shapeIndexItem = shapeIndex.find((s) => s.name === caseName);
+  const shapeIndexItem = CSPData.getShapeEntry(caseName);
   if (!shapeIndexItem) return null;
 
   const selectedKey = `training_selected_${caseName}`;
@@ -286,13 +286,13 @@ export function openTrainingModal(caseName: string): void {
 
   pushModalState('trainingModal', closeTrainingModal);
 
-  const dataItem = data.find((d) => d.name === caseName);
+  const dataItem = CSPData.getCase(caseName);
   if (!dataItem) {
     showToast('Case not found.', 2500, 'error');
     return;
   }
 
-  const shapeIndexItem = shapeIndex.find((s) => s.name === dataItem.name);
+  const shapeIndexItem = CSPData.getShapeEntry(dataItem.name);
   if (!shapeIndexItem) {
     showToast('Case not found in shape index.', 2500, 'error');
     return;
@@ -909,7 +909,7 @@ function updateTimerDisplay(): void {
 function openShapeIndexSelector(): void {
   if (multiCaseMode) return;
   if (!currentTrainingCase) return;
-  const shapeIndexItem = shapeIndex.find((s) => s.name === currentTrainingCase);
+  const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
   if (!shapeIndexItem) return;
 
   pushModalState('shapeIndexSelectorModal', closeShapeIndexSelector);
@@ -1004,7 +1004,7 @@ function toggleShapeIndex(index: number): void {
   if (!currentTrainingCase) return;
   const selectedKey = `training_selected_${currentTrainingCase}`;
   if (!trainingSelections[selectedKey]) {
-    const shapeIndexItem = shapeIndex.find((s) => s.name === currentTrainingCase);
+    const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
     trainingSelections[selectedKey] = [
       ...(shapeIndexItem?.org || []),
       ...(shapeIndexItem?.mir || []),
@@ -1040,7 +1040,7 @@ function toggleShapeIndex(index: number): void {
 
 function selectAllIndices(type: 'org' | 'mir'): void {
   if (!currentTrainingCase) return;
-  const shapeIndexItem = shapeIndex.find((s) => s.name === currentTrainingCase);
+  const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
   if (!shapeIndexItem) return;
 
   const selectedKey = `training_selected_${currentTrainingCase}`;
@@ -1066,7 +1066,7 @@ function selectAllIndices(type: 'org' | 'mir'): void {
 
 function deselectAllIndices(type: 'org' | 'mir'): void {
   if (!currentTrainingCase) return;
-  const shapeIndexItem = shapeIndex.find((s) => s.name === currentTrainingCase);
+  const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
   if (!shapeIndexItem) return;
 
   const selectedKey = `training_selected_${currentTrainingCase}`;
@@ -1529,7 +1529,7 @@ function openEvilnessQuiz(): void {
 }
 
 function startEvilnessQuiz(chosenCaseNames: string[]): void {
-  let evilCaseNames = chosenCaseNames.filter((cn) => shapeIndex.some((e) => e.name === cn));
+  let evilCaseNames = chosenCaseNames.filter((cn) => CSPData.hasCase(cn));
   if (evilCaseNames.length === 0) return;
 
   let evilRemaining: string[] = [];
@@ -1558,7 +1558,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
       caseName = evilCaseNames[Math.floor(Math.random() * evilCaseNames.length)];
     }
     if (!caseName) return null;
-    const entry = shapeIndex.find((e) => e.name === caseName);
+    const entry = CSPData.getShapeEntry(caseName);
     if (!entry) return null;
     const idxs = [...(entry.org || []), ...(entry.mir || [])];
     if (idxs.length === 0) return null;
@@ -1642,7 +1642,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
   pushModalState('evilnessQuizModal', closeQuiz);
 
   evilQuizOnSelectionChange = function (selectedArray) {
-    evilCaseNames = (selectedArray || []).filter((cn) => shapeIndex.some((e) => e.name === cn));
+    evilCaseNames = (selectedArray || []).filter((cn) => CSPData.hasCase(cn));
     resetEvilRemaining();
     const countEl = document.getElementById('evilQuizCaseCount');
     if (countEl) countEl.textContent = `${evilCaseNames.length} cases selected`;
@@ -1954,7 +1954,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
   function rebuildParityIndices(names: string[]): void {
     allIndices = [];
     (names || []).forEach((cn) => {
-      const entry = shapeIndex.find((e) => e.name === cn);
+      const entry = CSPData.getShapeEntry(cn);
       if (entry) {
         (entry.org || []).forEach((idx) => allIndices.push({ idx, caseName: cn }));
         (entry.mir || []).forEach((idx) => allIndices.push({ idx, caseName: cn }));

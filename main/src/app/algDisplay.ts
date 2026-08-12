@@ -1,6 +1,6 @@
 import { algToShapeIndex } from '../lib/cube';
+import { CSPData } from '../lib/dataStore';
 import { traceSolutionToSolutionShapePath } from '../lib/shapeTrace';
-import { shapeIndex, shapeIndexMap } from './state';
 
 export function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -121,12 +121,10 @@ export function getAlgDisplayMeta(alg: string, caseName: string): AlgDisplayMeta
     return { invalid: false, mirrored: false };
   }
   try {
-    const canonicalIdxStr = shapeIndexMap[caseName];
-    if (canonicalIdxStr === undefined) return { invalid: false, mirrored: false };
-    const canonicalIdx = parseInt(String(canonicalIdxStr), 10);
+    const canonicalIdx = CSPData.getCanonicalShapeIndex(caseName);
+    if (canonicalIdx === null) return { invalid: false, mirrored: false };
 
-    const caseShapeData =
-      shapeIndex.find((sd) => sd.org && sd.org.includes(canonicalIdx)) || null;
+    const caseShapeData = CSPData.getShapeEntry(caseName);
 
     const result = algToShapeIndex(alg);
     const idx = result.shapeIndex;

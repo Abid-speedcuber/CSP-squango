@@ -233,6 +233,31 @@ function getSymmetryOffsets(scrambleKey: string): { top: number; bottom: number 
   return parityTracerSymmetryOffsets[scrambleKey];
 }
 
+function getSvgGeometry(svg: Element, fallbackSize: number): { centerX: number; centerY: number; puzzleSize: number } {
+  const originX = parseFloat(svg.getAttribute('data-origin-x') || '');
+  const originY = parseFloat(svg.getAttribute('data-origin-y') || '');
+  const puzzleSize = parseFloat(svg.getAttribute('data-puzzle-size') || '');
+
+  if (Number.isFinite(originX) && Number.isFinite(originY)) {
+    return {
+      centerX: originX,
+      centerY: originY,
+      puzzleSize: Number.isFinite(puzzleSize) ? puzzleSize : fallbackSize,
+    };
+  }
+
+  const viewBox = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+  if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+    return {
+      centerX: viewBox[0] + viewBox[2] / 2,
+      centerY: viewBox[1] + viewBox[3] / 2,
+      puzzleSize: Number.isFinite(puzzleSize) ? puzzleSize : Math.min(viewBox[2], viewBox[3]),
+    };
+  }
+
+  return { centerX: fallbackSize / 2, centerY: fallbackSize / 2, puzzleSize: fallbackSize };
+}
+
 // ── Result rendering ─────────────────────────────────────────────────────────
 function displayResults(container: HTMLElement, sixStepParity: SixStepParity, config: TracerConfig): void {
   function createColorSquares(codenames: string): string {
@@ -1863,36 +1888,38 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
               const topArrowData = calculateArrowAngle(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
               const botArrowData = calculateArrowAngle(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
 
-              const unit10vh = imageSize * 0.4;
-              const radiusOuter = unit10vh * 0.7;
-              const ringRadius = radiusOuter + unit10vh * 0.4;
-              const centerX = imageSize / 2;
-              const centerY = imageSize / 2;
-
               const tempDiv = document.createElement('div');
               tempDiv.innerHTML = svgContent;
 
               const svgs = tempDiv.querySelectorAll('svg');
               if (svgs.length >= 2) {
+                const topGeometry = getSvgGeometry(svgs[0], imageSize);
+                const botGeometry = getSvgGeometry(svgs[1], imageSize);
+
+                const topUnit10vh = topGeometry.puzzleSize * 0.4;
+                const botUnit10vh = botGeometry.puzzleSize * 0.4;
+                const topRingRadius = topUnit10vh * 0.7 + topUnit10vh * 0.4;
+                const botRingRadius = botUnit10vh * 0.7 + botUnit10vh * 0.4;
+
                 const firstSvg = svgs[0];
                 const arrowSvg1 = generateArrowSVG(
-                  centerX,
-                  centerY,
-                  ringRadius,
+                  topGeometry.centerX,
+                  topGeometry.centerY,
+                  topRingRadius,
                   topArrowData.startAngle,
                   topArrowData.arcDegrees,
-                  imageSize,
+                  topGeometry.puzzleSize,
                 );
                 firstSvg.insertAdjacentHTML('beforeend', arrowSvg1);
 
                 const secondSvg = svgs[1];
                 const arrowSvg2 = generateArrowSVG(
-                  centerX,
-                  centerY,
-                  ringRadius,
+                  botGeometry.centerX,
+                  botGeometry.centerY,
+                  botRingRadius,
                   botArrowData.startAngle,
                   botArrowData.arcDegrees,
-                  imageSize,
+                  botGeometry.puzzleSize,
                 );
                 secondSvg.insertAdjacentHTML('beforeend', arrowSvg2);
               }
@@ -1904,11 +1931,15 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
                 const addSymmetryButton = (svg: SVGSVGElement, layerType: 'top' | 'bottom', match: MatchedShape): void => {
                   const canCycleSymmetry = match.symmetryDegree > 1;
 
+                  const geometry = getSvgGeometry(svg, imageSize);
+                  const unit10vh = geometry.puzzleSize * 0.4;
+                  const ringRadius = unit10vh * 0.7 + unit10vh * 0.4;
+
                   const svgNS = 'http://www.w3.org/2000/svg';
                   const buttonCircle = document.createElementNS(svgNS, 'circle');
 
-                  buttonCircle.setAttribute('cx', String(centerX));
-                  buttonCircle.setAttribute('cy', String(centerY));
+                  buttonCircle.setAttribute('cx', String(geometry.centerX));
+                  buttonCircle.setAttribute('cy', String(geometry.centerY));
                   buttonCircle.setAttribute('r', String(ringRadius * 0.3));
                   buttonCircle.setAttribute('fill', 'transparent');
                   buttonCircle.setAttribute('style', `cursor: ${canCycleSymmetry ? 'pointer' : 'default'};`);

@@ -4,7 +4,7 @@
  */
 import { invertScramble } from '../lib/cube';
 import { getParityText } from '../lib/parityAnalyzer';
-import { visualizeFromHex } from '../lib/drawScramble';
+import { renderSquare1SVG } from '../lib/drawScrambleCore';
 import { colorScheme, cornerStickerMode, scrambleImageSize } from './state';
 import { closeModalWithHistory, pushModalState } from './modal';
 
@@ -410,28 +410,108 @@ interface ViewerColors {
   leftColor: string;
 }
 
-function renderVisualization(hex: HexLayers, viewerColorScheme: ViewerColors, imageSize: number): string {
+function renderVisualization(hex: HexLayers, viewerColorScheme: ViewerColors, imageSize: number, verticalDisplay = false): string {
   try {
     const hexCode = hex.tlHex + '|' + hex.blHex;
-    const svgHtml = visualizeFromHex(
-      hexCode,
-      imageSize,
-      {
-        topColor: viewerColorScheme.topColor,
-        bottomColor: viewerColorScheme.bottomColor,
-        frontColor: viewerColorScheme.frontColor,
-        rightColor: viewerColorScheme.rightColor,
-        backColor: viewerColorScheme.backColor,
-        leftColor: viewerColorScheme.leftColor,
-        dividerColor: '#7a0000',
-        circleColor: 'transparent',
+    const svgHtml = renderSquare1SVG(hexCode, {
+      size: imageSize,
+      ringDistance: 5,
+      isVertical: verticalDisplay,
+      colorScheme: {
+        top: viewerColorScheme.topColor,
+        bottom: viewerColorScheme.bottomColor,
+        front: viewerColorScheme.frontColor,
+        right: viewerColorScheme.rightColor,
+        back: viewerColorScheme.backColor,
+        left: viewerColorScheme.leftColor,
+        'slice-indicator': '#7a0000',
       },
-      5,
-    );
+    });
     return svgHtml;
   } catch (e) {
     return '<div style="color: var(--algo-invalid-color); font-style: italic;">Error rendering: ' + (e as Error).message + '</div>';
   }
+}
+
+function getVisualizationFlex(container: Element | null): HTMLElement | null {
+  if (!container) return null;
+  return container.querySelector('div[style*="display:flex"], div[style*="display: flex"]');
+}
+
+function getLayerSvgs(container: Element | null): { topSvg: SVGElement | null; bottomSvg: SVGElement | null } {
+  if (!container) return { topSvg: null, bottomSvg: null };
+  const scope = getVisualizationFlex(container) || container;
+  const svgs = scope.querySelectorAll(':scope > svg');
+  return { topSvg: (svgs[0] as SVGElement) || null, bottomSvg: (svgs[1] as SVGElement) || null };
+}
+
+function getSvgOrigin(svg: SVGElement, fallbackSize: number): { x: number; y: number } {
+  const originX = parseFloat(svg.getAttribute('data-origin-x') || '');
+  const originY = parseFloat(svg.getAttribute('data-origin-y') || '');
+  if (Number.isFinite(originX) && Number.isFinite(originY)) {
+    return { x: originX, y: originY };
+  }
+  const viewBox = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
+  if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+    return { x: viewBox[0] + viewBox[2] / 2, y: viewBox[1] + viewBox[3] / 2 };
+  }
+  const size = parseFloat(svg.getAttribute('width') || '') || fallbackSize;
+  return { x: size / 2, y: size / 2 };
+}
+
+function getTurnPieces(svg: SVGElement): Element[] {
+  const layerGroup = svg.querySelector('.sq1-pieces');
+  if (layerGroup) return [layerGroup];
+  const pieceGroups = svg.querySelectorAll('.sq1-piece');
+  if (pieceGroups.length) return Array.from(pieceGroups);
+  return Array.from(svg.querySelectorAll('polygon, line.corner-detail'));
+}
+
+function easeInOut(t: number): number {
+  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+}
+
+interface TurnAnimation {
+  cancel(): void;
+  clear(): void;
+}
+
+function applyTurnAnimation(pieces: Element[], centerX: number, centerY: number, duration: number, degrees: number): TurnAnimation {
+  const targets = Array.from(pieces);
+  const baseTransforms = targets.map((piece) => piece.getAttribute('transform') || '');
+  const startTime = performance.now();
+  let frameId = 0;
+
+  function renderFrame(now: number): void {
+    const progress = duration <= 0 ? 1 : Math.min((now - startTime) / duration, 1);
+    const angle = degrees * easeInOut(progress);
+    targets.forEach((piece, index) => {
+      const baseTransform = baseTransforms[index];
+      const rotation = `rotate(${angle} ${centerX} ${centerY})`;
+      piece.setAttribute('transform', baseTransform ? `${rotation} ${baseTransform}` : rotation);
+    });
+    if (progress < 1) {
+      frameId = requestAnimationFrame(renderFrame);
+    }
+  }
+
+  frameId = requestAnimationFrame(renderFrame);
+
+  return {
+    cancel() {
+      cancelAnimationFrame(frameId);
+    },
+    clear() {
+      targets.forEach((piece, index) => {
+        const baseTransform = baseTransforms[index];
+        if (baseTransform) {
+          piece.setAttribute('transform', baseTransform);
+        } else {
+          piece.removeAttribute('transform');
+        }
+      });
+    },
+  };
 }
 
 // ========================================
@@ -919,26 +999,7 @@ export function createViewer(
   function render(): void {
     const step = state.steps[state.currentStep];
     const hex = getHexForStep(step, state.animateBothLayers);
-    let visualization = renderVisualization(hex, state.colorScheme, state.imageSize);
-
-    if (state.verticalDisplay) {
-      const wrapper = document.createElement('div');
-      wrapper.innerHTML = visualization;
-      const flexContainer = wrapper.querySelector('div[style*="display: flex"]');
-      if (flexContainer) {
-        const currentStyle = flexContainer.getAttribute('style');
-        flexContainer.setAttribute('style', (currentStyle || '').replace('display: flex', 'display: flex; flex-direction: column'));
-        const svgs = flexContainer.querySelectorAll('svg');
-        svgs.forEach((svg, index) => {
-          if (index === 1) {
-            const svgStyle = svg.getAttribute('style') || '';
-            const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
-            svg.setAttribute('style', newStyle);
-          }
-        });
-      }
-      visualization = wrapper.innerHTML;
-    }
+    const visualization = renderVisualization(hex, state.colorScheme, state.imageSize, state.verticalDisplay);
     const highlightedAlg = renderAlgorithm(step, state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
 
     const bodyHtml = `
@@ -970,25 +1031,6 @@ export function createViewer(
     document.getElementById(`${modalId}-body`)!.innerHTML = bodyHtml;
 
     attachEventListeners();
-  }
-
-  function applyVerticalDisplayIfEnabled(container: HTMLElement): void {
-    if (!state.verticalDisplay) return;
-
-    const flexDiv = container.querySelector('div[style*="display: flex"]');
-    if (!flexDiv) return;
-
-    const currentStyle = flexDiv.getAttribute('style');
-    flexDiv.setAttribute('style', (currentStyle || '').replace('display: flex', 'display: flex; flex-direction: column'));
-
-    const svgs = flexDiv.querySelectorAll('svg');
-    svgs.forEach((svg, index) => {
-      if (index === 1) {
-        const svgStyle = svg.getAttribute('style') || '';
-        const newStyle = svgStyle.replace(/margin-left:\s*[^;]+;?/, 'margin-top: -40px;');
-        svg.setAttribute('style', newStyle);
-      }
-    });
   }
 
   function attachEventListeners(): void {
@@ -1199,8 +1241,8 @@ export function createViewer(
           afterHex = nextStep ? getHexForStep(nextStep, true) : getHexForStep(step, true);
         }
 
-        const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize);
-        const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize);
+        const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize, state.verticalDisplay);
+        const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize, state.verticalDisplay);
 
         const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
 
@@ -1226,9 +1268,6 @@ export function createViewer(
           topLayer.style.transform = 'translateX(-50%)';
           topLayer.style.opacity = '1';
           topLayer.style.pointerEvents = 'none';
-
-          applyVerticalDisplayIfEnabled(bottomLayer);
-          applyVerticalDisplayIfEnabled(topLayer);
 
           wrapper.appendChild(bottomLayer);
           wrapper.appendChild(topLayer);
@@ -1259,9 +1298,6 @@ export function createViewer(
           topLayer.style.opacity = '1';
           topLayer.style.transition = `opacity ${duration}ms linear`;
           topLayer.style.pointerEvents = 'none';
-
-          applyVerticalDisplayIfEnabled(bottomLayer);
-          applyVerticalDisplayIfEnabled(topLayer);
 
           wrapper.appendChild(bottomLayer);
           wrapper.appendChild(topLayer);
@@ -1295,45 +1331,27 @@ export function createViewer(
           const topRotation = parseInt(match[1]);
           const bottomRotation = parseInt(match[2]);
 
-          const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
-          const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
+          const container = document.querySelector(`#${modalId} .visualization-container`);
+          const { topSvg, bottomSvg } = getLayerSvgs(container);
 
           if (topSvg && bottomSvg) {
-            const topPieces = topSvg.querySelectorAll<SVGElement>('polygon, line.corner-detail');
-            const bottomPieces = bottomSvg.querySelectorAll<SVGElement>('polygon, line.corner-detail');
+            const topPieces = getTurnPieces(topSvg);
+            const bottomPieces = getTurnPieces(bottomSvg);
 
-            const svgSize = state.imageSize;
-            const topCenterX = svgSize / 2;
-            const topCenterY = svgSize / 2;
-            const bottomCenterX = svgSize / 2;
-            const bottomCenterY = svgSize / 2;
+            const topOrigin = getSvgOrigin(topSvg, state.imageSize);
+            const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
 
             const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
             const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
 
             const rotationMultiplier = direction === 'prev' ? -1 : 1;
 
-            topPieces.forEach((piece) => {
-              piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-              piece.style.transition = `transform ${duration}ms ease-in-out`;
-              piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-            });
-
-            bottomPieces.forEach((piece) => {
-              piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-              piece.style.transition = `transform ${duration}ms ease-in-out`;
-              piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-            });
+            const topAnimation = applyTurnAnimation(topPieces, topOrigin.x, topOrigin.y, duration, topRotation * 30 * rotationMultiplier);
+            const bottomAnimation = applyTurnAnimation(bottomPieces, bottomOrigin.x, bottomOrigin.y, duration, bottomRotation * 30 * rotationMultiplier);
 
             setTimeout(() => {
-              topPieces.forEach((piece) => {
-                piece.style.transform = '';
-                piece.style.transition = '';
-              });
-              bottomPieces.forEach((piece) => {
-                piece.style.transform = '';
-                piece.style.transition = '';
-              });
+              topAnimation.clear();
+              bottomAnimation.clear();
 
               state.isAnimating = false;
               render();
@@ -1433,20 +1451,14 @@ export function createViewer(
         }
       }
 
-      const topSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:first-child`);
-      const bottomSvg = document.querySelector(`#${modalId} .visualization-container > div > svg:last-child`);
+      const container = document.querySelector(`#${modalId} .visualization-container`);
+      const { topSvg, bottomSvg } = getLayerSvgs(container);
 
       const maxRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
 
       if (topSvg && bottomSvg) {
-        const topPieces = topSvg.querySelectorAll<SVGElement>('polygon, line.corner-detail');
-        const bottomPieces = bottomSvg.querySelectorAll<SVGElement>('polygon, line.corner-detail');
-
-        const svgSize = state.imageSize;
-        const topCenterX = svgSize / 2;
-        const topCenterY = svgSize / 2;
-        const bottomCenterX = svgSize / 2;
-        const bottomCenterY = svgSize / 2;
+        const topPieces = getTurnPieces(topSvg);
+        const bottomPieces = getTurnPieces(bottomSvg);
 
         if (isSlashToken) {
           const slashDuration = 500 / state.animationSpeed;
@@ -1464,8 +1476,8 @@ export function createViewer(
             afterHex = nextStep ? getHexForStep(nextStep, false) : getHexForStep(step, false);
           }
 
-          const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize);
-          const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize);
+          const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize, state.verticalDisplay);
+          const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize, state.verticalDisplay);
 
           const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
 
@@ -1491,9 +1503,6 @@ export function createViewer(
             topLayer.style.transform = 'translateX(-50%)';
             topLayer.style.opacity = '1';
             topLayer.style.pointerEvents = 'none';
-
-            applyVerticalDisplayIfEnabled(bottomLayer);
-            applyVerticalDisplayIfEnabled(topLayer);
 
             wrapper.appendChild(bottomLayer);
             wrapper.appendChild(topLayer);
@@ -1524,9 +1533,6 @@ export function createViewer(
             topLayer.style.opacity = '1';
             topLayer.style.transition = `opacity ${slashDuration}ms linear`;
             topLayer.style.pointerEvents = 'none';
-
-            applyVerticalDisplayIfEnabled(bottomLayer);
-            applyVerticalDisplayIfEnabled(topLayer);
 
             wrapper.appendChild(bottomLayer);
             wrapper.appendChild(topLayer);
@@ -1567,27 +1573,15 @@ export function createViewer(
 
           const rotationMultiplier = direction === 'prev' ? -1 : 1;
 
-          topPieces.forEach((piece) => {
-            piece.style.transformOrigin = `${topCenterX}px ${topCenterY}px`;
-            piece.style.transition = `transform ${rotateDuration}ms ease-in-out`;
-            piece.style.transform = `rotate(${topRotation * 30 * rotationMultiplier}deg)`;
-          });
+          const topOrigin = getSvgOrigin(topSvg, state.imageSize);
+          const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
 
-          bottomPieces.forEach((piece) => {
-            piece.style.transformOrigin = `${bottomCenterX}px ${bottomCenterY}px`;
-            piece.style.transition = `transform ${rotateDuration}ms ease-in-out`;
-            piece.style.transform = `rotate(${bottomRotation * 30 * rotationMultiplier}deg)`;
-          });
+          const topAnimation = applyTurnAnimation(topPieces, topOrigin.x, topOrigin.y, rotateDuration, topRotation * 30 * rotationMultiplier);
+          const bottomAnimation = applyTurnAnimation(bottomPieces, bottomOrigin.x, bottomOrigin.y, rotateDuration, bottomRotation * 30 * rotationMultiplier);
 
           setTimeout(() => {
-            topPieces.forEach((piece) => {
-              piece.style.transform = '';
-              piece.style.transition = '';
-            });
-            bottomPieces.forEach((piece) => {
-              piece.style.transform = '';
-              piece.style.transition = '';
-            });
+            topAnimation.clear();
+            bottomAnimation.clear();
 
             state.isAnimating = false;
             render();

@@ -19,10 +19,9 @@ import {
   getDisplayName,
   perCaseSubtitles,
   saveState,
-  shapeIndex,
-  shapeIndexMap,
 } from './state';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
+import { CSPData } from '../lib/dataStore';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
 import { sanitizeNoteHTML } from './algDisplay';
@@ -106,7 +105,7 @@ function generateAlgorithmsTableRowsShell(): string {
 }
 
 function hydrateGeneralRow(row: HTMLTableRowElement): void {
-  const item = data.find((d) => d.name === row.dataset.case);
+  const item = CSPData.getCase(row.dataset.case || '');
   if (!item) return;
   const displayName = getDisplayName(item.name);
   const subtitle = perCaseSubtitles.get(item.name) || '';
@@ -135,7 +134,7 @@ function hydrateGeneralRow(row: HTMLTableRowElement): void {
 }
 
 function hydrateAlgorithmsRow(row: HTMLTableRowElement): void {
-  const item = data.find((d) => d.name === row.dataset.case);
+  const item = CSPData.getCase(row.dataset.case || '');
   if (!item) return;
   const visibleCols = quickEditState.visibleAlgColumns || 6;
   const displayName = getDisplayName(item.name);
@@ -271,15 +270,7 @@ function initQuickEditLazyLoad(): void {
 
 // ── Shape / parity helpers ────────────────────────────────────────────────────
 function getCaseShapeData(caseName: string): ShapeIndexEntry | null {
-  for (const shapeData of shapeIndex) {
-    if (shapeData.name === caseName) return shapeData;
-  }
-  const canonicalIdx = parseInt(String(shapeIndexMap[caseName]), 10);
-  if (isNaN(canonicalIdx)) return null;
-  for (const shapeData of shapeIndex) {
-    if (shapeData.org && shapeData.org.includes(canonicalIdx)) return shapeData;
-  }
-  return null;
+  return CSPData.getShapeEntry(caseName);
 }
 
 function getCanonicalCaseNameForCell(cell: HTMLElement): string | null {
@@ -340,8 +331,7 @@ function updateAlgorithmCellParity(cell: HTMLElement): void {
   }
 
   const caseName = getCanonicalCaseNameForCell(cell);
-  const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
-  const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(String(canonicalIdxStr), 10) : null;
+  const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
   const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
   try {
@@ -423,8 +413,7 @@ function updateAlgorithmCellParityLive(cell: HTMLElement): void {
   }
 
   const caseName = getCanonicalCaseNameForCell(cell);
-  const canonicalIdxStr = caseName ? shapeIndexMap[caseName] : null;
-  const canonicalIdx = canonicalIdxStr !== undefined ? parseInt(String(canonicalIdxStr), 10) : null;
+  const canonicalIdx = caseName ? CSPData.getCanonicalShapeIndex(caseName) : null;
   const caseShapeData = caseName ? getCaseShapeData(caseName) : null;
 
   try {
