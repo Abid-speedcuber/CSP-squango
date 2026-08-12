@@ -800,7 +800,7 @@ export default function SettingsModal(): React.ReactNode {
 
   useEffect(() => {
     if (open) applyInstructionVisibility();
-  }, [tab, open, applyInstructionVisibility]);
+  }, [tab, open]);
 
   if (!open) return null;
 

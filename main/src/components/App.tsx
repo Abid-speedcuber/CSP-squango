@@ -61,7 +61,7 @@ export default function App(): React.ReactNode {
 
   const filtered = useMemo(
     () => computeFilteredData(searchTerm, sortType, learnFilter),
-    [searchTerm, sortType, learnFilter, loaded],
+    [searchTerm, sortType, learnFilter],
   );
 
   const gridHTML = useMemo(() => filtered.map((item) => renderCard(item)).join(''), [filtered]);

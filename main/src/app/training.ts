@@ -147,7 +147,7 @@ function generateMultiCaseScrambleData(): ScrambleData | null {
   if (!shapeIndexItem) return null;
 
   const selectedKey = `training_selected_${caseName}`;
-  let indices = trainingSelections[selectedKey] || [
+  const indices = trainingSelections[selectedKey] || [
     ...(shapeIndexItem.org || []),
     ...(shapeIndexItem.mir || []),
   ];
@@ -1565,7 +1565,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
     return { idx: idxs[Math.floor(Math.random() * idxs.length)], caseName };
   }
 
-  let quizLog: {
+  const quizLog: {
     caseName: string;
     wasEvil: boolean;
     correct: boolean;
@@ -1574,7 +1574,6 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
   let quizStartTime = 0;
   let currentItem: { idx: number; caseName: string } | null = null;
   let timerInt: ReturnType<typeof setInterval> | null = null;
-  let questionCount = 0;
   let quizRunning = false;
   let sidebarOpen = false;
   let currentHexCode: string | null = null;
@@ -1707,7 +1706,6 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
     const picked = pickEvilItem();
     if (!picked) return;
     currentItem = picked;
-    questionCount++;
 
     currentHexCode = shapeIndexToHex(currentItem.idx);
     let imgHTML = '';
@@ -1966,7 +1964,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
   rebuildParityIndices(chosenCaseNames);
   if (allIndices.length === 0) return;
 
-  let quizLog: { caseName: string; parity: string | null; correct: boolean; timeMs: number }[] = [];
+  const quizLog: { caseName: string; parity: string | null; correct: boolean; timeMs: number }[] = [];
   let quizStartTime = 0;
   let currentItem: { idx: number; caseName: string } | null = null;
   let currentParity: string | null = null;
@@ -2217,8 +2215,8 @@ function startColorRecognitionPractice(): void {
     return arr;
   }
 
-  let packetHistory: (keyof typeof faceColors)[][][] = [];
-  let queue: (keyof typeof faceColors)[][] = [];
+  const packetHistory: (keyof typeof faceColors)[][][] = [];
+  const queue: (keyof typeof faceColors)[][] = [];
   function refillQueue(): void {
     const prev = packetHistory.length > 0 ? packetHistory[packetHistory.length - 1] : null;
     const packet = shufflePacket(prev);
@@ -2228,7 +2226,7 @@ function startColorRecognitionPractice(): void {
   refillQueue();
 
   let questionCount = 0;
-  let quizLog: {
+  const quizLog: {
     trio: string;
     emoji: string;
     correctIsEven: boolean;
