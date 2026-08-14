@@ -635,6 +635,7 @@ export function exportData(): void {
     displayNames,
     showHints,
     hideInstructions,
+    hideParenthesis,
     colorScheme,
     scrambleImageSize,
     customShapesForParityTracerLibrary: localStorage.getItem(
@@ -715,7 +716,7 @@ export function importData(jsonStr: string): void {
       displayNames = { ...defaultDisplayNames };
     }
     hideInstructions = !!state.hideInstructions;
-    hideParenthesis = false;
+    hideParenthesis = !!state.hideParenthesis;
     colorScheme = { ...DEFAULT_COLOR_SCHEME, ...(state.colorScheme || {}) };
     if (state.customShapesForParityTracerLibrary) {
       localStorage.setItem(

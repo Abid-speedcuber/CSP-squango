@@ -70,12 +70,12 @@ export default function App(): React.ReactNode {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const loadStartTime = Date.now();
       installWindowShims();
       await initializePreset();
       if (isFirstLoad) await applyPreset("Matt's_Preset", true, true, true);
       initializeSVGData();
       if (needsParityRecalculation()) calculateAndCacheAllParity();
-      const loadStartTime = Date.now();
       const loadDuration = Date.now() - loadStartTime;
       const remainingTime = Math.max(0, 2500 - loadDuration);
       await new Promise((resolve) => setTimeout(resolve, remainingTime));

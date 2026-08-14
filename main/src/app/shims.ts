@@ -350,7 +350,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
                 padding: 8px 16px;
                 cursor: ${item.disabled ? 'not-allowed' : 'pointer'};
                 font-size: 0.9rem;
-                color: ${item.disabled ? 'var(--text-muted)' : 'var(--text-ui)'}
+                color: ${item.disabled ? 'var(--text-muted)' : 'var(--text-ui)'};
                 opacity: ${item.disabled ? '0.5' : '1'};
             `;
 
