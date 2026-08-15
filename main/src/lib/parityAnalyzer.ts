@@ -88,46 +88,65 @@ export function adjustColorBrightness(hexColor: string, percent: number): string
   return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
 }
 
+// Patterns use binary notation: 0 = edge (E), 1 = corner (C).
 export const DEFAULT_SHAPE_PATTERNS: Record<string, string> = {
-  ECECECEC: 'Square',
-  EECECCEC: 'Kite',
-  EECCEECC: 'Barrel',
-  EECCECEC: 'Left Fist',
-  EECECECC: 'Right Fist',
-  EECEECCC: 'Shield',
-  EEECCECC: 'Muffin',
-  EEECECCC: 'Left Pawn',
-  ECEEECCC: 'Right Pawn',
-  EEEECCCC: 'Scallop',
-  EECCCCC: 'Pair',
-  ECECCCC: 'L-Shape',
-  ECCCECC: 'Line',
-  EEEEEECCC: '6-0',
-  ECEEEEECC: 'Right 5-1',
-  EEEEECECC: 'Left 5-1',
-  EECEEEECC: 'Right 4-2',
-  EEEECEECC: 'Left 4-2',
-  EEEECECEC: '4-1-1',
-  EEECEEECC: '3-3',
-  ECEECEEEC: '3-1-2',
-  ECEEECEEC: '3-2-1',
-  EECEECEEC: '2-2-2',
-  EEEEEEEEECC: '8-0',
-  EEEEEECEEC: '6-2',
-  EEEECEEEEC: '4-4',
-  EEEEEEECEC: '7-1',
-  EEEEEECEEEC: '5-3',
-  CCCCCC: 'Star',
+  '01010101': 'Square',
+  '00101101': 'Kite',
+  '00110011': 'Barrel',
+  '00110101': 'Left Fist',
+  '00101011': 'Right Fist',
+  '00100111': 'Shield',
+  '00011011': 'Muffin',
+  '00010111': 'Left Pawn',
+  '01000111': 'Right Pawn',
+  '00001111': 'Scallop',
+  '0011111': 'Pair',
+  '0101111': 'L-Shape',
+  '0111011': 'Line',
+  '000000111': '6-0',
+  '010000011': 'Right 5-1',
+  '000001011': 'Left 5-1',
+  '001000011': 'Right 4-2',
+  '000010011': 'Left 4-2',
+  '000010101': '4-1-1',
+  '000100011': '3-3',
+  '010010001': '3-1-2',
+  '010001001': '3-2-1',
+  '001001001': '2-2-2',
+  '0000000011': '8-0',
+  '0000001001': '6-2',
+  '0000100001': '4-4',
+  '0000000101': '7-1',
+  '0000010001': '5-3',
+  '111111': 'Star',
 };
 
 const SHAPES_STORAGE_KEY = 'customShapesForParityTracerLibrary';
+
+function toBinaryPattern(pat: string): string {
+  if (/[EC]/.test(pat)) return pat.replace(/E/g, '0').replace(/C/g, '1');
+  return pat;
+}
+
+function migratePatterns(patterns: Record<string, string>): Record<string, string> {
+  const migrated: Record<string, string> = {};
+  for (const [pat, name] of Object.entries(patterns)) {
+    migrated[toBinaryPattern(pat)] = String(name);
+  }
+  return migrated;
+}
 
 export function loadShapes(): Record<string, string> {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_SHAPE_PATTERNS };
   const stored = localStorage.getItem(SHAPES_STORAGE_KEY);
   if (stored) {
     try {
-      return { ...JSON.parse(stored) };
+      const parsed = JSON.parse(stored) as Record<string, string>;
+      const migrated = migratePatterns(parsed);
+      if (JSON.stringify(migrated) !== JSON.stringify(parsed)) {
+        localStorage.setItem(SHAPES_STORAGE_KEY, JSON.stringify(migrated));
+      }
+      return migrated;
     } catch {
       return { ...DEFAULT_SHAPE_PATTERNS };
     }
@@ -438,11 +457,12 @@ export interface MatchedShape {
 
 export function matchPattern(typeStr: string): MatchedShape {
   const patterns = getShapePatterns();
+  const binaryType = toBinaryPattern(typeStr);
 
   for (const [pat, name] of Object.entries(patterns)) {
-    if (pat.length !== typeStr.length) continue;
+    if (pat.length !== binaryType.length) continue;
 
-    const maxRotations = typeStr.length;
+    const maxRotations = binaryType.length;
     const rotationOrder = [0];
     for (let distance = 1; distance < maxRotations; distance++) {
       rotationOrder.push(-distance);
@@ -451,8 +471,8 @@ export function matchPattern(typeStr: string): MatchedShape {
 
     for (const rotationAmount of rotationOrder) {
       const normalizedRotation =
-        ((rotationAmount % typeStr.length) + typeStr.length) % typeStr.length;
-      if (rotateString(typeStr, normalizedRotation) === pat) {
+        ((rotationAmount % binaryType.length) + binaryType.length) % binaryType.length;
+      if (rotateString(binaryType, normalizedRotation) === pat) {
         return {
           name,
           pat,
@@ -463,7 +483,7 @@ export function matchPattern(typeStr: string): MatchedShape {
       }
     }
   }
-  return { name: 'Unknown', pat: typeStr, rot: 0, originalPat: typeStr, symmetryDegree: 1 };
+  return { name: 'Unknown', pat: binaryType, rot: 0, originalPat: binaryType, symmetryDegree: 1 };
 }
 
 function rotateString(s: string, k: number): string {
@@ -765,7 +785,7 @@ export function generateShapeSVG(pattern: string, size: number, idPrefix: string
   let currentAngle = 90;
 
   pieces.forEach((piece) => {
-    if (piece === 'E') {
+    if (piece === '0') {
       letterAngles.push(currentAngle);
       currentAngle -= 30;
     } else {
@@ -777,7 +797,7 @@ export function generateShapeSVG(pattern: string, size: number, idPrefix: string
 
   let angleIndex = 0;
   pieces.forEach((piece, index) => {
-    const isEdge = piece === 'E';
+    const isEdge = piece === '0';
     const isFirst = index === 0;
     const fillColor = isFirst ? '#add8e6' : '#ffffff';
 
@@ -841,7 +861,7 @@ export function calculateArrowAngle(
   patternTypes: string,
 ): ArrowAngle {
   const initialAngle = layerType === 'TOP' ? 90 : 300;
-  const endsWithCorner = patternTypes.endsWith('C');
+  const endsWithCorner = patternTypes.endsWith('1');
   const arcDegrees = endsWithCorner ? 300 : 330;
 
   let totalRotationDegrees = 0;

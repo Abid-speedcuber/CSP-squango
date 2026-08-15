@@ -5,23 +5,23 @@
  */
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-interface EdgePieceColors {
+export interface EdgePieceColors {
   inner: string;
   outer: string;
 }
 
-interface CornerPieceColors {
+export interface CornerPieceColors {
   top: string;
   left: string;
   right: string;
 }
 
-interface SliceColors {
+export interface SliceColors {
   top: string;
   bottom: string;
 }
 
-interface PiecesColors {
+export interface PiecesColors {
   edgeColors: Record<string, EdgePieceColors>;
   cornerColors: Record<string, CornerPieceColors>;
   sliceColors?: SliceColors;
@@ -123,6 +123,14 @@ export interface Square1Core {
   ): string;
   getSingleLayerSVG(
     rawHex: string,
+    size?: number,
+    muted?: boolean,
+    showSlice?: boolean,
+    whichLayer?: string,
+    exportPad?: number,
+  ): string;
+  getExpandedLayerSVG(
+    expanded: string,
     size?: number,
     muted?: boolean,
     showSlice?: boolean,
@@ -887,12 +895,13 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     cy: number,
     size: number,
     muted: boolean,
+    layerScaleOverride?: number,
   ): string {
     const variant = getActiveVariant();
     const colors = getResolvedColors();
     const ph = getPlaceholderScheme();
     const settings = getActiveStyleSettings();
-    const layerScale = variant.layerScale ?? 1;
+    const layerScale = layerScaleOverride ?? variant.layerScale ?? 1;
     let svg = '';
     for (const token of tokens) {
       const span = token.type === 'corner' ? 2 : 1;
@@ -959,12 +968,13 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     cy: number,
     size: number,
     maskId: string,
+    layerScaleOverride?: number,
   ): string {
     const style = STYLES[activeStyleIndex];
     if (style.source !== 'Abid') return '';
 
     const variant = getActiveVariant();
-    const layerScale = variant.layerScale ?? 1;
+    const layerScale = layerScaleOverride ?? variant.layerScale ?? 1;
     let occlusion = tokens
       .map((token) => getAbidPieceOcclusion(token, isBottom, cx, cy, size))
       .join('');
@@ -991,6 +1001,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     size: number,
     colors: Record<string, string>,
     muted: boolean,
+    layerScaleOverride?: number,
   ): string {
     const style = STYLES[activeStyleIndex];
     const variant = getActiveVariant();
@@ -999,7 +1010,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
       ? variant.drawSlice(layer, cx, cy, size, colors, muted, getPlaceholderScheme(), settings)
       : variant.drawSlice(layer, cx, cy, size, colors, muted, getPlaceholderScheme());
     const maskId = `mask-abid-slice-${layer}-${Math.random().toString(36).slice(2)}`;
-    const maskDef = getLayerSliceMask(tokens, isBottom, cx, cy, size, maskId);
+    const maskDef = getLayerSliceMask(tokens, isBottom, cx, cy, size, maskId, layerScaleOverride);
     if (!maskDef) return slice;
     return `${maskDef}<g mask="url(#${maskId})">${slice}</g>`;
   }
@@ -1030,6 +1041,65 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     content += drawLayer(tokens, isBottom, cx, cy, size, muted ?? false);
     // Tight viewBox: content is centred at cx,cy, radius ~= size*0.5
     const r = size * 0.52 + exportPad;
+    const vbX = (cx - r).toFixed(2);
+    const vbY = (cy - r).toFixed(2);
+    const vbS = (r * 2).toFixed(2);
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${vbS}" height="${vbS}" viewBox="${vbX} ${vbY} ${vbS} ${vbS}" data-origin-x="${cx}" data-origin-y="${cy}" data-puzzle-size="${size}" style="overflow:visible;" class="squan">${content}</svg>`;
+  }
+
+  /**
+   * Render a single layer from an expanded-form string (edge='0'/'2',
+   * corner='11'/'3'), where '2'/'3' marks the tracing-start piece.
+   * Layer scale is fixed at 1 so the shape fills the canvas consistently.
+   */
+  function parseExpandedLayer(expanded: string): HexToken[] {
+    const tokens: HexToken[] = [];
+    let slotPos = 1;
+    let i = 0;
+    while (i < expanded.length) {
+      const ch = expanded[i].toLowerCase();
+      if (ch === '0' || ch === '2') {
+        tokens.push({ piece: ch, type: 'edge', position: slotPos });
+        slotPos += 1;
+        i += 1;
+      } else {
+        tokens.push({ piece: ch === '3' ? '3' : '1', type: 'corner', position: slotPos });
+        slotPos += 2;
+        i += 2;
+      }
+    }
+    return tokens;
+  }
+
+  function getExpandedLayerSVG(
+    expanded: string,
+    size = 400,
+    muted?: boolean,
+    showSlice?: boolean,
+    whichLayer = 'top',
+    exportPad = 0,
+  ): string {
+    const tokens = parseExpandedLayer(expanded);
+    const colors = getResolvedColors();
+    size = size * (220 / 400);
+    const cx = size / 2;
+    const cy = size / 2;
+    const isBottom = whichLayer === 'bottom';
+    let content = '';
+    if (showSlice) {
+      const style = STYLES[activeStyleIndex];
+      const variant = getActiveVariant();
+      const settings = getActiveStyleSettings();
+      const slice = style.source === 'Abid'
+        ? variant.drawSlice(whichLayer, cx, cy, size, colors, muted ?? false, getPlaceholderScheme(), settings)
+        : variant.drawSlice(whichLayer, cx, cy, size, colors, muted ?? false, getPlaceholderScheme());
+      content += slice;
+    }
+    content += drawLayer(tokens, isBottom, cx, cy, size, muted ?? false, 1);
+    // Content extents: piece apex radius (layerScale 1) vs slice line radius.
+    const pieceMax = size * 0.4 * 0.7 * 1.366025404;
+    const sliceMax = size * 0.4 * (0.7 + 0.4) * 1.2;
+    const r = Math.max(pieceMax, sliceMax) * 1.29 + exportPad;
     const vbX = (cx - r).toFixed(2);
     const vbY = (cy - r).toFixed(2);
     const vbS = (r * 2).toFixed(2);
@@ -1102,6 +1172,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     // Core rendering
     getSVG,
     getSingleLayerSVG,
+    getExpandedLayerSVG,
     parseHex,
     // Color scheme
     getColorSlots() {
@@ -1180,6 +1251,23 @@ export function renderSquare1LayerSVG(rawHex: string, options: Square1RenderOpti
   const core = createConfiguredCore(options);
   return core.getSingleLayerSVG(
     rawHex,
+    options.size ?? 400,
+    options.muted ?? false,
+    options.showSlice ?? true,
+    options.layer ?? 'top',
+    options.exportPad ?? 0,
+  );
+}
+
+/**
+ * Render a single layer from an expanded-form string (see getExpandedLayerSVG).
+ * The expanded form uses edge='0'/'2' and corner='11'/'3', where '2'/'3'
+ * marks the tracing-start piece (typically the special/golden color).
+ */
+export function renderExpandedLayerSVG(expanded: string, options: Square1RenderOptions = {}): string {
+  const core = createConfiguredCore(options);
+  return core.getExpandedLayerSVG(
+    expanded,
     options.size ?? 400,
     options.muted ?? false,
     options.showSlice ?? true,

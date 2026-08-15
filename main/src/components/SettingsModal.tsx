@@ -21,9 +21,11 @@ import {
   enhancedAccess,
   evilnessFactor,
   evilnessStringReturn,
+  getHomepageImageSettings,
   hideInstructions,
   hideParenthesis,
   recalculateAllParity,
+  resetHomepageImageSettingsState,
   setAlgorithmFontSize,
   setCornerStickerMode,
   setEnhancedAccess,
@@ -34,7 +36,9 @@ import {
   setShowHints,
   showHints,
   toggleTheme,
+  updateHomepageImageSettings,
 } from '../app/state';
+import type { HomepageImageSettings } from '../lib/homepageShapes';
 import { applyAlgorithmFontSize, applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
 import {
@@ -186,6 +190,199 @@ function _triggerParityLiveUpdate(): void {
   if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+const FACE_COLOR_KEYS: { key: keyof HomepageImageSettings; label: string }[] = [
+  { key: 'topColor', label: 'Top' },
+  { key: 'bottomColor', label: 'Bottom' },
+  { key: 'frontColor', label: 'Front' },
+  { key: 'rightColor', label: 'Right' },
+  { key: 'backColor', label: 'Back' },
+  { key: 'leftColor', label: 'Left' },
+];
+
+// ── HOMESCREEN: Homepage Images ──────────────────────────────────────────────
+function HomepageImagesSection(): React.ReactNode {
+  useAppStore();
+  const [settings, setSettings] = useState<HomepageImageSettings>(getHomepageImageSettings());
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  const update = (patch: Partial<HomepageImageSettings>) => {
+    setSettings((s) => ({ ...s, ...patch }));
+    updateHomepageImageSettings(patch);
+  };
+
+  const strokeSlider = (
+    key: 'strokeWidthOuter' | 'sliceStrokeWidth' | 'strokeWidthInner',
+    label: string,
+    tip: string,
+  ) => (
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
+        <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          {label}
+        </label>
+        <span className="info-wrapper">
+          <button className="settings-info-btn" aria-label="More info">
+            <img src="res/info.svg" alt="" />
+          </button>
+          <span className="info-box">{tip}</span>
+        </span>
+      </div>
+      <input
+        type="range"
+        min={0.005}
+        max={0.03}
+        step={0.0005}
+        value={settings[key]}
+        style={{ width: '100%', cursor: 'pointer' }}
+        onChange={(e) => update({ [key]: parseFloat(e.target.value) })}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 3 }}>
+        <span>Thin</span>
+        <span style={{ fontWeight: 600 }}>{(settings[key] * 1000).toFixed(1)}</span>
+        <span>Thick</span>
+      </div>
+    </div>
+  );
+
+  const autoColorRow = (key: 'borderColor' | 'sliceColor', label: string, tip: string) => {
+    const isAuto = settings[key] === '';
+    return (
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+            <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>
+              {label}
+            </label>
+            <span className="info-wrapper">
+              <button className="settings-info-btn" aria-label="More info">
+                <img src="res/info.svg" alt="" />
+              </button>
+              <span className="info-box">{tip}</span>
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="color"
+              value={isAuto ? (isDark ? '#c0c0c0' : '#000000') : settings[key]}
+              disabled={isAuto}
+              style={{
+                width: 38,
+                height: 26,
+                padding: 0,
+                border: 'none',
+                cursor: isAuto ? 'not-allowed' : 'pointer',
+                opacity: isAuto ? 0.4 : 1,
+                background: 'transparent',
+              }}
+              onChange={(e) => update({ [key]: e.target.value })}
+            />
+            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={isAuto}
+                onChange={(e) => update({ [key]: e.target.checked ? '' : (isDark ? '#c0c0c0' : '#000000') })}
+                style={{ cursor: 'pointer' }}
+              />
+              Auto
+            </label>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      {_sectionTitle('Homepage Images')}
+      <div style={{ marginBottom: 10, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+        The case images on the home page are generated on the fly from the parity tracer's shape library and cached in
+        your browser. Changes apply to all 90 cases instantly.
+      </div>
+      {strokeSlider('strokeWidthOuter', 'Outline Stroke Width', 'Thickness of the outer shape outlines.')}
+      {strokeSlider('sliceStrokeWidth', 'Slice Line Width', 'Thickness of the slice indicator line drawn through the shape.')}
+      {strokeSlider('strokeWidthInner', 'Inner Line Width', 'Thickness of the inner seam lines between adjacent pieces.')}
+      {_row(
+        'Special Piece Color',
+        <input
+          type="color"
+          value={settings.specialPieceColor}
+          style={{ width: 44, height: 28, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
+          onChange={(e) => update({ specialPieceColor: e.target.value })}
+        />,
+        'The color of the tracing-start piece — the piece the parity tracer starts counting from.',
+      )}
+      {autoColorRow('borderColor', 'Outline Color', 'Color of the piece outlines. In "Auto" it follows the app theme (black in light mode, light grey in dark mode).')}
+      {autoColorRow('sliceColor', 'Slice Line Color', 'Color of the slice indicator line. In "Auto" it follows the app theme.')}
+      <div style={{ marginTop: 6, marginBottom: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
+        Face Colors
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
+        {FACE_COLOR_KEYS.map(({ key, label }) => {
+          const enabled = settings[key] !== 'transparent';
+          return (
+            <div
+              key={key}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 6,
+                padding: '6px 8px',
+                borderRadius: 8,
+                background: 'var(--surface2)',
+                border: '1px solid var(--border-color)',
+              }}
+            >
+              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={enabled}
+                  onChange={(e) => update({ [key]: e.target.checked ? '#AAAAAA' : 'transparent' })}
+                  style={{ cursor: 'pointer' }}
+                />
+                {label}
+              </label>
+              <input
+                type="color"
+                value={enabled ? settings[key] : '#000000'}
+                disabled={!enabled}
+                style={{
+                  width: 30,
+                  height: 22,
+                  padding: 0,
+                  border: 'none',
+                  cursor: enabled ? 'pointer' : 'not-allowed',
+                  opacity: enabled ? 1 : 0.4,
+                  background: 'transparent',
+                }}
+                onChange={(e) => update({ [key]: e.target.value })}
+              />
+            </div>
+          );
+        })}
+      </div>
+      <div
+        className="settings-action-btn"
+        onClick={() => setSettings(resetHomepageImageSettingsState())}
+        style={{
+          padding: '11px 16px',
+          borderRadius: 10,
+          cursor: 'pointer',
+          width: '100%',
+          fontWeight: 600,
+          fontSize: '0.92rem',
+          textAlign: 'center',
+          background: 'var(--surface2)',
+          border: '1px solid var(--border-color)',
+          color: 'var(--text-ui)',
+        }}
+      >
+        Reset to Defaults
+      </div>
+    </>
+  );
+}
+
 // ── TAB: Homescreen ───────────────────────────────────────────────────────────
 function HomescreenTab(): React.ReactNode {
   useAppStore();
@@ -252,11 +449,8 @@ function HomescreenTab(): React.ReactNode {
         () => (window as unknown as { openQuickEditModal?: () => void }).openQuickEditModal?.(),
         'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q',
       )}
-      {_actionBtn(
-        'Customize Tracing Guides',
-        () => (window as unknown as { openCustomizeSVGsModal?: () => void }).openCustomizeSVGsModal?.(),
-        'Drag the numbered labels to your preferred positions on each shape image.<br><br><strong>Keyboard shortcut:</strong> Alt+G',
-      )}
+
+      <HomepageImagesSection />
 
       {_sectionTitle('Access')}
       {_row(

@@ -1,6 +1,6 @@
 /**
  * Global app boot behaviors — ported from legacy `js/index.js`:
- *   • Alt-keyboard shortcuts (Alt+T/H/P/W/G/Q)
+ *   • Alt-keyboard shortcuts (Alt+T/H/P/W/Q)
  *   • Drag-and-drop JSON import
  *   • URL scramble deep-links (#s=... or bare hash with parens)
  */
@@ -50,12 +50,6 @@ function installKeyboardShortcuts(): void {
         e.preventDefault();
         if (typeof w.openParityTracingPersonalization === 'function') {
           (w.openParityTracingPersonalization as () => void)();
-        }
-        break;
-      case 'g': // Alt+G - Customize tracing guides
-        e.preventDefault();
-        if (typeof w.openCustomizeSVGsModal === 'function') {
-          (w.openCustomizeSVGsModal as () => void)();
         }
         break;
       case 'q': // Alt+Q - Quick edit

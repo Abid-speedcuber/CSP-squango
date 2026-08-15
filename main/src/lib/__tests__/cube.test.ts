@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 
 import { CASES, findCase } from '../../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP, shapeIndexForCase } from '../../data/shapeIndex';
-import { DEFAULT_SHAPE_SVGS } from '../../data/shapes';
+import { LAYER_EXPANDED_SHAPES } from '../../data/expandedShapes';
+import { renderLayerShapeSVG } from '../homepageShapes';
 
 import {
   algToShapeIndex,
@@ -19,12 +20,17 @@ import { randomCube, scrambleFromState } from '../solver';
 import { normalizeScramble } from '../normalizer';
 
 describe('data integrity', () => {
-  it('has exactly 90 cases, each with a shapeIndex entry and SVG references', () => {
+  it('has exactly 90 cases, each with a shapeIndex entry and renderable shape SVGs', () => {
     expect(CASES.length).toBe(90);
     for (const c of CASES) {
       expect(SHAPE_INDEX_MAP[c.name]).toBeDefined();
-      expect(DEFAULT_SHAPE_SVGS[c.top]).toBeDefined();
-      expect(DEFAULT_SHAPE_SVGS[c.bottom]).toBeDefined();
+      expect(LAYER_EXPANDED_SHAPES[c.top]).toBeDefined();
+      expect(LAYER_EXPANDED_SHAPES[c.bottom]).toBeDefined();
+      const topSVG = renderLayerShapeSVG(c.top);
+      const bottomSVG = renderLayerShapeSVG(c.bottom);
+      expect(topSVG, `no SVG generated for ${c.top}`).toBeTruthy();
+      expect(bottomSVG, `no SVG generated for ${c.bottom}`).toBeTruthy();
+      expect(topSVG).toContain('<svg');
       expect(c.odd.length).toBeGreaterThan(0);
       expect(c.even.length).toBeGreaterThan(0);
     }

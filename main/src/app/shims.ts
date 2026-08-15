@@ -41,7 +41,6 @@ import {
 import { openUnifiedSettings } from './settingsUI';
 import { installSidebarShims } from './sidebar';
 import { installEditCaseShims, openEditCaseModal } from './editCase';
-import { installSVGEditorShims, SVGEditor } from './svgEditor';
 import { installTrainingShims, openTrainingModal } from './training';
 import { installParityTracerShims } from './parityTracer';
 import { scrambleFromState } from '../lib/solver';
@@ -425,7 +424,6 @@ export function installWindowShims(): void {
 
   installSidebarShims();
   installEditCaseShims();
-  installSVGEditorShims();
   installTrainingShims();
   installParityTracerShims();
   installAnimateAlgShims();
@@ -469,10 +467,6 @@ export function installWindowShims(): void {
   w.attemptCloseGeneralNotesModal = attemptCloseGeneralNotesModal;
   w.showGeneralNotesInfoModal = showGeneralNotesInfoModal;
   w.closeGeneralNotesInfoModal = closeGeneralNotesInfoModal;
-
-  w.openCustomizeSVGsModal = () => {
-    SVGEditor.open();
-  };
 
   w.openUnifiedSettings = (tab: string) => {
     const valid = ['homescreen', 'parity', 'trainer', 'animate'];

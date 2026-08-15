@@ -1,9 +1,16 @@
 import { CASES } from '../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP } from '../data/shapeIndex';
-import { DEFAULT_SHAPE_SVGS } from '../data/shapes';
 import type { AlgCase } from '../data/types';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { getParityText } from '../lib/parityAnalyzer';
+import {
+  applyHomepageSVGsLive,
+  getHomepageShapeSVGs,
+  loadHomepageImageSettings,
+  resetHomepageImageSettings as resetHomepageImageSettingsDefaults,
+  saveHomepageImageSettings,
+  type HomepageImageSettings,
+} from '../lib/homepageShapes';
 import { notify } from './store';
 
 export const data: AlgCase[] = CASES;
@@ -138,7 +145,8 @@ const defaultDisplayNames: Record<string, string> = {
 
 // ── Mutable app state ───────────────────────────────────────────────────────
 export let displayNames: Record<string, string> = {};
-export let svgData: Record<string, string> = { ...DEFAULT_SHAPE_SVGS };
+export const svgData: Record<string, string> = {};
+export let homepageImageSettings: HomepageImageSettings = loadHomepageImageSettings();
 
 export const learnedCases = new Set<string>();
 export const learningCases = new Set<string>();
@@ -329,12 +337,7 @@ function ensureAllCasesHaveState(): void {
 }
 
 export function initializeSVGData(): void {
-  if (!svgData || Object.keys(svgData).length === 0) {
-    svgData = { ...DEFAULT_SHAPE_SVGS };
-  }
-  Object.keys(DEFAULT_SHAPE_SVGS).forEach((key) => {
-    if (!svgData[key]) svgData[key] = DEFAULT_SHAPE_SVGS[key];
-  });
+  getHomepageShapeSVGs(homepageImageSettings, svgData);
 }
 
 export function saveState(): void {
@@ -367,7 +370,6 @@ export function saveState(): void {
         perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
         cornerStickerMode,
         customAlgorithms: Object.fromEntries(customAlgorithms),
-        svgData,
         cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
         lastParityCalculationSettings,
         generalNotes,
@@ -435,10 +437,6 @@ function loadSavedState(): void {
         mergeDisplayNames(state.displayNames);
       } else {
         displayNames = { ...defaultDisplayNames };
-      }
-
-      if (state.svgData) {
-        svgData = { ...state.svgData };
       }
 
       if (state.cachedParityAlgorithms) {
@@ -563,10 +561,6 @@ export async function applyPreset(
   Object.entries((preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
     .forEach(([k, v]) => customAlgorithms.set(k, v));
 
-  if (preset.svgData) {
-    svgData = { ...(preset.svgData as Record<string, string>) };
-  }
-
   if (preset.evilnessMap !== undefined) evilnessMap = preset.evilnessMap as Record<string, boolean>;
   if (preset.evilnessFactor !== undefined) evilnessFactor = Boolean(preset.evilnessFactor);
   if (preset.evilnessStringReturn !== undefined)
@@ -646,7 +640,6 @@ export function exportData(): void {
     lastParityCalculationSettings,
     cornerStickerMode,
     customAlgorithms: Object.fromEntries(customAlgorithms),
-    svgData,
     generalNotes,
     algVariables: Object.fromEntries(algVariables),
     evilnessFactor,
@@ -740,10 +733,6 @@ export function importData(jsonStr: string): void {
     if (state.evilnessStringReturn !== undefined)
       evilnessStringReturn = Boolean(state.evilnessStringReturn);
     if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap as Record<string, boolean>;
-
-    if (state.svgData) {
-      svgData = { ...state.svgData };
-    }
 
     if (state.cachedParityAlgorithms) {
       cachedParityAlgorithms.clear();
@@ -1112,11 +1101,39 @@ export function toggleTheme(isDark: boolean): void {
   const next = isDark ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', next);
   localStorage.setItem('sqg-csp-theme', next);
+  regenerateHomepageSVGs();
   notify();
 }
 
-export function getSvgData(): Record<string, string> {
-  return svgData;
+export function getHomepageImageSettings(): HomepageImageSettings {
+  return homepageImageSettings;
+}
+
+let homepageRegenTimer: ReturnType<typeof setTimeout> | null = null;
+
+function regenerateHomepageSVGs(): void {
+  if (homepageRegenTimer) clearTimeout(homepageRegenTimer);
+  homepageRegenTimer = setTimeout(() => {
+    homepageRegenTimer = null;
+    getHomepageShapeSVGs(homepageImageSettings, svgData);
+    applyHomepageSVGsLive(svgData);
+    saveState();
+    notify();
+  }, 250);
+}
+
+export function updateHomepageImageSettings(patch: Partial<HomepageImageSettings>): void {
+  homepageImageSettings = { ...homepageImageSettings, ...patch };
+  saveHomepageImageSettings(homepageImageSettings);
+  regenerateHomepageSVGs();
+  notify();
+}
+
+export function resetHomepageImageSettingsState(): HomepageImageSettings {
+  homepageImageSettings = resetHomepageImageSettingsDefaults();
+  regenerateHomepageSVGs();
+  notify();
+  return homepageImageSettings;
 }
 
 export function getNeedsReorder(): boolean {

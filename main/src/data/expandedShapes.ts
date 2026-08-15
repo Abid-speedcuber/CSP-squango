@@ -1,0 +1,47 @@
+// AUTO-GENERATED — do not edit by hand.
+// Canonical expanded layer shapes (edge='0', corner='11') for every layer
+// shape referenced by src/data/cases.json. Derived from shapeIndexForCase
+// + shapeIndexToHex (the shape pattern per index is deterministic).
+// Regenerate via scripts in /tmp/opencode (see gen-expanded.ts).
+
+export const LAYER_EXPANDED_SHAPES: Record<string, string> = {
+  "Barrel_bottom": "110011110011",
+  "Barrel_top": "110011110011",
+  "Kite_bottom": "110110011011",
+  "Kite_top": "011011110110",
+  "Left_4_2": "110000111100",
+  "Left_5_1": "000011110110",
+  "Left_fist_bottom": "110011011011",
+  "Left_fist_top": "011011110011",
+  "Left_pawn_bottom": "110110001111",
+  "Left_pawn_top": "110110001111",
+  "Mushroom_bottom": "011110001111",
+  "Mushroom_top": "001111011110",
+  "Paired_edges": "111100111111",
+  "Parallel_edges": "011110111111",
+  "Perpendicular_edges": "110110111111",
+  "Right_4_2": "000011001111",
+  "Right_5_1": "011011110000",
+  "Right_fist_bottom": "110110110011",
+  "Right_fist_top": "110011110110",
+  "Right_pawn_bottom": "111100011011",
+  "Right_pawn_top": "111100011011",
+  "Scallop_bottom": "111100001111",
+  "Scallop_top": "111100001111",
+  "Shield_bottom": "111100110011",
+  "Shield_top": "111100110011",
+  "Square_bottom": "011011011011",
+  "Square_top": "011011011011",
+  "Star": "111111111111",
+  "svg_2_2_2": "001100110011",
+  "svg_3_1_2": "110011011000",
+  "svg_3_2_1": "011000110110",
+  "svg_3_3": "111100011000",
+  "svg_4_1_1": "000110110110",
+  "svg_4_4": "001100001100",
+  "svg_5_3": "000110001100",
+  "svg_6": "000011111100",
+  "svg_6_2": "000110011000",
+  "svg_7_1": "000110110000",
+  "svg_8": "000011110000",
+};

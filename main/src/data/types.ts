@@ -23,6 +23,3 @@ export interface ShapeIndexEntry {
 
 /** Maps each case name to its canonical cubie shape index. */
 export type ShapeIndexMap = Record<string, number>;
-
-/** Maps each SVG asset name to its markup. */
-export type ShapeSvgs = Record<string, string>;
