@@ -4,7 +4,6 @@
  */
 import type { AlgCase } from '../data/types';
 import {
-  algVariables,
   calculateAndCacheAllParity,
   colorScheme,
   cornerStickerMode,
@@ -22,28 +21,10 @@ import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { CSPData } from '../lib/dataStore';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
+import { expandAndNormalize, expandForColorCheck } from './quickEdit';
 import { closeModalWithHistory, pushModalState } from './modal';
 import { showSaveDiscardConfirmation } from './confirm';
 import { showToast } from './toast';
-
-// ── Variable expansion (from legacy quick-edit.js) ───────────────────────────
-function expandAlgVariables(alg: string): string {
-  if (!alg || alg === 'Done!') return alg;
-  if (algVariables.size === 0) return alg;
-  return alg.replace(/:([a-zA-Z_][a-zA-Z0-9_]*):/g, (match, name) => {
-    return algVariables.has(name) ? (algVariables.get(name) as string) : match;
-  });
-}
-
-function expandAndNormalize(alg: string): string {
-  if (!alg || alg === 'Done!') return alg;
-  return normalizeScramble(expandAlgVariables(alg));
-}
-
-function expandForColorCheck(alg: string): string {
-  if (!alg || alg === 'Done!') return alg;
-  return expandAlgVariables(alg);
-}
 
 // ── Shape / parity helpers ────────────────────────────────────────────────────
 function getModalCaseShapeData(caseName: string) {

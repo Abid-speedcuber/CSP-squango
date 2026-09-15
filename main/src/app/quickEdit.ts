@@ -66,7 +66,7 @@ let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'f
 let quickEditInitialState: AlgVarsSnapshot | null = null;
 
 // ── Variable expansion ────────────────────────────────────────────────────────
-function expandAlgVariables(alg: string): string {
+export function expandAlgVariables(alg: string): string {
   if (!alg || alg === 'Done!') return alg;
   if (algVariables.size === 0) return alg;
   return alg.replace(/:([a-zA-Z_][a-zA-Z0-9_]*):/g, (match, name) => {
@@ -74,12 +74,12 @@ function expandAlgVariables(alg: string): string {
   });
 }
 
-function expandAndNormalize(alg: string): string {
+export function expandAndNormalize(alg: string): string {
   if (!alg || alg === 'Done!') return alg;
   return normalizeScramble(expandAlgVariables(alg));
 }
 
-function expandForColorCheck(alg: string): string {
+export function expandForColorCheck(alg: string): string {
   if (!alg || alg === 'Done!') return alg;
   return expandAlgVariables(alg);
 }

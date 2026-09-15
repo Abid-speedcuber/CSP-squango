@@ -6,7 +6,14 @@
 // ========================================
 
 import { normalizeScramble } from './normalizer';
-import { applyScramble, rotateArray, stateToHex, type CubeState } from './cube';
+import {
+  CORNER_IDENTIFIER,
+  CORNER_PARTNER,
+  EDGE_PIECES,
+  sq1AlgToHex,
+  stateToHex,
+  type CubeState,
+} from './cube';
 
 export interface ColorConfig {
   topLayerMainColor: string;
@@ -59,15 +66,6 @@ for (const key of Object.keys(PIECE_LABELS)) {
   PIECE_LABEL_HTML[key] = createColorLabelHTML(PIECE_LABELS[key]);
 }
 
-export const EDGE_PIECES = new Set(['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V']);
-export const CORNER_PARTNER: Record<string, string> = {
-  A: 'B', B: 'A', D: 'E', E: 'D', G: 'H', H: 'G', J: 'K', K: 'J',
-  N: 'O', O: 'N', Q: 'R', R: 'Q', T: 'U', U: 'T', W: 'X', X: 'W',
-};
-export const CORNER_IDENTIFIER: Record<string, string> = {
-  A: 'AB', B: 'AB', D: 'DE', E: 'DE', G: 'GH', H: 'GH', J: 'JK', K: 'JK',
-  N: 'NO', O: 'NO', Q: 'QR', R: 'QR', T: 'TU', U: 'TU', W: 'WX', X: 'WX',
-};
 export const SOLVED_EDGES = ['C', 'F', 'I', 'L', 'M', 'P', 'S', 'V'];
 export const SOLVED_CORNERS = ['AB', 'DE', 'GH', 'JK', 'NO', 'QR', 'TU', 'WX'];
 
@@ -500,10 +498,11 @@ export function countPieces(units: ShapeUnit[]): { e: number; c: number; label: 
 
 export interface ParityStep {
   name: string;
-  pieces: string;
-  codenames: string;
-  detail: string;
   result: number;
+  hexPerm: string[];
+  codenames?: string[];
+  isLayer?: boolean;
+  topCount?: number;
 }
 
 export interface SixStepParity {
@@ -512,178 +511,213 @@ export interface SixStepParity {
   isOdd: boolean;
   evilStep: number | null;
   isOddWithEvil: boolean;
+  topUnits: string[];
+  botUnits: string[];
+  topMatch: MatchedShape;
+  botMatch: MatchedShape;
+  topTraceRotation: number;
+  botTraceRotation: number;
+  topBits: string;
+  botBits: string;
+  wasSwapped: boolean;
 }
 
-const EDGE_CODENAMES: Record<string, string> = {
-  L: 'O', C: 'G', F: 'R', I: 'B', M: 'R', P: 'G', S: 'O', V: 'B',
+// hex digit → parity color code (CCW sticker mode)
+const hexToColors_ccw: Record<string, string> = {
+  '0': 'O', '2': 'B', '4': 'R', '6': 'G',          // top edges
+  '8': 'G', 'a': 'R', 'c': 'B', 'e': 'O',          // bottom edges
+  '1': 'B', '3': 'R', '5': 'G', '7': 'O',          // top corners CCW
+  '9': 'G', 'b': 'R', 'd': 'B', 'f': 'O',          // bottom corners CCW
 };
-const CORNER_COUNTERCLOCKWISE: Record<string, string> = {
-  AB: 'O', DE: 'G', GH: 'R', JK: 'B', NO: 'R', QR: 'G', TU: 'O', WX: 'B',
+// CW sticker mode
+const hexToColors_cw: Record<string, string> = {
+  '0': 'O', '2': 'B', '4': 'R', '6': 'G',          // top edges
+  '8': 'G', 'a': 'R', 'c': 'B', 'e': 'O',          // bottom edges
+  '1': 'O', '3': 'B', '5': 'R', '7': 'G',          // top corners CW
+  '9': 'O', 'b': 'G', 'd': 'R', 'f': 'B',          // bottom corners CW
 };
-const CORNER_CLOCKWISE: Record<string, string> = {
-  AB: 'G', DE: 'R', GH: 'B', JK: 'O', NO: 'G', QR: 'O', TU: 'B', WX: 'R',
-};
+export const TOP_HEX = new Set(['0', '1', '2', '3', '4', '5', '6', '7']);
+const CORNER_HEX = new Set(['1', '3', '5', '7', '9', 'b', 'd', 'f']);
 
-function getEdgeCodename(letter: string): string {
-  return EDGE_CODENAMES[letter] || '?';
-}
-
-function getCornerCodename(id: string, useClockwiseCorner: boolean): string {
-  const colorMap = useClockwiseCorner ? CORNER_CLOCKWISE : CORNER_COUNTERCLOCKWISE;
-  return colorMap[id] || '?';
-}
-
-function isTopLayerEdge(letter: string): boolean {
-  return ['L', 'C', 'F', 'I'].includes(letter);
-}
-
-function isTopLayerCorner(id: string): boolean {
-  return ['AB', 'DE', 'GH', 'JK'].includes(id);
-}
-
-interface TrioParityResult {
-  result: number;
-  detail: string;
-}
-
-function calculateTrioParity(codenames: string[]): TrioParityResult {
-  if (codenames.length < 3) return { result: 0, detail: 'Not enough pieces' };
-
-  const trio = codenames.slice(0, 3);
-  const opposites: Record<string, string> = { R: 'O', O: 'R', B: 'G', G: 'B' };
-
-  let aloneIdx = -1;
-  for (let i = 0; i < 3; i++) {
-    const current = trio[i];
-    const opp = opposites[current];
-    const hasOpposite = trio.some((c, idx) => idx !== i && c === opp);
-    if (!hasOpposite) {
-      aloneIdx = i;
-      break;
+/**
+ * Takes raw sq1AlgToHex output {tlHex, blHex} (each 12 chars, corners doubled).
+ * Returns {topUnits, botUnits} as arrays of hex chars (unexpanded, variable length)
+ * and {topBits, botBits} as bitstrings for shape matching.
+ */
+export function hexToUnits(
+  tlHex: string,
+  blHex: string,
+): { topUnits: string[]; botUnits: string[]; topBits: string; botBits: string } {
+  function walkLayer(raw: string): { units: string[]; bits: string } {
+    // raw is 12 chars from sq1AlgToHex, read right-to-left (undo reversal)
+    const units: string[] = [];
+    let bits = '';
+    let i = raw.length - 1;
+    while (i >= 0) {
+      const c = raw[i];
+      if (CORNER_HEX.has(c)) {
+        units.push(c);
+        bits += '1';
+        i -= 2; // skip the doubled char
+      } else {
+        units.push(c);
+        bits += '0';
+        i -= 1;
+      }
     }
+    return { units, bits };
   }
-
-  if (aloneIdx === -1) {
-    return { result: 0, detail: `Trio ${trio.join('')}: No alone element found` };
-  }
-
-  let pair = '';
-  if (aloneIdx === 0) pair = trio[0] + trio[1];
-  else if (aloneIdx === 2) pair = trio[0] + trio[2];
-  else pair = trio[1] + trio[2];
-
-  let pairValue = 0;
-  if (pair === 'RG' || pair === 'GR' || pair === 'OB' || pair === 'BO') {
-    pairValue = 1;
-  } else if (pair === 'RB' || pair === 'BR' || pair === 'OG' || pair === 'GO') {
-    pairValue = 0;
-  }
-
+  const top = walkLayer(tlHex);
+  const bot = walkLayer(blHex);
   return {
-    result: pairValue,
-    detail: `Trio ${trio.join('')}: Alone at pos ${aloneIdx + 1}, pair ${pair} = ${pairValue}`,
+    topUnits: top.units,
+    topBits: top.bits,
+    botUnits: bot.units,
+    botBits: bot.bits,
   };
 }
 
-function calculateAlternatingParity(pieces: string[], isEdge: boolean): TrioParityResult {
-  const positions = [0, 2, 4, 6];
-  const selected = positions.map((i) => pieces[i]).filter((p) => p !== undefined);
+// Lookup tables instead of algorithmic analysis for speed
+const blackEdgeParityMap: Record<string, number> = {
+  '0246': 0, '0264': 1, '0426': 1, '0462': 0, '0624': 0, '0642': 1, '2046': 1, '2064': 0, '2406': 0, '2460': 1, '2604': 1, '2640': 0, '4026': 0, '4062': 1, '4206': 1, '4260': 0, '4602': 0, '4620': 1, '6024': 1, '6042': 0, '6204': 0, '6240': 1, '6402': 1, '6420': 0,
+};
 
-  let topLayerCount = 0;
-  if (isEdge) {
-    topLayerCount = selected.filter((p) => isTopLayerEdge(p)).length;
-  } else {
-    topLayerCount = selected.filter((p) => isTopLayerCorner(p)).length;
-  }
+const whiteEdgeParityMap: Record<string, number> = {
+  '8ace': 0, '8aec': 1, '8cae': 1, '8cea': 0, '8eac': 0, '8eca': 1, 'a8ce': 1, 'a8ec': 0, 'ac8e': 0, 'ace8': 1, 'ae8c': 1, 'aec8': 0, 'c8ae': 0, 'c8ea': 1, 'ca8e': 1, 'cae8': 0, 'ce8a': 0, 'cea8': 1, 'e8ac': 1, 'e8ca': 0, 'ea8c': 0, 'eac8': 1, 'ec8a': 1, 'eca8': 0,
+};
 
-  const result = topLayerCount === 1 || topLayerCount === 3 ? 1 : 0;
-  const selectedStr = selected.join(' ');
+const blackCornerParityMap: Record<string, number> = {
+  '1357': 0, '1375': 1, '1537': 1, '1573': 0, '1735': 0, '1753': 1, '3157': 1, '3175': 0, '3517': 0, '3571': 1, '3715': 1, '3751': 0, '5137': 0, '5173': 1, '5317': 1, '5371': 0, '5713': 0, '5731': 1, '7135': 1, '7153': 0, '7315': 0, '7351': 1, '7513': 1, '7531': 0,
+};
 
-  return {
-    result,
-    detail: `Positions 1,3,5,7: [${selectedStr}], ${colorConfig.topLayerColorFullName.toLowerCase()} = ${result}`,
-  };
+const whiteCornerParityMap: Record<string, number> = {
+  '9bdf': 1, '9bfd': 0, '9dbf': 0, '9dfb': 1, '9fbd': 1, '9fdb': 0, 'b9df': 0, 'b9fd': 1, 'bd9f': 1, 'bdf9': 0, 'bf9d': 0, 'bfd9': 1, 'd9bf': 1, 'd9fb': 0, 'db9f': 0, 'dbf9': 1, 'df9b': 1, 'dfb9': 0, 'f9bd': 0, 'f9db': 1, 'fb9d': 1, 'fbd9': 0, 'fd9b': 0, 'fdb9': 1,
+};
+
+export function getSymmetryOffsetKey(tlHex: string, blHex: string): string {
+  return `${tlHex}${blHex}`;
 }
 
-export function calculateParity(
-  edgesOrderLetters: string[],
-  cornersOrderIDs: string[],
-  useClockwiseCorner: boolean,
+// In-memory symmetry click offsets, keyed by hex layer pair (mirrors Refactor's
+// window.parityTracerSymmetryOffsets). Reset on reload.
+const parityTracerSymmetryOffsets: Record<string, { top: number; bottom: number }> = {};
+
+export function getParityTracerSymmetryOffset(
+  offsetKey: string,
+): { top: number; bottom: number } {
+  if (!parityTracerSymmetryOffsets[offsetKey])
+    parityTracerSymmetryOffsets[offsetKey] = { top: 0, bottom: 0 };
+  return parityTracerSymmetryOffsets[offsetKey];
+}
+
+function symRotation(match: MatchedShape, offset: number, unitLen: number): number {
+  if (offset === 0) return 0;
+  const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(unitLen / match.symmetryDegree);
+  return piecesPerSymmetry * offset;
+}
+
+/**
+ * O(1) parity pipeline: hex layers → units → shape match → lookup tables.
+ * Verbatim port of Refactor's calculateParityFromHex.
+ */
+export function calculateParityFromHex(
+  tlHex: string,
+  blHex: string,
+  z2Mode: boolean,
+  useClockwise: boolean,
   scrambleForEvil?: string,
 ): SixStepParity {
-  const steps: ParityStep[] = [];
+  const { topUnits, topBits, botUnits, botBits } = hexToUnits(tlHex, blHex);
 
-  const topEdges = edgesOrderLetters.filter((e) => isTopLayerEdge(e));
-  const topEdgesCodes = topEdges.map((e) => getEdgeCodename(e));
-  const line1 = calculateTrioParity(topEdgesCodes);
-  steps.push({
-    name: `Line 1: ${colorConfig.topLayerColorFullName} Edges`,
-    pieces: topEdges.join(' '),
-    codenames: topEdgesCodes.join(' '),
-    detail: line1.detail,
-    result: line1.result,
-  });
+  const scrambleKey = getSymmetryOffsetKey(tlHex, blHex);
+  getParityTracerSymmetryOffset(scrambleKey);
 
-  const bottomEdges = edgesOrderLetters.filter((e) => !isTopLayerEdge(e));
-  const bottomEdgesCodes = bottomEdges.map((e) => getEdgeCodename(e));
-  const line2 = calculateTrioParity(bottomEdgesCodes);
-  steps.push({
-    name: `Line 2: ${colorConfig.bottomLayerColorFullName} Edges`,
-    pieces: bottomEdges.join(' '),
-    codenames: bottomEdgesCodes.join(' '),
-    detail: line2.detail,
-    result: line2.result,
-  });
+  const topMatch = matchPattern(topBits);
+  const botMatch = matchPattern(botBits);
 
-  const topCorners = cornersOrderIDs.filter((c) => isTopLayerCorner(c));
-  const topCornersCodes = topCorners.map((c) => getCornerCodename(c, useClockwiseCorner));
-  const line3 = calculateTrioParity(topCornersCodes);
-  steps.push({
-    name: `Line 3: ${colorConfig.topLayerColorFullName} Corners`,
-    pieces: topCorners.join(' '),
-    codenames: topCornersCodes.join(' '),
-    detail: line3.detail,
-    result: line3.result,
-  });
+  const topSymOff = getParityTracerSymmetryOffset(scrambleKey).top || 0;
+  const botSymOff = getParityTracerSymmetryOffset(scrambleKey).bottom || 0;
 
-  const bottomCorners = cornersOrderIDs.filter((c) => !isTopLayerCorner(c));
-  const bottomCornersCodes = bottomCorners.map((c) => getCornerCodename(c, useClockwiseCorner));
-  const line4 = calculateTrioParity(bottomCornersCodes);
-  steps.push({
-    name: `Line 4: ${colorConfig.bottomLayerColorFullName} Corners`,
-    pieces: bottomCorners.join(' '),
-    codenames: bottomCornersCodes.join(' '),
-    detail: line4.detail,
-    result: line4.result,
-  });
+  const topRot = (topMatch.rot + symRotation(topMatch, topSymOff, topUnits.length)) % topUnits.length;
+  const botRot = (botMatch.rot + symRotation(botMatch, botSymOff, botUnits.length)) % botUnits.length;
 
-  const line5 = calculateAlternatingParity(edgesOrderLetters, true);
-  steps.push({
-    name: 'Line 5: Odd Edges',
-    pieces: line5.detail.split(': [')[1].split(']')[0],
-    codenames: '-',
-    detail: line5.detail,
-    result: line5.result,
-  });
+  // rotate units arrays
+  const tU = topUnits.slice(topRot).concat(topUnits.slice(0, topRot));
+  const bU = botUnits.slice(botRot).concat(botUnits.slice(0, botRot));
 
-  const line6 = calculateAlternatingParity(cornersOrderIDs, false);
-  steps.push({
-    name: 'Line 6: Odd Corners',
-    pieces: line6.detail.split(': [')[1].split(']')[0],
-    codenames: '-',
-    detail: line6.detail,
-    result: line6.result,
-  });
+  // count edges per layer for z2 swap check
+  const topE = tU.filter((c) => !CORNER_HEX.has(c)).length;
+  const botE = bU.filter((c) => !CORNER_HEX.has(c)).length;
+  const topC = tU.length - topE;
+  const botC = bU.length - botE;
 
-  const evilStep = evilness.factor ? isScrambleEvilInternal(scrambleForEvil || '') ? 1 : 0 : null;
-  const evilnessCount = evilStep !== null ? evilStep : 0;
+  const shouldSwap = z2Mode &&
+    ((topE === 2 && topC === 5 && botE === 6 && botC === 3) ||
+      (topE === 0 && topC === 6 && botE === 8 && botC === 2));
 
-  const total = steps.reduce((sum, step) => sum + step.result, 0);
-  const totalWithEvil = total + evilnessCount;
-  const isOdd = total % 2 === 1;
-  const isOddWithEvil = totalWithEvil % 2 === 1;
+  const orderedTop = shouldSwap ? bU : tU;
+  const orderedBot = shouldSwap ? tU : bU;
 
-  return { steps, total, isOdd, evilStep, isOddWithEvil };
+  // separate edges and corners in order
+  const allEdges: string[] = [];
+  const allCorners: string[] = [];
+  for (const u of orderedTop) {
+    if (CORNER_HEX.has(u)) allCorners.push(u);
+    else allEdges.push(u);
+  }
+  for (const u of orderedBot) {
+    if (CORNER_HEX.has(u)) allCorners.push(u);
+    else allEdges.push(u);
+  }
+
+  const codeMap = useClockwise ? hexToColors_cw : hexToColors_ccw;
+
+  // lines 1-4: trio parity via lookup tables
+  const topEdges = allEdges.filter((c) => TOP_HEX.has(c));
+  const botEdges = allEdges.filter((c) => !TOP_HEX.has(c));
+  const topCorners = allCorners.filter((c) => TOP_HEX.has(c));
+  const botCorners = allCorners.filter((c) => !TOP_HEX.has(c));
+
+  const l1 = blackEdgeParityMap[topEdges.join('')];
+  const l2 = whiteEdgeParityMap[botEdges.join('')];
+  const l3 = blackCornerParityMap[topCorners.join('')];
+  const l4 = whiteCornerParityMap[botCorners.join('')];
+
+  // lines 5-6: alternating parity (positions 0,2,4,6 of full ordered arrays)
+  const edgeOdd = [allEdges[0], allEdges[2], allEdges[4], allEdges[6]].filter(Boolean);
+  const cornerOdd = [allCorners[0], allCorners[2], allCorners[4], allCorners[6]].filter(Boolean);
+  const l5tc = edgeOdd.filter((c) => TOP_HEX.has(c)).length;
+  const l6tc = cornerOdd.filter((c) => TOP_HEX.has(c)).length;
+  const l5 = (l5tc === 1 || l5tc === 3) ? 1 : 0;
+  const l6 = (l6tc === 1 || l6tc === 3) ? 1 : 0;
+
+  const evilStep = evilness.factor ? (isScrambleEvilInternal(scrambleForEvil || '') ? 1 : 0) : null;
+  const total = l1 + l2 + l3 + l4 + l5 + l6;
+  const totalWithEvil = total + (evilStep ?? 0);
+
+  return {
+    isOdd: (total % 2) === 1,
+    isOddWithEvil: (totalWithEvil % 2) === 1,
+    evilStep,
+    total,
+    steps: [
+      { name: `Line 1: ${colorConfig.topLayerColorFullName} Edges`, result: l1, hexPerm: topEdges, codenames: topEdges.map((c) => codeMap[c]) },
+      { name: `Line 2: ${colorConfig.bottomLayerColorFullName} Edges`, result: l2, hexPerm: botEdges, codenames: botEdges.map((c) => codeMap[c]) },
+      { name: `Line 3: ${colorConfig.topLayerColorFullName} Corners`, result: l3, hexPerm: topCorners, codenames: topCorners.map((c) => codeMap[c]) },
+      { name: `Line 4: ${colorConfig.bottomLayerColorFullName} Corners`, result: l4, hexPerm: botCorners, codenames: botCorners.map((c) => codeMap[c]) },
+      { name: 'Line 5: Odd Edges', result: l5, hexPerm: edgeOdd, isLayer: true, topCount: l5tc },
+      { name: 'Line 6: Odd Corners', result: l6, hexPerm: cornerOdd, isLayer: true, topCount: l6tc },
+    ],
+    topUnits: tU,
+    botUnits: bU,
+    topMatch,
+    botMatch,
+    topTraceRotation: topRot,
+    botTraceRotation: botRot,
+    topBits,
+    botBits,
+    wasSwapped: shouldSwap,
+  };
 }
 
 export interface ClusterSlot {
@@ -738,11 +772,6 @@ export function buildClusters(shapeArray: number[]): ClusterSlot[] {
 
   return slots;
 }
-
-export const PIECE_TO_HEX: Record<string, string> = {
-  YO: '0', YOG: '77', YG: '6', YGR: '55', YR: '4', YRB: '33', YB: '2', YBO: '11',
-  WR: 'a', WRG: 'bb', WG: '8', WGO: '99', WO: 'e', WOB: 'ff', WB: 'c', WBR: 'dd',
-};
 
 export function encodeState(state: CubeState): string {
   return stateToHex(state);
@@ -856,18 +885,18 @@ export interface ArrowAngle {
 
 export function calculateArrowAngle(
   rotationAmount: number,
-  unitsArray: ShapeUnit[],
+  unitsArray: string[],
   layerType: 'TOP' | 'BOTTOM',
-  patternTypes: string,
+  patternBits: string,
 ): ArrowAngle {
   const initialAngle = layerType === 'TOP' ? 90 : 300;
-  const endsWithCorner = patternTypes.endsWith('1');
+  const endsWithCorner = patternBits.endsWith('1');
   const arcDegrees = endsWithCorner ? 300 : 330;
 
   let totalRotationDegrees = 0;
   for (let i = 0; i < rotationAmount; i++) {
-    const pieceType = unitsArray[i].type;
-    totalRotationDegrees += pieceType === 'E' ? 30 : 60;
+    const pieceDegrees = CORNER_HEX.has(unitsArray[i]) ? 60 : 30;
+    totalRotationDegrees += pieceDegrees;
   }
 
   const finalAngle = initialAngle - totalRotationDegrees;
@@ -949,47 +978,10 @@ export function analyzeParity(
   cornerMode: CornerMode = 'counterclockwise',
 ): 'Odd' | 'Even' | 'Error' {
   try {
-    const state = applyScramble(scrambleText);
-    const topRaw = buildUnits(state, 0);
-    const botRaw = buildUnits(state, 12);
-    const topMatch = matchPattern(topRaw.types);
-    const botMatch = matchPattern(botRaw.types);
-    const topUnits = rotateArray(topRaw.units, topMatch.rot);
-    const botUnits = rotateArray(botRaw.units, botMatch.rot);
-    const topCounts = countPieces(topUnits);
-    const botCounts = countPieces(botUnits);
-
-    const shouldSwapForParity =
-      getZ2TracingMode() &&
-      ((topCounts.label === '2E5C' && botCounts.label === '6E3C') ||
-        (topCounts.label === '0E6C' && botCounts.label === '8E2C'));
-
-    const parityEdgesOrder: string[] = [];
-    const parityCornersOrder: string[] = [];
-
-    const collect = (units: ShapeUnit[]): void => {
-      for (const u of units) {
-        if (u.type === 'E') parityEdgesOrder.push(u.edge!);
-        else parityCornersOrder.push(u.pair!);
-      }
-    };
-
-    if (shouldSwapForParity) {
-      collect(botUnits);
-      collect(topUnits);
-    } else {
-      collect(topUnits);
-      collect(botUnits);
-    }
-
-    const sixStepParity = calculateParity(
-      parityEdgesOrder,
-      parityCornersOrder,
-      cornerMode === 'clockwise',
-      scrambleText,
-    );
-    const useEvil = getEvilnessConfig().stringReturn && sixStepParity.evilStep !== null;
-    return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
+    const { tlHex, blHex } = sq1AlgToHex(scrambleText);
+    const parity = calculateParityFromHex(tlHex, blHex, getZ2TracingMode(), cornerMode === 'clockwise', scrambleText);
+    const useEvil = getEvilnessConfig().stringReturn && parity.evilStep !== null;
+    return (useEvil ? parity.isOddWithEvil : parity.isOdd) ? 'Odd' : 'Even';
   } catch {
     return 'Error';
   }

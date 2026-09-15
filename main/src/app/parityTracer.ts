@@ -1,35 +1,35 @@
 /**
  * Cale's Parity Tracer — port of the UI layer of legacy
- * js/tools/cales-parity-tracer.js (lines 860–2964). The engine (buildUnits,
- * matchPattern, calculateParity, arrow generation, ...) lives in
- * ../lib/parityAnalyzer.ts and is reused verbatim.
+ * js/tools/cales-parity-tracer.js (lines 860–2964). The engine (hexToUnits,
+ * calculateParityFromHex, arrow generation, ...) lives in
+ * ../lib/parityAnalyzer.ts and is reused verbatim (O(1) lookup-table parity,
+ * matching the Refactor branch).
  *
  * Everything is imperative DOM (matching the rest of the ported modals):
  * the tracer modal, tracing-position config modal, per-case evilness modal and
  * the two instruction modals are created and driven from here.
  */
-import { applyScramble, rotateArray, stateToHex } from '../lib/cube';
+import { applyScramble, sq1AlgToHex, stateToHex } from '../lib/cube';
 import { normalizeScramble } from '../lib/normalizer';
 import {
   DEFAULT_SHAPE_PATTERNS,
   type ArrowSettings,
   type MatchedShape,
-  type ShapeUnit,
   type SixStepParity,
   adjustColorBrightness,
   applyUtilityTransformationsToScramble,
-  buildUnits,
   calculateArrowAngle,
-  calculateParity,
-  countPieces,
+  calculateParityFromHex,
   generateArrowSVG,
   generateShapeSVG,
   getContrastColor,
   getEvilnessConfig,
   getParityTracerImageSize,
+  getParityTracerSymmetryOffset,
   getShapePatterns,
+  getSymmetryOffsetKey,
   getZ2TracingMode,
-  matchPattern,
+  hexToUnits,
   setArrowSettings,
   setCaseNameResolver,
   setColorConfig,
@@ -38,7 +38,7 @@ import {
   setShapePatterns,
   setShowCircularArrow,
   setZ2TracingMode,
-  validateCorners,
+  TOP_HEX,
 } from '../lib/parityAnalyzer';
 import { visualizeFromHex } from '../lib/drawScramble';
 import {
@@ -87,10 +87,6 @@ let shapePatterns: Record<string, string> = { ...getShapePatterns() };
 let utilityZ2Enabled = false;
 let utilityY2Enabled = false;
 let utilityFlipColorEnabled = false;
-
-let currentParityTracerScramble = '';
-
-const parityTracerSymmetryOffsets: Record<string, { top: number; bottom: number }> = {};
 
 let activeTracerClose: (() => void) | null = null;
 let activeTracerSilentClose: (() => void) | null = null;
@@ -220,19 +216,6 @@ function syncColorConfig(config: TracerConfig): void {
   });
 }
 
-function calculateSymmetryRotation(match: MatchedShape, offset: number, rawUnits: ShapeUnit[]): number {
-  if (offset === 0) return 0;
-  const piecesPerSymmetry = match.name === 'Star' ? 3 : Math.floor(rawUnits.length / match.symmetryDegree);
-  return piecesPerSymmetry * offset;
-}
-
-function getSymmetryOffsets(scrambleKey: string): { top: number; bottom: number } {
-  if (!parityTracerSymmetryOffsets[scrambleKey]) {
-    parityTracerSymmetryOffsets[scrambleKey] = { top: 0, bottom: 0 };
-  }
-  return parityTracerSymmetryOffsets[scrambleKey];
-}
-
 function getSvgGeometry(svg: Element, fallbackSize: number): { centerX: number; centerY: number; puzzleSize: number } {
   const originX = parseFloat(svg.getAttribute('data-origin-x') || '');
   const originY = parseFloat(svg.getAttribute('data-origin-y') || '');
@@ -260,8 +243,8 @@ function getSvgGeometry(svg: Element, fallbackSize: number): { centerX: number; 
 
 // ── Result rendering ─────────────────────────────────────────────────────────
 function displayResults(container: HTMLElement, sixStepParity: SixStepParity, config: TracerConfig): void {
-  function createColorSquares(codenames: string): string {
-    if (codenames === '-') return '';
+  function createColorSquares(codenames: string[] | undefined): string {
+    if (!codenames || !codenames.length) return '';
     const colorMap: Record<string, string> = {
       O: `<span class="color-dot" style="background: ${config.backFaceColorForVisualization};"></span>`,
       G: `<span class="color-dot" style="background: ${config.rightFaceColorForVisualization};"></span>`,
@@ -269,17 +252,15 @@ function displayResults(container: HTMLElement, sixStepParity: SixStepParity, co
       B: `<span class="color-dot" style="background: ${config.leftFaceColorForVisualization};"></span>`,
     };
     return codenames
-      .split(' ')
       .slice(0, 3)
       .map((c) => colorMap[c] || '')
       .join('');
   }
 
-  function createPositionIndicators(pieces: string): string {
-    return pieces
-      .split(' ')
-      .map((p) => {
-        const isTopLayer = ['L', 'C', 'F', 'I', 'AB', 'DE', 'GH', 'JK'].includes(p);
+  function createPositionIndicator(hexPerm: string[]): string {
+    return hexPerm
+      .map((h) => {
+        const isTopLayer = TOP_HEX.has(h);
         const letter = isTopLayer ? config.topLayerColorAbbreviation : config.bottomLayerColorAbbreviation;
         const bgColor = isTopLayer ? config.topLayerMainColor : config.bottomLayerMainColor;
         const textColor =
@@ -308,10 +289,8 @@ function displayResults(container: HTMLElement, sixStepParity: SixStepParity, co
   if (getEvilnessFactor() && sixStepParity.evilStep !== null) {
     allSteps.push({
       name: 'Line 7: Evilness',
-      pieces: '-',
-      codenames: '-',
-      detail: `Evilness: ${sixStepParity.evilStep}`,
       result: sixStepParity.evilStep,
+      hexPerm: [],
     });
   }
 
@@ -331,10 +310,10 @@ function displayResults(container: HTMLElement, sixStepParity: SixStepParity, co
                   ? '<span style="color:#8b0000;font-weight:700;">EVIL</span>'
                   : '<span style="color:#2d6a2d;font-weight:700;">GOOD</span>';
               displayContent = `${lineName}: ${evilLabel} = <strong>${step.result}</strong>`;
-            } else if (idx < 2 || (idx >= 2 && idx < 4)) {
-              displayContent = `${lineName}: ${createColorSquares(step.codenames)} = <strong>${step.result}</strong>`;
+            } else if (step.isLayer) {
+              displayContent = `${lineName}: ${createPositionIndicator(step.hexPerm)} = <strong>${step.result}</strong>`;
             } else {
-              displayContent = `${lineName}: ${createPositionIndicators(step.pieces)} = <strong>${step.result}</strong>`;
+              displayContent = `${lineName}: ${createColorSquares(step.codenames)} = <strong>${step.result}</strong>`;
             }
 
             return `
@@ -1375,63 +1354,11 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
   // If returnOnlyValue, calculate and return only the parity result.
   if (config.returnOnlyParityValue && config.scrambleTextInput) {
     try {
-      const state = applyScramble(config.scrambleTextInput);
-      const topRaw = buildUnits(state, 0);
-      const botRaw = buildUnits(state, 12);
-      const scrambleKey = config.scrambleTextInput.replace(/\s+/g, '');
-      const offsets = getSymmetryOffsets(scrambleKey);
-
-      const topMatch = matchPattern(topRaw.types);
-      const botMatch = matchPattern(botRaw.types);
-
-      const topSymmetryOffset = offsets.top || 0;
-      const botSymmetryOffset = offsets.bottom || 0;
-
-      const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-      const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
-
-      topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-      botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
-
-      const topUnits = rotateArray(topRaw.units, topMatch.rot);
-      const botUnits = rotateArray(botRaw.units, botMatch.rot);
-      const topCounts = countPieces(topUnits);
-      const botCounts = countPieces(botUnits);
-
-      const shouldSwapForParity = topCounts.label === '2E5C' && botCounts.label === '6E3C';
-
-      const parityEdgesOrder: string[] = [];
-      const parityCornersOrder: string[] = [];
-
-      if (shouldSwapForParity) {
-        for (const u of botUnits) {
-          if (u.type === 'E') parityEdgesOrder.push(u.edge!);
-          else parityCornersOrder.push(u.pair!);
-        }
-        for (const u of topUnits) {
-          if (u.type === 'E') parityEdgesOrder.push(u.edge!);
-          else parityCornersOrder.push(u.pair!);
-        }
-      } else {
-        for (const u of topUnits) {
-          if (u.type === 'E') parityEdgesOrder.push(u.edge!);
-          else parityCornersOrder.push(u.pair!);
-        }
-        for (const u of botUnits) {
-          if (u.type === 'E') parityEdgesOrder.push(u.edge!);
-          else parityCornersOrder.push(u.pair!);
-        }
-      }
-
+      const { tlHex, blHex } = sq1AlgToHex(config.scrambleTextInput);
       const useClockwise = cornerStickerMode === 'clockwise';
-      const sixStepParity = calculateParity(
-        parityEdgesOrder,
-        parityCornersOrder,
-        useClockwise,
-        config.scrambleTextInput,
-      );
-      const useEvil = getEvilnessStringReturn() && sixStepParity.evilStep !== null;
-      return (useEvil ? sixStepParity.isOddWithEvil : sixStepParity.isOdd) ? 'Odd' : 'Even';
+      const parity = calculateParityFromHex(tlHex, blHex, getZ2TracingMode(), useClockwise, config.scrambleTextInput);
+      const useEvil = getEvilnessStringReturn() && parity.evilStep !== null;
+      return (useEvil ? parity.isOddWithEvil : parity.isOdd) ? 'Odd' : 'Even';
     } catch (err) {
       console.error('Parity calculation error:', err);
       return 'error';
@@ -1786,7 +1713,6 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
       } catch {
         // keep raw input
       }
-      currentParityTracerScramble = scrambleText;
 
       const transformedScramble = applyUtilityTransformationsToScramble(scrambleText, {
         z2Enabled: utilityZ2Enabled,
@@ -1795,83 +1721,12 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
       });
 
       try {
-        const state = applyScramble(transformedScramble);
-
-        validateCorners(state);
-
-        const topRaw = buildUnits(state, 0);
-        const botRaw = buildUnits(state, 12);
-
-        const scrambleKey = scrambleText.replace(/\s+/g, '');
-        const offsets = getSymmetryOffsets(scrambleKey);
-
-        const topMatch = matchPattern(topRaw.types);
-        const botMatch = matchPattern(botRaw.types);
-
-        const topSymmetryOffset = offsets.top || 0;
-        const botSymmetryOffset = offsets.bottom || 0;
-
-        const topExtraRotation = calculateSymmetryRotation(topMatch, topSymmetryOffset, topRaw.units);
-        const botExtraRotation = calculateSymmetryRotation(botMatch, botSymmetryOffset, botRaw.units);
-
-        topMatch.rot = (topMatch.rot + topExtraRotation) % topRaw.units.length;
-        botMatch.rot = (botMatch.rot + botExtraRotation) % botRaw.units.length;
-
-        const topUnits = rotateArray(topRaw.units, topMatch.rot);
-        const botUnits = rotateArray(botRaw.units, botMatch.rot);
-        const topCounts = countPieces(topUnits);
-        const botCounts = countPieces(botUnits);
-
-        // Order is always Top → Bottom.
-        const blocks = [
-          { side: 'T', units: topUnits },
-          { side: 'B', units: botUnits },
-        ];
-
-        const edgesOrderLetters: string[] = [];
-        const cornersOrderIDs: string[] = [];
-
-        for (const b of blocks) {
-          for (const u of b.units) {
-            if (u.type === 'E') {
-              edgesOrderLetters.push(u.edge!);
-            } else {
-              cornersOrderIDs.push(u.pair!);
-            }
-          }
-        }
-
-        const shouldSwapForParity =
-          getZ2TracingMode() &&
-          ((topCounts.label === '2E5C' && botCounts.label === '6E3C') ||
-            (topCounts.label === '0E6C' && botCounts.label === '8E2C'));
-
-        let parityEdgesOrder: string[] = [];
-        let parityCornersOrder: string[] = [];
-
-        if (shouldSwapForParity) {
-          const parityBlocks = [
-            { side: 'B', units: botUnits },
-            { side: 'T', units: topUnits },
-          ];
-          for (const b of parityBlocks) {
-            for (const u of b.units) {
-              if (u.type === 'E') {
-                parityEdgesOrder.push(u.edge!);
-              } else {
-                parityCornersOrder.push(u.pair!);
-              }
-            }
-          }
-        } else {
-          parityEdgesOrder = edgesOrderLetters;
-          parityCornersOrder = cornersOrderIDs;
-        }
-
+        const { tlHex, blHex } = sq1AlgToHex(transformedScramble);
         const useClockwise = cornerStickerMode === 'clockwise';
-        const sixStepParity = calculateParity(parityEdgesOrder, parityCornersOrder, useClockwise, scrambleText);
+        const sixStepParity = calculateParityFromHex(tlHex, blHex, getZ2TracingMode(), useClockwise, scrambleText);
 
         if (config.shouldGenerateImage) {
+          const state = applyScramble(transformedScramble);
           const encodedScramble = stateToHex(state);
           if (!encodedScramble.startsWith('Error:')) {
             try {
@@ -1885,8 +1740,9 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
                 leftColor: config.leftFaceColorForVisualization,
               });
 
-              const topArrowData = calculateArrowAngle(topMatch.rot, topRaw.units, 'TOP', topMatch.originalPat);
-              const botArrowData = calculateArrowAngle(botMatch.rot, botRaw.units, 'BOTTOM', botMatch.originalPat);
+              const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
+              const topArrowData = calculateArrowAngle(sixStepParity.topTraceRotation, topRawU, 'TOP', sixStepParity.topBits);
+              const botArrowData = calculateArrowAngle(sixStepParity.botTraceRotation, botRawU, 'BOTTOM', sixStepParity.botBits);
 
               const tempDiv = document.createElement('div');
               tempDiv.innerHTML = svgContent;
@@ -1946,9 +1802,8 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
 
                   if (canCycleSymmetry) {
                     buttonCircle.addEventListener('click', () => {
-                      const currentScramble = currentParityTracerScramble || scrambleInput.value.trim();
-                      const scrambleKey = currentScramble.replace(/\s+/g, '');
-                      const offsetEntry = getSymmetryOffsets(scrambleKey);
+                      const offsetKey = getSymmetryOffsetKey(tlHex, blHex);
+                      const offsetEntry = getParityTracerSymmetryOffset(offsetKey);
 
                       const currentOffset = offsetEntry[layerType] || 0;
                       const maxSymmetries = match.name === 'Star' ? 2 : match.symmetryDegree;
@@ -1963,8 +1818,8 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
                   svg.appendChild(buttonCircle);
                 };
 
-                addSymmetryButton(svgsInContainer[0] as SVGSVGElement, 'top', topMatch);
-                addSymmetryButton(svgsInContainer[1] as SVGSVGElement, 'bottom', botMatch);
+                addSymmetryButton(svgsInContainer[0] as SVGSVGElement, 'top', sixStepParity.topMatch);
+                addSymmetryButton(svgsInContainer[1] as SVGSVGElement, 'bottom', sixStepParity.botMatch);
               }
             } catch (err) {
               vizContainer.innerHTML = `<div style="color: #e53e3e;">Visualization error: ${(err as Error).message}</div>`;

@@ -43,7 +43,7 @@ function updateSelectLabels(): void {
 }
 
 export default function App(): React.ReactNode {
-  useAppStore();
+  const storeVersion = useAppStore();
   const [loaded, setLoaded] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortTypeState] = useState<SortMode>(currentSortMode);
@@ -61,10 +61,13 @@ export default function App(): React.ReactNode {
 
   const filtered = useMemo(
     () => computeFilteredData(searchTerm, sortType, learnFilter),
-    [searchTerm, sortType, learnFilter],
+    [searchTerm, sortType, learnFilter, loaded, storeVersion],
   );
 
-  const gridHTML = useMemo(() => filtered.map((item) => renderCard(item)).join(''), [filtered]);
+  const gridHTML = useMemo(
+    () => filtered.map((item) => renderCard(item)).join(''),
+    [filtered, loaded, storeVersion],
+  );
 
   // Boot: install shims, load preset, initialize SVG data, recalc parity.
   useEffect(() => {

@@ -3,13 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { CASES } from '../../data/cases';
-import {
-  checkForVariables,
-  expandVariablesRecursive,
-  generateX2Algorithm,
-  normalizeScramble,
-  normalizeScrambleFormat,
-} from '../normalizer';
+import { generateX2Algorithm, normalizeScramble, normalizeScrambleFormat } from '../normalizer';
 
 const LEGACY_PATH = fileURLToPath(
   new URL('../../../../legacy/js/tools/scrambleNormalizer.js', import.meta.url),
@@ -17,8 +11,6 @@ const LEGACY_PATH = fileURLToPath(
 
 interface LegacyNormalizer {
   normalizeScramble: (input: string) => string;
-  checkForVariables: (input: string) => boolean;
-  expandVariablesRecursive: (input: string, table?: Record<string, string>) => string;
   normalizeScrambleFormat: (input: string) => string;
   generateX2Algorithm: (input: string) => string;
 }
@@ -66,24 +58,4 @@ describe('normalizer differential vs legacy', () => {
   it.each(corpus.filter((s) => s.includes('(')))('generateX2Algorithm(%j)', (input) => {
     expect(generateX2Algorithm(input)).toBe(legacyMod.generateX2Algorithm(input));
   });
-});
-
-describe('normalizer variable expansion vs legacy', () => {
-  const table = { A: '(1,0)/(2,0)', B: '/', C: '(0,0)' };
-
-  it.each(['*A*', '<A>', '(1,0)*A*/-', 'no vars here', '<A>*B*<A>'])(
-    'expandVariablesRecursive(%j) matches legacy',
-    (input) => {
-      expect(expandVariablesRecursive(input, table)).toBe(
-        legacyMod.expandVariablesRecursive(input, table),
-      );
-    },
-  );
-
-  it.each(['*A*', '<A>', '(1,0)*A*/-', 'no vars here'])(
-    'checkForVariables(%j) matches legacy',
-    (input) => {
-      expect(checkForVariables(input)).toBe(legacyMod.checkForVariables(input));
-    },
-  );
 });

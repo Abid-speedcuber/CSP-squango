@@ -1,54 +1,16 @@
 // ========================================
 // Square-1 scramble normalizer.
-// Handles variable expansion, decoding, and
-// move simplification in one place.
+// Handles decoding, and move simplification
+// in one place.
 // ========================================
 
 /**
- * Normalizes any scramble input: expands variables, decodes letter/prime
- * shorthand, and simplifies adjacent moves.
+ * Normalizes any scramble input: decodes letter/prime shorthand and
+ * simplifies adjacent moves.
  */
-export function normalizeScramble(input: string, variableTable?: Record<string, string>): string {
+export function normalizeScramble(input: string): string {
   if (!input) return '';
-  const expanded = checkForVariables(input)
-    ? expandVariablesRecursive(input, variableTable)
-    : input;
-  return normalizeScrambleFormat(expanded);
-}
-
-/** True if the input contains variable syntax (`*name*` or `<name>`). */
-export function checkForVariables(input: string): boolean {
-  if (!input) return false;
-  return /\*\w+\*/.test(input) || /<\w+>/.test(input);
-}
-
-/**
- * Expands variables recursively until none remain, or a depth limit is hit.
- * Unknown variables are left as-is.
- */
-export function expandVariablesRecursive(
-  input: string,
-  variableTable?: Record<string, string>,
-  depth = 0,
-): string {
-  if (depth > 10) {
-    console.warn('Variable expansion depth limit reached');
-    return input;
-  }
-  const expanded = expandVariablesOneLevel(input, variableTable);
-  if (checkForVariables(expanded)) {
-    return expandVariablesRecursive(expanded, variableTable, depth + 1);
-  }
-  return expanded;
-}
-
-/** Replaces each variable occurrence with its raw value (one level only). */
-function expandVariablesOneLevel(input: string, variableTable: Record<string, string> = {}): string {
-  if (!input) return input;
-  const varRegex = /[*<](\w+)[*>]/g;
-  return input.replace(varRegex, (match, varName: string) =>
-    variableTable[varName] !== undefined ? variableTable[varName] : match,
-  );
+  return normalizeScrambleFormat(input);
 }
 
 /** Normalizes whitespace and simplifies a scramble into canonical form. */
