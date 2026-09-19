@@ -3,8 +3,11 @@ import { useAppStore } from '../app/store';
 import {
   applyPreset,
   calculateAndCacheAllParityChunked,
+  calculateAndCacheParityForCases,
   currentSortMode,
   currentPreset,
+  hydratePresetDetails,
+  hydrateSavedStateDetails,
   initializePreset,
   initializeSVGDataForCases,
   isFirstLoad,
@@ -140,16 +143,17 @@ export default function App(): React.ReactNode {
       window.setTimeout(() => {
         void (async () => {
           installWindowShims();
-          if (!isFirstLoad) await initializePreset();
+          if (!isFirstLoad) void initializePreset();
           if (cancelled) return;
           const columns = gridRef.current ? getGridColumnCount(gridRef.current) : 1;
           const estimatedCardHeight = getCachedCardHeight(currentPreset, columns);
           setSkeletonCardHeight(estimatedCardHeight);
           const initialCount = getInitialCardCount(columns, estimatedCardHeight);
           setInitialCardCount(initialCount);
-          if (isFirstLoad) await applyPreset("Matt's_Preset", true, true, true, true);
+          if (isFirstLoad) await applyPreset("Matt's_Preset", true, true, true, true, true);
           if (cancelled) return;
           const initialCases = computeFilteredData(searchTerm, sortType, learnFilter).slice(0, initialCount);
+          if (needsParityRecalculation()) calculateAndCacheParityForCases(initialCases);
           initializeSVGDataForCases(initialCases);
           if (cancelled) return;
           setBootReady(true);
@@ -157,7 +161,15 @@ export default function App(): React.ReactNode {
           applyInstructionVisibility();
           updateProgress();
           if (isFirstLoad) {
-            setTimeout(() => openGeneralNotesModal(), 400);
+            window.setTimeout(() => {
+              void hydratePresetDetails("Matt's_Preset").then(() => {
+                if (!cancelled) window.setTimeout(() => openGeneralNotesModal(), 100);
+              });
+            }, 0);
+          } else {
+            window.setTimeout(() => {
+              if (!cancelled) hydrateSavedStateDetails();
+            }, 0);
           }
         })();
       }, 0);

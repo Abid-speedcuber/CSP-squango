@@ -84,3 +84,17 @@ test('legacy-format presets with redundant fields still load (backward compatibl
   expect(state.getPlannedLevel('Kite/Square')).toBeGreaterThan(0);
   expect(state.cachedParityAlgorithms.size).toBe(90);
 });
+
+test('Matt boot-visible algorithms are classified with evilness before render', async () => {
+  presetPayload = loadPresetFile("Matt's_Preset.json");
+  await state.applyPreset("Matt's_Preset", true, true, true, true);
+  state.cachedParityAlgorithms.clear();
+
+  const item = state.data.find((entry) => entry.name === 'Left 4-2/Paired Edges');
+  expect(item).toBeTruthy();
+  state.calculateAndCacheParityForCases([item!]);
+
+  const classified = state.cachedParityAlgorithms.get('Left 4-2/Paired Edges');
+  expect(classified?.odd).toContain('(-2,-4)/(4,0)/(1,0)/(-3,-3)/');
+  expect(classified?.even).toContain('(0,-2)/(-2,0)/(-1,-2)/(-3,-3)/');
+});

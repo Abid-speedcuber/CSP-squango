@@ -2,7 +2,7 @@ import { CASES } from '../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP } from '../data/shapeIndex';
 import type { AlgCase } from '../data/types';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
-import { getParityText } from '../lib/parityAnalyzer';
+import { getParityText, setCaseNameResolver, setEvilnessConfig } from '../lib/parityAnalyzer';
 import {
   applyHomepageSVGsLive,
   ensureHomepageShapeSVGsForCases,
@@ -48,6 +48,10 @@ const DEFAULT_COLOR_SCHEME: ColorScheme = {
 export const PRESET_CONFIG: Record<string, string> = {
   "Matt's_Preset": "presets/Matt's_Preset.json",
   'Empty_Preset': 'presets/Empty_Preset.json',
+};
+
+const BOOT_PRESET_CONFIG: Record<string, string> = {
+  "Matt's_Preset": "presets/Matt's_Preset.boot.json",
 };
 
 // ── Default display names for all 90 cases (fresh installs) ────────────────
@@ -187,6 +191,10 @@ export let currentPreset = localStorage.getItem('currentPreset') || "Matt's_Pres
 export let presetData: Record<string, unknown> | null = null;
 
 export const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
+const PROGRESS_STORAGE_KEY = 'sq1-parity-progress';
+const BOOT_PROGRESS_STORAGE_KEY = 'sq1-parity-boot-progress-v1';
+const BOOT_STATE_CARD_COUNT = 12;
+let fullSavedStateLoaded = false;
 
 // ── Shape index → case name lookup ──────────────────────────────────────────
 function buildShapeIndexToCaseMap(): Record<number, string> {
@@ -239,12 +247,20 @@ export function isScrambleEvil(scramble: string): boolean {
 // ── Parity caching ──────────────────────────────────────────────────────────
 let lastParityCalculationSettings: Record<string, unknown> | null = null;
 
+function syncParityAnalyzerEvilness(): void {
+  setEvilnessConfig({ factor: evilnessFactor, stringReturn: evilnessStringReturn, map: evilnessMap });
+  setCaseNameResolver(getCaseNameFromScramble);
+}
+
 function getParityCalculationSettings(): Record<string, unknown> {
   return {
     colorScheme: JSON.stringify(colorScheme),
     cornerStickerMode,
     customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
     customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries())),
+    evilnessFactor,
+    evilnessStringReturn,
+    evilnessMap: JSON.stringify(evilnessMap),
   };
 }
 
@@ -291,9 +307,17 @@ function cacheParityForItem(item: AlgCase): void {
 }
 
 export function calculateAndCacheAllParity(): void {
+  syncParityAnalyzerEvilness();
   lastParityCalculationSettings = getParityCalculationSettings();
 
   for (const item of data) {
+    cacheParityForItem(item);
+  }
+}
+
+export function calculateAndCacheParityForCases(cases: readonly AlgCase[]): void {
+  syncParityAnalyzerEvilness();
+  for (const item of cases) {
     cacheParityForItem(item);
   }
 }
@@ -302,6 +326,7 @@ export async function calculateAndCacheAllParityChunked(
   chunkSize = 6,
   onChunk?: () => void,
 ): Promise<void> {
+  syncParityAnalyzerEvilness();
   lastParityCalculationSettings = getParityCalculationSettings();
   cachedParityAlgorithms.clear();
 
@@ -324,7 +349,10 @@ export function needsParityRecalculation(): boolean {
     current.colorScheme !== lastParityCalculationSettings.colorScheme ||
     current.cornerStickerMode !== lastParityCalculationSettings.cornerStickerMode ||
     current.customShapes !== lastParityCalculationSettings.customShapes ||
-    current.customAlgorithms !== lastParityCalculationSettings.customAlgorithms
+    current.customAlgorithms !== lastParityCalculationSettings.customAlgorithms ||
+    current.evilnessFactor !== lastParityCalculationSettings.evilnessFactor ||
+    current.evilnessStringReturn !== lastParityCalculationSettings.evilnessStringReturn ||
+    current.evilnessMap !== lastParityCalculationSettings.evilnessMap
   );
 }
 
@@ -336,6 +364,8 @@ export function recalculateAllParity(): void {
 }
 
 // ── Persistence ─────────────────────────────────────────────────────────────
+type StoredProgressState = Record<string, unknown>;
+
 function mergeDisplayNames(source: Record<string, string>): void {
   displayNames = { ...source };
   for (const caseName in defaultDisplayNames) {
@@ -369,6 +399,92 @@ export function initializeSVGDataForCases(cases: readonly Pick<AlgCase, 'top' | 
   ensureHomepageShapeSVGsForCases(homepageImageSettings, svgData, cases);
 }
 
+function getPriorityBootCaseNames(): string[] {
+  const sorted = [...data];
+  sorted.sort((a, b) => b.probability - a.probability);
+  sorted.sort((a, b) => {
+    const aIsLearning = learningCases.has(a.name);
+    const bIsLearning = learningCases.has(b.name);
+    const aIsPlanned = plannedCases.has(a.name);
+    const bIsPlanned = plannedCases.has(b.name);
+    const aIsLearned = learnedCases.has(a.name);
+    const bIsLearned = learnedCases.has(b.name);
+
+    if (aIsLearning && !bIsLearning) return -1;
+    if (!aIsLearning && bIsLearning) return 1;
+
+    if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
+    if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
+    if (aIsPlanned && bIsPlanned) {
+      const aPriority = plannedLevels.get(a.name) || 4;
+      const bPriority = plannedLevels.get(b.name) || 4;
+      return aPriority - bPriority;
+    }
+
+    if (aIsLearned && !bIsLearned) return 1;
+    if (!aIsLearned && bIsLearned) return -1;
+    return 0;
+  });
+  return sorted.slice(0, BOOT_STATE_CARD_COUNT).map((item) => item.name);
+}
+
+function pickRecordEntries<T>(source: Record<string, T>, keys: readonly string[]): Record<string, T> {
+  const picked: Record<string, T> = {};
+  for (const key of keys) {
+    if (source[key] !== undefined) picked[key] = source[key];
+  }
+  return picked;
+}
+
+function pickMapEntries<T>(source: Map<string, T>, keys: readonly string[]): Record<string, T> {
+  const picked: Record<string, T> = {};
+  for (const key of keys) {
+    const value = source.get(key);
+    if (value !== undefined) picked[key] = value;
+  }
+  return picked;
+}
+
+function createStateSnapshot(bootOnly = false): StoredProgressState {
+  const bootCaseNames = bootOnly ? getPriorityBootCaseNames() : [];
+  return {
+    learned: Array.from(learnedCases),
+    learning: Array.from(learningCases),
+    planned: Array.from(plannedCases),
+    comments: bootOnly ? pickMapEntries(comments, bootCaseNames) : Object.fromEntries(comments),
+    plannedLevels: Object.fromEntries(plannedLevels),
+    parityOrientations: bootOnly
+      ? pickMapEntries(parityOrientations, bootCaseNames)
+      : Object.fromEntries(parityOrientations),
+    showPaths: true,
+    enablePriorityLearning: true,
+    displayNames: bootOnly ? pickRecordEntries(displayNames, bootCaseNames) : displayNames,
+    hideInstructions,
+    hideParenthesis,
+    colorScheme,
+    scrambleImageSize,
+    customShapesForParityTracerLibrary: localStorage.getItem(
+      'customShapesForParityTracerLibrary',
+    ),
+    perCaseSubtitles: bootOnly
+      ? pickMapEntries(perCaseSubtitles, bootCaseNames)
+      : Object.fromEntries(perCaseSubtitles),
+    cornerStickerMode,
+    customAlgorithms: bootOnly
+      ? pickMapEntries(customAlgorithms, bootCaseNames)
+      : Object.fromEntries(customAlgorithms),
+    cachedParityAlgorithms: bootOnly
+      ? pickMapEntries(cachedParityAlgorithms, bootCaseNames)
+      : Object.fromEntries(cachedParityAlgorithms),
+    lastParityCalculationSettings,
+    generalNotes: bootOnly ? '' : generalNotes,
+    algVariables: bootOnly ? {} : Object.fromEntries(algVariables),
+    evilnessFactor,
+    evilnessStringReturn,
+    evilnessMap,
+  };
+}
+
 export function saveState(): void {
   localStorage.setItem('sortMode', currentSortMode);
   localStorage.setItem('enhancedAccess', enhancedAccess.toString());
@@ -377,134 +493,132 @@ export function saveState(): void {
   localStorage.setItem('evilnessStringReturn', evilnessStringReturn.toString());
   localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
   try {
-    localStorage.setItem(
-      'sq1-parity-progress',
-      JSON.stringify({
-        learned: Array.from(learnedCases),
-        learning: Array.from(learningCases),
-        planned: Array.from(plannedCases),
-        comments: Object.fromEntries(comments),
-        plannedLevels: Object.fromEntries(plannedLevels),
-        parityOrientations: Object.fromEntries(parityOrientations),
-        showPaths: true,
-        enablePriorityLearning: true,
-        displayNames,
-        hideInstructions,
-        hideParenthesis,
-        colorScheme,
-        scrambleImageSize,
-        customShapesForParityTracerLibrary: localStorage.getItem(
-          'customShapesForParityTracerLibrary',
-        ),
-        perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
-        cornerStickerMode,
-        customAlgorithms: Object.fromEntries(customAlgorithms),
-        cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
-        lastParityCalculationSettings,
-        generalNotes,
-        algVariables: Object.fromEntries(algVariables),
-        evilnessFactor,
-        evilnessStringReturn,
-        evilnessMap,
-      }),
-    );
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(createStateSnapshot()));
+    localStorage.setItem(BOOT_PROGRESS_STORAGE_KEY, JSON.stringify(createStateSnapshot(true)));
   } catch (e) {
     console.error('Error saving state:', e);
   }
 }
 
+function applyStoredState(state: StoredProgressState): void {
+  learnedCases.clear();
+  learningCases.clear();
+  plannedCases.clear();
+  comments.clear();
+  plannedLevels.clear();
+  parityOrientations.clear();
+  perCaseSubtitles.clear();
+  customAlgorithms.clear();
+  cachedParityAlgorithms.clear();
+  algVariables.clear();
+
+  new Set<string>((state.learned as string[]) || []).forEach((v) => learnedCases.add(v));
+  new Set<string>((state.learning as string[]) || []).forEach((v) => learningCases.add(v));
+  new Set<string>((state.planned as string[]) || []).forEach((v) => plannedCases.add(v));
+  Object.entries((state.comments as Record<string, unknown>) || {}).forEach(([k, v]) =>
+    comments.set(k, String(v)),
+  );
+  Object.entries((state.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
+    plannedLevels.set(k, Number(v)),
+  );
+  Object.entries((state.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
+    parityOrientations.set(k, Number(v)),
+  );
+  showPaths = true;
+  enablePriorityLearning = true;
+  hideInstructions = !!state.hideInstructions;
+  hideParenthesis = !!state.hideParenthesis;
+  colorScheme = { ...DEFAULT_COLOR_SCHEME, ...((state.colorScheme as Partial<ColorScheme>) || {}) };
+  scrambleImageSize = Number(state.scrambleImageSize) || 200;
+  if (state.customShapesForParityTracerLibrary) {
+    localStorage.setItem(
+      'customShapesForParityTracerLibrary',
+      String(state.customShapesForParityTracerLibrary),
+    );
+  }
+  Object.entries((state.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
+    perCaseSubtitles.set(k, String(v)),
+  );
+  cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
+  Object.entries((state.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
+    .forEach(([k, v]) => customAlgorithms.set(k, v));
+  generalNotes = String(state.generalNotes || '');
+  Object.entries((state.algVariables as Record<string, unknown>) || {}).forEach(([k, v]) =>
+    algVariables.set(k, String(v)),
+  );
+
+  if (state.displayNames) {
+    mergeDisplayNames(state.displayNames as Record<string, string>);
+  } else {
+    displayNames = { ...defaultDisplayNames };
+  }
+
+  Object.entries((state.cachedParityAlgorithms as Record<string, { odd: string[]; even: string[] }>) || {})
+    .forEach(([k, v]) => cachedParityAlgorithms.set(k, v));
+  lastParityCalculationSettings = (state.lastParityCalculationSettings as Record<string, unknown>) || null;
+
+  if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
+  if (state.evilnessStringReturn !== undefined) {
+    evilnessStringReturn = Boolean(state.evilnessStringReturn);
+  }
+  if (state.evilnessMap) evilnessMap = state.evilnessMap as Record<string, boolean>;
+}
+
+function loadStoredEvilnessOverrides(): void {
+  const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
+  if (enhancedAccessSaved !== null) {
+    enhancedAccess = enhancedAccessSaved === 'true';
+  }
+
+  const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
+  if (storedEvilnessFactor !== null) {
+    evilnessFactor = storedEvilnessFactor === 'true';
+  }
+
+  const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
+  if (storedEvilnessStringReturn !== null) {
+    evilnessStringReturn = storedEvilnessStringReturn === 'true';
+  }
+
+  const storedEvilnessMap = localStorage.getItem('evilnessMap');
+  if (storedEvilnessMap !== null) {
+    try {
+      evilnessMap = JSON.parse(storedEvilnessMap) as Record<string, boolean>;
+    } catch {
+      // ignore malformed stored map
+    }
+  }
+}
+
 function loadSavedState(): void {
   try {
-    const saved = localStorage.getItem('sq1-parity-progress');
+    const saved = localStorage.getItem(PROGRESS_STORAGE_KEY);
     if (saved) {
-      const state = JSON.parse(saved);
-      learnedCases.clear();
-      learningCases.clear();
-      plannedCases.clear();
-      comments.clear();
-      plannedLevels.clear();
-      parityOrientations.clear();
-      perCaseSubtitles.clear();
-      customAlgorithms.clear();
-      cachedParityAlgorithms.clear();
-      algVariables.clear();
-
-      new Set<string>(state.learned || []).forEach((v) => learnedCases.add(v));
-      new Set<string>(state.learning || []).forEach((v) => learningCases.add(v));
-      new Set<string>(state.planned || []).forEach((v) => plannedCases.add(v));
-      Object.entries(state.comments || {}).forEach(([k, v]) => comments.set(k, String(v)));
-      Object.entries(state.plannedLevels || {}).forEach(([k, v]) => plannedLevels.set(k, Number(v)));
-      Object.entries(state.parityOrientations || {}).forEach(([k, v]) =>
-        parityOrientations.set(k, Number(v)),
-      );
-      showPaths = true;
-      enablePriorityLearning = true;
-      hideInstructions = !!state.hideInstructions;
-      hideParenthesis = !!state.hideParenthesis;
-      colorScheme = { ...DEFAULT_COLOR_SCHEME, ...(state.colorScheme || {}) };
-      scrambleImageSize = state.scrambleImageSize || 200;
-      if (state.customShapesForParityTracerLibrary) {
-        localStorage.setItem(
-          'customShapesForParityTracerLibrary',
-          state.customShapesForParityTracerLibrary,
-        );
-      }
-      Object.entries(state.perCaseSubtitles || {}).forEach(([k, v]) =>
-        perCaseSubtitles.set(k, String(v)),
-      );
-      cornerStickerMode =
-        (state.cornerStickerMode as CornerMode) || 'counterclockwise';
-      Object.entries(state.customAlgorithms || {}).forEach(([k, v]) =>
-        customAlgorithms.set(k, v as { odd?: string[]; even?: string[] }),
-      );
-      generalNotes = state.generalNotes || '';
-      Object.entries(state.algVariables || {}).forEach(([k, v]) =>
-        algVariables.set(k, String(v)),
-      );
-
-      if (state.displayNames) {
-        mergeDisplayNames(state.displayNames);
-      } else {
-        displayNames = { ...defaultDisplayNames };
-      }
-
-      if (state.cachedParityAlgorithms) {
-        cachedParityAlgorithms.clear();
-        Object.entries(state.cachedParityAlgorithms).forEach(([k, v]) =>
-          cachedParityAlgorithms.set(k, v as { odd: string[]; even: string[] }),
-        );
-      }
-      if (state.lastParityCalculationSettings) {
-        lastParityCalculationSettings = state.lastParityCalculationSettings as Record<
-          string,
-          unknown
-        >;
-      }
+      applyStoredState(JSON.parse(saved) as StoredProgressState);
     }
 
-    const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
-    if (enhancedAccessSaved !== null) {
-      enhancedAccess = enhancedAccessSaved === 'true';
-    }
-
-    const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
-    if (storedEvilnessFactor !== null) {
-      evilnessFactor = storedEvilnessFactor === 'true';
-    }
-
-    const storedEvilnessMap = localStorage.getItem('evilnessMap');
-    if (storedEvilnessMap !== null) {
-      try {
-        evilnessMap = JSON.parse(storedEvilnessMap) as Record<string, boolean>;
-      } catch {
-        // ignore malformed stored map
-      }
-    }
-
+    loadStoredEvilnessOverrides();
     ensureAllCasesHaveState();
+    syncParityAnalyzerEvilness();
+    fullSavedStateLoaded = true;
     saveState();
   } catch (e) {
     console.error('Error loading saved state:', e);
+  }
+}
+
+function loadBootSavedState(): boolean {
+  try {
+    const saved = localStorage.getItem(BOOT_PROGRESS_STORAGE_KEY);
+    if (!saved) return false;
+    applyStoredState(JSON.parse(saved) as StoredProgressState);
+    loadStoredEvilnessOverrides();
+    ensureAllCasesHaveState();
+    syncParityAnalyzerEvilness();
+    return true;
+  } catch (e) {
+    console.error('Error loading boot state:', e);
+    return false;
   }
 }
 
@@ -517,12 +631,20 @@ if (isFirstLoad) {
   saveState();
 }
 
-loadSavedState();
+if (isFirstLoad || !loadBootSavedState()) {
+  loadSavedState();
+}
+
+export function hydrateSavedStateDetails(): void {
+  if (fullSavedStateLoaded) return;
+  loadSavedState();
+  notify();
+}
 
 // ── Presets ─────────────────────────────────────────────────────────────────
-async function loadPresetData(presetName: string): Promise<Record<string, unknown> | null> {
+async function loadPresetData(presetName: string, boot = false): Promise<Record<string, unknown> | null> {
   try {
-    const presetPath = PRESET_CONFIG[presetName];
+    const presetPath = (boot ? BOOT_PRESET_CONFIG[presetName] : undefined) || PRESET_CONFIG[presetName];
     if (!presetPath) {
       throw new Error(`Preset "${presetName}" not found in configuration`);
     }
@@ -561,8 +683,9 @@ export async function applyPreset(
   silent = false,
   applyFull = false,
   deferParity = false,
+  boot = false,
 ): Promise<void> {
-  const preset = await loadPresetData(presetName);
+  const preset = await loadPresetData(presetName, boot);
   if (!preset) return;
 
   if (preset.displayNames) {
@@ -646,6 +769,33 @@ export async function applyPreset(
   if (!deferParity && needsParityRecalculation()) {
     calculateAndCacheAllParity();
   }
+}
+
+export async function hydratePresetDetails(presetName: string): Promise<void> {
+  const preset = await loadPresetData(presetName);
+  if (!preset) return;
+
+  if (preset.displayNames) mergeDisplayNames(preset.displayNames as Record<string, string>);
+
+  comments.clear();
+  Object.entries((preset.comments as Record<string, string>) || {}).forEach(([k, v]) =>
+    comments.set(k, String(v)),
+  );
+
+  perCaseSubtitles.clear();
+  Object.entries((preset.perCaseSubtitles as Record<string, string>) || {}).forEach(([k, v]) =>
+    perCaseSubtitles.set(k, String(v)),
+  );
+
+  customAlgorithms.clear();
+  Object.entries((preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
+    .forEach(([k, v]) => customAlgorithms.set(k, v));
+
+  generalNotes = (preset.generalNotes as string) || generalNotes;
+  presetData = { ...(presetData || {}), ...preset };
+  lastParityCalculationSettings = null;
+  saveState();
+  notify();
 }
 
 // ── Export / Import ─────────────────────────────────────────────────────────
@@ -1040,18 +1190,24 @@ export function setColorScheme(scheme: Partial<ColorScheme>): void {
 
 export function setEvilnessFactor(value: boolean): void {
   evilnessFactor = value;
+  lastParityCalculationSettings = null;
+  syncParityAnalyzerEvilness();
   saveState();
   notify();
 }
 
 export function setEvilnessStringReturn(value: boolean): void {
   evilnessStringReturn = value;
+  lastParityCalculationSettings = null;
+  syncParityAnalyzerEvilness();
   saveState();
   notify();
 }
 
 export function setEvilnessMap(map: Record<string, boolean>): void {
   evilnessMap = map;
+  lastParityCalculationSettings = null;
+  syncParityAnalyzerEvilness();
   saveState();
   notify();
 }
