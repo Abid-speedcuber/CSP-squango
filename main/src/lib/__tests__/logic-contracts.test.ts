@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 import { CASES } from '../../data/cases';
-import { applyScramble, createSolvedState } from '../cube';
+import { applyScramble, createSolvedState, invertScramble } from '../cube';
 import { generateScrambleFromHex, parseHexFormat } from '../scramble';
 import {
   analyzeParity,
@@ -96,24 +96,24 @@ describe('shapeTrace', () => {
     const scr = '(3,1)/(-1,0)/(2,0)';
     const scramblePath = traceScrambleToScrambleShapePath(scr).split(' → ');
     const solutionPath = traceScrambleToSolutionShapePath(scr).split(' → ');
+    const invertedPath = traceScrambleToScrambleShapePath(invertScramble(scr)).split(' → ');
     expect(solutionPath).toEqual([...scramblePath].reverse());
-    expect(traceSolutionToScrambleShapePath(scr).split(' → ')).toEqual(scramblePath);
-    expect(traceSolutionToSolutionShapePath(scr).split(' → ')).toEqual([...scramblePath].reverse());
+    expect(traceSolutionToScrambleShapePath(scr).split(' → ')).toEqual(invertedPath);
+    expect(traceSolutionToSolutionShapePath(scr).split(' → ')).toEqual([...invertedPath].reverse());
     expect(scramblePath.length).toBeGreaterThan(1);
   });
 
   it('every step names a known shape', () => {
-    const scr = '(1,0)/(-1,0)/(2,0)/(1,0)/';
-    const steps = traceScrambleToScrambleShapePath(scr).split(' → ');
+    const scr = CASES.find((c) => c.name === 'Left 4-2/Paired Edges')!.odd[0];
+    const steps = traceSolutionToSolutionShapePath(scr).split(' → ');
     expect(steps.length).toBeGreaterThan(1);
     const known = new Set(
       Object.values(DEFAULT_SHAPE_PATTERNS).map((n) => SHORT_SHAPE_NAMES[n] || n),
     );
-    known.add('Unknown');
     for (const step of steps) {
       const [top, bottom] = step.split('/');
-      expect(known.has(top)).toBe(true);
-      expect(known.has(bottom)).toBe(true);
+      expect(known.has(top), step).toBe(true);
+      expect(known.has(bottom), step).toBe(true);
     }
   });
 });

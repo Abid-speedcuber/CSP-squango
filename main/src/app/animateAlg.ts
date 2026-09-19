@@ -1,1641 +1,844 @@
 /**
- * Square-1 Algorithm Viewer (legacy `tools/animate-alg.js`) + the
- * `openAnimateAlgModal` bridge (legacy `restoftheapp.js`). Ported one-to-one.
+ * Three.js Square-1 algorithm viewer.
+ *
+ * Replaces the SVG/fade legacy animator with a real 3D Square-1 model. The
+ * public bridge stays compatible with the rest of the port:
+ * `openAnimateAlgModal(algorithm, caseName, parity)`.
  */
+import * as THREE from 'three';
 import { invertScramble } from '../lib/cube';
 import { getParityText } from '../lib/parityAnalyzer';
-import { renderSquare1SVG } from '../lib/drawScrambleCore';
-import { colorScheme, cornerStickerMode, scrambleImageSize } from './state';
 import { closeModalWithHistory, pushModalState } from './modal';
+import { colorScheme, cornerStickerMode } from './state';
 
-// ========================================
-// SCRAMBLE FUNCTIONS
-// ========================================
+type ViewerToken =
+  | { type: 'turn'; top: number; bottom: number; text: string }
+  | { type: 'slash'; text: string }
+  | { type: 'rotation'; axis: 'y2' | 'z2'; text: string };
 
-interface ViewerMove {
-  type: 'twist' | 'turn';
-  top?: number;
-  bottom?: number;
+const LEN = 150;
+const INTERNAL_COL = 0x0f0f0f;
+const BLUE = 0x0433ff;
+const RED = 0xff2600;
+const GREEN = 0x60d937;
+const ORANGE = 0xff9300;
+const POLES = [0xffffff, 0x1e1e1e];
+const EDGE_RIGHT_COLORS = [ORANGE, BLUE, RED, GREEN, RED, BLUE, ORANGE, GREEN];
+const LEFT_COLORS = [BLUE, RED, GREEN, ORANGE, BLUE, ORANGE, GREEN, RED];
+const INITIAL_UP = [1, -1, 0.02, 2, -2, 0.03, 3, -3, 0.04, 4, -4, 0.01];
+const INITIAL_DOWN = [0.05, 5, -5, 0.06, 6, -6, 0.07, 7, -7, 0.08, 8, -8];
+
+function escapeHTML(s: string): string {
+  return s.replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  })[ch]!);
 }
 
-interface HexLayers {
-  tlHex: string;
-  blHex: string;
-}
-
-function parseScramble(scramble: string, animateBothLayers = false): ViewerMove[] {
-  const moves: ViewerMove[] = [];
-  let i = 0;
-
-  if (animateBothLayers) {
-    while (i < scramble.length) {
-      const char = scramble[i];
-
-      if (char === '/' || char === '\\') {
-        moves.push({ type: 'twist' });
-        i++;
-      } else if (char === '(' || char === '-' || /\d/.test(char)) {
-        let moveStr = '';
-        let parenDepth = 0;
-
-        while (i < scramble.length) {
-          const c = scramble[i];
-          if (c === '(') parenDepth++;
-          if (c === ')') parenDepth--;
-
-          if (c === '/' || c === '\\') {
-            break;
-          }
-
-          if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-            moveStr += c;
-          }
-
-          i++;
-
-          if (parenDepth === 0 && moveStr.includes(',')) {
-            break;
-          }
-        }
-
-        const cleaned = moveStr.replace(/[()]/g, '').trim();
-        if (cleaned.includes(',')) {
-          const [top, bottom] = cleaned.split(',').map((n) => parseInt(n.trim()));
-          moves.push({ type: 'turn', top, bottom });
-        }
-      } else if (/\s/.test(char)) {
-        i++;
-      } else {
-        i++;
-      }
-    }
-  } else {
-    while (i < scramble.length) {
-      const char = scramble[i];
-
-      if (char === '/' || char === '\\') {
-        moves.push({ type: 'twist' });
-        i++;
-      } else if (char === '(' || char === '-' || /\d/.test(char)) {
-        let moveStr = '';
-        let parenDepth = 0;
-        let foundComma = false;
-
-        while (i < scramble.length) {
-          const c = scramble[i];
-          if (c === '(') parenDepth++;
-          if (c === ')') parenDepth--;
-
-          if (c === '/' || c === '\\') {
-            break;
-          }
-
-          if (c === ',') foundComma = true;
-
-          if ((c === ',' || c === '-' || /\d/.test(c) || c === '(' || c === ')') && parenDepth >= 0) {
-            moveStr += c;
-          }
-
-          i++;
-
-          if (parenDepth === 0 && foundComma) {
-            break;
-          }
-        }
-
-        const cleaned = moveStr.replace(/[()]/g, '').trim();
-        if (cleaned.includes(',')) {
-          const parts = cleaned.split(',').map((n) => parseInt(n.trim()));
-          const top = parts[0];
-          const bottom = parts.length > 1 ? parts[1] : 0;
-
-          if (top !== 0) {
-            moves.push({ type: 'turn', top, bottom: 0 });
-          }
-
-          if (bottom !== 0) {
-            moves.push({ type: 'turn', top: 0, bottom });
-          }
-
-          if (top === 0 && bottom === 0) {
-            moves.push({ type: 'turn', top: 0, bottom: 0 });
-          }
-        } else if (cleaned) {
-          const num = parseInt(cleaned);
-          if (!isNaN(num)) {
-            moves.push({ type: 'turn', top: num, bottom: 0 });
-          }
-        }
-      } else if (/\s/.test(char)) {
-        i++;
-      } else {
-        i++;
-      }
-    }
-  }
-  return moves;
-}
-
-function twist(tlHex: string, blHex: string): HexLayers {
-  const tlFirst6 = tlHex.slice(0, 6);
-  const tlLast6 = tlHex.slice(6);
-  const blFirst6 = blHex.slice(0, 6);
-  const blLast6 = blHex.slice(6);
-
-  return {
-    tlHex: tlFirst6 + blFirst6,
-    blHex: tlLast6 + blLast6,
-  };
-}
-
-function cycleLeft(hex: string, places: number): string {
-  const normalized = ((places % 12) + 12) % 12;
-  return hex.slice(normalized) + hex.slice(0, normalized);
-}
-
-function sq1AlgToHex(scramble: string, animateBothLayers = false): HexLayers {
-  let tlHex = '011233455677';
-  let blHex = '998bbaddcffe';
-
-  const moves = parseScramble(scramble, animateBothLayers);
-
-  for (let i = 0; i < moves.length; i++) {
-    const move = moves[i];
-
-    if (move.type === 'twist') {
-      const result = twist(tlHex, blHex);
-      tlHex = result.tlHex;
-      blHex = result.blHex;
-    } else if (move.type === 'turn') {
-      tlHex = cycleLeft(tlHex, move.top || 0);
-      blHex = cycleLeft(blHex, move.bottom || 0);
-    }
-  }
-  return { tlHex, blHex };
-}
-
-// ========================================
-// STEP GENERATION
-// ========================================
-
-interface AlgStep {
-  position: number;
-  highlightStart: number;
-  highlightEnd: number;
-  currentAlg: string;
-  description: string;
-}
-
-function generateSteps(alg: string, animateBothLayers = false): AlgStep[] {
-  const steps: AlgStep[] = [];
-  const chars = alg.split('');
-  let position = 0;
-
-  if (animateBothLayers) {
-    while (position < chars.length) {
-      const char = chars[position];
-
-      if (char === '/') {
-        steps.push({
-          position: position,
-          highlightStart: position,
-          highlightEnd: position + 1,
-          currentAlg: alg.substring(position),
-          description: 'Slash (twist)',
-        });
-        position++;
-      } else if (char === '(') {
-        let numEnd = position + 1;
-        while (
-          numEnd < chars.length &&
-          (chars[numEnd] === '-' || /\d/.test(chars[numEnd]) || chars[numEnd] === ',' || chars[numEnd] === ')')
-        ) {
-          if (chars[numEnd] === ')') {
-            numEnd++;
-            break;
-          }
-          numEnd++;
-        }
-
-        steps.push({
-          position: position,
-          highlightStart: position,
-          highlightEnd: numEnd,
-          currentAlg: alg.substring(position),
-          description: 'Both layers turn',
-        });
-
-        position = numEnd;
-      } else {
-        position++;
-      }
-    }
-  } else {
-    while (position < chars.length) {
-      const char = chars[position];
-
-      if (char === '/') {
-        steps.push({
-          position: position,
-          highlightStart: position,
-          highlightEnd: position + 1,
-          currentAlg: alg.substring(position),
-          description: 'Slash (twist)',
-        });
-        position++;
-      } else if (char === '(') {
-        let numEnd = position + 1;
-        while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-          numEnd++;
-        }
-
-        steps.push({
-          position: position,
-          highlightStart: position,
-          highlightEnd: numEnd,
-          currentAlg: alg.substring(position),
-          description: 'Top layer turn',
-        });
-
-        position = numEnd;
-      } else if (char === ',') {
-        let numEnd = position + 1;
-        while (numEnd < chars.length && (chars[numEnd] === '-' || /\d/.test(chars[numEnd]))) {
-          numEnd++;
-        }
-        if (numEnd < chars.length && chars[numEnd] === ')') {
-          numEnd++;
-        }
-
-        let moveStart = position;
-        while (moveStart > 0 && chars[moveStart - 1] !== '/') {
-          moveStart--;
-        }
-
-        let firstNumStart = moveStart;
-        while (
-          firstNumStart < position &&
-          chars[firstNumStart] !== '(' &&
-          (chars[firstNumStart] === '-' || /\d/.test(chars[firstNumStart]))
-        ) {
-          firstNumStart++;
-        }
-        if (chars[firstNumStart] === '(') firstNumStart++;
-
-        let firstNumEnd = firstNumStart;
-        while (firstNumEnd < position && (chars[firstNumEnd] === '-' || /\d/.test(chars[firstNumEnd]))) {
-          firstNumEnd++;
-        }
-
-        const remainingAlg = alg.substring(position + 1);
-        const modifiedAlg = '(0,' + remainingAlg;
-
-        steps.push({
-          position: position,
-          highlightStart: position + 1,
-          highlightEnd: numEnd,
-          currentAlg: modifiedAlg,
-          description: 'Bottom layer turn',
-        });
-
-        position = numEnd;
-      } else {
-        position++;
-      }
-    }
-  }
-
-  steps.push({
-    position: alg.length,
-    highlightStart: alg.length,
-    highlightEnd: alg.length,
-    currentAlg: '',
-    description: 'Solved state',
-  });
-
-  let firstNonZeroIndex = 0;
-  for (let i = 0; i < steps.length; i++) {
-    if (!isZeroMove(steps[i], alg, animateBothLayers)) {
-      firstNonZeroIndex = i;
-      break;
-    }
-  }
-
-  return steps.slice(firstNonZeroIndex);
-}
-
-function getHexForStep(step: AlgStep, animateBothLayers = false): HexLayers {
-  try {
-    if (step.currentAlg.trim() === '' || step.currentAlg === '(0,0)') {
-      return { tlHex: '011233455677', blHex: '998bbaddcffe' };
-    }
-    const inverted = invertScramble(step.currentAlg);
-    return sq1AlgToHex(inverted, animateBothLayers);
-  } catch {
-    return { tlHex: '011233455677', blHex: '998bbaddcffe' };
-  }
-}
-
-function isZeroMove(step: AlgStep, originalAlg: string, animateBothLayers: boolean): boolean {
-  const highlighted = originalAlg.substring(step.highlightStart, step.highlightEnd);
-
-  if (highlighted.includes('/')) {
-    return false;
-  }
-
-  if (animateBothLayers) {
-    const match = highlighted.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
-    if (match) {
-      const top = parseInt(match[1]);
-      const bottom = parseInt(match[2]);
-      return top === 0 && bottom === 0;
-    }
-    return false;
-  }
-
-  const numberMatch = highlighted.match(/-?\d+/);
-  if (numberMatch) {
-    const number = parseInt(numberMatch[0]);
-    return number === 0;
-  }
-
-  return false;
-}
-
-// ========================================
-// RENDERING FUNCTIONS
-// ========================================
-
-function renderAlgorithm(
-  _step: AlgStep,
-  originalAlg: string,
-  steps: AlgStep[],
-  currentStepIndex: number,
-  animateBothLayers: boolean,
-): string {
-  let html = '';
-  let position = 0;
-
-  steps.forEach((s, index) => {
-    if (s.highlightStart > position) {
-      html += originalAlg.substring(position, s.highlightStart);
-    }
-
-    const tokenText = originalAlg.substring(s.highlightStart, s.highlightEnd);
-    const isCurrent = index === currentStepIndex;
-    const isZero = isZeroMove(s, originalAlg, animateBothLayers);
-
-    if (!isZero) {
-      html += `<span class="clickable-token ${isCurrent ? 'current-token' : ''}" data-step-index="${index}" style="cursor: pointer; padding: 2px 4px; border-radius: 2px; ${isCurrent ? 'background: var(--hover-bg); color: var(--text-primary);' : ''} display: inline-block; margin: 0 1px;">${tokenText}</span>`;
+function parseAlgorithm(algorithm: string): ViewerToken[] {
+  const tokens: ViewerToken[] = [];
+  const re = /y2|z2|\((-?\d+)\s*,\s*(-?\d+)\)|\/|\\/gi;
+  let match: RegExpExecArray | null;
+  while ((match = re.exec(algorithm))) {
+    const raw = match[0];
+    if (raw === '/' || raw === '\\') {
+      tokens.push({ type: 'slash', text: raw });
+    } else if (raw.toLowerCase() === 'y2' || raw.toLowerCase() === 'z2') {
+      tokens.push({ type: 'rotation', axis: raw.toLowerCase() as 'y2' | 'z2', text: raw });
     } else {
-      html += `<span style="padding: 2px 4px; opacity: 0.4; display: inline-block; margin: 0 1px;">${tokenText}</span>`;
-    }
-
-    position = s.highlightEnd;
-  });
-
-  if (position < originalAlg.length) {
-    html += originalAlg.substring(position);
-  }
-
-  return html;
-}
-
-interface ViewerColors {
-  topColor: string;
-  bottomColor: string;
-  frontColor: string;
-  rightColor: string;
-  backColor: string;
-  leftColor: string;
-}
-
-function renderVisualization(hex: HexLayers, viewerColorScheme: ViewerColors, imageSize: number, verticalDisplay = false): string {
-  try {
-    const hexCode = hex.tlHex + '|' + hex.blHex;
-    const svgHtml = renderSquare1SVG(hexCode, {
-      size: imageSize,
-      ringDistance: 5,
-      isVertical: verticalDisplay,
-      colorScheme: {
-        top: viewerColorScheme.topColor,
-        bottom: viewerColorScheme.bottomColor,
-        front: viewerColorScheme.frontColor,
-        right: viewerColorScheme.rightColor,
-        back: viewerColorScheme.backColor,
-        left: viewerColorScheme.leftColor,
-        'slice-indicator': '#7a0000',
-      },
-    });
-    return svgHtml;
-  } catch (e) {
-    return '<div style="color: var(--algo-invalid-color); font-style: italic;">Error rendering: ' + (e as Error).message + '</div>';
-  }
-}
-
-function getVisualizationFlex(container: Element | null): HTMLElement | null {
-  if (!container) return null;
-  return container.querySelector('div[style*="display:flex"], div[style*="display: flex"]');
-}
-
-function getLayerSvgs(container: Element | null): { topSvg: SVGElement | null; bottomSvg: SVGElement | null } {
-  if (!container) return { topSvg: null, bottomSvg: null };
-  const scope = getVisualizationFlex(container) || container;
-  const svgs = scope.querySelectorAll(':scope > svg');
-  return { topSvg: (svgs[0] as SVGElement) || null, bottomSvg: (svgs[1] as SVGElement) || null };
-}
-
-function getSvgOrigin(svg: SVGElement, fallbackSize: number): { x: number; y: number } {
-  const originX = parseFloat(svg.getAttribute('data-origin-x') || '');
-  const originY = parseFloat(svg.getAttribute('data-origin-y') || '');
-  if (Number.isFinite(originX) && Number.isFinite(originY)) {
-    return { x: originX, y: originY };
-  }
-  const viewBox = (svg.getAttribute('viewBox') || '').trim().split(/\s+/).map(Number);
-  if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
-    return { x: viewBox[0] + viewBox[2] / 2, y: viewBox[1] + viewBox[3] / 2 };
-  }
-  const size = parseFloat(svg.getAttribute('width') || '') || fallbackSize;
-  return { x: size / 2, y: size / 2 };
-}
-
-function getTurnPieces(svg: SVGElement): Element[] {
-  const layerGroup = svg.querySelector('.sq1-pieces');
-  if (layerGroup) return [layerGroup];
-  const pieceGroups = svg.querySelectorAll('.sq1-piece');
-  if (pieceGroups.length) return Array.from(pieceGroups);
-  return Array.from(svg.querySelectorAll('polygon, line.corner-detail'));
-}
-
-function easeInOut(t: number): number {
-  return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-}
-
-interface TurnAnimation {
-  cancel(): void;
-  clear(): void;
-}
-
-function applyTurnAnimation(pieces: Element[], centerX: number, centerY: number, duration: number, degrees: number): TurnAnimation {
-  const targets = Array.from(pieces);
-  const baseTransforms = targets.map((piece) => piece.getAttribute('transform') || '');
-  const startTime = performance.now();
-  let frameId = 0;
-
-  function renderFrame(now: number): void {
-    const progress = duration <= 0 ? 1 : Math.min((now - startTime) / duration, 1);
-    const angle = degrees * easeInOut(progress);
-    targets.forEach((piece, index) => {
-      const baseTransform = baseTransforms[index];
-      const rotation = `rotate(${angle} ${centerX} ${centerY})`;
-      piece.setAttribute('transform', baseTransform ? `${rotation} ${baseTransform}` : rotation);
-    });
-    if (progress < 1) {
-      frameId = requestAnimationFrame(renderFrame);
+      tokens.push({ type: 'turn', top: Number(match[1]), bottom: Number(match[2]), text: raw });
     }
   }
+  return tokens;
+}
 
-  frameId = requestAnimationFrame(renderFrame);
+function ease(start: number, end: number, t: number): number {
+  const e = 6 * t ** 5 - 15 * t ** 4 + 10 * t ** 3;
+  return start + (end - start) * e;
+}
 
-  return {
-    cancel() {
-      cancelAnimationFrame(frameId);
-    },
-    clear() {
-      targets.forEach((piece, index) => {
-        const baseTransform = baseTransforms[index];
-        if (baseTransform) {
-          piece.setAttribute('transform', baseTransform);
-        } else {
-          piece.removeAttribute('transform');
+function turnLayer(layer: number[], move: number): number[] {
+  const out = layer.slice();
+  const count = Math.abs(move);
+  for (let i = 0; i < count; i++) {
+    if (move > 0) out.unshift(out.pop()!);
+    else out.push(out.shift()!);
+  }
+  return out;
+}
+
+class ImmediateRenderer {
+  positions = new Float32Array(6000 * 3 * 3);
+  colors = new Float32Array(6000 * 3 * 3);
+  linePositions = new Float32Array(4000 * 2 * 3);
+  count = 0;
+  lineCount = 0;
+  private matrix = new THREE.Matrix4();
+  private stack: THREE.Matrix4[] = [];
+  private verts: THREE.Vector3[] = [];
+  private mode = 'POLY';
+  private color = [1, 1, 1];
+  private colorObj = new THREE.Color();
+
+  reset(): void {
+    this.count = 0;
+    this.lineCount = 0;
+    this.matrix.identity();
+    this.stack.length = 0;
+    this.verts.length = 0;
+  }
+
+  push(): void { this.stack.push(this.matrix.clone()); }
+  pop(): void { this.matrix = this.stack.pop() || new THREE.Matrix4(); }
+  translate(x: number, y: number, z: number): void { this.matrix.multiply(new THREE.Matrix4().makeTranslation(x, y, z)); }
+  rotateX(a: number): void { this.matrix.multiply(new THREE.Matrix4().makeRotationX(a)); }
+  rotateY(a: number): void { this.matrix.multiply(new THREE.Matrix4().makeRotationY(a)); }
+  rotateZ(a: number): void { this.matrix.multiply(new THREE.Matrix4().makeRotationZ(a)); }
+  fill(hex: number): void {
+    this.colorObj.set(hex);
+    this.color = [this.colorObj.r, this.colorObj.g, this.colorObj.b];
+  }
+  begin(mode = 'POLY'): void {
+    this.mode = mode;
+    this.verts = [];
+  }
+  vertex(x: number, y: number, z = 0): void {
+    this.verts.push(new THREE.Vector3(x, y, z).applyMatrix4(this.matrix));
+  }
+  end(): void {
+    if (this.mode === 'QUADS') {
+      for (let i = 0; i + 3 < this.verts.length; i += 4) {
+        this.tri(this.verts[i], this.verts[i + 1], this.verts[i + 2]);
+        this.tri(this.verts[i], this.verts[i + 2], this.verts[i + 3]);
+        this.outline([this.verts[i], this.verts[i + 1], this.verts[i + 2], this.verts[i + 3]]);
+      }
+    } else {
+      for (let i = 1; i + 1 < this.verts.length; i++) this.tri(this.verts[0], this.verts[i], this.verts[i + 1]);
+      this.outline(this.verts);
+    }
+  }
+  private tri(a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3): void {
+    if (this.count + 3 > 6000 * 3) return;
+    const pts = [a, b, c];
+    const base = this.count * 3;
+    for (let i = 0; i < 3; i++) {
+      this.positions[base + i * 3] = pts[i].x;
+      this.positions[base + i * 3 + 1] = pts[i].y;
+      this.positions[base + i * 3 + 2] = pts[i].z;
+      this.colors[base + i * 3] = this.color[0];
+      this.colors[base + i * 3 + 1] = this.color[1];
+      this.colors[base + i * 3 + 2] = this.color[2];
+    }
+    this.count += 3;
+  }
+  private line(a: THREE.Vector3, b: THREE.Vector3): void {
+    if (this.lineCount + 2 > 4000 * 2) return;
+    const base = this.lineCount * 3;
+    this.linePositions[base] = a.x;
+    this.linePositions[base + 1] = a.y;
+    this.linePositions[base + 2] = a.z;
+    this.linePositions[base + 3] = b.x;
+    this.linePositions[base + 4] = b.y;
+    this.linePositions[base + 5] = b.z;
+    this.lineCount += 2;
+  }
+  private outline(verts: THREE.Vector3[]): void {
+    for (let i = 0; i < verts.length; i++) this.line(verts[i], verts[(i + 1) % verts.length]);
+  }
+}
+
+class Square1ThreeViewer {
+  private up = INITIAL_UP.slice();
+  private down = INITIAL_DOWN.slice();
+  private bar = false;
+  private rotated = false;
+  private step = 0;
+  private progress = 0;
+  private playing = false;
+  private runningToken: ViewerToken | null = null;
+  private frame = 0;
+  private speed = Number(localStorage.getItem('sq1ThreeAnimSpeed') || '1') || 1;
+  private readonly im = new ImmediateRenderer();
+  private readonly scene = new THREE.Scene();
+  private readonly camera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
+  private readonly renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  private readonly rig = new THREE.Group();
+  private readonly geometry = new THREE.BufferGeometry();
+  private readonly lineGeometry = new THREE.BufferGeometry();
+  private readonly mesh: THREE.Mesh;
+  private readonly lineMesh: THREE.LineSegments;
+  private readonly initialCameraVector = new THREE.Vector3(320, 260, 420);
+  private readonly initialCameraDistance = this.initialCameraVector.length();
+  private dragging = false;
+  private lastMouse = { x: 0, y: 0 };
+  private dragZone = 1;
+
+  constructor(
+    private readonly host: HTMLElement,
+    private readonly tokens: ViewerToken[],
+    private readonly presetTokens: ViewerToken[],
+    private readonly status: HTMLElement,
+    private readonly algEl: HTMLElement,
+  ) {
+    this.scene.background = new THREE.Color(0x000000);
+    this.scene.background = null;
+    this.camera.position.set(0, 0, this.initialCameraDistance);
+    this.rig.add(this.camera);
+    this.scene.add(this.rig);
+    this.rig.quaternion.setFromUnitVectors(
+      new THREE.Vector3(0, 0, 1),
+      this.initialCameraVector.clone().normalize(),
+    );
+
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    this.renderer.domElement.className = 'sq1-three-canvas';
+    this.host.appendChild(this.renderer.domElement);
+
+    this.geometry.setAttribute('position', new THREE.BufferAttribute(this.im.positions, 3));
+    this.geometry.setAttribute('color', new THREE.BufferAttribute(this.im.colors, 3));
+    this.geometry.setDrawRange(0, 0);
+    const material = new THREE.MeshBasicMaterial({ vertexColors: true, side: THREE.DoubleSide });
+    material.polygonOffset = true;
+    material.polygonOffsetFactor = 1;
+    material.polygonOffsetUnits = 1;
+    this.mesh = new THREE.Mesh(this.geometry, material);
+    this.scene.add(this.mesh);
+
+    this.lineGeometry.setAttribute('position', new THREE.BufferAttribute(this.im.linePositions, 3));
+    this.lineGeometry.setDrawRange(0, 0);
+    this.lineMesh = new THREE.LineSegments(this.lineGeometry, new THREE.LineBasicMaterial({ color: 0x000000 }));
+    this.scene.add(this.lineMesh);
+
+    this.bindControls();
+    this.resize();
+    this.setToStartState();
+    this.updateAlgorithm();
+    this.status.textContent = 'case ready';
+    this.loop();
+  }
+
+  dispose(): void {
+    cancelAnimationFrame(this.frame);
+    window.removeEventListener('resize', this.resize);
+    window.removeEventListener('pointerup', this.onPointerUp);
+    window.removeEventListener('pointermove', this.onPointerMove);
+    this.renderer.domElement.removeEventListener('pointerdown', this.onPointerDown);
+    this.renderer.domElement.removeEventListener('wheel', this.onWheel);
+    this.geometry.dispose();
+    this.lineGeometry.dispose();
+    (this.mesh.material as THREE.Material).dispose();
+    (this.lineMesh.material as THREE.Material).dispose();
+    this.renderer.dispose();
+    this.renderer.domElement.remove();
+  }
+
+  play(): void {
+    if (this.playing || this.step >= this.tokens.length) return;
+    this.playing = true;
+    this.status.textContent = 'playing';
+  }
+
+  pause(): void {
+    this.playing = false;
+    this.status.textContent = 'paused';
+  }
+
+  reset(): void {
+    this.setToStartState();
+    this.step = 0;
+    this.progress = 0;
+    this.playing = false;
+    this.runningToken = null;
+    this.updateAlgorithm();
+    this.status.textContent = 'case ready';
+  }
+
+  private setToStartState(): void {
+    this.up = INITIAL_UP.slice();
+    this.down = INITIAL_DOWN.slice();
+    this.bar = false;
+    this.rotated = false;
+    for (const token of this.presetTokens) this.commit(token);
+  }
+
+  next(): void {
+    if (this.runningToken || this.step >= this.tokens.length) return;
+    this.runningToken = this.tokens[this.step];
+    this.progress = 0;
+    this.playing = true;
+  }
+
+  previous(): void {
+    if (this.runningToken || this.step <= 0) return;
+    const targetStep = Math.max(0, this.step - 1);
+    this.setToStartState();
+    for (let i = 0; i < targetStep; i++) this.commit(this.tokens[i]);
+    this.step = targetStep;
+    this.playing = false;
+    this.progress = 0;
+    this.updateAlgorithm();
+    this.status.textContent = targetStep === 0 ? 'case ready' : `move ${targetStep} / ${this.tokens.length}`;
+  }
+
+  setSpeed(value: number): void {
+    this.speed = value;
+    localStorage.setItem('sq1ThreeAnimSpeed', String(value));
+  }
+
+  private bindControls(): void {
+    this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
+    this.renderer.domElement.addEventListener('wheel', this.onWheel, { passive: false });
+    window.addEventListener('pointerup', this.onPointerUp);
+    window.addEventListener('pointermove', this.onPointerMove);
+    window.addEventListener('resize', this.resize);
+  }
+
+  private onPointerDown = (e: PointerEvent): void => {
+    this.dragging = true;
+    this.lastMouse = { x: e.clientX, y: e.clientY };
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const radius = Math.min(rect.width, rect.height) * 0.35;
+    this.dragZone = Math.hypot(e.clientX - cx, e.clientY - cy) < radius ? 1 : 2;
+  };
+
+  private onPointerUp = (): void => { this.dragging = false; };
+
+  private onPointerMove = (e: PointerEvent): void => {
+    if (!this.dragging) return;
+    const dx = e.clientX - this.lastMouse.x;
+    const dy = e.clientY - this.lastMouse.y;
+    const rotSpeed = 0.006;
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0).applyQuaternion(this.rig.quaternion);
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(this.rig.quaternion);
+    const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(this.rig.quaternion);
+
+    if (this.dragZone === 1) {
+      q.setFromAxisAngle(up, -dx * rotSpeed);
+      this.rig.quaternion.premultiply(q);
+      q.setFromAxisAngle(right, -dy * rotSpeed);
+      this.rig.quaternion.premultiply(q);
+    } else {
+      const rect = this.renderer.domElement.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const vecX = this.lastMouse.x - cx;
+      const vecY = this.lastMouse.y - cy;
+      const len = Math.hypot(vecX, vecY);
+
+      if (len > 0.001) {
+        const rX = vecX / len;
+        const rY = vecY / len;
+        const tX = -rY;
+        const tY = rX;
+        const centralMag = dx * rX + dy * rY;
+        const tangentMag = dx * tX + dy * tY;
+        const dCx = centralMag * rX;
+        const dCy = centralMag * rY;
+
+        q.setFromAxisAngle(up, -dCx * rotSpeed);
+        this.rig.quaternion.premultiply(q);
+        q.setFromAxisAngle(right, -dCy * rotSpeed);
+        this.rig.quaternion.premultiply(q);
+        q.setFromAxisAngle(forward, -tangentMag * rotSpeed);
+        this.rig.quaternion.premultiply(q);
+      }
+    }
+    this.rig.quaternion.normalize();
+    this.lastMouse = { x: e.clientX, y: e.clientY };
+  };
+
+  private onWheel = (e: WheelEvent): void => {
+    e.preventDefault();
+    this.camera.position.z = THREE.MathUtils.clamp(this.camera.position.z * (e.deltaY > 0 ? 1.1 : 0.9), 230, 1200);
+  };
+
+  private resize = (): void => {
+    const rect = this.host.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height, false);
+  };
+
+  private loop = (): void => {
+    this.frame = requestAnimationFrame(this.loop);
+    this.tick();
+    this.draw();
+    this.renderer.render(this.scene, this.camera);
+  };
+
+  private tick(): void {
+    if (!this.playing) return;
+    if (!this.runningToken) {
+      if (this.step >= this.tokens.length) {
+        this.playing = false;
+        this.status.textContent = 'done';
+        return;
+      }
+      this.runningToken = this.tokens[this.step];
+      this.progress = 0;
+    }
+    this.progress += 0.035 * this.speed;
+    if (this.progress >= 1) {
+      this.commit(this.runningToken);
+      this.runningToken = null;
+      this.progress = 0;
+      this.step++;
+      this.updateAlgorithm();
+      if (this.step >= this.tokens.length) {
+        this.playing = false;
+        this.status.textContent = 'done';
+      }
+    } else {
+      this.status.textContent = `move ${Math.min(this.step + 1, this.tokens.length)} / ${this.tokens.length}`;
+    }
+  }
+
+  private commit(token: ViewerToken): void {
+    if (token.type === 'turn') {
+      this.up = turnLayer(this.up, token.top);
+      this.down = turnLayer(this.down, token.bottom);
+    } else if (token.type === 'slash') {
+      const upSection = this.up.slice(0, 6);
+      const downSection = this.down.slice(0, 6);
+      this.up = downSection.concat(this.up.slice(6));
+      this.down = upSection.concat(this.down.slice(6));
+      this.bar = !this.bar;
+    } else if (token.axis === 'y2') {
+      this.up = turnLayer(this.up, 6);
+      this.down = turnLayer(this.down, 6);
+      this.rotated = true;
+    } else {
+      const upRight = this.up.slice(0, 6);
+      const upLeft = this.up.slice(6);
+      const downRight = this.down.slice(0, 6);
+      const downLeft = this.down.slice(6);
+      this.up = downRight.concat(downLeft);
+      this.down = upRight.concat(upLeft);
+      this.up = turnLayer(this.up, 6);
+      this.down = turnLayer(this.down, 6);
+      this.rotated = true;
+    }
+  }
+
+  private updateAlgorithm(): void {
+    this.algEl.innerHTML = this.tokens.map((token, idx) => {
+      const cls = idx === this.step ? 'sq1-token current' : idx < this.step ? 'sq1-token done' : 'sq1-token';
+      return `<span class="${cls}">${escapeHTML(token.text)}</span>`;
+    }).join('');
+  }
+
+  private draw(): void {
+    this.im.reset();
+    const token = this.runningToken;
+    if (token?.type === 'turn') {
+      this.drawEquator(true, this.bar, this.rotated);
+      this.drawEquator(false, false, this.rotated);
+      this.im.push();
+      this.im.rotateZ(ease(0, token.top * Math.PI / 6, this.progress));
+      this.drawUpLayer();
+      this.im.pop();
+      this.im.push();
+      this.im.rotateZ(ease(0, -token.bottom * Math.PI / 6, this.progress));
+      this.drawDownLayer();
+      this.im.pop();
+    } else if (token?.type === 'slash') {
+      this.leftCube();
+      this.im.push();
+      this.im.rotateX(ease(0, (this.bar ? -1 : 1) * Math.PI, this.progress));
+      this.rightCube();
+      this.im.pop();
+    } else if (token?.type === 'rotation') {
+      this.im.push();
+      if (token.axis === 'y2') this.im.rotateZ(ease(0, Math.PI, this.progress));
+      else this.im.rotateY(ease(0, Math.PI, this.progress));
+      this.restCube();
+      this.im.pop();
+    } else {
+      this.restCube();
+    }
+    (this.geometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+    (this.geometry.attributes.color as THREE.BufferAttribute).needsUpdate = true;
+    this.geometry.setDrawRange(0, this.im.count);
+    (this.lineGeometry.attributes.position as THREE.BufferAttribute).needsUpdate = true;
+    this.lineGeometry.setDrawRange(0, this.im.lineCount);
+  }
+
+  private edge(col: number): void {
+    this.im.fill(col);
+    this.im.begin();
+    this.im.vertex(0, 0, 0);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), 0);
+    this.im.vertex(LEN / (2 * Math.cos(Math.PI / 12)) * Math.cos(Math.PI / 3), -LEN / (2 * Math.cos(Math.PI / 12)) * Math.sin(Math.PI / 3), 0);
+    this.im.end();
+  }
+
+  private corner(col: number): void {
+    this.im.fill(col);
+    this.im.begin();
+    this.im.vertex(0, 0, 0);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), 0);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), 0);
+    this.im.vertex(LEN / (2 * Math.cos(Math.PI / 12)) * Math.cos(Math.PI / 6), -LEN / (2 * Math.cos(Math.PI / 12)) * Math.sin(Math.PI / 6), 0);
+    this.im.end();
+  }
+
+  private edgeFill(isTop: boolean, internal: boolean, idx: number): number {
+    if (internal) return INTERNAL_COL;
+    const value = isTop ? this.up[idx] : this.down[idx];
+    return POLES[Math.round((100 / 8 * value - 0.01) % 1)];
+  }
+
+  private cornerFill(isTop: boolean, internal: boolean, idx: number): number {
+    if (internal) return INTERNAL_COL;
+    const value = isTop ? this.up[idx] : this.down[idx];
+    return POLES[Math.round((Math.abs(value) / 8.5) % 1)];
+  }
+
+  private cshape(isTop: boolean, isRight: boolean, internal: boolean): void {
+    this.im.push();
+    const layer = isTop ? this.up : this.down;
+    const start = isRight ? 0 : 6;
+    this.im.translate(0, 0, isTop ? (internal ? LEN / 6 : LEN / 2) : (internal ? -LEN / 6 : -LEN / 2));
+    if (!isTop) this.im.rotateZ(Math.PI);
+    for (let i = start; i < start + 6; i++) {
+      const value = layer[i];
+      this.im.push();
+      if (isTop) this.im.rotateZ(Math.PI / 6 * i);
+      else this.im.rotateZ(Math.abs(value) < 1 ? -(i + 1) * Math.PI / 6 : -(i + 2) * Math.PI / 6);
+      if (Math.abs(value) < 1) this.edge(this.edgeFill(isTop, internal, i));
+      else if (value > 0) {
+        this.corner(this.cornerFill(isTop, internal, i));
+        i++;
+      }
+      this.im.pop();
+    }
+    this.im.pop();
+  }
+
+  private eadj(x: number, y: number, z: number, col: number): void {
+    this.im.push();
+    this.im.translate(x, y, z);
+    this.im.fill(col);
+    this.im.begin('QUADS');
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), LEN / 6);
+    this.im.vertex(LEN / (2 * Math.cos(Math.PI / 12)) * Math.cos(Math.PI / 3), -LEN / (2 * Math.cos(Math.PI / 12)) * Math.sin(Math.PI / 3), LEN / 6);
+    this.im.vertex(LEN / (2 * Math.cos(Math.PI / 12)) * Math.cos(Math.PI / 3), -LEN / (2 * Math.cos(Math.PI / 12)) * Math.sin(Math.PI / 3), -LEN / 6);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 6);
+    this.im.end();
+    this.im.pop();
+  }
+
+  private cadj(x: number, y: number, z: number, col: number): void {
+    this.im.push();
+    this.im.translate(x, y, z);
+    this.im.fill(col);
+    this.im.begin('QUADS');
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), -LEN / 6);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 6);
+    this.im.end();
+    this.im.pop();
+  }
+
+  private layerSides(isTop: boolean, isRight: boolean): void {
+    const layer = isTop ? this.up : this.down;
+    const start = isRight ? 0 : 6;
+    for (let i = start; i < start + 6; i++) {
+      const value = layer[i];
+      this.im.push();
+      if (isTop) {
+        this.im.rotateZ(i * Math.PI / 6);
+        if (Math.abs(value) < 1) this.eadj(0, 0, LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value * 100) - 1]);
+        else if (value >= 1) this.cadj(0, 0, LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value) - 1]);
+        else {
+          this.im.rotateZ(Math.PI / 3);
+          this.cadj(
+            -LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6),
+            LEN / (2 * Math.cos(Math.PI / 12)) - LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6),
+            LEN / 3,
+            LEFT_COLORS[Math.trunc(-value - 1)],
+          );
         }
-      });
-    },
-  };
+      } else {
+        this.im.rotateZ(Math.PI);
+        if (Math.abs(value) < 1) {
+          this.im.rotateZ(-(i + 1) * Math.PI / 6);
+          this.eadj(0, 0, -LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value * 100) - 1]);
+        } else if (value >= 1) {
+          this.im.rotateZ(-(i - 1) * Math.PI / 6);
+          this.cadj(
+            -LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6),
+            LEN / (2 * Math.cos(Math.PI / 12)) - LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6),
+            -LEN / 3,
+            EDGE_RIGHT_COLORS[Math.trunc(value) - 1],
+          );
+        } else {
+          this.im.rotateZ(-(i + 1) * Math.PI / 6);
+          this.cadj(0, 0, -LEN / 3, LEFT_COLORS[Math.trunc(-value) - 1]);
+        }
+      }
+      this.im.pop();
+    }
+  }
+
+  private equatorBar(col: number): void {
+    this.im.fill(col);
+    this.im.begin('QUADS');
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), -LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), -LEN / 6);
+    this.im.end();
+  }
+
+  private equatorEndLong(col: number): void {
+    this.im.fill(col);
+    this.im.begin('QUADS');
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), LEN / 6);
+    this.im.vertex(LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), -LEN / 6);
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 6);
+    this.im.end();
+  }
+
+  private coreTops(isRight: boolean): void {
+    this.im.push();
+    if (isRight) this.im.rotateZ(Math.PI);
+    this.im.fill(INTERNAL_COL);
+    this.im.begin('QUADS');
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), LEN / 6);
+    this.im.vertex(-LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), LEN / 6);
+    this.im.vertex(-LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), LEN / 6);
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), LEN / 6);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 6);
+    this.im.vertex(-LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6), -LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6), -LEN / 6);
+    this.im.vertex(-LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 3), LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 3), -LEN / 6);
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 6);
+    this.im.end();
+    this.im.pop();
+  }
+
+  private drawEquator(isRight: boolean, flip: boolean, rotated: boolean): void {
+    this.im.push();
+    if (flip) this.im.rotateX(Math.PI);
+    this.coreTops(isRight);
+    if (isRight) {
+      if (!rotated) {
+        this.equatorBar(BLUE);
+        this.equatorEndLong(RED);
+        this.cadj(0, 0, 0, ORANGE);
+      } else {
+        this.equatorBar(GREEN);
+        this.equatorEndLong(ORANGE);
+        this.cadj(0, 0, 0, RED);
+      }
+    } else {
+      this.im.push();
+      this.im.rotateZ(Math.PI);
+      if (!rotated) {
+        this.equatorBar(GREEN);
+        this.equatorEndLong(ORANGE);
+        this.cadj(0, 0, 0, RED);
+      } else {
+        this.equatorBar(BLUE);
+        this.equatorEndLong(RED);
+        this.cadj(0, 0, 0, ORANGE);
+      }
+      this.im.pop();
+    }
+    this.im.pop();
+  }
+
+  private sliceInternal(): void {
+    this.im.fill(INTERNAL_COL);
+    this.im.begin('QUADS');
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 2 + 0.5);
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), -LEN / 2 + 0.5);
+    this.im.vertex(0, LEN / (2 * Math.cos(Math.PI / 12)), LEN / 2 - 0.5);
+    this.im.vertex(0, -LEN / (2 * Math.cos(Math.PI / 12)), LEN / 2 - 0.5);
+    this.im.end();
+  }
+
+  private leftCube(): void {
+    this.cshape(true, false, false);
+    this.cshape(false, false, false);
+    this.cshape(true, false, true);
+    this.cshape(false, false, true);
+    this.layerSides(true, false);
+    this.layerSides(false, false);
+    this.drawEquator(false, false, this.rotated);
+    this.sliceInternal();
+  }
+
+  private rightCube(): void {
+    this.cshape(true, true, false);
+    this.cshape(false, true, false);
+    this.cshape(true, true, true);
+    this.cshape(false, true, true);
+    this.layerSides(true, true);
+    this.layerSides(false, true);
+    this.drawEquator(true, this.bar, this.rotated);
+    this.sliceInternal();
+  }
+
+  private drawUpLayer(): void {
+    this.cshape(true, false, false);
+    this.cshape(true, true, false);
+    this.cshape(true, false, true);
+    this.cshape(true, true, true);
+    this.layerSides(true, true);
+    this.layerSides(true, false);
+  }
+
+  private drawDownLayer(): void {
+    this.cshape(false, false, false);
+    this.cshape(false, true, false);
+    this.cshape(false, false, true);
+    this.cshape(false, true, true);
+    this.layerSides(false, true);
+    this.layerSides(false, false);
+  }
+
+  private restCube(): void {
+    this.leftCube();
+    this.rightCube();
+  }
 }
 
-// ========================================
-// MAIN VIEWER CREATION FUNCTION
-// ========================================
-
-interface ViewerState {
-  originalAlg: string;
-  steps: AlgStep[];
-  currentStep: number;
-  animationSpeed: number;
-  autoRunDelay: number;
-  isAnimating: boolean;
-  isAutoRunning: boolean;
-  autoRunDirection: 'next' | 'prev';
-  colorScheme: ViewerColors;
-  imageSize: number;
-  animateBothLayers: boolean;
-  verticalDisplay: boolean;
-}
-
-export function createViewer(
-  algorithm: string,
-  colors: Partial<ViewerColors> = {},
-  _imageSize = 200,
-  caseName = '',
-  parity = '',
-): string {
-  const modalId = 'sq1-viewer-modal-' + Date.now();
-
-  const viewerColorScheme: ViewerColors = {
-    topColor: colors.topColor || '#000000',
-    bottomColor: colors.bottomColor || '#FFFFFF',
-    frontColor: colors.frontColor || '#CC0000',
-    rightColor: colors.rightColor || '#00AA00',
-    backColor: colors.backColor || '#FF8C00',
-    leftColor: colors.leftColor || '#0066CC',
-  };
-
-  const state: ViewerState = {
-    originalAlg: algorithm,
-    steps: generateSteps(
-      algorithm,
-      localStorage.getItem('sq1AnimBothLayers') !== null
-        ? localStorage.getItem('sq1AnimBothLayers') === 'true'
-        : true,
-    ),
-    currentStep: 0,
-    animationSpeed: parseFloat(localStorage.getItem('sq1AnimSpeed') || '') || 0.9,
-    autoRunDelay: parseInt(localStorage.getItem('sq1AutoDelay') || '', 10) || 500,
-    isAnimating: false,
-    isAutoRunning: false,
-    autoRunDirection: 'next',
-    colorScheme: viewerColorScheme,
-    imageSize: parseInt(localStorage.getItem('sq1AnimImageSize') || '', 10) || 200,
-    animateBothLayers:
-      localStorage.getItem('sq1AnimBothLayers') !== null
-        ? localStorage.getItem('sq1AnimBothLayers') === 'true'
-        : true,
-    verticalDisplay:
-      localStorage.getItem('sq1AnimVerticalDisplay') !== null
-        ? localStorage.getItem('sq1AnimVerticalDisplay') === 'true'
-        : false,
-  };
-
-  const css = `
-        <style>
-            #${modalId} {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: var(--modal-overlay);
-                z-index: 10005;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                font-family: Arial, sans-serif;
-                overflow-y: auto;
-                padding: 0px 20px;
-                box-sizing: border-box;
-            }
-            #${modalId} .modal-content {
-                background: var(--surface);
-                border-radius: 18px;
-                max-width: min(800px, 90vw);
-                width: 100%;
-                min-height: 20vh;
-                max-height: 95vh;
-                overflow: hidden;
-                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-                position: relative;
-                display: flex;
-                flex-direction: column;
-            }
-            #${modalId} .modal-body {
-                padding: 0px 20px;
-                overflow-y: auto;
-                flex: 1;
-                background: var(--surface);
-                border-radius: 0 0 18px 18px;
-            }
-            #${modalId} .modal-body::-webkit-scrollbar {
-                display: none;
-            }
-            #${modalId} .modal-body {
-                -ms-overflow-style: none;
-                scrollbar-width: none;
-            }
-            #${modalId} .modal-header {
-                padding: 20px;
-                border-bottom: 1px solid var(--surface-border);
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-            #${modalId} .close-btn {
-                background: var(--surface2);
-                border: none;
-                border-radius: 50%;
-                width: 32px;
-                height: 32px;
-                cursor: pointer;
-                font-size: 20px;
-                transition: background 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-                line-height: 1;
-            }
-            #${modalId} .close-btn:hover {
-                background: var(--surface-border);
-            }
-            #${modalId} .menu-btn {
-                background: var(--surface2);
-                border: none;
-                border-radius: 6px;
-                width: 36px;
-                height: 36px;
-                cursor: pointer;
-                font-size: 20px;
-                transition: background 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-            }
-            #${modalId} .menu-btn:hover {
-                background: var(--surface-border);
-            }
-            #${modalId} .sidebar {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 280px;
-                height: 100%;
-                background: var(--surface2);
-                box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
-                z-index: 100;
-                border-radius: 18px 0 0 18px;
-                overflow-y: auto;
-                overflow-x: hidden;
-                transform: translateX(-100%);
-                transition: transform 0.3s ease;
-            }
-            #${modalId} .sidebar::-webkit-scrollbar {
-                width: 6px;
-            }
-            #${modalId} .sidebar::-webkit-scrollbar-track {
-                background: var(--surface-border);
-            }
-            #${modalId} .sidebar::-webkit-scrollbar-thumb {
-                background: var(--scrollbar-thumb-hover);
-                border-radius: 3px;
-            }
-            #${modalId} .sidebar.open {
-                transform: translateX(0);
-            }
-            #${modalId} .sidebar-content {
-                position: relative !important;
-                transform: none !important;
-                left: auto !important;
-                top: auto !important;
-                width: auto !important;
-                height: auto !important;
-                max-width: none !important;
-                max-height: none !important;
-                background: none !important;
-                box-shadow: none !important;
-                display: block !important;
-                flex-direction: column !important;
-                overflow-y: visible !important;
-                transition: none !important;
-                padding: 20px;
-            }
-            #${modalId} .sidebar-title {
-                font-size: 18px;
-                font-weight: bold;
-                color: var(--text-primary) !important;
-                margin-bottom: 20px;
-                padding-bottom: 10px;
-                border-bottom: 2px solid var(--surface-border);
-            }
-            #${modalId} .sidebar-section {
-                margin-bottom: 25px;
-            }
-            #${modalId} .sidebar-section label {
-                display: block;
-                font-size: 14px;
-                color: var(--text-primary) !important;
-                margin-bottom: 8px;
-                font-weight: 600;
-            }
-            #${modalId} .sidebar-section input[type="range"] {
-                width: 100%;
-                height: 6px;
-                border-radius: 3px;
-                background: var(--surface-border);
-                outline: none;
-                -webkit-appearance: none;
-            }
-            #${modalId} .sidebar-section input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-            }
-            #${modalId} .sidebar-section input[type="range"]::-moz-range-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-                border: none;
-            }
-            #${modalId} .sidebar-value {
-                display: block;
-                text-align: right;
-                font-size: 14px;
-                color: var(--text-primary) !important;
-                margin-top: 4px;
-                font-weight: 500;
-            }
-            #${modalId} .toggle-container {
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            #${modalId} .toggle-container span {
-                color: var(--text-primary) !important;
-                font-weight: 500;
-            }
-            #${modalId} .toggle-switch {
-                position: relative;
-                width: 48px;
-                height: 24px;
-                background: var(--border-color);
-                border-radius: 12px;
-                cursor: pointer;
-                transition: background 0.3s;
-                flex-shrink: 0;
-            }
-            #${modalId} .toggle-switch.active {
-                background: var(--accent);
-            }
-            #${modalId} .toggle-slider {
-                position: absolute;
-                top: 2px;
-                left: 2px;
-                width: 20px;
-                height: 20px;
-                background: var(--surface);
-                border-radius: 50%;
-                transition: left 0.3s;
-            }
-            #${modalId} .toggle-switch.active .toggle-slider {
-                left: 26px;
-            }
-            #${modalId} .modal-body {
-                padding: 0px 20px;
-            }
-            #${modalId} .algorithm-display {
-                font-family: 'Courier New', monospace;
-                font-size: 18px;
-                padding: 12px;
-                background: var(--surface2);
-                border-radius: 6px;
-                margin: 15px 0;
-                text-align: center;
-                color: var(--text-primary);
-            }
-            #${modalId} .slider-group {
-                margin: 15px 0;
-                display: flex;
-                align-items: center;
-                gap: 10px;
-            }
-            #${modalId} .slider-group label {
-                min-width: 140px;
-                font-size: 14px;
-                color: var(--text-secondary);
-            }
-            #${modalId} .slider-group input[type="range"] {
-                flex: 1;
-                height: 6px;
-                border-radius: 3px;
-                background: var(--surface-border);
-                outline: none;
-            }
-            #${modalId} .slider-group input[type="range"]::-webkit-slider-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-            }
-            #${modalId} .slider-group input[type="range"]::-moz-range-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-                border: none;
-            }
-            #${modalId} .slider-group span {
-                min-width: 60px;
-                text-align: right;
-                font-size: 14px;
-                color: var(--text-secondary);
-            }
-            #${modalId} .visualization-area {
-                margin: 7px 0;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-            }
-            #${modalId} .visualization-container {
-                flex: 1;
-                display: flex;
-                justify-content: center;
-            }
-            #${modalId} .highlighted-alg {
-                font-family: 'Courier New', monospace;
-                font-size: 16px;
-                padding: 10px;
-                background: var(--surface2);
-                border-radius: 6px;
-                margin: 15px 0;
-                text-align: center;
-                min-height: 30px;
-            }
-            #${modalId} .control-buttons {
-                display: flex;
-                gap: 10px;
-                justify-content: center;
-                margin: 15px 0;
-            }
-            #${modalId} .control-btn {
-                background: var(--surface2);
-                border: none;
-                border-radius: 4px;
-                padding: 4px 6px;
-                cursor: pointer;
-                font-size: 14px;
-                transition: background 0.2s;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            #${modalId} .control-btn:hover:not(:disabled) {
-                background: var(--surface-border);
-            }
-            #${modalId} .control-btn:disabled {
-                opacity: 0.3;
-                cursor: not-allowed;
-            }
-            #${modalId} .step-slider-container {
-                margin: 15px 0;
-            }
-            #${modalId} .step-slider-container input[type="range"] {
-                width: 100%;
-                height: 6px;
-                border-radius: 3px;
-                background: var(--surface-border);
-                outline: none;
-            }
-            #${modalId} .step-slider-container input[type="range"]::-webkit-slider-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-            }
-            #${modalId} .step-slider-container input[type="range"]::-moz-range-thumb {
-                width: 18px;
-                height: 18px;
-                border-radius: 50%;
-                background: var(--accent);
-                cursor: pointer;
-                border: none;
-            }
-            #${modalId} .step-counter {
-                text-align: center;
-                font-size: 14px;
-                color: var(--text-secondary);
-                margin: 10px 0;
-            }
-            #${modalId} .clickable-token:not(.current-token):hover {
-                text-decoration: underline;
-            }
-        </style>
-    `;
-
-  const html = `
-        ${css}
-        <div id="${modalId}" onclick="(function(e) { if (e.target.id === '${modalId}') { document.getElementById('${modalId}').remove(); document.body.classList.remove('modal-open'); document.body.style.top = ''; window.scrollTo(0, window.modalScrollY || 0); } })(event)">
-            <div class="modal-content">
-                <div class="modal-header">
-    <div style="display: flex; align-items: center; gap: 12px;">
-        <button class="menu-btn" id="${modalId}-menu-btn">☰</button>
-        <div style="display: flex; flex-direction: column; gap: 2px;">
-            ${caseName && parity ? `
-                <div style="font-size: 16px; font-weight: bold; color: var(--text-primary);">${caseName} (${parity})</div>
-                <div style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${algorithm.length > 50 ? algorithm.substring(0, 50) + '...' : algorithm}</div>
-            ` : `
-                <div style="font-size: 18px; font-weight: bold; color: var(--text-primary);">Algorithm Viewer</div>
-            `}
+function createModalHTML(modalId: string, algorithm: string, caseName: string, parity: string, speed: number): string {
+  const title = caseName && parity ? `${caseName} (${parity})` : 'Algorithm Viewer';
+  return `
+    <div id="${modalId}" class="modal active sq1-three-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title">${escapeHTML(title)}</div>
+            <div class="sq1-three-subtitle">${escapeHTML(algorithm)}</div>
+          </div>
+          <button class="close-btn" id="${modalId}-close">×</button>
         </div>
+        <div class="sq1-three-stage" id="${modalId}-stage"></div>
+        <div class="sq1-three-alg" id="${modalId}-alg"></div>
+        <div class="sq1-three-controls">
+          <button class="control-btn" id="${modalId}-reset" title="Reset"><img src="res/anim/first.svg" alt="Reset"></button>
+          <button class="control-btn" id="${modalId}-prev" title="Previous"><img src="res/anim/prev.svg" alt="Previous"></button>
+          <button class="control-btn" id="${modalId}-play" title="Play"><img src="res/anim/play.svg" alt="Play"></button>
+          <button class="control-btn" id="${modalId}-pause" title="Pause"><img src="res/anim/pause.svg" alt="Pause"></button>
+          <button class="control-btn" id="${modalId}-next" title="Next"><img src="res/anim/next.svg" alt="Next"></button>
+          <label class="sq1-speed">Speed <input id="${modalId}-speed" type="range" min="0.4" max="3" step="0.1" value="${speed}"></label>
+          <span class="sq1-status" id="${modalId}-status">idle</span>
+        </div>
+      </div>
     </div>
-    <button class="close-btn" id="${modalId}-close-btn">✕</button>
-</div>
-                <div class="modal-body" id="${modalId}-body">
-                </div>
-                <div class="sidebar" id="${modalId}-sidebar">
-                    <div class="sidebar-content">
-                        <div class="sidebar-title">Settings</div>
-
-                        <div class="sidebar-section">
-                            <label>Animation Speed</label>
-                            <input type="range" id="${modalId}-sidebar-speed" min="0.2" max="2" step="0.1" value="${state.animationSpeed}">
-                            <span class="sidebar-value" id="${modalId}-sidebar-speed-val">${state.animationSpeed.toFixed(1)}x</span>
-                        </div>
-
-                        <div class="sidebar-section">
-                            <label>Auto Delay</label>
-                            <input type="range" id="${modalId}-sidebar-delay" min="0" max="1000" step="50" value="${state.autoRunDelay}">
-                            <span class="sidebar-value" id="${modalId}-sidebar-delay-val">${state.autoRunDelay}ms</span>
-                        </div>
-
-                        <div class="sidebar-section">
-                            <label>Image Size</label>
-                            <input type="range" id="${modalId}-sidebar-image-size" min="100" max="400" step="10" value="${state.imageSize}">
-                            <span class="sidebar-value" id="${modalId}-sidebar-image-size-val">${state.imageSize}px</span>
-                        </div>
-
-                        <div class="sidebar-section">
-                            <label>Animate Both Layers Together</label>
-                            <div class="toggle-container">
-                                <div class="toggle-switch ${state.animateBothLayers ? 'active' : ''}" id="${modalId}-both-layers-toggle">
-                                    <div class="toggle-slider"></div>
-                                </div>
-                                <span style="font-size: 14px; color: var(--text-secondary);" id="${modalId}-toggle-label">${state.animateBothLayers ? 'On' : 'Off'}</span>
-                            </div>
-                        </div>
-
-                        <div class="sidebar-section">
-                            <label>Enable Vertical Display</label>
-                            <div class="toggle-container">
-                                <div class="toggle-switch ${state.verticalDisplay ? 'active' : ''}" id="${modalId}-vertical-display-toggle">
-                                    <div class="toggle-slider"></div>
-                                </div>
-                                <span style="font-size: 14px; color: var(--text-secondary);" id="${modalId}-vertical-toggle-label">${state.verticalDisplay ? 'On' : 'Off'}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
-
-  function render(): void {
-    const step = state.steps[state.currentStep];
-    const hex = getHexForStep(step, state.animateBothLayers);
-    const visualization = renderVisualization(hex, state.colorScheme, state.imageSize, state.verticalDisplay);
-    const highlightedAlg = renderAlgorithm(step, state.originalAlg, state.steps, state.currentStep, state.animateBothLayers);
-
-    const bodyHtml = `
-            <div class="visualization-area">
-                <div class="visualization-container">${visualization}</div>
-            </div>
-
-            <div class="highlighted-alg">${highlightedAlg}</div>
-
-            <div class="control-buttons">
-                <button class="control-btn" id="${modalId}-first" ${state.currentStep === 0 ? 'disabled' : ''}>
-                    <img src="res/anim/first.svg" alt="First" style="width: 16px; height: 16px;">
-                </button>
-                <button class="control-btn" id="${modalId}-prev" ${state.currentStep === 0 ? 'disabled' : ''}>
-                    <img src="res/anim/prev.svg" alt="Previous" style="width: 16px; height: 16px;">
-                </button>
-                <button class="control-btn" id="${modalId}-play-pause">
-                    <img src="res/anim/${state.isAutoRunning ? 'pause' : 'play'}.svg" alt="${state.isAutoRunning ? 'Pause' : 'Play'}" style="width: 16px; height: 16px;">
-                </button>
-                <button class="control-btn" id="${modalId}-next" ${state.currentStep === state.steps.length - 1 ? 'disabled' : ''}>
-                    <img src="res/anim/next.svg" alt="Next" style="width: 16px; height: 16px;">
-                </button>
-                <button class="control-btn" id="${modalId}-last" ${state.currentStep === state.steps.length - 1 ? 'disabled' : ''}>
-                    <img src="res/anim/last.svg" alt="Last" style="width: 16px; height: 16px;">
-                </button>
-            </div>
-               `;
-
-    document.getElementById(`${modalId}-body`)!.innerHTML = bodyHtml;
-
-    attachEventListeners();
-  }
-
-  function attachEventListeners(): void {
-    const firstBtn = document.getElementById(`${modalId}-first`);
-    if (firstBtn) {
-      firstBtn.onclick = () => {
-        if (state.currentStep > 0 && !state.isAnimating && !state.isAutoRunning) {
-          state.currentStep = 0;
-          render();
-        }
-      };
-    }
-
-    const lastBtn = document.getElementById(`${modalId}-last`);
-    if (lastBtn) {
-      lastBtn.onclick = () => {
-        if (state.currentStep < state.steps.length - 1 && !state.isAnimating && !state.isAutoRunning) {
-          state.currentStep = state.steps.length - 1;
-          render();
-        }
-      };
-    }
-
-    const playPauseBtn = document.getElementById(`${modalId}-play-pause`);
-    if (playPauseBtn) {
-      playPauseBtn.onclick = () => {
-        if (state.isAutoRunning) {
-          state.isAutoRunning = false;
-          render();
-        } else {
-          if (state.currentStep < state.steps.length - 1 && !state.isAnimating) {
-            state.isAutoRunning = true;
-            state.autoRunDirection = 'next';
-            render();
-            autoRunNextStep();
-          }
-        }
-      };
-    }
-
-    const menuBtn = document.getElementById(`${modalId}-menu-btn`);
-    const sidebar = document.getElementById(`${modalId}-sidebar`);
-    const modalBody = document.getElementById(`${modalId}-body`);
-
-    menuBtn!.onclick = (e) => {
-      e.stopPropagation();
-      sidebar!.classList.toggle('open');
-    };
-
-    modalBody!.onclick = () => {
-      if (sidebar!.classList.contains('open')) {
-        sidebar!.classList.remove('open');
-      }
-    };
-
-    sidebar!.onclick = (e) => {
-      e.stopPropagation();
-    };
-
-    const closeBtn = document.getElementById(`${modalId}-close-btn`);
-    const close = () => {
-      closeModalWithHistory(() => {
-        document.getElementById(modalId)?.remove();
-        document.body.classList.remove('modal-open');
-        document.body.style.top = '';
-        window.scrollTo(0, (window as unknown as { modalScrollY?: number }).modalScrollY || 0);
-      });
-    };
-    closeBtn!.onclick = close;
-    pushModalState(modalId, close);
-
-    const sidebarSpeedSlider = document.getElementById(`${modalId}-sidebar-speed`);
-    const sidebarSpeedVal = document.getElementById(`${modalId}-sidebar-speed-val`);
-    sidebarSpeedSlider!.oninput = (e) => {
-      state.animationSpeed = parseFloat((e.target as HTMLInputElement).value);
-      sidebarSpeedVal!.textContent = state.animationSpeed.toFixed(1) + 'x';
-      localStorage.setItem('sq1AnimSpeed', String(state.animationSpeed));
-    };
-
-    const sidebarDelaySlider = document.getElementById(`${modalId}-sidebar-delay`);
-    const sidebarDelayVal = document.getElementById(`${modalId}-sidebar-delay-val`);
-    sidebarDelaySlider!.oninput = (e) => {
-      state.autoRunDelay = parseInt((e.target as HTMLInputElement).value);
-      sidebarDelayVal!.textContent = state.autoRunDelay + 'ms';
-      localStorage.setItem('sq1AutoDelay', String(state.autoRunDelay));
-    };
-
-    const sidebarImageSizeSlider = document.getElementById(`${modalId}-sidebar-image-size`);
-    const sidebarImageSizeVal = document.getElementById(`${modalId}-sidebar-image-size-val`);
-    sidebarImageSizeSlider!.oninput = (e) => {
-      state.imageSize = parseInt((e.target as HTMLInputElement).value);
-      sidebarImageSizeVal!.textContent = state.imageSize + 'px';
-      localStorage.setItem('sq1AnimImageSize', String(state.imageSize));
-      render();
-    };
-
-    const bothLayersToggle = document.getElementById(`${modalId}-both-layers-toggle`);
-    bothLayersToggle!.onclick = () => {
-      state.animateBothLayers = !state.animateBothLayers;
-      bothLayersToggle!.classList.toggle('active');
-      const label = bothLayersToggle!.nextElementSibling;
-      label!.textContent = state.animateBothLayers ? 'On' : 'Off';
-      localStorage.setItem('sq1AnimBothLayers', String(state.animateBothLayers));
-
-      state.steps = generateSteps(state.originalAlg, state.animateBothLayers);
-      state.currentStep = 0;
-      render();
-    };
-
-    const verticalDisplayToggle = document.getElementById(`${modalId}-vertical-display-toggle`);
-    verticalDisplayToggle!.onclick = () => {
-      state.verticalDisplay = !state.verticalDisplay;
-      verticalDisplayToggle!.classList.toggle('active');
-      const label = verticalDisplayToggle!.nextElementSibling;
-      label!.textContent = state.verticalDisplay ? 'On' : 'Off';
-      localStorage.setItem('sq1AnimVerticalDisplay', String(state.verticalDisplay));
-
-      render();
-    };
-
-    const prevBtn = document.getElementById(`${modalId}-prev`);
-    if (prevBtn) {
-      prevBtn.onclick = () => {
-        if (state.currentStep > 0 && !state.isAnimating && !state.isAutoRunning) {
-          state.currentStep--;
-          animateStep('prev');
-        }
-      };
-    }
-
-    const nextBtn = document.getElementById(`${modalId}-next`);
-    if (nextBtn) {
-      nextBtn.onclick = () => {
-        if (state.currentStep < state.steps.length - 1 && !state.isAnimating && !state.isAutoRunning) {
-          state.currentStep++;
-          animateStep('next');
-        }
-      };
-    }
-
-    document.querySelectorAll(`#${modalId} .clickable-token`).forEach((token) => {
-      (token as HTMLElement).onclick = () => {
-        if (state.isAnimating || state.isAutoRunning) return;
-
-        const targetStep = parseInt(token.getAttribute('data-step-index') || '');
-        if (!isNaN(targetStep) && targetStep >= 0 && targetStep < state.steps.length) {
-          state.currentStep = targetStep;
-          render();
-        }
-      };
-    });
-  }
-
-  function autoRunNextStep(): void {
-    if (!state.isAutoRunning) return;
-
-    const direction = state.autoRunDirection;
-    const canContinue = direction === 'next' ? state.currentStep < state.steps.length - 1 : state.currentStep > 0;
-
-    if (!canContinue) {
-      state.isAutoRunning = false;
-      render();
-      return;
-    }
-
-    setTimeout(() => {
-      if (!state.isAutoRunning) return;
-
-      state.currentStep += direction === 'next' ? 1 : -1;
-      animateStep(direction);
-    }, state.autoRunDelay);
-  }
-
-  function animateStep(direction: 'next' | 'prev' = 'next'): void {
-    state.isAnimating = true;
-    const step = state.steps[state.currentStep];
-
-    if (state.animateBothLayers) {
-      let tokenToAnimate: AlgStep | undefined;
-
-      if (direction === 'next') {
-        if (state.currentStep > 0) {
-          tokenToAnimate = state.steps[state.currentStep - 1];
-        } else {
-          state.isAnimating = false;
-          render();
-          return;
-        }
-      } else {
-        tokenToAnimate = step;
-      }
-
-      const tokenText = state.originalAlg.substring(tokenToAnimate.highlightStart, tokenToAnimate.highlightEnd);
-
-      if (tokenText.includes('/')) {
-        const duration = 500 / state.animationSpeed;
-
-        let beforeHex: HexLayers;
-        let afterHex: HexLayers;
-
-        if (direction === 'next') {
-          const prevStep = state.steps[state.currentStep - 1];
-          beforeHex = prevStep ? getHexForStep(prevStep, true) : getHexForStep(step, true);
-          afterHex = getHexForStep(step, true);
-        } else {
-          beforeHex = getHexForStep(step, true);
-          const nextStep = state.steps[state.currentStep + 1];
-          afterHex = nextStep ? getHexForStep(nextStep, true) : getHexForStep(step, true);
-        }
-
-        const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize, state.verticalDisplay);
-        const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize, state.verticalDisplay);
-
-        const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
-
-        const wrapper = document.createElement('div');
-        wrapper.style.position = 'relative';
-        wrapper.style.display = 'flex';
-        wrapper.style.flexDirection = 'column';
-        wrapper.style.alignItems = 'center';
-        wrapper.style.gap = '20 px';
-
-        const bottomLayer = document.createElement('div');
-        const topLayer = document.createElement('div');
-
-        if (direction === 'next') {
-          bottomLayer.innerHTML = afterSvgHtml;
-          bottomLayer.style.position = 'relative';
-          bottomLayer.style.opacity = '0';
-
-          topLayer.innerHTML = beforeSvgHtml;
-          topLayer.style.position = 'absolute';
-          topLayer.style.top = '0';
-          topLayer.style.left = '50%';
-          topLayer.style.transform = 'translateX(-50%)';
-          topLayer.style.opacity = '1';
-          topLayer.style.pointerEvents = 'none';
-
-          wrapper.appendChild(bottomLayer);
-          wrapper.appendChild(topLayer);
-
-          visualizationDiv!.innerHTML = '';
-          visualizationDiv!.appendChild(wrapper);
-
-          requestAnimationFrame(() => {
-            topLayer.style.transition = `opacity ${duration}ms linear`;
-            bottomLayer.style.transition = `opacity ${duration}ms linear`;
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                topLayer.style.opacity = '0';
-              }, 0);
-              bottomLayer.style.opacity = '1';
-            });
-          });
-        } else {
-          bottomLayer.innerHTML = beforeSvgHtml;
-          bottomLayer.style.position = 'relative';
-          bottomLayer.style.opacity = '1';
-
-          topLayer.innerHTML = afterSvgHtml;
-          topLayer.style.position = 'absolute';
-          topLayer.style.top = '0';
-          topLayer.style.left = '50%';
-          topLayer.style.transform = 'translateX(-50%)';
-          topLayer.style.opacity = '1';
-          topLayer.style.transition = `opacity ${duration}ms linear`;
-          topLayer.style.pointerEvents = 'none';
-
-          wrapper.appendChild(bottomLayer);
-          wrapper.appendChild(topLayer);
-
-          visualizationDiv!.innerHTML = '';
-          visualizationDiv!.appendChild(wrapper);
-
-          requestAnimationFrame(() => {
-            topLayer.style.transition = `opacity ${duration}ms linear`;
-            bottomLayer.style.transition = `opacity ${duration}ms linear`;
-            requestAnimationFrame(() => {
-              setTimeout(() => {
-                topLayer.style.opacity = '0';
-              }, 0);
-              bottomLayer.style.opacity = '1';
-            });
-          });
-        }
-
-        setTimeout(() => {
-          state.isAnimating = false;
-          render();
-
-          if (state.isAutoRunning) {
-            autoRunNextStep();
-          }
-        }, duration);
-      } else {
-        const match = tokenText.match(/\(?\s*(-?\d+)\s*,\s*(-?\d+)\s*\)?/);
-        if (match) {
-          const topRotation = parseInt(match[1]);
-          const bottomRotation = parseInt(match[2]);
-
-          const container = document.querySelector(`#${modalId} .visualization-container`);
-          const { topSvg, bottomSvg } = getLayerSvgs(container);
-
-          if (topSvg && bottomSvg) {
-            const topPieces = getTurnPieces(topSvg);
-            const bottomPieces = getTurnPieces(bottomSvg);
-
-            const topOrigin = getSvgOrigin(topSvg, state.imageSize);
-            const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
-
-            const maxActualRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
-            const duration = maxActualRotation === 0 ? 50 : (maxActualRotation * 100) / state.animationSpeed;
-
-            const rotationMultiplier = direction === 'prev' ? -1 : 1;
-
-            const topAnimation = applyTurnAnimation(topPieces, topOrigin.x, topOrigin.y, duration, topRotation * 30 * rotationMultiplier);
-            const bottomAnimation = applyTurnAnimation(bottomPieces, bottomOrigin.x, bottomOrigin.y, duration, bottomRotation * 30 * rotationMultiplier);
-
-            setTimeout(() => {
-              topAnimation.clear();
-              bottomAnimation.clear();
-
-              state.isAnimating = false;
-              render();
-
-              if (state.isAutoRunning) {
-                autoRunNextStep();
-              }
-            }, duration);
-          } else {
-            state.isAnimating = false;
-            render();
-          }
-        } else {
-          state.isAnimating = false;
-          render();
-        }
-      }
-    } else {
-      let topRotation = 0;
-      let bottomRotation = 0;
-      let shouldRotate = false;
-      let isSlashToken = false;
-      let analyzePosition = -1;
-
-      if (direction === 'next') {
-        analyzePosition = step.highlightStart - 1;
-        while (analyzePosition >= 0 && /\s/.test(state.originalAlg[analyzePosition])) {
-          analyzePosition--;
-        }
-      } else {
-        analyzePosition = step.highlightStart;
-      }
-
-      if (analyzePosition >= 0 && analyzePosition < state.originalAlg.length) {
-        if (state.originalAlg[analyzePosition] === '/') {
-          isSlashToken = true;
-        } else {
-          let numberStart = analyzePosition;
-          let numberEnd = analyzePosition;
-
-          while (numberStart > 0 && (state.originalAlg[numberStart - 1] === '-' || /\d/.test(state.originalAlg[numberStart - 1]))) {
-            numberStart--;
-          }
-
-          while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
-            numberEnd++;
-          }
-
-          if (numberStart === numberEnd) {
-            numberStart = analyzePosition;
-            while (numberStart < state.originalAlg.length && !/\d/.test(state.originalAlg[numberStart]) && state.originalAlg[numberStart] !== '-') {
-              numberStart++;
-            }
-            if (numberStart < state.originalAlg.length && state.originalAlg[numberStart] === '-') {
-              numberEnd = numberStart + 1;
-            } else {
-              numberEnd = numberStart;
-            }
-            while (numberEnd < state.originalAlg.length && /\d/.test(state.originalAlg[numberEnd])) {
-              numberEnd++;
-            }
-          }
-
-          const numberStr = state.originalAlg.substring(numberStart, numberEnd);
-          const number = parseInt(numberStr);
-
-          if (!isNaN(number)) {
-            shouldRotate = true;
-
-            let searchStart = numberEnd;
-            let foundComma = false;
-
-            while (searchStart < state.originalAlg.length && /\s/.test(state.originalAlg[searchStart])) {
-              searchStart++;
-            }
-
-            if (searchStart < state.originalAlg.length && state.originalAlg[searchStart] === ',') {
-              foundComma = true;
-            }
-
-            let beforeComma = false;
-            for (let i = numberStart - 1; i >= 0; i--) {
-              if (state.originalAlg[i] === ',') {
-                beforeComma = true;
-                break;
-              }
-              if (state.originalAlg[i] === '(' || state.originalAlg[i] === '/') {
-                break;
-              }
-            }
-            if (foundComma && !beforeComma) {
-              topRotation = number;
-            } else {
-              bottomRotation = number;
-            }
-          }
-        }
-      }
-
-      const container = document.querySelector(`#${modalId} .visualization-container`);
-      const { topSvg, bottomSvg } = getLayerSvgs(container);
-
-      const maxRotation = Math.max(Math.abs(topRotation), Math.abs(bottomRotation));
-
-      if (topSvg && bottomSvg) {
-        const topPieces = getTurnPieces(topSvg);
-        const bottomPieces = getTurnPieces(bottomSvg);
-
-        if (isSlashToken) {
-          const slashDuration = 500 / state.animationSpeed;
-
-          let beforeHex: HexLayers;
-          let afterHex: HexLayers;
-
-          if (direction === 'next') {
-            const prevStep = state.steps[state.currentStep - 1];
-            beforeHex = prevStep ? getHexForStep(prevStep, false) : getHexForStep(step, false);
-            afterHex = getHexForStep(step, false);
-          } else {
-            beforeHex = getHexForStep(step, false);
-            const nextStep = state.steps[state.currentStep + 1];
-            afterHex = nextStep ? getHexForStep(nextStep, false) : getHexForStep(step, false);
-          }
-
-          const beforeSvgHtml = renderVisualization(beforeHex, state.colorScheme, state.imageSize, state.verticalDisplay);
-          const afterSvgHtml = renderVisualization(afterHex, state.colorScheme, state.imageSize, state.verticalDisplay);
-
-          const visualizationDiv = document.querySelector(`#${modalId} .visualization-container`);
-
-          const wrapper = document.createElement('div');
-          wrapper.style.position = 'relative';
-          wrapper.style.display = 'flex';
-          wrapper.style.flexDirection = 'column';
-          wrapper.style.alignItems = 'center';
-          wrapper.style.gap = '0px';
-
-          const bottomLayer = document.createElement('div');
-          const topLayer = document.createElement('div');
-
-          if (direction === 'next') {
-            bottomLayer.innerHTML = afterSvgHtml;
-            bottomLayer.style.position = 'relative';
-            bottomLayer.style.opacity = '0';
-
-            topLayer.innerHTML = beforeSvgHtml;
-            topLayer.style.position = 'absolute';
-            topLayer.style.top = '0';
-            topLayer.style.left = '50%';
-            topLayer.style.transform = 'translateX(-50%)';
-            topLayer.style.opacity = '1';
-            topLayer.style.pointerEvents = 'none';
-
-            wrapper.appendChild(bottomLayer);
-            wrapper.appendChild(topLayer);
-
-            visualizationDiv!.innerHTML = '';
-            visualizationDiv!.appendChild(wrapper);
-
-            requestAnimationFrame(() => {
-              topLayer.style.transition = `opacity ${slashDuration}ms linear`;
-              bottomLayer.style.transition = `opacity ${slashDuration}ms linear`;
-              requestAnimationFrame(() => {
-                setTimeout(() => {
-                  topLayer.style.opacity = '0';
-                }, 0);
-                bottomLayer.style.opacity = '1';
-              });
-            });
-          } else {
-            bottomLayer.innerHTML = beforeSvgHtml;
-            bottomLayer.style.position = 'relative';
-            bottomLayer.style.opacity = '1';
-
-            topLayer.innerHTML = afterSvgHtml;
-            topLayer.style.position = 'absolute';
-            topLayer.style.top = '0';
-            topLayer.style.left = '50%';
-            topLayer.style.transform = 'translateX(-50%)';
-            topLayer.style.opacity = '1';
-            topLayer.style.transition = `opacity ${slashDuration}ms linear`;
-            topLayer.style.pointerEvents = 'none';
-
-            wrapper.appendChild(bottomLayer);
-            wrapper.appendChild(topLayer);
-
-            visualizationDiv!.innerHTML = '';
-            visualizationDiv!.appendChild(wrapper);
-
-            requestAnimationFrame(() => {
-              topLayer.style.transition = `opacity ${slashDuration}ms linear`;
-              bottomLayer.style.transition = `opacity ${slashDuration}ms linear`;
-              requestAnimationFrame(() => {
-                setTimeout(() => {
-                  topLayer.style.opacity = '0';
-                }, 0);
-                bottomLayer.style.opacity = '1';
-              });
-            });
-          }
-
-          setTimeout(() => {
-            state.isAnimating = false;
-            render();
-
-            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg, state.animateBothLayers);
-
-            if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
-              state.currentStep++;
-              setTimeout(() => animateStep('next'), 0);
-            } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
-              state.currentStep--;
-              setTimeout(() => animateStep('prev'), 0);
-            } else if (!currentIsZero && state.isAutoRunning) {
-              autoRunNextStep();
-            }
-          }, slashDuration);
-        } else if (shouldRotate) {
-          const rotateDuration = maxRotation === 0 ? 50 : (maxRotation * 100) / state.animationSpeed;
-
-          const rotationMultiplier = direction === 'prev' ? -1 : 1;
-
-          const topOrigin = getSvgOrigin(topSvg, state.imageSize);
-          const bottomOrigin = getSvgOrigin(bottomSvg, state.imageSize);
-
-          const topAnimation = applyTurnAnimation(topPieces, topOrigin.x, topOrigin.y, rotateDuration, topRotation * 30 * rotationMultiplier);
-          const bottomAnimation = applyTurnAnimation(bottomPieces, bottomOrigin.x, bottomOrigin.y, rotateDuration, bottomRotation * 30 * rotationMultiplier);
-
-          setTimeout(() => {
-            topAnimation.clear();
-            bottomAnimation.clear();
-
-            state.isAnimating = false;
-            render();
-
-            const currentIsZero = isZeroMove(state.steps[state.currentStep], state.originalAlg, state.animateBothLayers);
-
-            if (currentIsZero && direction === 'next' && state.currentStep < state.steps.length - 1) {
-              state.currentStep++;
-              setTimeout(() => animateStep('next'), 0);
-            } else if (currentIsZero && direction === 'prev' && state.currentStep > 0) {
-              state.currentStep--;
-              setTimeout(() => animateStep('prev'), 0);
-            } else if (state.isAutoRunning) {
-              autoRunNextStep();
-            }
-          }, rotateDuration);
-        } else {
-          state.isAnimating = false;
-          render();
-        }
-      } else {
-        state.isAnimating = false;
-        render();
-
-        if (state.isAutoRunning) {
-          autoRunNextStep();
-        }
-      }
-    }
-  }
-
-  setTimeout(() => {
-    (window as unknown as { modalScrollY: number }).modalScrollY = window.scrollY;
-    document.body.style.top = `-${window.scrollY}px`;
-    document.body.classList.add('modal-open');
-    render();
-  }, 0);
-
-  return html;
+  `;
 }
 
-// ========================================
-// PUBLIC ENTRY (legacy openAnimateAlgModal)
-// ========================================
+function ensureStyles(): void {
+  if (document.getElementById('sq1-three-viewer-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'sq1-three-viewer-styles';
+  style.textContent = `
+    .sq1-three-modal .modal-content {
+      max-width: min(920px, calc(100vw - 24px));
+      width: min(920px, calc(100vw - 24px));
+      max-height: min(860px, calc(100vh - 24px));
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sq1-three-subtitle {
+      margin-top: 3px;
+      color: var(--text-muted);
+      font: 12px/1.4 Consolas, Menlo, monospace;
+      max-width: min(720px, calc(100vw - 110px));
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .sq1-three-stage {
+      height: clamp(320px, 58vh, 560px);
+      background: radial-gradient(circle at 50% 48%, var(--surface2), var(--background));
+      border-top: 1px solid var(--surface-border);
+      border-bottom: 1px solid var(--surface-border);
+      touch-action: none;
+    }
+    .sq1-three-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+    }
+    .sq1-three-canvas:active { cursor: grabbing; }
+    .sq1-three-alg {
+      padding: 12px 16px 6px;
+      min-height: 46px;
+      font: 14px/1.8 Consolas, Menlo, monospace;
+      color: var(--text-primary);
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .sq1-token {
+      display: inline-block;
+      padding: 0 4px;
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+    .sq1-token.done { color: var(--text-muted); opacity: 0.7; }
+    .sq1-token.current { background: var(--step-highlight-bg); color: var(--accent); }
+    .sq1-three-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px 14px;
+      flex-wrap: wrap;
+    }
+    .sq1-three-controls .control-btn img {
+      width: 16px;
+      height: 16px;
+    }
+    .sq1-speed {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-secondary);
+      font-size: 13px;
+    }
+    .sq1-speed input { width: 110px; accent-color: var(--accent); }
+    .sq1-status {
+      min-width: 78px;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    @media (max-width: 570px) {
+      .sq1-three-stage { height: 360px; }
+      .sq1-speed { width: 100%; margin-left: 0; }
+      .sq1-status { margin-left: auto; }
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export function openAnimateAlgModal(algorithm = '', caseName = '', computedParity = ''): void {
   const alg = algorithm || '(0,0)';
-
+  const tokens = parseAlgorithm(alg);
+  const presetTokens = parseAlgorithm(invertScramble(alg));
   let parity = computedParity;
   if (!parity && algorithm && algorithm !== 'Done!') {
     try {
-      const setup = invertScramble(algorithm);
-      const parityText = getParityText(
-        setup,
+      parity = getParityText(
+        invertScramble(algorithm),
         {
           topColor: colorScheme.topColor,
           bottomColor: colorScheme.bottomColor,
@@ -1645,34 +848,50 @@ export function openAnimateAlgModal(algorithm = '', caseName = '', computedParit
           leftColor: colorScheme.leftColor,
         },
         cornerStickerMode,
-      );
-      parity = parityText.toLowerCase();
+      ).toLowerCase();
     } catch {
       parity = '';
     }
   }
 
-  const html = createViewer(
-    alg,
-    {
-      topColor: colorScheme.topColor,
-      bottomColor: colorScheme.bottomColor,
-      frontColor: colorScheme.frontColor,
-      rightColor: colorScheme.rightColor,
-      backColor: colorScheme.backColor,
-      leftColor: colorScheme.leftColor,
-    },
-    scrambleImageSize,
-    caseName,
-    parity,
-  );
+  ensureStyles();
+  const modalId = `sq1-three-modal-${Date.now()}`;
+  const speed = Number(localStorage.getItem('sq1ThreeAnimSpeed') || '1') || 1;
+  document.body.insertAdjacentHTML('beforeend', createModalHTML(modalId, alg, caseName, parity, speed));
+  document.body.classList.add('modal-open');
 
-  document.body.insertAdjacentHTML('beforeend', html);
+  const modal = document.getElementById(modalId)!;
+  const host = document.getElementById(`${modalId}-stage`)!;
+  const status = document.getElementById(`${modalId}-status`)!;
+  const algEl = document.getElementById(`${modalId}-alg`)!;
+  const viewer = new Square1ThreeViewer(host, tokens, presetTokens, status, algEl);
+  viewer.setSpeed(speed);
+
+  const close = () => {
+    closeModalWithHistory(() => {
+      viewer.dispose();
+      modal.remove();
+      document.body.classList.remove('modal-open');
+    });
+  };
+  document.getElementById(`${modalId}-close`)!.onclick = close;
+  modal.onclick = (event) => {
+    if (event.target === modal) close();
+  };
+  document.getElementById(`${modalId}-play`)!.onclick = () => viewer.play();
+  document.getElementById(`${modalId}-pause`)!.onclick = () => viewer.pause();
+  document.getElementById(`${modalId}-reset`)!.onclick = () => viewer.reset();
+  document.getElementById(`${modalId}-prev`)!.onclick = () => viewer.previous();
+  document.getElementById(`${modalId}-next`)!.onclick = () => viewer.next();
+  (document.getElementById(`${modalId}-speed`) as HTMLInputElement).oninput = (event) => {
+    viewer.setSpeed(Number((event.target as HTMLInputElement).value));
+  };
+  pushModalState(modalId, close);
 }
 
-// ── Window shims ─────────────────────────────────────────────────────────────
 export const Square1AlgorithmViewer = {
-  createViewer,
+  open: openAnimateAlgModal,
+  parseAlgorithm,
 };
 
 export function installAnimateAlgShims(): void {

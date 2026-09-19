@@ -69,6 +69,10 @@ function closeAlgoPopup(isPermanent: boolean): void {
   }
 }
 
+function hideAlgoPopup(_element: HTMLElement, isPermanent: boolean): void {
+  closeAlgoPopup(isPermanent);
+}
+
 function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean): void {
   if (popupHoverTimeout) {
     clearTimeout(popupHoverTimeout);
@@ -456,7 +460,7 @@ export function installWindowShims(): void {
 
   w.showContextMenu = showContextMenu;
   w.showAlgoPopup = showAlgoPopup;
-  w.hideAlgoPopup = closeAlgoPopup;
+  w.hideAlgoPopup = hideAlgoPopup;
 
   w.showNotesInfoModal = showNotesInfoModal;
   w.closeNotesInfoModal = closeNotesInfoModal;
