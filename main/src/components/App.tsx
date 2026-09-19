@@ -32,7 +32,7 @@ const DEFAULT_SKELETON_CARD_HEIGHT = 360;
 const MATT_SKELETON_CARD_HEIGHT = 430;
 const MIN_INITIAL_CARD_COUNT = 3;
 const MAX_INITIAL_CARD_COUNT = 18;
-type GridChunkHandle = number;
+type ScheduledHandle = { cancel: () => void };
 
 function readCardHeightCache(): Record<string, number> {
   try {
@@ -76,12 +76,21 @@ function getInitialCardCount(columns: number, estimatedCardHeight: number): numb
   return Math.min(MAX_INITIAL_CARD_COUNT, Math.max(MIN_INITIAL_CARD_COUNT, columns * rowsToRender));
 }
 
-function scheduleGridChunk(callback: () => void): GridChunkHandle {
-  return window.setTimeout(callback, 16);
+function scheduleBackgroundTask(callback: () => void, timeout = 500): ScheduledHandle {
+  const w = window as Window & {
+    requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+    cancelIdleCallback?: (id: number) => void;
+  };
+  if (w.requestIdleCallback && w.cancelIdleCallback) {
+    const id = w.requestIdleCallback(callback, { timeout });
+    return { cancel: () => w.cancelIdleCallback?.(id) };
+  }
+  const id = window.setTimeout(callback, 32);
+  return { cancel: () => window.clearTimeout(id) };
 }
 
-function cancelGridChunk(id: GridChunkHandle): void {
-  window.clearTimeout(id);
+function scheduleGridChunk(callback: () => void): ScheduledHandle {
+  return scheduleBackgroundTask(callback, 250);
 }
 
 function updateSelectLabels(): void {
@@ -139,6 +148,7 @@ export default function App(): React.ReactNode {
   // Boot: paint the responsive shell first, then run preset/SVG/parity work.
   useEffect(() => {
     let cancelled = false;
+    let hydrationHandle: ScheduledHandle | null = null;
     const afterFirstPaint = () => {
       window.setTimeout(() => {
         void (async () => {
@@ -161,15 +171,15 @@ export default function App(): React.ReactNode {
           applyInstructionVisibility();
           updateProgress();
           if (isFirstLoad) {
-            window.setTimeout(() => {
+            hydrationHandle = scheduleBackgroundTask(() => {
               void hydratePresetDetails("Matt's_Preset").then(() => {
                 if (!cancelled) window.setTimeout(() => openGeneralNotesModal(), 100);
               });
-            }, 0);
+            }, 1000);
           } else {
-            window.setTimeout(() => {
+            hydrationHandle = scheduleBackgroundTask(() => {
               if (!cancelled) hydrateSavedStateDetails();
-            }, 0);
+            }, 1000);
           }
         })();
       }, 0);
@@ -178,6 +188,7 @@ export default function App(): React.ReactNode {
     return () => {
       cancelled = true;
       window.cancelAnimationFrame(frame);
+      hydrationHandle?.cancel();
     };
   }, []);
 
@@ -253,10 +264,10 @@ export default function App(): React.ReactNode {
 
     const grid = gridRef.current;
     const columns = getGridColumnCount(grid);
-    const chunkSize = Math.max(columns * 4, 12);
+    const chunkSize = Math.max(columns * 2, 6);
     let nextIndex = initialCardCount;
     let cancelled = false;
-    let scheduledId = 0;
+    let scheduledHandle: ScheduledHandle | null = null;
 
     const appendChunk = () => {
       if (cancelled || !gridRef.current) return;
@@ -268,7 +279,7 @@ export default function App(): React.ReactNode {
       if (html) gridRef.current.insertAdjacentHTML('beforeend', html);
       nextIndex = end;
       if (nextIndex < filtered.length) {
-        scheduledId = scheduleGridChunk(appendChunk);
+        scheduledHandle = scheduleGridChunk(appendChunk);
       } else {
         updateProgress();
         applyHintVisibility();
@@ -277,11 +288,11 @@ export default function App(): React.ReactNode {
       }
     };
 
-    scheduledId = scheduleGridChunk(appendChunk);
+    scheduledHandle = scheduleGridChunk(appendChunk);
 
     return () => {
       cancelled = true;
-      if (scheduledId) cancelGridChunk(scheduledId);
+      scheduledHandle?.cancel();
     };
   }, [bootReady, filtered, initialCardCount, gridHTML]);
 

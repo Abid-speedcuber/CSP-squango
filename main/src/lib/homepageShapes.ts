@@ -219,14 +219,28 @@ function cacheItemStorageKey(hash: string, key: string): string {
   return `${SVG_CACHE_ITEM_PREFIX}:${hash}:${key}`;
 }
 
+function yieldToBrowser(timeout = 500): Promise<void> {
+  if (typeof window !== 'undefined') {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+    };
+    if (w.requestIdleCallback) {
+      return new Promise((resolve) => w.requestIdleCallback?.(() => resolve(), { timeout }));
+    }
+  }
+  return new Promise((resolve) => setTimeout(resolve, 32));
+}
+
 function scheduleCompressedCacheWrite(settings: HomepageImageSettings, shapes: Record<string, string>): void {
   if (typeof localStorage === 'undefined' || typeof window === 'undefined' || Object.keys(shapes).length === 0) return;
   const hash = settingsHash(settings);
   window.setTimeout(() => {
     void (async () => {
       try {
+        await yieldToBrowser(1500);
         const compressed = await compressShapeSVGs(shapes);
         for (const [key, svg] of Object.entries(compressed)) {
+          await yieldToBrowser();
           localStorage.setItem(cacheItemStorageKey(hash, key), svg);
         }
         localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
@@ -318,9 +332,11 @@ function stripInvisibleOverhead(svg: string): string {
 }
 
 export async function compressShapeSVGs(shapes: Record<string, string>): Promise<Record<string, string>> {
+  await yieldToBrowser(1500);
   const { optimize } = await import('svgo/browser');
   const out: Record<string, string> = {};
   for (const [name, svg] of Object.entries(shapes)) {
+    await yieldToBrowser();
     try {
       const result = optimize(stripInvisibleOverhead(svg), {
         multipass: true,

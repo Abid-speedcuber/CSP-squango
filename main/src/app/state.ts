@@ -198,6 +198,18 @@ const BOOT_PROGRESS_STORAGE_KEY = 'sq1-parity-boot-progress-v1';
 const BOOT_STATE_CARD_COUNT = 12;
 let fullSavedStateLoaded = false;
 
+function yieldToBrowser(timeout = 250): Promise<void> {
+  if (typeof window !== 'undefined') {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, options?: { timeout: number }) => number;
+    };
+    if (w.requestIdleCallback) {
+      return new Promise((resolve) => w.requestIdleCallback?.(() => resolve(), { timeout }));
+    }
+  }
+  return new Promise((resolve) => setTimeout(resolve, 16));
+}
+
 // ── Shape index → case name lookup ──────────────────────────────────────────
 function buildShapeIndexToCaseMap(): Record<number, string> {
   const map: Record<number, string> = {};
@@ -337,9 +349,10 @@ export async function calculateAndCacheAllParityChunked(
       cacheParityForItem(item);
     }
     onChunk?.();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await yieldToBrowser();
   }
 
+  await yieldToBrowser();
   saveState();
   notify();
 }
@@ -812,6 +825,7 @@ export async function hydratePresetDetails(presetName: string): Promise<void> {
   generalNotes = (preset.generalNotes as string) || generalNotes;
   presetData = { ...(presetData || {}), ...preset };
   lastParityCalculationSettings = null;
+  await yieldToBrowser();
   saveState();
   notify();
 }
