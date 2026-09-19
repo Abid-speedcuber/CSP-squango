@@ -131,10 +131,20 @@ export function markTracingStart(canonical: string, pattern: string): string {
  * Marked canonical expanded layer for a homepage layer shape name,
  * using the current live parity-tracer patterns.
  */
+const markedLayerCache = new Map<string, string | undefined>();
+
 export function getMarkedLayerExpanded(layerName: string): string | undefined {
+  const patternHash = JSON.stringify(getShapePatterns());
+  const cacheKey = `${patternHash}:${layerName}`;
+  if (markedLayerCache.has(cacheKey)) return markedLayerCache.get(cacheKey);
+
   const canonical = LAYER_EXPANDED_SHAPES[layerName];
-  if (!canonical) return undefined;
+  if (!canonical) {
+    markedLayerCache.set(cacheKey, undefined);
+    return undefined;
+  }
   const match = findLayerPattern(canonical);
-  if (!match) return canonical;
-  return markTracingStart(canonical, match.pattern);
+  const marked = match ? markTracingStart(canonical, match.pattern) : canonical;
+  markedLayerCache.set(cacheKey, marked);
+  return marked;
 }

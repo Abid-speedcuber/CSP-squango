@@ -197,12 +197,13 @@ export function renderAlgorithmWithPopup(
   parityType: string,
   hideParenthesis: boolean,
   fontFamily: string,
+  validateMeta = true,
 ): string {
   const fontStyle = fontFamily ? `font-family: ${fontFamily};` : '';
   return algoArray
     .map((algo, idx) => {
       const algoId = `alg-${caseName.replace(/[^a-zA-Z0-9]/g, '_')}-${parityType}-${idx}`;
-      const meta = getAlgDisplayMeta(algo, caseName);
+      const meta = validateMeta ? getAlgDisplayMeta(algo, caseName) : { invalid: false, mirrored: false };
       const prefix = meta.mirrored
         ? '<span style="color: var(--z2-prefix-color); margin-right:4px; display:inline; vertical-align:baseline; white-space:nowrap;"><big style="font-size:1em;">&lt;</big><small>z2</small><big style="font-size:1em;">&gt;</big></span>'
         : '';

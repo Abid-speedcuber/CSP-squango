@@ -1,9 +1,11 @@
 import type { AlgCase } from '../data/types';
 import { escapeRegex, renderAlgorithmWithPopup, sanitizeNoteHTML } from './algDisplay';
 import { highlightPartialMatch, searchMatches } from './filter';
+import { homepageShapeSVGKey } from '../lib/homepageShapes';
 import {
   cachedParityAlgorithms,
   comments,
+  customAlgorithms,
   evilnessFactor,
   getDisplayName,
   getPlannedLevel,
@@ -71,20 +73,21 @@ export function renderCard(item: AlgCase): string {
   const comment = comments.get(item.name) || '';
 
   const cachedAlgs = cachedParityAlgorithms.get(item.name);
-  const oddAlgos = cachedAlgs ? cachedAlgs.odd : [];
-  const evenAlgos = cachedAlgs ? cachedAlgs.even : [];
+  const fallbackAlgs = customAlgorithms.get(item.name);
+  const oddAlgos = cachedAlgs ? cachedAlgs.odd : fallbackAlgs?.odd || item.odd || [];
+  const evenAlgos = cachedAlgs ? cachedAlgs.even : fallbackAlgs?.even || item.even || [];
 
-  const topSVG = svgData[item.top] || '';
-  const bottomSVG = svgData[item.bottom] || '';
+  const topSVG = svgData[homepageShapeSVGKey('top', item.top)] || '';
+  const bottomSVG = svgData[homepageShapeSVGKey('bottom', item.bottom)] || '';
 
   const fontFamily = algoFontFamily();
   const oddAlgoDisplay =
     oddAlgos.length > 0
-      ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', hideParenthesis, fontFamily)
+      ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', hideParenthesis, fontFamily, false)
       : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
   const evenAlgoDisplay =
     evenAlgos.length > 0
-      ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', hideParenthesis, fontFamily)
+      ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', hideParenthesis, fontFamily, false)
       : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
 
   const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? 'var(--card-learned-border)' : isLearning ? 'var(--card-learning-border)' : 'var(--border-color)'}" stroke-width="2">

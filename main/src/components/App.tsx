@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useAppStore } from '../app/store';
 import {
   applyPreset,
-  calculateAndCacheAllParity,
+  calculateAndCacheAllParityChunked,
   currentSortMode,
+  currentPreset,
   initializePreset,
-  initializeSVGData,
+  initializeSVGDataForCases,
   isFirstLoad,
   needsParityRecalculation,
   profileAvatar,
@@ -18,8 +19,67 @@ import { installWindowShims } from '../app/shims';
 import { renderCard } from '../app/cardHTML';
 import { openGeneralNotesModal } from '../app/notes';
 import { applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
-import LoadingScreen from './LoadingScreen';
+// LoadingScreen intentionally disabled: the app now paints the shell first and
+// uses inline skeleton cards while the heavier boot work runs after first paint.
+// import LoadingScreen from './LoadingScreen';
 import SettingsModal from './SettingsModal';
+
+const CARD_HEIGHT_CACHE_KEY = 'sqg-card-height-estimates-v1';
+const DEFAULT_SKELETON_CARD_HEIGHT = 360;
+const MATT_SKELETON_CARD_HEIGHT = 430;
+const MIN_INITIAL_CARD_COUNT = 3;
+const MAX_INITIAL_CARD_COUNT = 18;
+type GridChunkHandle = number;
+
+function readCardHeightCache(): Record<string, number> {
+  try {
+    return JSON.parse(localStorage.getItem(CARD_HEIGHT_CACHE_KEY) || '{}') as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+function getGridColumnCount(grid: HTMLElement): number {
+  const columns = window.getComputedStyle(grid).gridTemplateColumns;
+  if (!columns || columns === 'none') return 1;
+  return columns.split(' ').filter(Boolean).length || 1;
+}
+
+function getCardHeightCacheKey(preset: string, columns: number): string {
+  return `${preset || 'unknown'}::${columns}`;
+}
+
+function getCachedCardHeight(preset: string, columns: number): number {
+  const cached = readCardHeightCache()[getCardHeightCacheKey(preset, columns)];
+  if (typeof cached === 'number' && Number.isFinite(cached) && cached > 0) return cached;
+  return preset === "Matt's_Preset" ? MATT_SKELETON_CARD_HEIGHT : DEFAULT_SKELETON_CARD_HEIGHT;
+}
+
+function saveCardHeightEstimate(preset: string, columns: number, height: number): void {
+  if (!Number.isFinite(height) || height <= 0) return;
+  const cache = readCardHeightCache();
+  const key = getCardHeightCacheKey(preset, columns);
+  const previous = cache[key];
+  // Ease downward so a temporarily short filtered view does not make the next
+  // Matt/default skeleton too small again.
+  cache[key] = previous ? Math.round(previous * 0.35 + height * 0.65) : Math.round(height);
+  localStorage.setItem(CARD_HEIGHT_CACHE_KEY, JSON.stringify(cache));
+}
+
+function getInitialCardCount(columns: number, estimatedCardHeight: number): number {
+  const controlsReserve = 190;
+  const visibleRows = Math.ceil(Math.max(1, window.innerHeight - controlsReserve) / estimatedCardHeight);
+  const rowsToRender = Math.max(2, visibleRows + 1);
+  return Math.min(MAX_INITIAL_CARD_COUNT, Math.max(MIN_INITIAL_CARD_COUNT, columns * rowsToRender));
+}
+
+function scheduleGridChunk(callback: () => void): GridChunkHandle {
+  return window.setTimeout(callback, 16);
+}
+
+function cancelGridChunk(id: GridChunkHandle): void {
+  window.clearTimeout(id);
+}
 
 function updateSelectLabels(): void {
   const width = window.innerWidth;
@@ -44,11 +104,15 @@ function updateSelectLabels(): void {
 
 export default function App(): React.ReactNode {
   const storeVersion = useAppStore();
-  const [loaded, setLoaded] = useState(false);
+  const [bootReady, setBootReady] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortType, setSortTypeState] = useState<SortMode>(currentSortMode);
   const [learnFilter, setLearnFilterState] = useState<LearnFilter>('all');
+  const [skeletonCardHeight, setSkeletonCardHeight] = useState(MATT_SKELETON_CARD_HEIGHT);
+  const [initialCardCount, setInitialCardCount] = useState(MIN_INITIAL_CARD_COUNT);
+  const [gridComplete, setGridComplete] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
+  const parityStartedRef = useRef(false);
 
   const setSortType = useCallback((mode: SortMode) => {
     setSortTypeState(mode);
@@ -60,48 +124,56 @@ export default function App(): React.ReactNode {
   }, []);
 
   const filtered = useMemo(
-    () => computeFilteredData(searchTerm, sortType, learnFilter),
-    [searchTerm, sortType, learnFilter, loaded, storeVersion],
+    () => (bootReady ? computeFilteredData(searchTerm, sortType, learnFilter) : []),
+    [searchTerm, sortType, learnFilter, bootReady, storeVersion],
   );
 
   const gridHTML = useMemo(
-    () => filtered.map((item) => renderCard(item)).join(''),
-    [filtered, loaded, storeVersion],
+    () => (bootReady ? filtered.slice(0, initialCardCount).map((item) => renderCard(item)).join('') : ''),
+    [filtered, bootReady, initialCardCount, storeVersion],
   );
 
-  // Boot: install shims, load preset, initialize SVG data, recalc parity.
+  // Boot: paint the responsive shell first, then run preset/SVG/parity work.
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const loadStartTime = Date.now();
-      installWindowShims();
-      await initializePreset();
-      if (isFirstLoad) await applyPreset("Matt's_Preset", true, true, true);
-      initializeSVGData();
-      if (needsParityRecalculation()) calculateAndCacheAllParity();
-      const loadDuration = Date.now() - loadStartTime;
-      const remainingTime = Math.max(0, 2500 - loadDuration);
-      await new Promise((resolve) => setTimeout(resolve, remainingTime));
-      if (cancelled) return;
-      setLoaded(true);
-      applyHintVisibility();
-      applyInstructionVisibility();
-      if (isFirstLoad) {
-        setTimeout(() => openGeneralNotesModal(), 400);
-      }
-    })();
+    const afterFirstPaint = () => {
+      window.setTimeout(() => {
+        void (async () => {
+          installWindowShims();
+          if (!isFirstLoad) await initializePreset();
+          if (cancelled) return;
+          const columns = gridRef.current ? getGridColumnCount(gridRef.current) : 1;
+          const estimatedCardHeight = getCachedCardHeight(currentPreset, columns);
+          setSkeletonCardHeight(estimatedCardHeight);
+          const initialCount = getInitialCardCount(columns, estimatedCardHeight);
+          setInitialCardCount(initialCount);
+          if (isFirstLoad) await applyPreset("Matt's_Preset", true, true, true, true);
+          if (cancelled) return;
+          const initialCases = computeFilteredData(searchTerm, sortType, learnFilter).slice(0, initialCount);
+          initializeSVGDataForCases(initialCases);
+          if (cancelled) return;
+          setBootReady(true);
+          applyHintVisibility();
+          applyInstructionVisibility();
+          updateProgress();
+          if (isFirstLoad) {
+            setTimeout(() => openGeneralNotesModal(), 400);
+          }
+        })();
+      }, 0);
+    };
+    const frame = window.requestAnimationFrame(afterFirstPaint);
     return () => {
       cancelled = true;
+      window.cancelAnimationFrame(frame);
     };
   }, []);
 
   useEffect(() => {
-    if (loaded) {
-      updateSelectLabels();
-      window.addEventListener('resize', updateSelectLabels);
-    }
+    updateSelectLabels();
+    window.addEventListener('resize', updateSelectLabels);
     return () => window.removeEventListener('resize', updateSelectLabels);
-  }, [loaded]);
+  }, []);
 
   // Search toggle behavior
   const searchToggleRef = useRef<HTMLButtonElement | null>(null);
@@ -109,7 +181,6 @@ export default function App(): React.ReactNode {
   const controlsRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    if (!loaded) return;
     const controls = controlsRef.current;
     const searchToggle = searchToggleRef.current;
     const searchInput = searchRef.current;
@@ -152,27 +223,91 @@ export default function App(): React.ReactNode {
       document.removeEventListener('click', onDocClick);
       searchInput.removeEventListener('keydown', onSearchKeydown);
     };
-  }, [loaded]);
+  }, []);
 
   // Update progress bars whenever learned state changes
   useEffect(() => {
-    if (loaded) updateProgress();
-  }, [loaded]);
+    if (bootReady) updateProgress();
+  }, [bootReady, storeVersion]);
 
-  if (!loaded) {
-    return (
-      <>
-        <LoadingScreen hidden={false} />
-      </>
-    );
-  }
+  useEffect(() => {
+    if (!bootReady || !gridRef.current) return;
+
+    setGridComplete(false);
+    if (filtered.length <= initialCardCount) {
+      setGridComplete(true);
+      return;
+    }
+
+    const grid = gridRef.current;
+    const columns = getGridColumnCount(grid);
+    const chunkSize = Math.max(columns * 4, 12);
+    let nextIndex = initialCardCount;
+    let cancelled = false;
+    let scheduledId = 0;
+
+    const appendChunk = () => {
+      if (cancelled || !gridRef.current) return;
+      const end = Math.min(filtered.length, nextIndex + chunkSize);
+      const nextItems = filtered.slice(nextIndex, end);
+      initializeSVGDataForCases(nextItems);
+      const html = nextItems.map((item) => renderCard(item)).join('');
+      if (html) gridRef.current.insertAdjacentHTML('beforeend', html);
+      nextIndex = end;
+      if (nextIndex < filtered.length) {
+        scheduledId = scheduleGridChunk(appendChunk);
+      } else {
+        updateProgress();
+        applyHintVisibility();
+        applyInstructionVisibility();
+        setGridComplete(true);
+      }
+    };
+
+    scheduledId = scheduleGridChunk(appendChunk);
+
+    return () => {
+      cancelled = true;
+      if (scheduledId) cancelGridChunk(scheduledId);
+    };
+  }, [bootReady, filtered, initialCardCount, gridHTML]);
+
+  useEffect(() => {
+    if (!bootReady || !gridComplete || parityStartedRef.current || !needsParityRecalculation()) return;
+    parityStartedRef.current = true;
+    void calculateAndCacheAllParityChunked(5, () => updateProgress());
+  }, [bootReady, gridComplete]);
+
+  useEffect(() => {
+    if (!bootReady || !gridRef.current) return;
+    const grid = gridRef.current;
+    const measure = () => {
+      const columns = getGridColumnCount(grid);
+      const cards = Array.from(grid.querySelectorAll<HTMLElement>('.card')).slice(0, Math.max(1, columns * 2));
+      if (!cards.length) return;
+      const maxHeight = Math.max(...cards.map((card) => card.getBoundingClientRect().height));
+      saveCardHeightEstimate(currentPreset, columns, maxHeight);
+      setSkeletonCardHeight(maxHeight);
+    };
+
+    const frame = window.requestAnimationFrame(measure);
+    const observer = new ResizeObserver(measure);
+    Array.from(grid.querySelectorAll<HTMLElement>('.card'))
+      .slice(0, 10)
+      .forEach((card) => observer.observe(card));
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [bootReady, gridHTML, storeVersion]);
 
   const title = 'SquanGo CSP';
 
   return (
     <>
-      <LoadingScreen hidden={true} />
-      <div className={`container${loaded ? '' : ' hidden-until-loaded'}`} id="mainContainer">
+      {/* <LoadingScreen hidden={true} /> */}
+      <div className="container" id="mainContainer">
         <header>
           <h1 className="desktop-title">{title}</h1>
           <h1 className="tablet-title">{title}</h1>
@@ -265,7 +400,36 @@ export default function App(): React.ReactNode {
           </select>
         </div>
 
-        <div className="grid" id="grid" ref={gridRef} dangerouslySetInnerHTML={{ __html: gridHTML }} />
+        {bootReady ? (
+          <div className="grid" id="grid" ref={gridRef} dangerouslySetInnerHTML={{ __html: gridHTML }} />
+        ) : (
+          <div
+            className="grid sqg-skeleton-grid"
+            id="grid"
+            ref={gridRef}
+            aria-busy="true"
+            style={{ '--sqg-card-estimated-height': `${Math.round(skeletonCardHeight)}px` } as CSSProperties}
+          >
+            {Array.from({ length: 12 }, (_, idx) => (
+              <div className="card sqg-skeleton-card" key={idx}>
+                <div className="card-header">
+                  <div className="sqg-skeleton-line sqg-skeleton-title" />
+                  <div className="sqg-skeleton-line sqg-skeleton-prob" />
+                </div>
+                <div className="card-images card-svg-container">
+                  <div><span className="sqg-skeleton-shape" /></div>
+                  <div><span className="sqg-skeleton-shape" /></div>
+                </div>
+                <div className="card-body">
+                  <div className="sqg-skeleton-line" />
+                  <div className="sqg-skeleton-line sqg-skeleton-line-short" />
+                  <div className="sqg-skeleton-line" />
+                  <div className="sqg-skeleton-line sqg-skeleton-line-mid" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
 
         <footer>
           <p>Please contact for any edits.</p>

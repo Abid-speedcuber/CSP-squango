@@ -5,6 +5,7 @@ import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { getParityText } from '../lib/parityAnalyzer';
 import {
   applyHomepageSVGsLive,
+  ensureHomepageShapeSVGsForCases,
   getHomepageShapeSVGs,
   loadHomepageImageSettings,
   resetHomepageImageSettings as resetHomepageImageSettingsDefaults,
@@ -238,65 +239,87 @@ export function isScrambleEvil(scramble: string): boolean {
 // ── Parity caching ──────────────────────────────────────────────────────────
 let lastParityCalculationSettings: Record<string, unknown> | null = null;
 
-export function calculateAndCacheAllParity(): void {
-  lastParityCalculationSettings = {
+function getParityCalculationSettings(): Record<string, unknown> {
+  return {
     colorScheme: JSON.stringify(colorScheme),
     cornerStickerMode,
     customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
     customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries())),
   };
+}
+
+function cacheParityForItem(item: AlgCase): void {
+  const customAlgs = customAlgorithms.get(item.name);
+  const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : item.odd || [];
+  const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : item.even || [];
+  const allAlgorithms = [...oddAlgos, ...evenAlgos];
+
+  const dynamicOddAlgos: string[] = [];
+  const dynamicEvenAlgos: string[] = [];
+
+  for (const alg of allAlgorithms) {
+    if (!alg || alg.trim() === '') continue;
+    if (alg === 'Done!') {
+      dynamicEvenAlgos.push(alg);
+      continue;
+    }
+    try {
+      const setup = invertScramble(alg);
+      const parityText = getParityText(
+        setup,
+        {
+          topColor: colorScheme.topColor,
+          bottomColor: colorScheme.bottomColor,
+          frontColor: colorScheme.frontColor,
+          rightColor: colorScheme.rightColor,
+          backColor: colorScheme.backColor,
+          leftColor: colorScheme.leftColor,
+        },
+        cornerStickerMode,
+      );
+      if (parityText === 'Odd') {
+        dynamicOddAlgos.push(alg);
+      } else if (parityText === 'Even') {
+        dynamicEvenAlgos.push(alg);
+      }
+    } catch (error) {
+      console.error('Error testing algorithm:', alg, error);
+    }
+  }
+
+  cachedParityAlgorithms.set(item.name, { odd: dynamicOddAlgos, even: dynamicEvenAlgos });
+}
+
+export function calculateAndCacheAllParity(): void {
+  lastParityCalculationSettings = getParityCalculationSettings();
 
   for (const item of data) {
-    const customAlgs = customAlgorithms.get(item.name);
-    const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : item.odd || [];
-    const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : item.even || [];
-    const allAlgorithms = [...oddAlgos, ...evenAlgos];
-
-    const dynamicOddAlgos: string[] = [];
-    const dynamicEvenAlgos: string[] = [];
-
-    for (const alg of allAlgorithms) {
-      if (!alg || alg.trim() === '') continue;
-      if (alg === 'Done!') {
-        dynamicEvenAlgos.push(alg);
-        continue;
-      }
-      try {
-        const setup = invertScramble(alg);
-        const parityText = getParityText(
-          setup,
-          {
-            topColor: colorScheme.topColor,
-            bottomColor: colorScheme.bottomColor,
-            frontColor: colorScheme.frontColor,
-            rightColor: colorScheme.rightColor,
-            backColor: colorScheme.backColor,
-            leftColor: colorScheme.leftColor,
-          },
-          cornerStickerMode,
-        );
-        if (parityText === 'Odd') {
-          dynamicOddAlgos.push(alg);
-        } else if (parityText === 'Even') {
-          dynamicEvenAlgos.push(alg);
-        }
-      } catch (error) {
-        console.error('Error testing algorithm:', alg, error);
-      }
-    }
-
-    cachedParityAlgorithms.set(item.name, { odd: dynamicOddAlgos, even: dynamicEvenAlgos });
+    cacheParityForItem(item);
   }
+}
+
+export async function calculateAndCacheAllParityChunked(
+  chunkSize = 6,
+  onChunk?: () => void,
+): Promise<void> {
+  lastParityCalculationSettings = getParityCalculationSettings();
+  cachedParityAlgorithms.clear();
+
+  for (let i = 0; i < data.length; i += chunkSize) {
+    for (const item of data.slice(i, i + chunkSize)) {
+      cacheParityForItem(item);
+    }
+    onChunk?.();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  }
+
+  saveState();
+  notify();
 }
 
 export function needsParityRecalculation(): boolean {
   if (!lastParityCalculationSettings) return true;
-  const current = {
-    colorScheme: JSON.stringify(colorScheme),
-    cornerStickerMode,
-    customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
-    customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries())),
-  };
+  const current = getParityCalculationSettings();
   return (
     current.colorScheme !== lastParityCalculationSettings.colorScheme ||
     current.cornerStickerMode !== lastParityCalculationSettings.cornerStickerMode ||
@@ -336,8 +359,14 @@ function ensureAllCasesHaveState(): void {
   });
 }
 
-export function initializeSVGData(): void {
+export function initializeSVGData(notifyStore = true): void {
   getHomepageShapeSVGs(homepageImageSettings, svgData);
+  applyHomepageSVGsLive(svgData);
+  if (notifyStore) notify();
+}
+
+export function initializeSVGDataForCases(cases: readonly Pick<AlgCase, 'top' | 'bottom'>[]): void {
+  ensureHomepageShapeSVGsForCases(homepageImageSettings, svgData, cases);
 }
 
 export function saveState(): void {
@@ -529,8 +558,9 @@ export async function initializePreset(): Promise<void> {
 export async function applyPreset(
   presetName: string,
   _skipWarning = false,
-  _silent = false,
+  silent = false,
   applyFull = false,
+  deferParity = false,
 ): Promise<void> {
   const preset = await loadPresetData(presetName);
   if (!preset) return;
@@ -608,10 +638,12 @@ export async function applyPreset(
   presetData = preset;
   lastParityCalculationSettings = null;
   saveState();
-  notify();
-  updateProgress();
+  if (!silent) {
+    notify();
+    updateProgress();
+  }
 
-  if (needsParityRecalculation()) {
+  if (!deferParity && needsParityRecalculation()) {
     calculateAndCacheAllParity();
   }
 }

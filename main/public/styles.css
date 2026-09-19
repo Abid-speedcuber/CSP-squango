@@ -626,6 +626,7 @@ select {
     width: 100%;
     height: 100%;
     object-fit: contain;
+    display: block;
 }
 
 .card-svg-container svg {
@@ -634,6 +635,83 @@ select {
 
 .card-body {
     padding: min(15px, 1.5vw);
+}
+
+.sqg-skeleton-card {
+    pointer-events: none;
+    overflow: hidden;
+    min-height: var(--sqg-card-estimated-height, 360px);
+}
+
+.sqg-skeleton-line,
+.sqg-skeleton-shape {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    background: var(--surface2);
+    border-radius: 4px;
+}
+
+.sqg-skeleton-line::after,
+.sqg-skeleton-shape::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        color-mix(in srgb, var(--surface-raised) 70%, transparent),
+        transparent
+    );
+    animation: sqgSkeletonGlint 1.15s ease-in-out infinite;
+}
+
+.sqg-skeleton-card .card-header {
+    min-height: 55px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.sqg-skeleton-title {
+    width: 48%;
+    height: 18px;
+}
+
+.sqg-skeleton-prob {
+    width: 64px;
+    height: 16px;
+}
+
+.sqg-skeleton-shape {
+    width: min(70%, 96px);
+    aspect-ratio: 1;
+    border-radius: 50%;
+}
+
+.sqg-skeleton-card .card-body {
+    display: grid;
+    gap: 9px;
+}
+
+.sqg-skeleton-card .card-body .sqg-skeleton-line {
+    height: 13px;
+}
+
+.sqg-skeleton-line-short {
+    width: 58%;
+}
+
+.sqg-skeleton-line-mid {
+    width: 76%;
+}
+
+@keyframes sqgSkeletonGlint {
+    100% {
+        transform: translateX(100%);
+    }
 }
 
 .algo-section {
@@ -1845,6 +1923,12 @@ body.modal-open .homepage-info-btn {
     height: 200px !important;
     display: block;
     transition: transform 0.3s ease;
+}
+
+.card-svg-container .cubeshape-svg,
+.card-svg-container .squan {
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* SVG Container Backgrounds (whitespace around the scramble shapes) */

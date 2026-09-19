@@ -738,7 +738,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
         const s = typeof settings === 'number' ? {} : settings;
         const rOuter = size * 0.4 * 0.7;
         const ringR = rOuter + size * 0.4 * 0.4;
-        const r = ringR * 1.2;
+        const r = ringR * (s.sliceRadiusScale ?? 1.2);
         const sw = (size * (s.sliceStrokeWidth ?? 0.008)).toFixed(2);
         const color = muted ? ph.slice : (colors['slice-indicator'] ?? '#6f0000');
         function polarPt(rr: number, deg: number): Point {
@@ -1099,7 +1099,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     // Content extents: piece apex radius (layerScale 1) vs slice line radius.
     const pieceMax = size * 0.4 * 0.7 * 1.366025404;
     const sliceMax = size * 0.4 * (0.7 + 0.4) * 1.2;
-    const r = Math.max(pieceMax, sliceMax) * 1.29 + exportPad;
+    const r = Math.max(pieceMax, sliceMax) * 1.08 + exportPad;
     const vbX = (cx - r).toFixed(2);
     const vbY = (cy - r).toFixed(2);
     const vbS = (r * 2).toFixed(2);
@@ -1224,7 +1224,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
 
 export const sq1core = createSquare1Core();
 
-function createConfiguredCore(options: Square1RenderOptions = {}): Square1Core {
+export function createConfiguredCore(options: Square1RenderOptions = {}): Square1Core {
   const core = createSquare1Core({ piecesColors: options.piecesColors });
   if (options.styleIndex != null) core.setActiveStyle(options.styleIndex);
   if (options.showSideColors != null) core.setShowSideColors(options.showSideColors);
