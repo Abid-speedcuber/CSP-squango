@@ -262,6 +262,7 @@ export default function App(): React.ReactNode {
       if (cancelled || !gridRef.current) return;
       const end = Math.min(filtered.length, nextIndex + chunkSize);
       const nextItems = filtered.slice(nextIndex, end);
+      if (needsParityRecalculation()) calculateAndCacheParityForCases(nextItems);
       initializeSVGDataForCases(nextItems);
       const html = nextItems.map((item) => renderCard(item)).join('');
       if (html) gridRef.current.insertAdjacentHTML('beforeend', html);

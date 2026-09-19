@@ -10,6 +10,8 @@ import {
   loadHomepageImageSettings,
   resetHomepageImageSettings as resetHomepageImageSettingsDefaults,
   saveHomepageImageSettings,
+  seedHomepageShapeSVGs,
+  type HomepageShapeSVGCachePayload,
   type HomepageImageSettings,
 } from '../lib/homepageShapes';
 import { notify } from './store';
@@ -704,6 +706,14 @@ export async function applyPreset(
     );
   }
 
+  if (preset.homepageShapeSVGCache) {
+    seedHomepageShapeSVGs(
+      homepageImageSettings,
+      svgData,
+      preset.homepageShapeSVGCache as HomepageShapeSVGCachePayload,
+    );
+  }
+
   perCaseSubtitles.clear();
   Object.entries((preset.perCaseSubtitles as Record<string, string>) || {}).forEach(([k, v]) =>
     perCaseSubtitles.set(k, String(v)),
@@ -724,6 +734,14 @@ export async function applyPreset(
     parityOrientations.set(k, Number(v)),
   );
   generalNotes = (preset.generalNotes as string) || '';
+
+  const presetParityCache = preset.cachedParityAlgorithms as
+    | Record<string, { odd: string[]; even: string[] }>
+    | undefined;
+  cachedParityAlgorithms.clear();
+  if (presetParityCache) {
+    Object.entries(presetParityCache).forEach(([k, v]) => cachedParityAlgorithms.set(k, v));
+  }
 
   if (applyFull) {
     if (preset.scrambleImageSize != null) scrambleImageSize = Number(preset.scrambleImageSize);
@@ -759,7 +777,7 @@ export async function applyPreset(
 
   currentPreset = presetName;
   presetData = preset;
-  lastParityCalculationSettings = null;
+  lastParityCalculationSettings = presetParityCache ? getParityCalculationSettings() : null;
   saveState();
   if (!silent) {
     notify();

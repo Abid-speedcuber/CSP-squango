@@ -50,9 +50,9 @@ export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
 const SETTINGS_STORAGE_KEY = 'sq1-homepage-image-settings';
 const SVG_CACHE_HASH_KEY = 'sq1-homepage-svg-cache-settings';
 const SVG_CACHE_ITEM_PREFIX = 'sq1-homepage-svg-cache-item';
-const SVG_CACHE_VERSION = 4;
+const SVG_CACHE_VERSION = 5;
 const HOMEPAGE_SLICE_STROKE_SCALE = 0.22;
-const HOMEPAGE_SLICE_RADIUS_SCALE = 0.98;
+const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
 
 export function isDarkTheme(): boolean {
   return (
@@ -140,6 +140,11 @@ export function renderLayerShapeSVG(
 
 export function homepageShapeSVGKey(layer: 'top' | 'bottom', layerName: string): string {
   return `${layer}:${layerName}`;
+}
+
+export interface HomepageShapeSVGCachePayload {
+  hash: string;
+  shapes: Record<string, string>;
 }
 
 function splitHomepageShapeSVGKey(key: string): { layer: 'top' | 'bottom'; layerName: string } | null {
@@ -332,6 +337,37 @@ export async function compressShapeSVGs(shapes: Record<string, string>): Promise
 
 function settingsHash(settings: HomepageImageSettings): string {
   return JSON.stringify({ ...settings, __dark: isDarkTheme(), __svgCacheVersion: SVG_CACHE_VERSION });
+}
+
+export function getHomepageShapeSVGCacheHash(settings: HomepageImageSettings): string {
+  return settingsHash(settings);
+}
+
+export function seedHomepageShapeSVGs(
+  settings: HomepageImageSettings,
+  svgData: Record<string, string>,
+  payload: HomepageShapeSVGCachePayload,
+): boolean {
+  const hash = settingsHash(settings);
+  if (payload.hash !== hash) return false;
+  for (const [key, svg] of Object.entries(payload.shapes)) {
+    svgData[key] = svg;
+    if (typeof localStorage !== 'undefined') {
+      try {
+        localStorage.setItem(cacheItemStorageKey(hash, key), svg);
+      } catch {
+        // Seeding is an optimization only.
+      }
+    }
+  }
+  if (typeof localStorage !== 'undefined') {
+    try {
+      localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
+    } catch {
+      // Seeding is an optimization only.
+    }
+  }
+  return true;
 }
 
 /**

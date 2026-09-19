@@ -85,6 +85,32 @@ test('legacy-format presets with redundant fields still load (backward compatibl
   expect(state.cachedParityAlgorithms.size).toBe(90);
 });
 
+test("Matt's boot preset seeds parity cache for first paint", async () => {
+  presetPayload = loadPresetFile("Matt's_Preset.boot.json");
+  await state.applyPreset("Matt's_Preset", true, true, true, true, true);
+
+  expect(state.cachedParityAlgorithms.size).toBe(90);
+  expect(state.needsParityRecalculation()).toBe(false);
+  const left42 = state.cachedParityAlgorithms.get('Left 4-2/Paired Edges');
+  expect(left42?.odd).toContain('(-2,-4)/(4,0)/(1,0)/(-3,-3)/');
+  expect(left42?.even).toContain('(0,-2)/(-2,0)/(-1,-2)/(-3,-3)/');
+});
+
+test("Matt's boot preset seeds the first four cards' homepage SVGs", async () => {
+  presetPayload = loadPresetFile("Matt's_Preset.boot.json");
+  Object.keys(state.svgData).forEach((key) => delete state.svgData[key]);
+  await state.applyPreset("Matt's_Preset", true, true, true, true, true);
+
+  expect(Object.keys(state.svgData).sort()).toEqual([
+    'bottom:Paired_edges',
+    'top:Left_4_2',
+    'top:Right_4_2',
+    'top:svg_3_3',
+    'top:svg_4_1_1',
+  ]);
+  expect(state.svgData['top:Left_4_2']).toContain('<svg');
+});
+
 test('Matt boot-visible algorithms are classified with evilness before render', async () => {
   presetPayload = loadPresetFile("Matt's_Preset.json");
   await state.applyPreset("Matt's_Preset", true, true, true, true);
