@@ -14,6 +14,23 @@ let quickEditState = {
 // Load auto-select setting from localStorage
 let autoSelectTextOnFocus = localStorage.getItem('autoSelectTextOnFocus') !== 'false'; // Default true
 
+// All algorithms for a case: custom overrides first, otherwise the defaults from algs.js
+function getCaseAlgs(item) {
+    const customAlgs = customAlgorithms.get(item.name);
+    return customAlgs
+        ? [...(customAlgs.odd || []), ...(customAlgs.even || [])]
+        : [...(item.odd || []), ...(item.even || [])];
+}
+
+// Column count needed to fit the longest case row (never fewer than 6)
+function getRequiredAlgColumnCount() {
+    let longest = 0;
+    for (const item of data) {
+        longest = Math.max(longest, getCaseAlgs(item).length);
+    }
+    return Math.max(6, longest);
+}
+
 // Expand :varName: tokens in an alg string using algVariables map
 function expandAlgVariables(alg) {
     if (!alg || !algVariables || algVariables.size === 0) return alg;
@@ -42,7 +59,8 @@ function generateGeneralTableRowsShell() {
 
 function generateAlgorithmsTableRowsShell() {
     const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
-    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`).join('');
+    const colCount = 1 + (quickEditState.visibleAlgColumns || 6);
+    return sortedData.map(item => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="${colCount}" style="height:41px;"></td></tr>`).join('');
 }
 
 function hydrateGeneralRow(row) {
@@ -69,9 +87,9 @@ function hydrateAlgorithmsRow(row) {
     if (!item) return;
     const visibleCols = quickEditState.visibleAlgColumns || 6;
     const displayName = getDisplayName(item.name);
-    const customAlgs = customAlgorithms.get(item.name);
-    let allAlgs = customAlgs ? [...(customAlgs.odd || []), ...(customAlgs.even || [])] : [...(item.odd || []), ...(item.even || [])];
-    const totalCols = Math.max(visibleCols, 6);
+    let allAlgs = getCaseAlgs(item);
+    // Render a cell for every alg — never truncate the row (hidden cells still save)
+    const totalCols = Math.max(visibleCols, allAlgs.length);
     while (allAlgs.length < totalCols) allAlgs.push('');
     row.classList.remove('qe-lazy-row');
     row.innerHTML = `
@@ -158,6 +176,9 @@ function openQuickEditModal() {
     const modal = document.createElement('div');
     modal.className = 'quick-edit-fullscreen';
     modal.id = 'quickEditModal';
+
+    // Size the algorithm table to fit the longest case row (min 6 columns)
+    quickEditState.visibleAlgColumns = getRequiredAlgColumnCount();
 
     modal.innerHTML = `
         <div class="quick-edit-screen">
@@ -323,17 +344,10 @@ function generateAlgorithmsTableRows() {
 
     return sortedData.map(item => {
         const displayName = getDisplayName(item.name);
-        const customAlgs = customAlgorithms.get(item.name);
-        let allAlgs = [];
+        let allAlgs = getCaseAlgs(item);
 
-        if (customAlgs) {
-            allAlgs = [...(customAlgs.odd || []), ...(customAlgs.even || [])];
-        } else {
-            allAlgs = [...(item.odd || []), ...(item.even || [])];
-        }
-
-        // Pad to visible columns (minimum 6)
-        const totalCols = Math.max(visibleCols, 6);
+        // Render a cell for every alg — never truncate the row (hidden cells still save)
+        const totalCols = Math.max(visibleCols, allAlgs.length);
         while (allAlgs.length < totalCols) {
             allAlgs.push('');
         }
@@ -445,7 +459,6 @@ function addAlgorithmColumns() {
 
     updateAlgorithmTableHeaders();
     updateAlgorithmTableCells();
-    document.getElementById('visibleColumnCount').textContent = quickEditState.visibleAlgColumns;
 }
 
 function updateAlgorithmTableHeaders() {
@@ -1397,8 +1410,8 @@ function forceCloseQuickEditModal() {
             currentFindIndex: -1,
             findMatches: [],
             lastFocusedCell: null,
-            allMatchRanges: [],
-            visibleAlgColumns: 6
+            allMatchRanges: []
+            // visibleAlgColumns is recomputed on open by getRequiredAlgColumnCount()
         };
     });
 }
@@ -1451,7 +1464,7 @@ window.showQuickEditInfoModal = function () {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">4</div>
-                        <div class="training-info-text"><strong>Reveal Columns:</strong> It is not hardcoded that you can have at most 6 algorithms for a case. Click +2 in the Algorithms tab to reveal more columns as needed.</div>
+                        <div class="training-info-text"><strong>Reveal Columns:</strong> Click +2 in the Algorithms tab to add more columns as needed.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">5</div>

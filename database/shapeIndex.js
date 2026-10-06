@@ -166,7 +166,7 @@ const shapeIndexMap = {
   "3-1-2/Perpendicular Edges": "1917",
   "3-2-1/Perpendicular Edges": "843",
   "2-2-2/Paired Edges": "310",
-  "Scallop/Barrel": "704",
+  "Scallop/Barrel": "2691",
   "Right Pawn/Left Fist": "2747",
   "Left Pawn/Right Fist": "2298",
   "Shield/Muffin": "2843",
