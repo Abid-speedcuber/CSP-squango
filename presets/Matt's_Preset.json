@@ -138,7 +138,7 @@
     "3-2-1/Parallel Edges": "<a href=\"https://youtu.be/V5zx2MUSNJI&t=516s\" target=\"blank\">video timestamp</a><br>nice, because although it's not all pairs, it's able to go to all pairs in one slice<br><b>good sol:</b> → 4-2/pair good sol<br><b>bad sol:</b> 4 slices → kites",
     "Scallop/Right Pawn": "<a href=\"https://youtu.be/kKOSxk84v90&t=870s\" target=\"blank\">video timestamp</a><br>follow, because similar to scallop/fist, a bear can eat scallops (paw is like a bear's fist)<br><b>good sol:</b> join a <b>pair to paw</b> → 5-1/pair<br><b>bad sol:</b> join an <b>L to scallop</b> → 5-1/pair",
     "Scallop/Left Pawn": "<a href=\"https://youtu.be/kKOSxk84v90&t=870s\" target=\"blank\">video timestamp</a><br>follow, because similar to scallop/fist, a bear can eat scallops (paw is like a bear's fist)<br><b>good sol:</b> join a <b>pair to paw</b> → 5-1/pair<br><b>bad sol:</b> join an <b>L to scallop</b> → 5-1/pair",
-    "Scallop/Shield": "<a href=\"https://youtu.be/kKOSxk84v90&t=242s\" target=\"blank\">video timestamp</a><br>nice, because scallops have their shells, which are kinda like shields, so this CS makes sense<br><b>good sol:</b> hide a pair on the <b>frontslash</b> line, 2 slices → scallops<br><b>bad sol:</b> hide a pair on the <b>backslash</b> line, 2 slices → scallops",
+    "Scallop/Shield": "<a href=\"https://youtu.be/kKOSxk84v90&t=242s\" target=\"blank\">video timestamp</a><br>evil, because using a shield to block out scallop will make you starve<br><b>good sol:</b> shield lone corner on the <b>frontslash</b> line, 2 slices → scallops<br><b>bad sol:</b> shield lone corner on the <b>backslash</b> line, 2 slices → scallops",
     "Scallop/Muffin": "<a href=\"https://youtu.be/kKOSxk84v90&t=927s\" target=\"blank\">video timestamp</a><br>evil, because scallop and muffin are NOT food that go well together<br><b>good sol:</b> put the muffin lone edge on the <b>frontslash</b> line, 2 slices → scallop/kite<br><b>bad sol:</b> put the muffin lone edge on the <b>backslash</b> line, 2 slices → scallop/kite",
     "Scallop/Left Fist": "<a href=\"https://youtu.be/kKOSxk84v90&t=295s\" target=\"blank\">video timestamp</a><br>follow, because a fist can eat the scallop (fist dominates)<br><b>good sol:</b> 2 slices <b>2-gen</b> to scallop/kite<br><b>bad sol:</b> 2 slices <b>3-gen</b> to scallop/kite",
     "Scallop/Right Fist": "<a href=\"https://youtu.be/kKOSxk84v90&t=295s\" target=\"blank\">video timestamp</a><br>follow, because a fist can eat the scallop (fist dominates)<br><b>good sol:</b> 2 slices <b>2-gen</b> to scallop/kite<br><b>bad sol:</b> 2 slices <b>3-gen</b> to scallop/kite",
@@ -422,7 +422,7 @@
     "3-2-1/Parallel Edges": "nice case",
     "Scallop/Right Pawn": "evil case",
     "Scallop/Left Pawn": "nice case",
-    "Scallop/Shield": "nice case",
+    "Scallop/Shield": "evil case",
     "Scallop/Muffin": "evil case",
     "Scallop/Left Fist": "nice case",
     "Scallop/Right Fist": "evil case",
@@ -874,12 +874,12 @@
     },
     "Scallop/Shield": {
       "odd": [
-        "(4,-4)/(0,-2)/(2,0)/(1,2)/(-3,-3)/",
-        "(2,-2)/(-2,0)/(0,2)/(-1,-2)/(-3,-3)/"
-      ],
-      "even": [
         "(2,0)/(0,2)/(-2,0)/(-1,-2)/(-3,-3)/",
         "(-6,-4)/(2,0)/(0,-2)/(1,2)/(-3,-3)/"
+      ],
+      "even": [
+        "(4,-4)/(0,-2)/(2,0)/(1,2)/(-3,-3)/",
+        "(2,-2)/(-2,0)/(0,2)/(-1,-2)/(-3,-3)/"
       ]
     },
     "Scallop/Muffin": {
@@ -2366,12 +2366,14 @@
     "Kite/Right Fist": true,
     "Muffin/Barrel": true,
     "Shield/Kite": true,
+    "Shield/Square": true,
     "Shield/Muffin": true,
     "Shield/Left Fist": true,
     "Shield/Right Fist": true,
     "Scallop/Kite": true,
     "Scallop/Muffin": true,
     "Scallop/Scallop": true,
+    "Scallop/Shield": true,
     "Scallop/Square": true,
     "Scallop/Right Fist": true,
     "Scallop/Right Pawn": true,
@@ -2388,8 +2390,7 @@
     "Right Pawn/Right Pawn": true,
     "4-1-1/Parallel Edges": true,
     "Left Pawn/Kite": true,
-    "Right Pawn/Barrel": true,
-    "Shield/Square": true
+    "Right Pawn/Barrel": true
   },
   "parityTracerImageSize": null,
   "parityTracerShowArrow": null,
