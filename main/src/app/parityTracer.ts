@@ -113,7 +113,7 @@ function refreshTracerSettings(): void {
   const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
   setZ2TracingMode(storedZ2 === null ? true : storedZ2 === 'true');
   const storedImgSize = localStorage.getItem('parityTracerImageSize');
-  setParityTracerImageSize(storedImgSize === null ? 200 : parseInt(storedImgSize, 10));
+  setParityTracerImageSize(storedImgSize === null ? 300 : parseInt(storedImgSize, 10));
   const storedArrow = localStorage.getItem('parityTracerShowArrow');
   setShowCircularArrow(storedArrow === null ? true : storedArrow === 'true');
   const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
@@ -1738,7 +1738,7 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
                 rightColor: config.rightFaceColorForVisualization,
                 backColor: config.backFaceColorForVisualization,
                 leftColor: config.leftFaceColorForVisualization,
-              });
+              }, 100);
 
               const { topUnits: topRawU, botUnits: botRawU } = hexToUnits(tlHex, blHex);
               const topArrowData = calculateArrowAngle(sixStepParity.topTraceRotation, topRawU, 'TOP', sixStepParity.topBits);
@@ -1939,7 +1939,7 @@ function openNewParityAnalysis(setup: string | null): void {
     leftColor: colorScheme.leftColor,
     scrambleText: setup || '',
     generateImage: true,
-    imageSize: parseInt(localStorage.getItem('parityTracerImageSize') || '200', 10) || 200,
+    imageSize: parseInt(localStorage.getItem('parityTracerImageSize') || '300', 10) || 300,
   });
 }
 
@@ -1962,7 +1962,7 @@ function buildConfigFromColorScheme(): TracerConfig {
     leftFaceColorForVisualization: colorScheme.leftColor,
     scrambleTextInput: '',
     shouldGenerateImage: true,
-    imageSizeInPixels: parseInt(localStorage.getItem('parityTracerImageSize') || '200', 10) || 200,
+    imageSizeInPixels: parseInt(localStorage.getItem('parityTracerImageSize') || '300', 10) || 300,
     returnOnlyParityValue: false,
   };
 }

@@ -560,7 +560,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
             min: 0,
             max: 0.02,
             step: 0.0005,
-            default: 0.012,
+            default: 0.01,
             decimals: 4,
           },
           middle: {
@@ -571,7 +571,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
             min: 0,
             max: 0.03,
             step: 0.0005,
-            default: 0.012,
+            default: 0.01,
             decimals: 4,
           },
           bottom: {
@@ -582,7 +582,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
             min: 0,
             max: 0.02,
             step: 0.0005,
-            default: 0.01,
+            default: 0.008,
             decimals: 4,
           },
         },
