@@ -256,13 +256,21 @@ export default function App(): React.ReactNode {
   useEffect(() => {
     if (!bootReady || !gridRef.current) return;
 
+    const grid = gridRef.current;
+
     setGridComplete(false);
+
+    // This effect is the single owner of the grid's children. Reset the content
+    // to the freshly computed initial slice before appending, so cards appended
+    // by a previous render (e.g. a prior learn-filter mode) are cleared instead
+    // of accumulating into duplicates.
+    grid.innerHTML = gridHTML;
+
     if (filtered.length <= initialCardCount) {
       setGridComplete(true);
       return;
     }
 
-    const grid = gridRef.current;
     const columns = getGridColumnCount(grid);
     const chunkSize = Math.max(columns * 2, 6);
     let nextIndex = initialCardCount;
@@ -425,12 +433,13 @@ export default function App(): React.ReactNode {
         </div>
 
         {bootReady ? (
-          <div className="grid" id="grid" ref={gridRef} dangerouslySetInnerHTML={{ __html: gridHTML }} />
+          <div className="grid" id="grid" ref={gridRef} key="grid-real" />
         ) : (
           <div
             className="grid sqg-skeleton-grid"
             id="grid"
             ref={gridRef}
+            key="grid-skeleton"
             aria-busy="true"
             style={{ '--sqg-card-estimated-height': `${Math.round(skeletonCardHeight)}px` } as CSSProperties}
           >
