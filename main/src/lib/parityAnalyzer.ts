@@ -204,9 +204,9 @@ export function setZ2TracingMode(enabled: boolean): void {
 }
 
 let parityTracerImageSize = (() => {
-  if (typeof localStorage === 'undefined') return 300;
+  if (typeof localStorage === 'undefined') return 280;
   const stored = localStorage.getItem(IMAGE_SIZE_STORAGE_KEY);
-  return stored === null ? 300 : parseInt(stored, 10);
+  return stored === null ? 280 : parseInt(stored, 10);
 })();
 
 export function getParityTracerImageSize(): number {
