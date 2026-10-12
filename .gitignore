@@ -69,3 +69,5 @@ node_modules/
 .dataconnect
 
 main/dist/
+
+.opencode/
