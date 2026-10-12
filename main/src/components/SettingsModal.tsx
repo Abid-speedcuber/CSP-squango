@@ -41,6 +41,7 @@ import {
 import type { HomepageImageSettings } from '../lib/homepageShapes';
 import { applyAlgorithmFontSize, applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
+import InfoTip from './InfoTip';
 import {
   applyHideImgLive,
   applyHoldLive,
@@ -57,14 +58,7 @@ function _row(labelHtml: string, controlHtml: React.ReactNode, tipHtml?: string)
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
         <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>{labelHtml}</label>
-        {tipHtml ? (
-          <span className="info-wrapper">
-            <button className="settings-info-btn" aria-label="More info">
-              <img src="res/info.svg" alt="" />
-            </button>
-            <span className="info-box" dangerouslySetInnerHTML={{ __html: tipHtml }} />
-          </span>
-        ) : null}
+        {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
       </div>
       <div style={{ flexShrink: 0 }}>{controlHtml}</div>
     </div>
@@ -125,18 +119,7 @@ function _actionBtn(label: string, onAction: () => void, tipHtml?: string): Reac
       }}
     >
       <span>{label}</span>
-      {tipHtml ? (
-        <span className="info-wrapper">
-          <button
-            className="settings-info-btn"
-            aria-label="More info"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <img src="res/info.svg" alt="" />
-          </button>
-          <span className="info-box" dangerouslySetInnerHTML={{ __html: tipHtml }} />
-        </span>
-      ) : null}
+      {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
     </div>
   );
 }
@@ -220,12 +203,7 @@ function HomepageImagesSection(): React.ReactNode {
         <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
           {label}
         </label>
-        <span className="info-wrapper">
-          <button className="settings-info-btn" aria-label="More info">
-            <img src="res/info.svg" alt="" />
-          </button>
-          <span className="info-box">{tip}</span>
-        </span>
+        <InfoTip tipHtml={tip} />
       </div>
       <input
         type="range"
@@ -253,12 +231,7 @@ function HomepageImagesSection(): React.ReactNode {
             <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>
               {label}
             </label>
-            <span className="info-wrapper">
-              <button className="settings-info-btn" aria-label="More info">
-                <img src="res/info.svg" alt="" />
-              </button>
-              <span className="info-box">{tip}</span>
-            </span>
+            <InfoTip tipHtml={tip} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <input
@@ -544,15 +517,7 @@ function ParityTab(): React.ReactNode {
           <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Image Size: <span id="pt_imgSizeVal">{ptSize}px</span>
           </label>
-          <span className="info-wrapper">
-            <button className="settings-info-btn" aria-label="More info">
-              <img src="res/info.svg" alt="" />
-            </button>
-            <span className="info-box">
-              Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and
-              preference.
-            </span>
-          </span>
+          <InfoTip tipHtml="Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference." />
         </div>
         <input
           id="pt_imgSize"
@@ -778,14 +743,7 @@ function TrainerTab(): React.ReactNode {
           <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Hold-to-Start: <span id="tr_holdVal">{holdVal.toFixed(2)}s</span>
           </label>
-          <span className="info-wrapper">
-            <button className="settings-info-btn" aria-label="More info">
-              <img src="res/info.svg" alt="" />
-            </button>
-            <span className="info-box">
-              How long you must hold the spacebar (or press the timer zone) before starting the timer.
-            </span>
-          </span>
+          <InfoTip tipHtml="How long you must hold the spacebar (or press the timer zone) before starting the timer." />
         </div>
         <input
           id="tr_hold"
@@ -907,12 +865,7 @@ function AnimateTab(): React.ReactNode {
           <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Auto-play Delay: <span id="aa_delayVal">{delay}ms</span>
           </label>
-          <span className="info-wrapper">
-            <button className="settings-info-btn" aria-label="More info">
-              <img src="res/info.svg" alt="" />
-            </button>
-            <span className="info-box">The pause between moves when auto-playing an algorithm.</span>
-          </span>
+          <InfoTip tipHtml="The pause between moves when auto-playing an algorithm." />
         </div>
         <input
           id="aa_delay"

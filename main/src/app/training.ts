@@ -34,6 +34,7 @@ import { visualizeFromScramble, visualizeShapes } from '../lib/drawScramble';
 import { getColorName, getParityText } from '../lib/parityAnalyzer';
 import { pushModalState, closeModalWithHistory, attachOverlayClose } from './modal';
 import { showToast } from './toast';
+import { mountInfoTip } from '../components/mountInfoTip';
 
 // ── Training modal state (mirrors legacy) ───────────────────────────────────
 let currentTrainingCase: string | null = null;
@@ -2784,10 +2785,7 @@ function createSelectorModal(): void {
                     onchange="_toggleGoThroughFromSelector(this.checked)" style="transform:scale(1.2); cursor:pointer;">
                 <label for="selectorGoThrough" style="font-size:0.88rem; color:var(--text-secondary); cursor:pointer;">
                     Go through each case once
-                    <span class="info-wrapper">
-                        <button class="settings-info-btn" aria-label="More info" onclick="event.preventDefault();event.stopPropagation();"><img src="res/info.svg"></button>
-                        <span class="info-box">Go through each selected case once, and show a message after a full pass.</span>
-                    </span>
+                    <span id="selectorGoThroughTip"></span>
                 </label>
             </div>
         </div>
@@ -2796,6 +2794,11 @@ function createSelectorModal(): void {
   attachOverlayClose(modal, closeSelectorModal);
 
   document.body.appendChild(modal);
+
+  const tipHost = modal.querySelector<HTMLElement>('#selectorGoThroughTip');
+  if (tipHost) {
+    mountInfoTip(tipHost, 'Go through each selected case once, and show a message after a full pass.');
+  }
 }
 
 function onSelectorSearch(val: string): void {
