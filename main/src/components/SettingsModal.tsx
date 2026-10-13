@@ -267,22 +267,18 @@ function HomepageImagesSection(): React.ReactNode {
   return (
     <>
       {_sectionTitle('Homepage Images')}
-      <div style={{ marginBottom: 10, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-        The case images on the home page are generated on the fly from the parity tracer's shape library and cached in
-        your browser. Changes apply to all 90 cases instantly.
-      </div>
-      {strokeSlider('strokeWidthOuter', 'Outline Stroke Width', 'Thickness of the outer shape outlines.')}
-      {strokeSlider('sliceStrokeWidth', 'Slice Line Width', 'Thickness of the slice indicator line drawn through the shape.')}
-      {strokeSlider('strokeWidthInner', 'Inner Line Width', 'Thickness of the inner seam lines between adjacent pieces.')}
+      {strokeSlider('strokeWidthOuter', 'Outline Stroke Width', 'Thickness of the outlines.')}
+      {strokeSlider('sliceStrokeWidth', 'Slice Line Width', 'Thickness of the slice indicator line, drawn through the shape.')}
+      {strokeSlider('strokeWidthInner', 'Inner Line Width', 'Thickness of the inner seam lines between adjacent pieces????')}
       {_row(
-        'Special Piece Color',
+        'Tracing Position Highlight',
         <input
           type="color"
           value={settings.specialPieceColor}
           style={{ width: 44, height: 28, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
           onChange={(e) => update({ specialPieceColor: e.target.value })}
         />,
-        'The color of the tracing-start piece — the piece the parity tracer starts counting from.',
+        'Adjust the color of your tracing position. This displays on the homepage.',
       )}
       {autoColorRow('borderColor', 'Outline Color', 'Color of the piece outlines. In "Auto" it follows the app theme (black in light mode, light grey in dark mode).')}
       {autoColorRow('sliceColor', 'Slice Line Color', 'Color of the slice indicator line. In "Auto" it follows the app theme.')}
