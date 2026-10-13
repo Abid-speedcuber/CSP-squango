@@ -1,19 +1,4 @@
-import { hideInstructions, setHideInstructions, setHideParenthesis, setShowHints } from './state';
-
-/** Port of legacy `applyHintVisibility` (modals.js). */
-export function applyHintVisibility(): void {
-  if (showHintsValue()) {
-    document.body.classList.remove('hide-hints');
-  } else {
-    document.body.classList.add('hide-hints');
-  }
-}
-
-function showHintsValue(): boolean {
-  return localStorage.getItem('showHints') !== null
-    ? localStorage.getItem('showHints') === 'true'
-    : true;
-}
+import { hideInstructions, setHideInstructions, setHideParenthesis } from './state';
 
 /** Port of legacy `applyInstructionVisibility` (modals.js). */
 export function applyInstructionVisibility(): void {
@@ -23,12 +8,6 @@ export function applyInstructionVisibility(): void {
   instructionBtns.forEach((btn) => {
     (btn as HTMLElement).style.display = hideInstructions ? 'none' : 'flex';
   });
-}
-
-/** Port of legacy `toggleHints` (modals.js). */
-export function toggleHints(isChecked: boolean): void {
-  setShowHints(isChecked);
-  applyHintVisibility();
 }
 
 /** Port of legacy `toggleHideInstructions` (modals.js). */

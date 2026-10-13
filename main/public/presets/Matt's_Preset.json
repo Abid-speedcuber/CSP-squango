@@ -185,7 +185,6 @@
     "Right Pawn/Right Fist": "bad paw/bad fist",
     "Right Pawn/Right Pawn": "bad paw/bad paw"
   },
-  "showHints": true,
   "hideInstructions": false,
   "colorScheme": {
     "topColor": "#000000",

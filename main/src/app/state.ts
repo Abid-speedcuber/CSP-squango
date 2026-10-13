@@ -178,10 +178,6 @@ export let hideParenthesis = false;
 export let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize') || '', 10) || 14;
 export let generalNotes = '';
 export let enhancedAccess = localStorage.getItem('enhancedAccess') === 'true';
-export let showHints =
-  localStorage.getItem('showHints') !== null
-    ? localStorage.getItem('showHints') === 'true'
-    : true;
 export let currentSortMode: SortMode =
   (localStorage.getItem('sortMode') as SortMode) || 'probability';
 export let needsReorder = false;
@@ -639,8 +635,6 @@ function loadBootSavedState(): boolean {
 }
 
 if (isFirstLoad) {
-  showHints = true;
-  localStorage.setItem('showHints', 'true');
   showPaths = true;
   enablePriorityLearning = true;
   displayNames = { ...defaultDisplayNames };
@@ -764,10 +758,6 @@ export async function applyPreset(
   if (applyFull) {
     if (preset.scrambleImageSize != null) scrambleImageSize = Number(preset.scrambleImageSize);
     if (preset.hideInstructions !== undefined) hideInstructions = Boolean(preset.hideInstructions);
-    if (preset.showHints !== undefined) {
-      showHints = Boolean(preset.showHints);
-      localStorage.setItem('showHints', showHints.toString());
-    }
     if (preset.profileName) {
       profileName = String(preset.profileName);
       localStorage.setItem('profileName', profileName);
@@ -846,7 +836,6 @@ export function exportData(): void {
     parityOrientations: Object.fromEntries(parityOrientations),
     showPaths: true,
     displayNames,
-    showHints,
     hideInstructions,
     hideParenthesis,
     colorScheme,
@@ -983,10 +972,6 @@ export function importData(jsonStr: string): void {
 
     lastParityCalculationSettings = null;
 
-    if (state.showHints !== undefined) {
-      showHints = Boolean(state.showHints);
-      localStorage.setItem('showHints', showHints.toString());
-    }
     if (state.customShapesForParityTracerLibrary) {
       localStorage.setItem(
         'customShapesForParityTracerLibrary',
@@ -1258,12 +1243,6 @@ export function setHideInstructions(value: boolean): void {
 export function setHideParenthesis(value: boolean): void {
   hideParenthesis = value;
   saveState();
-  notify();
-}
-
-export function setShowHints(value: boolean): void {
-  showHints = value;
-  localStorage.setItem('showHints', value.toString());
   notify();
 }
 

@@ -1922,11 +1922,6 @@ body.modal-open .homepage-info-btn {
     cursor: pointer;
 }
 
-/* Hint Toggle Styles */
-.hide-hints .label-toggle {
-    display: none;
-}
-
 /* SVG Styling */
 .card .card-svg-container svg path {
     transition: fill 0.3s ease, stroke 0.3s ease;

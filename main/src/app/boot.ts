@@ -1,6 +1,6 @@
 /**
  * Global app boot behaviors — ported from legacy `js/index.js`:
- *   • Alt-keyboard shortcuts (Alt+T/H/P/W/Q)
+ *   • Alt-keyboard shortcuts (Alt+H/P/W/Q)
  *   • Drag-and-drop JSON import
  *   • URL scramble deep-links (#s=... or bare hash with parens)
  */
@@ -9,10 +9,8 @@ import {
   hideParenthesis,
   setHideInstructions,
   setHideParenthesis,
-  setShowHints,
-  showHints,
 } from './state';
-import { applyHintVisibility, applyInstructionVisibility } from './visibility';
+import { applyInstructionVisibility } from './visibility';
 import { showToast } from './toast';
 
 function setToggleChecked(id: string, checked: boolean): void {
@@ -26,24 +24,17 @@ function installKeyboardShortcuts(): void {
     const w = window as unknown as Record<string, unknown>;
 
     switch (e.key.toLowerCase()) {
-      case 't': // Alt+T - Show tracing guides
-        e.preventDefault();
-        setShowHints(!showHints);
-        applyHintVisibility();
-        setToggleChecked('hintToggle', !showHints);
-        showToast(`Tracing guides ${!showHints ? 'enabled' : 'disabled'}`, 2000, 'info');
-        break;
       case 'h': // Alt+H - Hide instructions
         e.preventDefault();
         setHideInstructions(!hideInstructions);
         applyInstructionVisibility();
-        setToggleChecked('hideInstructionsToggle', !hideInstructions);
+        setToggleChecked('hs_hideInstructionsToggle', !hideInstructions);
         showToast(`Instruction buttons ${!hideInstructions ? 'hidden' : 'shown'}`, 2000, 'info');
         break;
       case 'p': // Alt+P - Hide parenthesis
         e.preventDefault();
         setHideParenthesis(!hideParenthesis);
-        setToggleChecked('hideParenthesisToggle', !hideParenthesis);
+        setToggleChecked('hs_hideParenthesisToggle', !hideParenthesis);
         showToast(`Parenthesis ${!hideParenthesis ? 'hidden' : 'shown'}`, 2000, 'info');
         break;
       case 'w': // Alt+W - Parity tracing personalization

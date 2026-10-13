@@ -23,7 +23,7 @@ import { installWindowShims } from '../app/shims';
 import { renderCard } from '../app/cardHTML';
 import { reconcileGrid } from '../app/gridRender';
 import { openGeneralNotesModal } from '../app/notes';
-import { applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
+import { applyInstructionVisibility } from '../app/visibility';
 // LoadingScreen intentionally disabled: the app now paints the shell first and
 // uses inline skeleton cards while the heavier boot work runs after first paint.
 // import LoadingScreen from './LoadingScreen';
@@ -182,7 +182,6 @@ export default function App(): React.ReactNode {
           initializeSVGDataForCases(initialCases);
           if (cancelled) return;
           setBootReady(true);
-          applyHintVisibility();
           applyInstructionVisibility();
           updateProgress();
           if (isFirstLoad) {
@@ -291,7 +290,6 @@ export default function App(): React.ReactNode {
       if (needsParityRecalculation()) calculateAndCacheParityForCases(items);
       reconcileGrid(grid, items);
       updateProgress();
-      applyHintVisibility();
       applyInstructionVisibility();
       setGridComplete(true);
       setGridRenderTick((tick) => tick + 1);
@@ -328,7 +326,6 @@ export default function App(): React.ReactNode {
         scheduledHandle = scheduleGridChunk(appendChunk);
       } else {
         updateProgress();
-        applyHintVisibility();
         applyInstructionVisibility();
         setGridComplete(true);
         setGridRenderTick((tick) => tick + 1);

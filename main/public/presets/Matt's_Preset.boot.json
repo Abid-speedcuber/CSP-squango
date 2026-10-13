@@ -456,7 +456,6 @@
     "Shield/Square": true
   },
   "hideInstructions": false,
-  "showHints": true,
   "profileName": "Profile",
   "profileAvatar": "res/avatar.svg",
   "cachedParityAlgorithms": {
