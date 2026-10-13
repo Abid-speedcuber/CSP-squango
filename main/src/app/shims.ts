@@ -42,7 +42,7 @@ import {
   showNotesInfoModal,
   toggleEditGeneralNotes,
 } from './notes';
-import { openUnifiedSettings } from './settingsUI';
+import { openHomepageImageSettings, openUnifiedSettings } from './settingsUI';
 import { installSidebarShims } from './sidebar';
 import { installEditCaseShims, openEditCaseModal } from './editCase';
 import { installTrainingShims, openTrainingModal } from './training';
@@ -448,6 +448,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
 export function installWindowShims(): void {
   const w = window as unknown as Record<string, unknown>;
 
+  w.openHomepageImageSettings = openHomepageImageSettings;
   installSidebarShims();
   installEditCaseShims();
   installTrainingShims();

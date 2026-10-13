@@ -8,6 +8,7 @@ import {
   ensureHomepageShapeSVGsForCases,
   getHomepageShapeSVGs,
   loadHomepageImageSettings,
+  prepareHomepageShapeSVGCache,
   resetHomepageImageSettings as resetHomepageImageSettingsDefaults,
   saveHomepageImageSettings,
   seedHomepageShapeSVGs,
@@ -1371,4 +1372,14 @@ export function setNeedsReorder(value: boolean, notifyStore = true): void {
 
 export function getPlannedLevel(caseName: string): number {
   return plannedLevels.get(caseName) || 4;
+}
+
+/** Commit the draft only after its compressed reload cache is ready. */
+export async function saveHomepageImageSettingsForReload(settings: HomepageImageSettings): Promise<void> {
+  await prepareHomepageShapeSVGCache(settings);
+  if (homepageRegenTimer) clearTimeout(homepageRegenTimer);
+  homepageRegenTimer = null;
+  saveHomepageImageSettings(settings);
+  homepageImageSettings = { ...settings };
+  saveState();
 }

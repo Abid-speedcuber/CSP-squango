@@ -53,7 +53,7 @@ export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
 const SETTINGS_STORAGE_KEY = 'sq1-homepage-image-settings';
 const SVG_CACHE_HASH_KEY = 'sq1-homepage-svg-cache-settings';
 const SVG_CACHE_ITEM_PREFIX = 'sq1-homepage-svg-cache-item';
-const SVG_CACHE_VERSION = 8;
+const SVG_CACHE_VERSION = 9;
 const HOMEPAGE_SLICE_STROKE_SCALE = 0.22;
 const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
 
@@ -120,12 +120,12 @@ export function renderLayerShapeSVG(
       sliceRadiusScale: HOMEPAGE_SLICE_RADIUS_SCALE,
     },
     colorScheme: {
-      top: settings.topColor,
+      top: layer === 'bottom' ? settings.bottomColor : settings.topColor,
       bottom: settings.bottomColor,
-      front: settings.frontColor,
-      right: settings.rightColor,
-      back: settings.backColor,
-      left: settings.leftColor,
+      front: 'transparent',
+      right: 'transparent',
+      back: 'transparent',
+      left: 'transparent',
       border,
       'slice-indicator': slice,
     },
@@ -182,10 +182,10 @@ function createHomepageCoreOptions(settings: HomepageImageSettings): Square1Rend
     colorScheme: {
       top: settings.topColor,
       bottom: settings.bottomColor,
-      front: settings.frontColor,
-      right: settings.rightColor,
-      back: settings.backColor,
-      left: settings.leftColor,
+      front: 'transparent',
+      right: 'transparent',
+      back: 'transparent',
+      left: 'transparent',
       border,
       'slice-indicator': slice,
     },
@@ -214,6 +214,7 @@ function renderHomepageShapeSVGWithCore(
 ): string | null {
   const parsed = splitHomepageShapeSVGKey(key);
   if (!parsed) return null;
+  core.setColorScheme({ top: parsed.layer === 'bottom' ? options.colorScheme!.bottom : options.colorScheme!.top });
   const marked = getMarkedExpandedForLayer(parsed.layerName, parsed.layer);
   if (!marked) return null;
   return core.getExpandedLayerSVG(
@@ -456,4 +457,35 @@ export function applyHomepageSVGsLive(svgData: Record<string, string>): void {
       divs[1].innerHTML = svgData[homepageShapeSVGKey('bottom', shapes.bottom)] || '';
     }
   });
+}
+
+/** Render only the demo layers while editing; the homepage stays untouched. */
+export function renderHomepageShapePreview(
+  name: string,
+  settings: HomepageImageSettings,
+  layer: 'top' | 'bottom',
+): string {
+  return stripInvisibleOverhead(renderLayerShapeSVG(name, settings, layer) || '');
+}
+
+/** Prepare the exact shapes cards use, yielding between batches, before reload. */
+export async function prepareHomepageShapeSVGCache(settings: HomepageImageSettings): Promise<void> {
+  const hash = settingsHash(settings);
+  const keys = [...new Set(CASES.flatMap(item => [
+    homepageShapeSVGKey('top', item.top), homepageShapeSVGKey('bottom', item.bottom),
+  ]))];
+  const options = createHomepageCoreOptions(settings);
+  const core = createConfiguredCore(options);
+  const raw: Record<string, string> = {};
+  for (let i = 0; i < keys.length; i++) {
+    if (i % 2 === 0) await yieldToBrowser();
+    const svg = renderHomepageShapeSVGWithCore(core, options, keys[i]);
+    if (svg) raw[keys[i]] = svg;
+  }
+  const compressed = await compressShapeSVGs(raw);
+  if (settingsHash(settings) !== hash) throw new Error('Theme or tracing settings changed. Please save again.');
+  for (const [key, svg] of Object.entries(compressed)) {
+    localStorage.setItem(cacheItemStorageKey(hash, key), svg);
+  }
+  localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
 }

@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   SETTINGS_TABS,
   closeUnifiedSettings,
   getSettingsActiveTab,
   isSettingsOpen,
-  switchSettingsTab,
 } from '../app/settingsUI';
 import { useAppStore } from '../app/store';
 import {
   attachOverlayClose,
+  closeModalWithHistory,
+  hasOpenModal,
   lockScroll,
   pushModalState,
   removeCloseModalFromStack,
@@ -21,11 +22,9 @@ import {
   enhancedAccess,
   evilnessFactor,
   evilnessStringReturn,
-  getHomepageImageSettings,
   hideInstructions,
   hideParenthesis,
   recalculateAllParity,
-  resetHomepageImageSettingsState,
   setAlgorithmFontSize,
   setCornerStickerMode,
   setEnhancedAccess,
@@ -33,15 +32,12 @@ import {
   setEvilnessStringReturn,
   setHideInstructions,
   setHideParenthesis,
-  setShowHints,
-  showHints,
   toggleTheme,
-  updateHomepageImageSettings,
 } from '../app/state';
-import type { HomepageImageSettings } from '../lib/homepageShapes';
-import { applyAlgorithmFontSize, applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
+import { applyAlgorithmFontSize, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
 import InfoTip from './InfoTip';
+import { settingsRow as _row, sectionTitle as _sectionTitle } from './SettingsControls';
 import {
   applyHideImgLive,
   applyHoldLive,
@@ -53,18 +49,6 @@ import {
   setEnableParityQuizLive,
 } from '../app/training';
 
-function _row(labelHtml: string, controlHtml: React.ReactNode, tipHtml?: string): React.ReactNode {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
-        <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>{labelHtml}</label>
-        {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
-      </div>
-      <div style={{ flexShrink: 0 }}>{controlHtml}</div>
-    </div>
-  );
-}
-
 function _toggle(id: string, checked: boolean, onchange: (val: boolean) => void): React.ReactNode {
   return (
     <input
@@ -74,25 +58,6 @@ function _toggle(id: string, checked: boolean, onchange: (val: boolean) => void)
       onChange={(e) => onchange(e.target.checked)}
       style={{ transform: 'scale(1.3)', cursor: 'pointer' }}
     />
-  );
-}
-
-function _sectionTitle(text: string): React.ReactNode {
-  return (
-    <div
-      style={{
-        fontSize: '0.8rem',
-        fontWeight: 700,
-        letterSpacing: '0.06em',
-        textTransform: 'uppercase',
-        color: 'var(--text-secondary)',
-        margin: '18px 0 10px',
-        paddingBottom: 4,
-        borderBottom: '1px solid var(--surface-border)',
-      }}
-    >
-      {text}
-    </div>
   );
 }
 
@@ -173,185 +138,6 @@ function _triggerParityLiveUpdate(): void {
   if (input) input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
-const FACE_COLOR_KEYS: { key: keyof HomepageImageSettings; label: string }[] = [
-  { key: 'topColor', label: 'Top' },
-  { key: 'bottomColor', label: 'Bottom' },
-  { key: 'frontColor', label: 'Front' },
-  { key: 'rightColor', label: 'Right' },
-  { key: 'backColor', label: 'Back' },
-  { key: 'leftColor', label: 'Left' },
-];
-
-// ── HOMESCREEN: Homepage Images ──────────────────────────────────────────────
-function HomepageImagesSection(): React.ReactNode {
-  useAppStore();
-  const [settings, setSettings] = useState<HomepageImageSettings>(getHomepageImageSettings());
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-
-  const update = (patch: Partial<HomepageImageSettings>) => {
-    setSettings((s) => ({ ...s, ...patch }));
-    updateHomepageImageSettings(patch);
-  };
-
-  const strokeSlider = (
-    key: 'strokeWidthOuter' | 'sliceStrokeWidth' | 'strokeWidthInner',
-    label: string,
-    tip: string,
-  ) => (
-    <div style={{ marginBottom: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-        <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-          {label}
-        </label>
-        <InfoTip tipHtml={tip} />
-      </div>
-      <input
-        type="range"
-        min={0.005}
-        max={0.03}
-        step={0.0005}
-        value={settings[key]}
-        style={{ width: '100%', cursor: 'pointer' }}
-        onChange={(e) => update({ [key]: parseFloat(e.target.value) })}
-      />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 3 }}>
-        <span>Thin</span>
-        <span style={{ fontWeight: 600 }}>{(settings[key] * 1000).toFixed(1)}</span>
-        <span>Thick</span>
-      </div>
-    </div>
-  );
-
-  const autoColorRow = (key: 'borderColor' | 'sliceColor', label: string, tip: string) => {
-    const isAuto = settings[key] === '';
-    return (
-      <div style={{ marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
-            <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>
-              {label}
-            </label>
-            <InfoTip tipHtml={tip} />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="color"
-              value={isAuto ? (isDark ? '#c0c0c0' : '#000000') : settings[key]}
-              disabled={isAuto}
-              style={{
-                width: 38,
-                height: 26,
-                padding: 0,
-                border: 'none',
-                cursor: isAuto ? 'not-allowed' : 'pointer',
-                opacity: isAuto ? 0.4 : 1,
-                background: 'transparent',
-              }}
-              onChange={(e) => update({ [key]: e.target.value })}
-            />
-            <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer' }}>
-              <input
-                type="checkbox"
-                checked={isAuto}
-                onChange={(e) => update({ [key]: e.target.checked ? '' : (isDark ? '#c0c0c0' : '#000000') })}
-                style={{ cursor: 'pointer' }}
-              />
-              Auto
-            </label>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <>
-      {_sectionTitle('Homepage Images')}
-      {strokeSlider('strokeWidthOuter', 'Outline Stroke Width', 'Thickness of the outlines.')}
-      {strokeSlider('sliceStrokeWidth', 'Slice Line Width', 'Thickness of the slice indicator line, drawn through the shape.')}
-      {strokeSlider('strokeWidthInner', 'Inner Line Width', 'Thickness of the inner seam lines between adjacent pieces????')}
-      {_row(
-        'Tracing Position Highlight',
-        <input
-          type="color"
-          value={settings.specialPieceColor}
-          style={{ width: 44, height: 28, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
-          onChange={(e) => update({ specialPieceColor: e.target.value })}
-        />,
-        'Adjust the color of your tracing position. This displays on the homepage.',
-      )}
-      {autoColorRow('borderColor', 'Outline Color', 'Color of the piece outlines. In "Auto" it follows the app theme (black in light mode, light grey in dark mode).')}
-      {autoColorRow('sliceColor', 'Slice Line Color', 'Color of the slice indicator line. In "Auto" it follows the app theme.')}
-      <div style={{ marginTop: 6, marginBottom: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
-        Face Colors
-      </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 12 }}>
-        {FACE_COLOR_KEYS.map(({ key, label }) => {
-          const enabled = settings[key] !== 'transparent';
-          return (
-            <div
-              key={key}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                gap: 6,
-                padding: '6px 8px',
-                borderRadius: 8,
-                background: 'var(--surface2)',
-                border: '1px solid var(--border-color)',
-              }}
-            >
-              <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
-                <input
-                  type="checkbox"
-                  checked={enabled}
-                  onChange={(e) => update({ [key]: e.target.checked ? '#AAAAAA' : 'transparent' })}
-                  style={{ cursor: 'pointer' }}
-                />
-                {label}
-              </label>
-              <input
-                type="color"
-                value={enabled ? settings[key] : '#000000'}
-                disabled={!enabled}
-                style={{
-                  width: 30,
-                  height: 22,
-                  padding: 0,
-                  border: 'none',
-                  cursor: enabled ? 'pointer' : 'not-allowed',
-                  opacity: enabled ? 1 : 0.4,
-                  background: 'transparent',
-                }}
-                onChange={(e) => update({ [key]: e.target.value })}
-              />
-            </div>
-          );
-        })}
-      </div>
-      <div
-        className="settings-action-btn"
-        onClick={() => setSettings(resetHomepageImageSettingsState())}
-        style={{
-          padding: '11px 16px',
-          borderRadius: 10,
-          cursor: 'pointer',
-          width: '100%',
-          fontWeight: 600,
-          fontSize: '0.92rem',
-          textAlign: 'center',
-          background: 'var(--surface2)',
-          border: '1px solid var(--border-color)',
-          color: 'var(--text-ui)',
-        }}
-      >
-        Reset to Defaults
-      </div>
-    </>
-  );
-}
-
 // ── TAB: Homescreen ───────────────────────────────────────────────────────────
 function HomescreenTab(): React.ReactNode {
   useAppStore();
@@ -362,14 +148,6 @@ function HomescreenTab(): React.ReactNode {
     <>
       {_sectionTitle('Display')}
       {_row('Dark Mode', _toggle('hs_themeToggle', isDark, (v) => toggleTheme(v)), 'Switch between light and dark mode.')}
-      {_row(
-        'Show Tracing Guides',
-        _toggle('hs_hintToggle', showHints, (v) => {
-          setShowHints(v);
-          applyHintVisibility();
-        }),
-        'Show/hide the numbered tracing guide overlays on case images. The numbers indicate tracing order.<br><br><strong>Keyboard shortcut:</strong> Alt+T',
-      )}
       {_row(
         'Hide Instruction Buttons',
         _toggle('hs_hideInstructionsToggle', hideInstructions, (v) => {
@@ -414,12 +192,15 @@ function HomescreenTab(): React.ReactNode {
         'Change your Square-1 colour scheme. This affects parity tracing and draw-scramble visualizations.',
       )}
       {_actionBtn(
+        'Homepage Image Settings',
+        () => (window as unknown as { openHomepageImageSettings?: () => void }).openHomepageImageSettings?.(),
+        'Preview and customize homepage case images.',
+      )}
+      {_actionBtn(
         'Quick Edit',
         () => (window as unknown as { openQuickEditModal?: () => void }).openQuickEditModal?.(),
         'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q',
       )}
-
-      <HomepageImagesSection />
 
       {_sectionTitle('Access')}
       {_row(
@@ -917,16 +698,24 @@ function AnimateTab(): React.ReactNode {
   );
 }
 
-// ── Modal container ───────────────────────────────────────────────────────────
+const SECTION_CONTENT = {
+  homescreen: HomescreenTab,
+  parity: ParityTab,
+  trainer: TrainerTab,
+  animate: AnimateTab,
+};
+
+// All sections stay mounted in one scrollable panel.
 export default function SettingsModal(): React.ReactNode {
-  const tab = getSettingsActiveTab();
   useAppStore();
+  const tab = getSettingsActiveTab();
   const open = isSettingsOpen();
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [activeSection, setActiveSection] = useState<string>(tab);
 
   const closeSettings = useCallback(() => {
     removeCloseModalFromStack(closeSettings);
-    closeUnifiedSettings();
-    unlockScroll();
+    closeModalWithHistory(closeUnifiedSettings);
   }, []);
 
   useEffect(() => {
@@ -937,137 +726,73 @@ export default function SettingsModal(): React.ReactNode {
     if (overlay) attachOverlayClose(overlay, closeSettings);
     return () => {
       removeCloseModalFromStack(closeSettings);
-      unlockScroll();
+      if (!hasOpenModal()) unlockScroll();
     };
   }, [open, closeSettings]);
 
+  const jumpToSection = useCallback((id: string, smooth = true) => {
+    const panel = panelRef.current;
+    const section = document.getElementById(`settingsSection_${id}`);
+    if (!panel || !section) return;
+    const top = section.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop;
+    panel.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+    setActiveSection(id);
+  }, []);
+
   useEffect(() => {
-    if (open) applyInstructionVisibility();
-  }, [tab, open]);
+    if (!open) return;
+    jumpToSection(tab, false);
+    applyInstructionVisibility();
+  }, [tab, open, jumpToSection]);
+
+  const updateActiveSection = () => {
+    const panel = panelRef.current;
+    if (!panel) return;
+    let active: string = SETTINGS_TABS[0].id;
+    const top = panel.getBoundingClientRect().top;
+    for (const section of SETTINGS_TABS) {
+      const heading = document.getElementById(`settingsSection_${section.id}`);
+      if (heading && heading.getBoundingClientRect().top <= top + 28) active = section.id;
+    }
+    if (panel.scrollTop + panel.clientHeight >= panel.scrollHeight - 2) active = SETTINGS_TABS[SETTINGS_TABS.length - 1].id;
+    setActiveSection(active);
+  };
 
   if (!open) return null;
 
-  const activeTab = SETTINGS_TABS.find((t) => t.id === tab);
-
   return (
-    <div
-      id="unifiedSettingsModal"
-      className="modal active"
-      style={{ zIndex: 10010 }}
-      onMouseDown={(e) => {
-        if (e.target === e.currentTarget) closeSettings();
-      }}
-    >
-      <div
-        className="modal-content"
-        style={{
-          maxWidth: 760,
-          width: '96vw',
-          maxHeight: '88vh',
-          minHeight: '40vh',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: 18,
-          overflow: 'hidden',
-          background: 'var(--surface)',
-          padding: 0,
-        }}
-      >
-        <div
-          style={{
-            flexShrink: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '20px 24px 16px',
-            borderBottom: '2px solid var(--surface-border)',
-            background: 'var(--surface)',
-          }}
-        >
-          <span style={{ fontSize: '1.4rem', fontWeight: 700, color: 'var(--text-ui)' }}>Settings</span>
-          <button
-            onClick={closeSettings}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.7rem',
-              cursor: 'pointer',
-              color: 'var(--sidebar-close-color)',
-              lineHeight: 1,
-              padding: 0,
-            }}
-          >
-            &times;
-          </button>
+    <div id="unifiedSettingsModal" className="modal active" style={{ zIndex: 10010 }}>
+      <div className="modal-content unified-settings-content" role="dialog" aria-modal="true" aria-labelledby="settingsHeading">
+        <div className="settings-header">
+          <h2 id="settingsHeading">Settings</h2>
+          <button className="close-btn" aria-label="Close settings" onClick={closeSettings}>&times;</button>
         </div>
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <nav
-            id="settingsSidebar"
-            style={{
-              flexShrink: 0,
-              width: 58,
-              background: 'var(--surface2)',
-              borderRight: '1px solid var(--surface-border)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 2,
-              padding: '10px 6px',
-              overflowY: 'auto',
-            }}
-          >
-            {SETTINGS_TABS.map((t) => {
-              const active = t.id === tab;
-              const isAnimate = t.id === 'animate';
+        <div className="settings-layout">
+          <nav id="settingsSidebar" aria-label="Settings sections">
+            {SETTINGS_TABS.map((section) => (
+              <button
+                key={section.id}
+                id={`settingsTab_${section.id}`}
+                data-tab={section.id}
+                title={section.label}
+                aria-label={section.label}
+                aria-current={activeSection === section.id ? 'location' : undefined}
+                onClick={() => jumpToSection(section.id)}
+              >
+                <img src={section.icon} width={24} height={24} alt="" />
+              </button>
+            ))}
+          </nav>
+          <div id="settingsPanel" ref={panelRef} onScroll={updateActiveSection}>
+            {SETTINGS_TABS.map((section) => {
+              const Content = SECTION_CONTENT[section.id];
               return (
-                <button
-                  key={t.id}
-                  id={`settingsTab_${t.id}`}
-                  data-tab={t.id}
-                  title={t.label}
-                  onClick={() => switchSettingsTab(t.id)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: 9,
-                    borderRadius: 10,
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: active ? 'var(--surface-border)' : 'transparent',
-                    transition: 'all 0.15s',
-                    width: '100%',
-                  }}
-                >
-                  <img
-                    src={t.icon}
-                    width={isAnimate ? 30 : 24}
-                    height={isAnimate ? 30 : 24}
-                    style={{ opacity: active ? '1' : '0.55' }}
-                    alt={t.label}
-                  />
-                </button>
+                <section key={section.id} id={`settingsSection_${section.id}`} aria-labelledby={`settingsHeading_${section.id}`}>
+                  <h3 id={`settingsHeading_${section.id}`} className="settings-section-heading">{section.label}</h3>
+                  <Content />
+                </section>
               );
             })}
-          </nav>
-          <div id="settingsPanel" style={{ flex: 1, overflowY: 'auto', padding: '0 24px 22px' }}>
-            <div
-              style={{
-                position: 'sticky',
-                top: 0,
-                background: 'var(--surface)',
-                zIndex: 1,
-                padding: '18px 0 4px',
-                marginBottom: 4,
-              }}
-            >
-              <span style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-ui)' }}>
-                {activeTab ? activeTab.label : ''}
-              </span>
-            </div>
-            {tab === 'homescreen' && <HomescreenTab />}
-            {tab === 'parity' && <ParityTab />}
-            {tab === 'trainer' && <TrainerTab />}
-            {tab === 'animate' && <AnimateTab />}
           </div>
         </div>
       </div>

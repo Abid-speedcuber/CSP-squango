@@ -28,6 +28,7 @@ import { applyHintVisibility, applyInstructionVisibility } from '../app/visibili
 // uses inline skeleton cards while the heavier boot work runs after first paint.
 // import LoadingScreen from './LoadingScreen';
 import SettingsModal from './SettingsModal';
+import HomepageImagesModal from './HomepageImagesModal';
 
 const CARD_HEIGHT_CACHE_KEY = 'sqg-card-height-estimates-v1';
 const DEFAULT_SKELETON_CARD_HEIGHT = 360;
@@ -522,6 +523,7 @@ export default function App(): React.ReactNode {
         </button>
       ) : null}
       <SettingsModal />
+      <HomepageImagesModal />
     </>
   );
 }

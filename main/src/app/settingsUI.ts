@@ -35,3 +35,7 @@ export function switchSettingsTab(tabId: SettingsTabId): void {
   settingsActiveTab = tabId;
   notify();
 }
+
+export function openHomepageImageSettings(): void {
+  window.dispatchEvent(new Event('sqg:open-homepage-images'));
+}
