@@ -42,6 +42,11 @@ export function popCloseModalStack(): boolean {
   return true;
 }
 
+/** True while at least one modal is on the Esc/back-button close stack. */
+export function hasOpenModal(): boolean {
+  return closeModalStack.length > 0;
+}
+
 export function closeModalWithHistory(closeFn: (...args: unknown[]) => void, ...args: unknown[]): void {
   if (typeof closeFn !== 'function') return;
   removeCloseModalFromStack(closeFn);

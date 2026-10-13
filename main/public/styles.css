@@ -31,6 +31,7 @@
     --bar-learning:      #ffa000;
     --accent:            #007bff;
     --accent-hover:      #0056b3;
+    --focus-ring:        #007bff;  /* keyboard-nav focus outline */
     --link-color:        #007bff;  /* links + menu selected — dark value differs from accent */
     --hover-bg:          #e3f2fd;  /* row hover, menu selection bg, popup input hover */
     --step-highlight-bg: #f0f9ff;  /* shape-path step chips, popup step spans */
@@ -158,6 +159,7 @@
 
     --accent:            #3a7bd5;
     --accent-hover:      #5596f0;
+    --focus-ring:        #6a9ef8;  /* keyboard-nav focus outline */
     --link-color:        #6a9ef8;
     --hover-bg:          #1e2535;
     --step-highlight-bg: #1a1e2a;
@@ -265,6 +267,23 @@ input[type="text"], select,
         border-color    0.25s ease,
         color           0.25s ease,
         box-shadow      0.25s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOCUS RING  —  designed outline, keyboard navigation only.
+   `data-input-modality` is stamped on <html> by focusRing.ts:
+     • "pointer"  → mouse/touch focus, no ring
+     • "keyboard" → Tab / Esc navigation, show the ring
+   Until that attribute exists (JS failed to load) the browser's
+   default focus ring is left untouched.
+   ═══════════════════════════════════════════════════════════ */
+html[data-input-modality] :focus {
+    outline: none;
+}
+
+html[data-input-modality="keyboard"] :focus {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
 }
 
 html, body {
