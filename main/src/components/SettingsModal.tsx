@@ -657,7 +657,7 @@ function ParityTab(): React.ReactNode {
 
 // ── TAB: Trainer ──────────────────────────────────────────────────────────────
 function TrainerTab(): React.ReactNode {
-  const [imgSize, setImgSize] = useState<number>(parseInt(localStorage.getItem('trainingScrambleImageSize') || '200', 10));
+  const [imgSize, setImgSize] = useState<number>(parseInt(localStorage.getItem('trainingScrambleImageSize') || '280', 10));
   const [txtSize, setTxtSize] = useState<number>(parseInt(localStorage.getItem('trainingScrambleTextSize') || '16', 10));
   const [tmrSize, setTmrSize] = useState<number>(parseInt(localStorage.getItem('trainingTimerSize') || '80', 10));
   const [holdVal, setHoldVal] = useState<number>(parseFloat(localStorage.getItem('trainingHoldToStart') || '0.22'));

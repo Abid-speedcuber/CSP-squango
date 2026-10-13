@@ -48,7 +48,7 @@ let preGeneratedScrambles: ScrambleData[] = [];
 let currentScrambleText = '';
 let scrambleHistory: ScrambleData[] = [];
 let currentHistoryIndex = -1;
-let trainingScrambleImageSize = 200;
+let trainingScrambleImageSize = 280;
 let trainingScrambleTextSize = 16;
 let trainingHoldToStart = 0.22;
 let holdStartTime = 0;
@@ -95,6 +95,9 @@ let parityQuizOnSelectionChange: ((names: string[]) => void) | null = null;
 const TIMER_SELECTOR_KEY = 'sq1-selector-cases';
 
 // ── Scramble text/image helpers ──────────────────────────────────────────────
+// Draw-scramble ring distance, matching the parity tracer's visualization.
+const TRAINING_SCRAMBLE_RING_DISTANCE = 120;
+
 function hexToScrambleText(hexCode: string): string {
   let text = hexCode;
   try {
@@ -113,7 +116,7 @@ function hexToScrambleImage(hexCode: string, size = trainingScrambleImageSize): 
   try {
     const state = parseHexFormat(hexCode);
     const notation = scrambleFromState(state) || hexCode;
-    image = visualizeFromScramble(notation, size, colorScheme);
+    image = visualizeFromScramble(notation, size, colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE);
   } catch {
     // keep placeholder
   }
@@ -366,7 +369,7 @@ function loadTrainingSettings(): void {
   const savedTextSize = localStorage.getItem('trainingScrambleTextSize');
   const savedHoldToStart = localStorage.getItem('trainingHoldToStart');
 
-  trainingScrambleImageSize = savedImageSize ? parseInt(savedImageSize) : 200;
+  trainingScrambleImageSize = savedImageSize ? parseInt(savedImageSize) : 280;
   trainingScrambleTextSize = savedTextSize ? parseInt(savedTextSize) : 16;
   trainingHoldToStart = savedHoldToStart ? parseFloat(savedHoldToStart) : 0.22;
   trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
@@ -486,7 +489,12 @@ function resizeCurrentTrainingScramble(): void {
   const imgEl = document.getElementById('trainingScrambleImage');
   if (imgEl && !trainingHideScrambleImage && currentScrambleText) {
     try {
-      const img = visualizeFromScramble(currentScrambleText, trainingScrambleImageSize, colorScheme);
+      const img = visualizeFromScramble(
+        currentScrambleText,
+        trainingScrambleImageSize,
+        colorScheme,
+        TRAINING_SCRAMBLE_RING_DISTANCE,
+      );
       imgEl.innerHTML = img;
       if (scrambleHistory[currentHistoryIndex]) scrambleHistory[currentHistoryIndex].image = img;
     } catch {
@@ -529,7 +537,7 @@ function openParityAnalysisFromTraining(): void {
     leftColor: colorScheme.leftColor,
     scrambleText: cleanScramble,
     generateImage: true,
-    imageSize: trainingScrambleImageSize || 200,
+    imageSize: trainingScrambleImageSize || 280,
   });
 }
 
@@ -1661,7 +1669,13 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
         const state = parseHexFormat(currentHexCode);
         const notation = scrambleFromState(state);
         const imgEl = document.getElementById('evilQuizImage');
-        if (imgEl && notation) imgEl.innerHTML = visualizeFromScramble(notation, size, colorScheme);
+        if (imgEl && notation)
+          imgEl.innerHTML = visualizeFromScramble(
+            notation,
+            size,
+            colorScheme,
+            TRAINING_SCRAMBLE_RING_DISTANCE,
+          );
       } catch {
         // keep current image
       }
@@ -1714,7 +1728,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
       const state = parseHexFormat(currentHexCode);
       const notation = scrambleFromState(state);
       imgHTML = notation
-        ? visualizeFromScramble(notation, trainingScrambleImageSize || 200, colorScheme)
+        ? visualizeFromScramble(notation, trainingScrambleImageSize || 280, colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
         : '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
     } catch {
       imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
@@ -2035,7 +2049,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
       const notation = scrambleFromState(state);
       scrambleText = notation || hexCode;
       imgHTML = notation
-        ? visualizeFromScramble(notation, trainingScrambleImageSize || 200, colorScheme)
+        ? visualizeFromScramble(notation, trainingScrambleImageSize || 280, colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
         : '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
       currentParity = quizGetParityFromHex(hexCode);
     } catch {
