@@ -1250,6 +1250,7 @@ export function setHideParenthesis(value: boolean): void {
 export function setEnhancedAccess(value: boolean): void {
   enhancedAccess = value;
   localStorage.setItem('enhancedAccess', value.toString());
+  notify();
 }
 
 export function setAlgorithmFontSize(value: number): void {

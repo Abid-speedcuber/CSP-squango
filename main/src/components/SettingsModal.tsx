@@ -215,9 +215,11 @@ function HomescreenTab(): React.ReactNode {
 function ParityTab(): React.ReactNode {
   useAppStore();
   const [ptSize, setPtSize] = useState<number>(parseInt(localStorage.getItem('parityTracerImageSize') || '200', 10));
-  const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
-  const z2On = storedZ2 !== null ? storedZ2 === 'true' : true;
-  const showArrow = localStorage.getItem('parityTracerShowArrow') !== 'false';
+  const [z2On, setZ2On] = useState<boolean>(() => {
+    const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
+    return storedZ2 !== null ? storedZ2 === 'true' : true;
+  });
+  const [showArrow, setShowArrow] = useState<boolean>(() => localStorage.getItem('parityTracerShowArrow') !== 'false');
 
   let arrowSettings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
   try {
@@ -281,6 +283,7 @@ function ParityTab(): React.ReactNode {
       {_row(
         'z2 Tracing for 6/8-Edge Cases',
         _toggle('pt_z2', z2On, (v) => {
+          setZ2On(v);
           localStorage.setItem('z2TracingModeForParityTracerLibrary', v.toString());
           _triggerParityLiveUpdate();
         }),
@@ -290,7 +293,7 @@ function ParityTab(): React.ReactNode {
       {_sectionTitle('Visualization')}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="pt_imgSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Image Size: <span id="pt_imgSizeVal">{ptSize}px</span>
           </label>
           <InfoTip tipHtml="Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference." />
@@ -314,6 +317,7 @@ function ParityTab(): React.ReactNode {
       {_row(
         'Show Tracing Arrow',
         _toggle('pt_showArrow', showArrow, (v) => {
+          setShowArrow(v);
           localStorage.setItem('parityTracerShowArrow', v.toString());
           _triggerParityLiveUpdate();
         }),
@@ -323,7 +327,7 @@ function ParityTab(): React.ReactNode {
       <div id="pt_arrowSettings" style={{ opacity: showArrow ? '1' : '0.4', pointerEvents: showArrow ? 'auto' : 'none' }}>
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <label htmlFor="pt_opacity" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Arrow Opacity: <span id="pt_opacityVal">{arrowOpacity}%</span>
             </label>
           </div>
@@ -339,7 +343,7 @@ function ParityTab(): React.ReactNode {
         </div>
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <label htmlFor="pt_stroke" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Stroke Width: <span id="pt_strokeVal">{arrowStroke.toFixed(1)}</span>
             </label>
           </div>
@@ -356,7 +360,7 @@ function ParityTab(): React.ReactNode {
         </div>
         <div style={{ marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
+            <label htmlFor="pt_radius" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
               Arrow Radius: <span id="pt_radiusVal">{arrowRadius.toFixed(2)}</span>
             </label>
           </div>
@@ -448,7 +452,7 @@ function TrainerTab(): React.ReactNode {
       {_sectionTitle('Scramble Display')}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="tr_imgSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Image Size: <span id="tr_imgSizeVal">{imgSize}px</span>
           </label>
         </div>
@@ -470,7 +474,7 @@ function TrainerTab(): React.ReactNode {
       </div>
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="tr_txtSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Scramble Text Size: <span id="tr_txtSizeVal">{txtSize}px</span>
           </label>
         </div>
@@ -494,7 +498,7 @@ function TrainerTab(): React.ReactNode {
       {_sectionTitle('Timer')}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="tr_tmrSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Timer Text Size: <span id="tr_tmrSizeVal">{tmrSize}px</span>
           </label>
         </div>
@@ -516,7 +520,7 @@ function TrainerTab(): React.ReactNode {
       </div>
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="tr_hold" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Hold-to-Start: <span id="tr_holdVal">{holdVal.toFixed(2)}s</span>
           </label>
           <InfoTip tipHtml="How long you must hold the spacebar (or press the timer zone) before starting the timer." />
@@ -617,7 +621,7 @@ function AnimateTab(): React.ReactNode {
       {_sectionTitle('Playback')}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="aa_speed" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Animation Speed: <span id="aa_speedVal">{speed.toFixed(1)}x</span>
           </label>
         </div>
@@ -638,7 +642,7 @@ function AnimateTab(): React.ReactNode {
       </div>
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="aa_delay" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Auto-play Delay: <span id="aa_delayVal">{delay}ms</span>
           </label>
           <InfoTip tipHtml="The pause between moves when auto-playing an algorithm." />
@@ -662,7 +666,7 @@ function AnimateTab(): React.ReactNode {
       {_sectionTitle('Display')}
       <div style={{ marginBottom: 18 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
+          <label htmlFor="aa_imgSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
             Image Size: <span id="aa_imgSizeVal">{imgSize}px</span>
           </label>
         </div>

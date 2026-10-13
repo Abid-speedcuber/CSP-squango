@@ -1,11 +1,13 @@
-import type { ReactNode } from 'react';
+import { isValidElement, type ReactNode } from 'react';
 import InfoTip from './InfoTip';
 
 export function settingsRow(labelHtml: string, controlHtml: ReactNode, tipHtml?: string): ReactNode {
+  const controlId = isValidElement<{ id?: string }>(controlHtml) ? controlHtml.props.id : undefined;
+
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 12 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
-        <label style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>{labelHtml}</label>
+        <label htmlFor={controlId} style={{ color: 'var(--text-secondary)', fontWeight: 500, fontSize: '0.92rem' }}>{labelHtml}</label>
         {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
       </div>
       <div style={{ flexShrink: 0 }}>{controlHtml}</div>
@@ -31,4 +33,3 @@ export function sectionTitle(text: string): ReactNode {
     </div>
   );
 }
-
