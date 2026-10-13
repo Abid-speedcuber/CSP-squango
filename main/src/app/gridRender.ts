@@ -17,7 +17,13 @@ import { renderCard } from './cardHTML';
  * is preserved. `renderCard` is the single source of truth for card content, so
  * comparing normalized `outerHTML` reliably catches every per-card change.
  */
-export function reconcileGrid(grid: HTMLElement, items: readonly AlgCase[]): void {
+// Set refreshExisting=false for an explicit reorder: card content is already
+// current, so skip generating/parsing/serializing SVG-heavy markup for it.
+export function reconcileGrid(
+  grid: HTMLElement,
+  items: readonly AlgCase[],
+  refreshExisting = true,
+): void {
   const placeholder = grid.querySelector('#_render_placeholder');
   if (placeholder) placeholder.remove();
 
@@ -39,29 +45,56 @@ export function reconcileGrid(grid: HTMLElement, items: readonly AlgCase[]): voi
   });
 
   // Walk items in target order, reusing/updating/creating + positioning nodes.
-  let prev: Element | null = null;
+  const ordered: Element[] = [];
   for (const item of items) {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = renderCard(item);
-    const fresh = tmp.firstElementChild;
-    if (!fresh) continue;
-
     let node = existing.get(item.name);
-    if (node) {
-      // Compare browser-normalized serializations so identical cards are left
-      // in place (no DOM mutation, no repaint).
-      if (node.outerHTML !== fresh.outerHTML) {
-        node.replaceWith(fresh);
+    if (!node || refreshExisting) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = renderCard(item);
+      const fresh = tmp.firstElementChild;
+      if (!fresh) continue;
+
+      if (node) {
+        if (node.outerHTML !== fresh.outerHTML) {
+          node.replaceWith(fresh);
+          node = fresh;
+        }
+      } else {
         node = fresh;
       }
-    } else {
-      node = fresh;
     }
     existing.set(item.name, node);
 
-    // Ensure node sits immediately after the previously placed node.
-    const ref: ChildNode | null = prev ? prev.nextSibling : grid.firstChild;
-    if (node !== ref) grid.insertBefore(node, ref);
-    prev = node;
+    ordered.push(node);
+  }
+  positionCards(grid, ordered);
+}
+
+/** Keep the longest already-ordered sequence connected; move only the rest. */
+function positionCards(grid: HTMLElement, ordered: readonly Element[]): void {
+  const positions = new Map(Array.from(grid.children).map((node, index) => [node, index]));
+  const tails: number[] = [];
+  const previous = new Array<number>(ordered.length).fill(-1);
+  for (let i = 0; i < ordered.length; i++) {
+    const position = positions.get(ordered[i]);
+    if (position === undefined) continue;
+    let low = 0;
+    let high = tails.length;
+    while (low < high) {
+      const middle = (low + high) >>> 1;
+      if (positions.get(ordered[tails[middle]])! < position) low = middle + 1;
+      else high = middle;
+    }
+    if (low > 0) previous[i] = tails[low - 1];
+    tails[low] = i;
+  }
+
+  const stationary = new Set<number>();
+  for (let i = tails[tails.length - 1] ?? -1; i !== -1; i = previous[i]) stationary.add(i);
+  let next: Element | null = null;
+  for (let i = ordered.length - 1; i >= 0; i--) {
+    const node = ordered[i];
+    if (!stationary.has(i)) grid.insertBefore(node, next);
+    next = node;
   }
 }

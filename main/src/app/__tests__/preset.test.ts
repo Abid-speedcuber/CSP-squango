@@ -111,6 +111,14 @@ test("Matt's boot preset seeds the first four cards' homepage SVGs", async () =>
   expect(state.svgData['top:Left_4_2']).toContain('<svg');
 });
 
+test("Matt's boot preset includes comments for every card that can render before hydration", () => {
+  const boot = loadPresetFile("Matt's_Preset.boot.json");
+  expect(Object.keys((boot.comments as Record<string, string>) || {})).toHaveLength(90);
+  expect(Object.keys((boot.perCaseSubtitles as Record<string, string>) || {})).toHaveLength(90);
+  expect(Object.keys((boot.displayNames as Record<string, string>) || {})).toHaveLength(90);
+  expect((boot.comments as Record<string, string>)['Scallop/Shield']).toBeTruthy();
+});
+
 test('Matt boot-visible algorithms are classified with evilness before render', async () => {
   presetPayload = loadPresetFile("Matt's_Preset.json");
   await state.applyPreset("Matt's_Preset", true, true, true, true);

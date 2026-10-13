@@ -13,6 +13,7 @@ import {
   isFirstLoad,
   needsParityRecalculation,
   profileAvatar,
+  setNeedsReorder,
   setSortMode,
   updateProgress,
   type SortMode,
@@ -125,6 +126,7 @@ export default function App(): React.ReactNode {
   const [initialCardCount, setInitialCardCount] = useState(MIN_INITIAL_CARD_COUNT);
   const [gridComplete, setGridComplete] = useState(false);
   const [gridRenderTick, setGridRenderTick] = useState(0);
+  const [showReorderButton, setShowReorderButton] = useState(false);
   const gridRef = useRef<HTMLDivElement | null>(null);
   const gridPaintedRef = useRef(false);
   const parityStartedRef = useRef(false);
@@ -147,6 +149,15 @@ export default function App(): React.ReactNode {
     () => (bootReady ? filtered.slice(0, initialCardCount).map((item) => renderCard(item)).join('') : ''),
     [filtered, bootReady, initialCardCount, storeVersion],
   );
+
+  const reorderExistingGrid = useCallback((items: ReturnType<typeof computeFilteredData>) => {
+    const grid = gridRef.current;
+    if (!grid) return;
+    // Learning/priority edits already refresh the affected card. Move only the
+    // nodes whose position changed, keeping all SVG descendants connected.
+    reconcileGrid(grid, items, false);
+    setGridRenderTick((tick) => tick + 1);
+  }, []);
 
   // Boot: paint the responsive shell first, then run preset/SVG/parity work.
   useEffect(() => {
@@ -199,6 +210,12 @@ export default function App(): React.ReactNode {
     updateSelectLabels();
     window.addEventListener('resize', updateSelectLabels);
     return () => window.removeEventListener('resize', updateSelectLabels);
+  }, []);
+
+  useEffect(() => {
+    const onShowReorder = () => setShowReorderButton(true);
+    window.addEventListener('sqg:show-reorder', onShowReorder);
+    return () => window.removeEventListener('sqg:show-reorder', onShowReorder);
   }, []);
 
   // Search toggle behavior
@@ -422,8 +439,8 @@ export default function App(): React.ReactNode {
             value={sortType}
             onChange={(e) => {
               setSortType(e.target.value as SortMode);
-              const reorderBtn = document.getElementById('reorderButton');
-              if (reorderBtn) reorderBtn.remove();
+              setNeedsReorder(false, false);
+              setShowReorderButton(false);
             }}
           >
             <option value="priority" data-short="Priority" data-xs="Priority">
@@ -489,6 +506,21 @@ export default function App(): React.ReactNode {
           <p>Please contact for any edits.</p>
         </footer>
       </div>
+      {showReorderButton ? (
+        <button
+          id="reorderButton"
+          className="reorder-btn"
+          type="button"
+          disabled={!gridComplete}
+          onClick={() => {
+            setNeedsReorder(false, false);
+            setShowReorderButton(false);
+            reorderExistingGrid(computeFilteredData(searchTerm, sortType, learnFilter));
+          }}
+        >
+          Re-order Cases
+        </button>
+      ) : null}
       <SettingsModal />
     </>
   );

@@ -16,6 +16,8 @@ import {
 } from '../lib/drawScramble';
 import {
   adjustPriority,
+  currentSortMode,
+  data,
   enhancedAccess,
   evilnessMap,
   getDisplayName,
@@ -24,8 +26,10 @@ import {
   learningCases,
   plannedLevels,
   saveState,
+  setNeedsReorder,
   toggleLearned,
 } from './state';
+import { renderCard } from './cardHTML';
 import {
   attemptCloseGeneralNotesModal,
   attemptCloseNotesModal,
@@ -51,6 +55,20 @@ import { installQuickEditShims } from './quickEdit';
 let activePopup: HTMLElement | null = null;
 let activePopupElement: HTMLElement | null = null;
 let popupHoverTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function rerenderCaseCard(caseName: string): void {
+  const cardElement = document.querySelector(`[data-case-name="${CSS.escape(caseName)}"]`);
+  const item = data.find((entry) => entry.name === caseName);
+  if (cardElement && item) {
+    cardElement.outerHTML = renderCard(item);
+  }
+}
+
+function requestManualReorder(): void {
+  if (currentSortMode !== 'priority') return;
+  setNeedsReorder(true, false);
+  window.dispatchEvent(new CustomEvent('sqg:show-reorder'));
+}
 
 function closeAlgoPopup(isPermanent: boolean): void {
   if (isPermanent) {
@@ -288,18 +306,22 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
       {
         label: 'Move Up in Priority',
         action: () => {
-          adjustPriority(caseName, -1);
+          adjustPriority(caseName, -1, false);
           const newPriority = plannedLevels.get(caseName) || 4;
           statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
+          rerenderCaseCard(caseName);
+          requestManualReorder();
         },
         disabled: priorityLevel === 1,
       },
       {
         label: 'Move Down in Priority',
         action: () => {
-          adjustPriority(caseName, 1);
+          adjustPriority(caseName, 1, false);
           const newPriority = plannedLevels.get(caseName) || 4;
           statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
+          rerenderCaseCard(caseName);
+          requestManualReorder();
         },
         disabled: priorityLevel === 7,
       },
@@ -455,7 +477,9 @@ export function installWindowShims(): void {
 
   w.toggleLearned = (name: string, event: MouseEvent) => {
     event.stopPropagation();
-    toggleLearned(name, false);
+    toggleLearned(name, event.button === 2, false);
+    rerenderCaseCard(name);
+    requestManualReorder();
   };
 
   w.showContextMenu = showContextMenu;

@@ -1072,7 +1072,7 @@ export function updateProgress(): ProgressStats {
 }
 
 // ── Learning-state mutations ────────────────────────────────────────────────
-export function toggleLearned(name: string, rightClick = false): void {
+export function toggleLearned(name: string, rightClick = false, notifyStore = true): void {
   if (rightClick) {
     if (learnedCases.has(name)) {
       learnedCases.delete(name);
@@ -1104,10 +1104,10 @@ export function toggleLearned(name: string, rightClick = false): void {
   }
   saveState();
   updateProgress();
-  notify();
+  if (notifyStore) notify();
 }
 
-export function adjustPriority(name: string, delta: number): number {
+export function adjustPriority(name: string, delta: number, notifyStore = true): number {
   if (!plannedCases.has(name)) {
     plannedCases.add(name);
     learnedCases.delete(name);
@@ -1122,15 +1122,15 @@ export function adjustPriority(name: string, delta: number): number {
   plannedLevels.set(name, newLevel);
   saveState();
   updateProgress();
-  notify();
+  if (notifyStore) notify();
   return newLevel;
 }
 
-export function setPlannedLevel(name: string, level: number): void {
+export function setPlannedLevel(name: string, level: number, notifyStore = true): void {
   plannedLevels.set(name, level);
   saveState();
   updateProgress();
-  notify();
+  if (notifyStore) notify();
 }
 
 // ── Display names & misc helpers ────────────────────────────────────────────
@@ -1364,9 +1364,9 @@ export function getNeedsReorder(): boolean {
   return needsReorder;
 }
 
-export function setNeedsReorder(value: boolean): void {
+export function setNeedsReorder(value: boolean, notifyStore = true): void {
   needsReorder = value;
-  notify();
+  if (notifyStore) notify();
 }
 
 export function getPlannedLevel(caseName: string): number {
