@@ -10,7 +10,10 @@
 
 import { createConfiguredCore, renderExpandedLayerSVG, type Square1RenderOptions } from './drawScrambleCore';
 import { getMarkedLayerExpanded } from './expandedShape';
-import { LAYER_EXPANDED_SHAPES } from '../data/expandedShapes';
+import { getShapePatterns } from './parityAnalyzer';
+import { BOTTOM_ANCHOR_SLOT } from './tracingStart';
+import { LAYER_SHAPE_BITS } from '../data/layerShapes';
+import { SHAPE_DISPLAY_ROTATIONS } from '../data/shapeDisplay';
 import { CASES } from '../data/cases';
 import type { AlgCase } from '../data/types';
 
@@ -50,7 +53,7 @@ export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
 const SETTINGS_STORAGE_KEY = 'sq1-homepage-image-settings';
 const SVG_CACHE_HASH_KEY = 'sq1-homepage-svg-cache-settings';
 const SVG_CACHE_ITEM_PREFIX = 'sq1-homepage-svg-cache-item';
-const SVG_CACHE_VERSION = 5;
+const SVG_CACHE_VERSION = 8;
 const HOMEPAGE_SLICE_STROKE_SCALE = 0.22;
 const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
 
@@ -88,12 +91,20 @@ function resolveStrokeColor(color: string): string {
   return isDarkTheme() ? '#c0c0c0' : '#000000';
 }
 
+/** Marked, display-rotated expanded layer for a homepage image (see expandedShape.ts). */
+export function getMarkedExpandedForLayer(
+  layerName: string,
+  layer: 'top' | 'bottom',
+): string | undefined {
+  return getMarkedLayerExpanded(layerName, layer);
+}
+
 export function renderLayerShapeSVG(
   layerName: string,
   settings: HomepageImageSettings = DEFAULT_HOMEPAGE_IMAGE_SETTINGS,
   layer: 'top' | 'bottom' = 'top',
 ): string | null {
-  const marked = getMarkedLayerExpanded(layerName);
+  const marked = getMarkedExpandedForLayer(layerName, layer);
   if (!marked) return null;
   const border = resolveStrokeColor(settings.borderColor);
   const slice = resolveStrokeColor(settings.sliceColor);
@@ -203,7 +214,7 @@ function renderHomepageShapeSVGWithCore(
 ): string | null {
   const parsed = splitHomepageShapeSVGKey(key);
   if (!parsed) return null;
-  const marked = getMarkedLayerExpanded(parsed.layerName);
+  const marked = getMarkedExpandedForLayer(parsed.layerName, parsed.layer);
   if (!marked) return null;
   return core.getExpandedLayerSVG(
     marked,
@@ -306,7 +317,7 @@ export function ensureHomepageShapeSVGsForCases(
 
 export function generateAllLayerShapes(settings: HomepageImageSettings): Record<string, string> {
   const out: Record<string, string> = {};
-  const keys = Object.keys(LAYER_EXPANDED_SHAPES).flatMap((layerName) => [
+  const keys = Object.keys(LAYER_SHAPE_BITS).flatMap((layerName) => [
     homepageShapeSVGKey('top', layerName),
     homepageShapeSVGKey('bottom', layerName),
   ]);
@@ -351,8 +362,28 @@ export async function compressShapeSVGs(shapes: Record<string, string>): Promise
   return out;
 }
 
+/** Short FNV-1a digest, keeps cache keys compact. */
+function digest(s: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return (h >>> 0).toString(36);
+}
+
 function settingsHash(settings: HomepageImageSettings): string {
-  return JSON.stringify({ ...settings, __dark: isDarkTheme(), __svgCacheVersion: SVG_CACHE_VERSION });
+  return JSON.stringify({
+    ...settings,
+    __dark: isDarkTheme(),
+    __svgCacheVersion: SVG_CACHE_VERSION,
+    // Anything that changes which piece is marked or how the image is oriented.
+    __tracing: digest(
+      JSON.stringify(getShapePatterns()) +
+        JSON.stringify(SHAPE_DISPLAY_ROTATIONS) +
+        BOTTOM_ANCHOR_SLOT,
+    ),
+  });
 }
 
 export function getHomepageShapeSVGCacheHash(settings: HomepageImageSettings): string {
@@ -395,7 +426,7 @@ export function getHomepageShapeSVGs(
   settings: HomepageImageSettings,
   svgData: Record<string, string>,
 ): void {
-  const keys = Object.keys(LAYER_EXPANDED_SHAPES).flatMap((layerName) => [
+  const keys = Object.keys(LAYER_SHAPE_BITS).flatMap((layerName) => [
     homepageShapeSVGKey('top', layerName),
     homepageShapeSVGKey('bottom', layerName),
   ]);

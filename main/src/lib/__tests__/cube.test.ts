@@ -3,7 +3,8 @@ import { describe, it, expect } from 'vitest';
 import { CASES, findCase } from '../../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP, shapeIndexForCase } from '../../data/shapeIndex';
 import { LAYER_EXPANDED_SHAPES } from '../../data/expandedShapes';
-import { renderLayerShapeSVG } from '../homepageShapes';
+import { BOTTOM_LAYER_START_SLOT, markExpandedSlot } from '../expandedShape';
+import { getMarkedExpandedForLayer, renderLayerShapeSVG } from '../homepageShapes';
 
 import {
   algToShapeIndex,
@@ -49,6 +50,39 @@ describe('data integrity', () => {
     const first = CASES[0];
     expect(findCase(first.name)?.name).toBe(first.name);
     expect(findCase('does-not-exist')).toBeUndefined();
+  });
+});
+
+describe('bottom-layer absolute tracing start (slot 6)', () => {
+  it('marks character index 6 of the canonical expanded shape for every bottom layer', () => {
+    for (const c of CASES) {
+      const canonical = LAYER_EXPANDED_SHAPES[c.bottom];
+      const marked = markExpandedSlot(canonical, BOTTOM_LAYER_START_SLOT);
+      expect(marked[BOTTOM_LAYER_START_SLOT], `${c.bottom} mark at slot ${BOTTOM_LAYER_START_SLOT}`).toMatch(/[23]/);
+      const bottomSVG = renderLayerShapeSVG(c.bottom, undefined, 'bottom');
+      expect(bottomSVG, `no bottom SVG generated for ${c.bottom}`).toBeTruthy();
+      expect(bottomSVG).toContain('<svg');
+    }
+  });
+
+  it('carries the square tracing start through the display rotation', () => {
+    const canonical = LAYER_EXPANDED_SHAPES.Square_bottom;
+    // Trace start stays on the reference frame (character 6).
+    expect(markExpandedSlot(canonical, BOTTOM_LAYER_START_SLOT)).toBe('011011211011');
+    // Display rotates to the upright orientation, mark still on an edge.
+    const display = getMarkedExpandedForLayer('Square_bottom', 'bottom') ?? '';
+    expect(display).toBe('110112110110');
+    expect(display.replace(/2/g, '0').replace(/3/g, '1')).toBe('110110110110');
+    expect(display[5]).toBe('2');
+  });
+
+  it('leaves other bottom layers unrotated', () => {
+    for (const c of CASES) {
+      if (c.bottom === 'Square_bottom') continue;
+      expect(getMarkedExpandedForLayer(c.bottom, 'bottom')).toBe(
+        markExpandedSlot(LAYER_EXPANDED_SHAPES[c.bottom], BOTTOM_LAYER_START_SLOT),
+      );
+    }
   });
 });
 

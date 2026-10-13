@@ -6,6 +6,7 @@
 // ========================================
 
 import { normalizeScramble } from './normalizer';
+import { chooseBottomStart } from './tracingStart';
 import {
   CORNER_IDENTIFIER,
   CORNER_PARTNER,
@@ -157,10 +158,21 @@ export function saveShapes(shapes: Record<string, string>): void {
 }
 
 let shapePatterns = loadShapes();
+let shapePatternsSource = readShapesSource();
 
+function readShapesSource(): string | null {
+  return typeof localStorage === 'undefined' ? null : localStorage.getItem(SHAPES_STORAGE_KEY);
+}
+
+/** Live patterns; reloads when storage was changed externally (preset/state restore). */
 export function getShapePatterns(): Record<string, string> {
-  if (!shapePatterns || Object.keys(shapePatterns).length === 0) {
+  if (
+    !shapePatterns ||
+    Object.keys(shapePatterns).length === 0 ||
+    readShapesSource() !== shapePatternsSource
+  ) {
     shapePatterns = loadShapes();
+    shapePatternsSource = readShapesSource();
   }
   return shapePatterns;
 }
@@ -168,6 +180,7 @@ export function getShapePatterns(): Record<string, string> {
 export function setShapePatterns(patterns: Record<string, string>): void {
   shapePatterns = { ...patterns };
   saveShapes(shapePatterns);
+  shapePatternsSource = readShapesSource();
 }
 
 export interface UtilityState {
@@ -616,6 +629,7 @@ function symRotation(match: MatchedShape, offset: number, unitLen: number): numb
   return piecesPerSymmetry * offset;
 }
 
+
 /**
  * O(1) parity pipeline: hex layers → units → shape match → lookup tables.
  * Verbatim port of Refactor's calculateParityFromHex.
@@ -639,7 +653,13 @@ export function calculateParityFromHex(
   const botSymOff = getParityTracerSymmetryOffset(scrambleKey).bottom || 0;
 
   const topRot = (topMatch.rot + symRotation(topMatch, topSymOff, topUnits.length)) % topUnits.length;
-  const botRot = (botMatch.rot + symRotation(botMatch, botSymOff, botUnits.length)) % botUnits.length;
+  const botSymRotation = symRotation(botMatch, botSymOff, botUnits.length);
+  // Bottom start: pattern-derived; symmetric shapes take the valid piece nearest the anchor.
+  const botBaseRot =
+    botMatch.name === 'Unknown'
+      ? botMatch.rot
+      : chooseBottomStart(botBits, botMatch.pat, botMatch.rot);
+  const botRot = (botBaseRot + botSymRotation) % botUnits.length;
 
   // rotate units arrays
   const tU = topUnits.slice(topRot).concat(topUnits.slice(0, topRot));

@@ -2,7 +2,7 @@ import { CASES } from '../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP } from '../data/shapeIndex';
 import type { AlgCase } from '../data/types';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
-import { getParityText, setCaseNameResolver, setEvilnessConfig } from '../lib/parityAnalyzer';
+import { getParityText, setCaseNameResolver, setEvilnessConfig, getShapePatterns } from '../lib/parityAnalyzer';
 import {
   applyHomepageSVGsLive,
   ensureHomepageShapeSVGsForCases,
@@ -712,12 +712,14 @@ export async function applyPreset(
   );
   colorScheme = { ...DEFAULT_COLOR_SCHEME, ...((preset.colorScheme as Partial<ColorScheme>) || {}) };
 
+  const patternsBefore = JSON.stringify(getShapePatterns());
   if (preset.customShapesForParityTracerLibrary) {
     localStorage.setItem(
       'customShapesForParityTracerLibrary',
       String(preset.customShapesForParityTracerLibrary),
     );
   }
+  const patternsChanged = JSON.stringify(getShapePatterns()) !== patternsBefore;
 
   if (preset.homepageShapeSVGCache) {
     seedHomepageShapeSVGs(
@@ -726,6 +728,8 @@ export async function applyPreset(
       preset.homepageShapeSVGCache as HomepageShapeSVGCachePayload,
     );
   }
+  // SVGs generated before the patterns loaded carry stale marks.
+  if (patternsChanged) regenerateHomepageSVGs();
 
   perCaseSubtitles.clear();
   Object.entries((preset.perCaseSubtitles as Record<string, string>) || {}).forEach(([k, v]) =>

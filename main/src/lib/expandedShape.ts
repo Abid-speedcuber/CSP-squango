@@ -3,16 +3,13 @@
  *
  * Expanded notation: 12 characters per half, one per sticker slot.
  *   '0' = edge slot, '2' = edge slot that is the tracing start,
- *   '11' = corner slot pair (or '3' on the first slot when marked).
- *
- * The tracing start is the FIRST unit of the shape's parity-tracer pattern
- * (binary: 0=edge, 1=corner). Marking maps that unit into the canonical
- * expanded form (derived from the half-shape-index hex) by reversing the
- * pattern and rotating it to align with the canonical orientation.
+ *   '11' = corner slot pair (or '31' when the corner is the tracing start).
  */
 
-import { LAYER_EXPANDED_SHAPES } from '../data/expandedShapes';
-import { getShapePatterns } from './parityAnalyzer';
+import { LAYER_SHAPE_BITS } from '../data/layerShapes';
+import { getShapeDisplayRotation } from '../data/shapeDisplay';
+import { matchPattern } from './parityAnalyzer';
+import { chooseBottomStart } from './tracingStart';
 
 const EDGE_HEX_CHARS = new Set(['0', '2', '4', '6', '8', 'a', 'c', 'e']);
 
@@ -67,84 +64,58 @@ export function unitsOfExpanded(expanded: string): UnitType[] {
   return units;
 }
 
-function rotateRight<T>(arr: T[], r: number): T[] {
-  const n = arr.length;
-  const k = ((r % n) + n) % n;
-  return arr.slice(n - k).concat(arr.slice(0, n - k));
+/**
+ * Rotate an expanded layer by whole pieces, keeping piece boundaries and any
+ * '2'/'3' tracing-start mark attached to its piece.
+ */
+export function rotateExpandedUnits(expanded: string, shift: number): string {
+  const tokens = parseExpandedLayer(expanded);
+  const n = tokens.length;
+  if (n === 0) return expanded;
+  const k = ((shift % n) + n) % n;
+  if (k === 0) return expanded;
+  const rotated = [...tokens.slice(k), ...tokens.slice(0, k)];
+  let out = '';
+  for (const t of rotated) {
+    if (t.type === 'edge') out += t.piece === '2' ? '2' : '0';
+    else out += t.piece === '3' ? '31' : '11';
+  }
+  return out;
 }
 
-/** Canonical expanded form of a layer shape (from the pregenerated data). */
-export function getLayerExpanded(layerName: string): string | undefined {
-  return LAYER_EXPANDED_SHAPES[layerName];
+/** Expanded layer from render-order unit bits; the unit at `mark` is the tracing start. */
+function buildExpanded(renderBits: string, mark: number): string {
+  let out = '';
+  for (let i = 0; i < renderBits.length; i++) {
+    if (renderBits[i] === '1') out += i === mark ? '31' : '11';
+    else out += i === mark ? '2' : '0';
+  }
+  return out;
 }
 
 /**
- * Find the live parity-tracer pattern (from getShapePatterns) whose reversed
- * unit string is a rotation of the given canonical expanded layer.
+ * Tracing-start-marked expanded layer for a homepage image.
+ * The start comes from the tracer's own logic, evaluated on the layer's fixed
+ * reference frame (LAYER_SHAPE_BITS), so it never depends on display settings.
+ * The display rotation is applied last and carries the mark with its piece.
+ * Render order is the reverse of the tracer's reading order.
  */
-export function findLayerPattern(canonical: string): { pattern: string; name: string } | null {
-  const canonUnits = unitsOfExpanded(canonical);
-  const patterns = getShapePatterns();
-  for (const [pattern, name] of Object.entries(patterns)) {
-    const patUnits = pattern.split('').map((c): UnitType => (c === '1' ? 'C' : 'E'));
-    if (patUnits.length !== canonUnits.length) continue;
-    const rev = [...patUnits].reverse();
-    for (let k = 0; k < canonUnits.length; k++) {
-      if (rotateRight(rev, k).join('') === canonUnits.join('')) {
-        return { pattern, name };
-      }
-    }
+export function getMarkedLayerExpanded(
+  layerName: string,
+  layer: 'top' | 'bottom',
+): string | undefined {
+  const frame = LAYER_SHAPE_BITS[layerName];
+  if (!frame) return undefined;
+
+  const match = matchPattern(frame);
+  let mark = -1;
+  if (match.name !== 'Unknown') {
+    const start = layer === 'top' ? match.rot : chooseBottomStart(frame, match.pat, match.rot);
+    mark = frame.length - 1 - start;
   }
-  return null;
-}
-
-/**
- * Mark the tracing start (the pattern's FIRST unit) in a canonical expanded
- * layer: edge slot → '2', corner first slot → '3'.
- */
-export function markTracingStart(canonical: string, pattern: string): string {
-  const canonUnits = unitsOfExpanded(canonical);
-  const patUnits = pattern.split('').map((c): UnitType => (c === '1' ? 'C' : 'E'));
-  if (patUnits.length !== canonUnits.length) return canonical;
-
-  const rev = [...patUnits].reverse();
-  const n = canonUnits.length;
-  let r = -1;
-  for (let k = 0; k < n; k++) {
-    if (rotateRight(rev, k).join('') === canonUnits.join('')) {
-      r = k;
-      break;
-    }
-  }
-  if (r === -1) return canonical;
-
-  const startUnit = ((patUnits.length - 1) + r) % patUnits.length;
-  let slot = 0;
-  for (let u = 0; u < startUnit; u++) slot += canonUnits[u] === 'E' ? 1 : 2;
-
-  const out = canonical.split('');
-  out[slot] = canonUnits[startUnit] === 'C' ? '3' : '2';
-  return out.join('');
-}
-
-/**
- * Marked canonical expanded layer for a homepage layer shape name,
- * using the current live parity-tracer patterns.
- */
-const markedLayerCache = new Map<string, string | undefined>();
-
-export function getMarkedLayerExpanded(layerName: string): string | undefined {
-  const patternHash = JSON.stringify(getShapePatterns());
-  const cacheKey = `${patternHash}:${layerName}`;
-  if (markedLayerCache.has(cacheKey)) return markedLayerCache.get(cacheKey);
-
-  const canonical = LAYER_EXPANDED_SHAPES[layerName];
-  if (!canonical) {
-    markedLayerCache.set(cacheKey, undefined);
-    return undefined;
-  }
-  const match = findLayerPattern(canonical);
-  const marked = match ? markTracingStart(canonical, match.pattern) : canonical;
-  markedLayerCache.set(cacheKey, marked);
-  return marked;
+  const render = [...frame].reverse().join('');
+  return rotateExpandedUnits(
+    buildExpanded(render, mark),
+    getShapeDisplayRotation(layer, layerName),
+  );
 }
