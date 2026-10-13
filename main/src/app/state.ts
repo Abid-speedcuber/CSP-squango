@@ -37,7 +37,7 @@ export interface ColorScheme {
 }
 
 const DEFAULT_COLOR_SCHEME: ColorScheme = {
-  topColor: '#000000',
+  topColor: '#474747',
   bottomColor: '#FFFFFF',
   frontColor: '#CC0000',
   rightColor: '#00AA00',
@@ -1185,6 +1185,7 @@ export function getAliases(caseName: string): string[] {
 export function getColorName(hexColor: string): string {
   const colorMap: Record<string, string> = {
     '#000000': 'Black',
+    '#474747': 'Black',
     '#FFFFFF': 'White',
     '#FFFF00': 'Yellow',
     '#FFD700': 'Yellow',

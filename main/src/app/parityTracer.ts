@@ -1980,6 +1980,7 @@ function hideInstructionsSetting(): boolean {
 function getColorName(hexColor: string): string {
   const colorMap: Record<string, string> = {
     '#000000': 'Black',
+    '#474747': 'Black',
     '#FFFFFF': 'White',
     '#FFFF00': 'Yellow',
     '#FFD700': 'Yellow',
