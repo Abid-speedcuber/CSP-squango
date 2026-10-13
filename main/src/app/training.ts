@@ -98,6 +98,15 @@ const TIMER_SELECTOR_KEY = 'sq1-selector-cases';
 // Draw-scramble ring distance, matching the parity tracer's visualization.
 const TRAINING_SCRAMBLE_RING_DISTANCE = 120;
 
+function formatMedianTime(timesMs: number[]): string {
+  if (timesMs.length === 0) return 'Median: —';
+  const sorted = [...timesMs].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  const median =
+    sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
+  return `Median: ${(median / 1000).toFixed(3)}s`;
+}
+
 function hexToScrambleText(hexCode: string): string {
   let text = hexCode;
   try {
@@ -1621,6 +1630,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
                 <span>Case Log</span>
                 <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
+            <div id="evilQuizMedian" style="padding:10px 12px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border-color);"></div>
             <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
@@ -1676,6 +1686,8 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
   function renderSidebar(): void {
     const list = document.getElementById('evilQuizLogList');
     if (!list) return;
+    const median = document.getElementById('evilQuizMedian');
+    if (median) median.textContent = formatMedianTime(quizLog.map((entry) => entry.timeMs));
     if (quizLog.length === 0) {
       list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>';
       return;
@@ -1981,6 +1993,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
   let currentParity: string | null = null;
   let timerInt: ReturnType<typeof setInterval> | null = null;
   let questionCount = 0;
+  let sidebarOpen = false;
 
   const modal = document.createElement('div');
   modal.id = 'parityQuizModal';
@@ -1992,6 +2005,9 @@ function startParityQuiz(chosenCaseNames: string[]): void {
             </div>
             <div style="display:flex;gap:10px;align-items:center;">
                 <div id="parityQuizProgress" style="font-size:0.85rem;color:var(--text-muted)">Q1 | 0/0</div>
+                <button class="training-modal-refresh" id="parityQuizLogToggle" title="Case log">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
                 <button class="training-modal-refresh" id="parityQuizSelectCases" title="Select cases" style="width:auto;padding:0 12px;font-size:0.8rem;font-weight:600;">Cases</button>
                 <button class="training-modal-close" id="parityQuizClose">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -2011,6 +2027,14 @@ function startParityQuiz(chosenCaseNames: string[]): void {
             <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:var(--text-ui);"></div>
             <div class="training-modal-timer" id="parityQuizTimer">0.000</div>
         </div>
+        <div id="parityQuizSidebar" style="display:none;position:fixed;top:0;right:0;width:260px;height:100%;background:var(--surface);border-left:1px solid var(--border-color);z-index:10001;overflow-y:auto;flex-direction:column;">
+            <div style="padding:14px 16px;font-weight:700;color:var(--text-ui);border-bottom:1px solid var(--border-color);display:flex;justify-content:space-between;align-items:center;">
+                <span>Case Log</span>
+                <button id="parityQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
+            </div>
+            <div id="parityQuizMedian" style="padding:10px 12px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border-color);"></div>
+            <div id="parityQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
     `;
 
   const closeQuiz = () => {
@@ -2029,6 +2053,51 @@ function startParityQuiz(chosenCaseNames: string[]): void {
   parityQuizOnSelectionChange = function (selectedArray) {
     rebuildParityIndices(selectedArray);
   };
+
+  function renderSidebar(): void {
+    const list = document.getElementById('parityQuizLogList');
+    if (!list) return;
+    const median = document.getElementById('parityQuizMedian');
+    if (median) median.textContent = formatMedianTime(quizLog.map((entry) => entry.timeMs));
+    if (quizLog.length === 0) {
+      list.innerHTML = '<span style="color:var(--text-muted);font-style:italic;">No answers yet.</span>';
+      return;
+    }
+    list.innerHTML = [...quizLog]
+      .reverse()
+      .map((entry) => {
+        const icon = entry.correct ? '✓' : '✗';
+        const color = entry.correct ? '#2d6a2d' : '#cc0000';
+        const timeStr = (entry.timeMs / 1000).toFixed(3) + 's';
+        const parityStr = entry.parity ?? 'Unknown';
+        return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
+                <span style="color:${color};font-weight:700;">${icon}</span>
+                <span style="font-weight:600;margin-left:4px;">${entry.caseName}</span>
+                <span style="color:var(--text-muted);margin-left:4px;">(${parityStr})</span>
+                <span style="float:right;color:var(--text-muted)">${timeStr}</span>
+            </div>`;
+      })
+      .join('');
+  }
+
+  function toggleSidebar(open = !sidebarOpen): void {
+    sidebarOpen = open;
+    const sidebar = document.getElementById('parityQuizSidebar');
+    if (sidebar) {
+      sidebar.style.display = sidebarOpen ? 'flex' : 'none';
+      if (sidebarOpen) renderSidebar();
+    }
+  }
+
+  document.getElementById('parityQuizLogToggle')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleSidebar();
+  });
+  document.getElementById('parityQuizSidebarClose')!.addEventListener('click', () => toggleSidebar(false));
+  modal.addEventListener('click', (e) => {
+    const sidebar = document.getElementById('parityQuizSidebar');
+    if (sidebarOpen && sidebar && !sidebar.contains(e.target as Node)) toggleSidebar(false);
+  });
 
   function nextQuestion(): void {
     if (!currentItem || allIndices.length > 0) {
@@ -2087,6 +2156,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
         timeMs: elapsed,
       });
     }
+    if (sidebarOpen) renderSidebar();
 
     const fb = document.getElementById('parityQuizFeedback')!;
     fb.textContent = correct
