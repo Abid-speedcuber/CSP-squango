@@ -403,12 +403,6 @@ function showInstructionModal(config: TracerConfig, title: string, bodyHTML: str
   };
   closeBtn.onclick = close;
   pushModalState('instructionModal', close);
-
-  instructionModal.onclick = (e) => {
-    if (e.target === instructionModal) {
-      close();
-    }
-  };
 }
 
 function showParityTracerInstructionModal(config: TracerConfig): void {

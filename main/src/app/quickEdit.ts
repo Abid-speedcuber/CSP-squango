@@ -25,10 +25,9 @@ import { CSPData } from '../lib/dataStore';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
 import { sanitizeNoteHTML } from './algDisplay';
-import { closeModalWithHistory, pushModalState } from './modal';
+import { attachOverlayClose, closeAllModalStates, closeModalWithHistory, pushModalState } from './modal';
 import { showConfirmation, showSaveDiscardConfirmation } from './confirm';
 import { showToast } from './toast';
-import { closeAllModalStates } from './modal';
 import { notify } from './store';
 
 interface QuickEditState {
@@ -1469,9 +1468,7 @@ function openAlgVariablesModal(): void {
     `;
 
   document.body.appendChild(modal);
-  modal.addEventListener('mousedown', (e) => {
-    if (e.target === modal) closeAlgVariablesModal();
-  });
+  attachOverlayClose(modal, closeAlgVariablesModal);
   pushModalState('algVariablesModal', closeAlgVariablesModal);
 }
 

@@ -875,9 +875,6 @@ export function openAnimateAlgModal(algorithm = '', caseName = '', computedParit
     });
   };
   document.getElementById(`${modalId}-close`)!.onclick = close;
-  modal.onclick = (event) => {
-    if (event.target === modal) close();
-  };
   document.getElementById(`${modalId}-play`)!.onclick = () => viewer.play();
   document.getElementById(`${modalId}-pause`)!.onclick = () => viewer.pause();
   document.getElementById(`${modalId}-reset`)!.onclick = () => viewer.reset();
