@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { getHomepageImageSettings, saveHomepageImageSettingsForReload } from '../app/state';
 import { useAppStore } from '../app/store';
 import { applyInstructionVisibility } from '../app/visibility';
-import { attachOverlayClose, closeModalWithHistory, hasOpenModal, lockScroll, pushModalState, removeCloseModalFromStack, unlockScroll } from '../app/modal';
+import { closeModalWithHistory, hasOpenModal, lockScroll, pushModalState, removeCloseModalFromStack, unlockScroll } from '../app/modal';
 import { DEFAULT_HOMEPAGE_IMAGE_SETTINGS, renderHomepageShapePreview, type HomepageImageSettings } from '../lib/homepageShapes';
 import LinkedStrokeWidthControl from './LinkedStrokeWidthControl';
 import { showToast } from '../app/toast';
@@ -191,7 +191,6 @@ function HomepageImagesSection(): React.ReactNode {
 export default function HomepageImagesModal(): React.ReactNode {
   const [open, setOpen] = useState(false);
   const close = useCallback(() => {
-    removeCloseModalFromStack(close);
     closeModalWithHistory(() => setOpen(false));
   }, []);
 
@@ -205,8 +204,6 @@ export default function HomepageImagesModal(): React.ReactNode {
     if (!open) return;
     lockScroll();
     pushModalState('homepageImagesModal', close);
-    const overlay = document.getElementById('homepageImagesModal');
-    if (overlay) attachOverlayClose(overlay, close);
     applyInstructionVisibility();
     return () => {
       removeCloseModalFromStack(close);

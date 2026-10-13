@@ -33,8 +33,13 @@ export default function InfoTip({ tipHtml, label = 'More info' }: InfoTipProps):
     const onOtherTip = (event: Event) => {
       if ((event as CustomEvent<string>).detail !== tipId) setOpen(false);
     };
+    const onModalClosing = () => setOpen(false);
     window.addEventListener('sqg:info-open', onOtherTip);
-    return () => window.removeEventListener('sqg:info-open', onOtherTip);
+    window.addEventListener('sqg:modal-closing', onModalClosing);
+    return () => {
+      window.removeEventListener('sqg:info-open', onOtherTip);
+      window.removeEventListener('sqg:modal-closing', onModalClosing);
+    };
   }, [tipId]);
 
   useEffect(() => {

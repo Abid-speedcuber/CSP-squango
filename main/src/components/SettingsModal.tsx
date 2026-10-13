@@ -7,7 +7,6 @@ import {
 } from '../app/settingsUI';
 import { useAppStore } from '../app/store';
 import {
-  attachOverlayClose,
   closeModalWithHistory,
   hasOpenModal,
   lockScroll,
@@ -714,7 +713,6 @@ export default function SettingsModal(): React.ReactNode {
   const [activeSection, setActiveSection] = useState<string>(tab);
 
   const closeSettings = useCallback(() => {
-    removeCloseModalFromStack(closeSettings);
     closeModalWithHistory(closeUnifiedSettings);
   }, []);
 
@@ -722,8 +720,6 @@ export default function SettingsModal(): React.ReactNode {
     if (!open) return;
     lockScroll();
     pushModalState('unifiedSettingsModal', closeSettings);
-    const overlay = document.getElementById('unifiedSettingsModal');
-    if (overlay) attachOverlayClose(overlay, closeSettings);
     return () => {
       removeCloseModalFromStack(closeSettings);
       if (!hasOpenModal()) unlockScroll();

@@ -42,7 +42,6 @@ import {
 } from '../lib/parityAnalyzer';
 import { visualizeFromHex } from '../lib/drawScramble';
 import {
-  attachOverlayClose,
   closeModalWithHistory,
   pushModalState,
   removeCloseModalFromStack,
@@ -378,6 +377,7 @@ function showInstructionModal(config: TracerConfig, title: string, bodyHTML: str
     : adjustColorBrightness(config.backgroundColor, -4);
 
   const instructionModal = document.createElement('div');
+  instructionModal.id = 'instructionModal';
   instructionModal.className = 'training-info-modal';
   instructionModal.style.zIndex = zIndex;
   instructionModal.innerHTML = `
@@ -406,7 +406,7 @@ function showInstructionModal(config: TracerConfig, title: string, bodyHTML: str
 
   instructionModal.onclick = (e) => {
     if (e.target === instructionModal) {
-      instructionModal.remove();
+      close();
     }
   };
 }
@@ -484,6 +484,7 @@ function showEvilnessCasesModal(
   let evilFilteredCases: string[] = [...allCases];
 
   const evilModalDiv = document.createElement('div');
+  evilModalDiv.id = 'evilModal';
   evilModalDiv.style.cssText = `
     display:flex; position:fixed; top:0; left:0; width:100%; height:100%;
     background:rgba(0,0,0,0.55); z-index:10008;
@@ -720,7 +721,6 @@ function showEvilnessCasesModal(
   (evilInner.querySelector('#evilSaveBtn') as HTMLButtonElement).addEventListener('click', performSave);
   (evilInner.querySelector('#evilCancelBtn') as HTMLButtonElement).addEventListener('click', () => closeEvilModal(false));
   (evilInner.querySelector('#evilModalCloseBtn') as HTMLButtonElement).addEventListener('click', () => closeEvilModal(false));
-  attachOverlayClose(evilModalDiv, () => closeEvilModal(false));
   pushModalState('evilModal', evilStackCloser);
 
   (evilInner.querySelector('#evilResetBtn') as HTMLButtonElement).addEventListener('click', () => {
@@ -755,6 +755,7 @@ function showTracingPositionSettingsModal(
     : adjustColorBrightness(config.backgroundColor, -3);
 
   const configModalDiv = document.createElement('div');
+  configModalDiv.id = 'parityConfigModal';
   configModalDiv.className = 'parity-tracer-config-modal';
   configModalDiv.style.cssText = `
     position: fixed;
@@ -1287,8 +1288,6 @@ function showTracingPositionSettingsModal(
 
   configFloatingCloseBtn.onclick = () => closeConfigModal();
 
-  attachOverlayClose(configModalDiv, () => closeConfigModal());
-
   setTimeout(() => {
     configContent.querySelectorAll<HTMLElement>('[class*="shape-piece-config-"]').forEach((piece) => {
       piece.style.cursor = 'pointer';
@@ -1381,6 +1380,7 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
     : adjustColorBrightness(config.backgroundColor, LM_HOVER_BG);
 
   const backdrop = document.createElement('div');
+  backdrop.id = 'parityTracerModal';
   backdrop.className = 'parity-tracer-backdrop';
   backdrop.style.cssText = `
     position: fixed;
@@ -1910,8 +1910,6 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
     settingsBtnElement.addEventListener('click', () => {
       openUnifiedSettings('parity');
     });
-
-    attachOverlayClose(backdrop, () => closeMainModal());
 
     performAnalysis();
   }, 0);

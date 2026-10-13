@@ -32,7 +32,7 @@ import { processScramble } from '../lib/colorizer';
 import { shapeIndexToHex } from '../lib/cube';
 import { visualizeFromScramble, visualizeShapes } from '../lib/drawScramble';
 import { getColorName, getParityText } from '../lib/parityAnalyzer';
-import { pushModalState, closeModalWithHistory, attachOverlayClose } from './modal';
+import { pushModalState, closeModalWithHistory, getTopModalId } from './modal';
 import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
 
@@ -288,8 +288,6 @@ export function openTrainingModal(caseName: string): void {
 
   currentTrainingCase = caseName;
 
-  pushModalState('trainingModal', closeTrainingModal);
-
   const dataItem = CSPData.getCase(caseName);
   if (!dataItem) {
     showToast('Case not found.', 2500, 'error');
@@ -316,6 +314,8 @@ export function openTrainingModal(caseName: string): void {
     showToast('No training scrambles available for this case.', 2500, 'error');
     return;
   }
+
+  pushModalState('trainingModal', closeTrainingModal);
 
   titleEl.textContent = `Training: ${getDisplayName(caseName)}`;
   preGeneratedScrambles = [];
@@ -1213,6 +1213,7 @@ function handleTrainingKeyDown(e: KeyboardEvent): void {
   }
 
   if (e.code === 'Escape') {
+    if (getTopModalId() && getTopModalId() !== 'trainingModal') return;
     e.preventDefault();
     // Claim the Esc here so the global modal-stack handler (modal.ts) doesn't ALSO
     // pop the stack and close the training modal. While the trainer is open, Esc is
@@ -1221,13 +1222,8 @@ function handleTrainingKeyDown(e: KeyboardEvent): void {
     const infoModal = document.getElementById('trainingInfoModal');
     const shapeModal = document.getElementById('shapeIndexSelectorModal');
     const selectorModal = document.getElementById('trainingSelectorModal');
-    const settingsModal = document.getElementById('unifiedSettingsModal');
     if (infoModal && infoModal.classList.contains('active')) {
       closeTrainingInfoModal();
-      return;
-    }
-    if (settingsModal && settingsModal.classList.contains('active')) {
-      closeUnifiedSettingsBridge();
       return;
     }
     if (shapeModal && shapeModal.classList.contains('active')) {
@@ -1430,12 +1426,6 @@ function openTrainingSettingsModal(): void {
   (window as unknown as { openUnifiedSettings: (tab: string) => void }).openUnifiedSettings(
     'trainer',
   );
-}
-
-function closeUnifiedSettingsBridge(): void {
-  const el = document.getElementById('unifiedSettingsModal');
-  if (el) el.classList.remove('active');
-  document.body.classList.remove('modal-open');
 }
 
 function openTrainingInfoModal(): void {
@@ -1895,6 +1885,12 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
     if (e.code === 'Escape') {
       e.preventDefault();
       e.stopImmediatePropagation();
+      if (sidebarOpen) {
+        sidebarOpen = false;
+        const sidebar = document.getElementById('evilQuizSidebar');
+        if (sidebar) sidebar.style.display = 'none';
+        return;
+      }
       if (quizRunning) {
         quizRunning = false;
         if (timerInt) clearInterval(timerInt);
@@ -2501,6 +2497,12 @@ function startColorRecognitionPractice(): void {
     if (e.code === 'Escape') {
       e.preventDefault();
       e.stopImmediatePropagation();
+      if (sidebarOpen) {
+        sidebarOpen = false;
+        const sidebar = document.getElementById('colorRecogSidebar');
+        if (sidebar) sidebar.style.display = 'none';
+        return;
+      }
       if (quizRunning) {
         quizRunning = false;
         if (timerInt) clearInterval(timerInt);
@@ -2605,7 +2607,6 @@ function openTrainerPickerModal(): void {
   document.body.appendChild(picker);
   pushModalState('trainerPickerModal', closeTrainerPickerModal);
   document.getElementById('trainerPickerClose')!.addEventListener('click', closeTrainerPickerModal);
-  attachOverlayClose(picker, closeTrainerPickerModal);
 }
 
 function closeTrainerPickerModal(): void {
@@ -2804,8 +2805,6 @@ function createSelectorModal(): void {
             </div>
         </div>
     `;
-
-  attachOverlayClose(modal, closeSelectorModal);
 
   document.body.appendChild(modal);
 

@@ -28,7 +28,7 @@ import { sanitizeNoteHTML } from './algDisplay';
 import { closeModalWithHistory, pushModalState } from './modal';
 import { showConfirmation, showSaveDiscardConfirmation } from './confirm';
 import { showToast } from './toast';
-import { closeUnifiedSettings } from './settingsUI';
+import { closeAllModalStates } from './modal';
 import { notify } from './store';
 
 interface QuickEditState {
@@ -1163,7 +1163,8 @@ function revertQuickEditChanges(): void {
 
 // ── Open modal ────────────────────────────────────────────────────────────────
 export function openQuickEditModal(): void {
-  closeUnifiedSettings();
+  if (document.getElementById('quickEditModal')) return;
+  closeAllModalStates();
 
   if (typeof (window as unknown as { closeTransientOverlays?: () => void }).closeTransientOverlays === 'function') {
     (window as unknown as { closeTransientOverlays: () => void }).closeTransientOverlays();

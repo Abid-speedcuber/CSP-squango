@@ -3,15 +3,21 @@
  * Modals that need Esc/back-button handling push a close function.
  */
 
-type CloseEntry = (() => void) | [() => void, ...unknown[]];
+type CloseEntry = {
+  modalId: string;
+  closeFn: (...args: unknown[]) => void;
+  args: unknown[];
+};
 
 let closeModalStack: CloseEntry[] = [];
 let sqgModalPopstateClosing = false;
-let sqgModalSkipPopstate = false;
+let sqgModalSkipPopstateCount = 0;
+let modalCloseInProgress = false;
+let backdropPointerDown: { entry: CloseEntry; overlay: HTMLElement; pointerId: number } | null = null;
 
 export function pushModalState(modalId: string, closeFn: () => void, ...args: unknown[]): void {
   if (typeof closeFn !== 'function') return;
-  const entry: CloseEntry = args.length ? [closeFn, ...args] : closeFn;
+  const entry: CloseEntry = { modalId, closeFn, args };
   closeModalStack.push(entry);
   try {
     window.history.pushState({ sqgModal: true, modalId }, '');
@@ -22,22 +28,22 @@ export function pushModalState(modalId: string, closeFn: () => void, ...args: un
 
 export function removeCloseModalFromStack(closeFn: () => void): void {
   if (typeof closeFn !== 'function') return;
-  closeModalStack = closeModalStack.filter((entry) => {
-    if (typeof entry === 'function') return entry !== closeFn;
-    if (Array.isArray(entry) && typeof entry[0] === 'function') return entry[0] !== closeFn;
-    return true;
-  });
+  closeModalStack = closeModalStack.filter((entry) => entry.closeFn !== closeFn);
 }
 
 export function popCloseModalStack(): boolean {
   if (closeModalStack.length === 0) return false;
   const entry = closeModalStack.pop();
-  if (typeof entry === 'function') {
-    entry();
-  } else if (Array.isArray(entry) && typeof entry[0] === 'function') {
-    const fn: (() => void) = entry[0];
-    const rest = entry.slice(1) as unknown[];
-    (fn as (...args: unknown[]) => void)(...rest);
+  window.dispatchEvent(new Event('sqg:modal-closing'));
+  modalCloseInProgress = true;
+  try {
+    entry?.closeFn(...entry.args);
+  } finally {
+    modalCloseInProgress = false;
+  }
+  if (!sqgModalPopstateClosing && window.history.state?.sqgModal) {
+    sqgModalSkipPopstateCount += 1;
+    window.history.back();
   }
   return true;
 }
@@ -47,14 +53,48 @@ export function hasOpenModal(): boolean {
   return closeModalStack.length > 0;
 }
 
+export function getTopModalId(): string | undefined {
+  return closeModalStack[closeModalStack.length - 1]?.modalId;
+}
+
+/** Close every stacked modal, typically before switching to a standalone workspace. */
+export function closeAllModalStates(): void {
+  if (closeModalStack.length === 0) return;
+  const historyEntriesToRemove = closeModalStack.length;
+  const wasPopstateClosing = sqgModalPopstateClosing;
+  sqgModalPopstateClosing = true;
+  try {
+    while (closeModalStack.length > 0) {
+      popCloseModalStack();
+    }
+  } finally {
+    sqgModalPopstateClosing = wasPopstateClosing;
+  }
+
+  if (!hasOpenModal()) unlockScroll();
+
+  if (!wasPopstateClosing && window.history.state?.sqgModal) {
+    sqgModalSkipPopstateCount += historyEntriesToRemove;
+    window.history.go(-historyEntriesToRemove);
+  }
+}
+
 export function closeModalWithHistory(closeFn: (...args: unknown[]) => void, ...args: unknown[]): void {
   if (typeof closeFn !== 'function') return;
-  removeCloseModalFromStack(closeFn);
+  const matchingEntryExists = closeModalStack.some((entry) => entry.closeFn === closeFn);
+  if (matchingEntryExists) {
+    removeCloseModalFromStack(closeFn);
+  } else if (!modalCloseInProgress && closeModalStack.length > 0) {
+    closeModalStack.pop();
+  }
 
   const shouldPopHistory =
-    !sqgModalPopstateClosing && window.history.state && window.history.state.sqgModal;
+    !modalCloseInProgress
+    && !sqgModalPopstateClosing
+    && window.history.state
+    && window.history.state.sqgModal;
   if (shouldPopHistory) {
-    sqgModalSkipPopstate = true;
+    sqgModalSkipPopstateCount += 1;
   }
 
   closeFn(...args);
@@ -66,8 +106,8 @@ export function closeModalWithHistory(closeFn: (...args: unknown[]) => void, ...
 
 export function installModalStackGlobalListeners(): void {
   window.addEventListener('popstate', () => {
-    if (sqgModalSkipPopstate) {
-      sqgModalSkipPopstate = false;
+    if (sqgModalSkipPopstateCount > 0) {
+      sqgModalSkipPopstateCount -= 1;
       return;
     }
     if (closeModalStack.length > 0) {
@@ -78,12 +118,35 @@ export function installModalStackGlobalListeners(): void {
   });
 
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (document.getElementById('evilnessQuizModal')) return;
-      if (closeModalStack.length > 0) {
-        popCloseModalStack();
-      }
+    if (e.key !== 'Escape') return;
+    if (getTopModalId() === 'evilnessQuizModal' || getTopModalId() === 'colorRecogModal') return;
+    if (!popCloseModalStack()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  });
+
+  document.addEventListener('pointerdown', (e) => {
+    backdropPointerDown = null;
+    if (e.button !== 0) return;
+
+    const entry = closeModalStack[closeModalStack.length - 1];
+    const overlay = entry ? document.getElementById(entry.modalId) : null;
+    if (overlay && e.target === overlay) {
+      backdropPointerDown = { entry, overlay, pointerId: e.pointerId };
     }
+  });
+
+  document.addEventListener('pointerup', (e) => {
+    const pointerDown = backdropPointerDown;
+    backdropPointerDown = null;
+    if (!pointerDown || pointerDown.pointerId !== e.pointerId || e.target !== pointerDown.overlay) return;
+    if (closeModalStack[closeModalStack.length - 1] === pointerDown.entry) {
+      popCloseModalStack();
+    }
+  });
+
+  document.addEventListener('pointercancel', () => {
+    backdropPointerDown = null;
   });
 }
 

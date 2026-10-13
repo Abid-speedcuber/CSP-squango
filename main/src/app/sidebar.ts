@@ -23,7 +23,7 @@ import {
   setColorScheme,
   setProfile,
 } from './state';
-import { closeModalWithHistory, pushModalState, removeCloseModalFromStack } from './modal';
+import { closeModalWithHistory, pushModalState } from './modal';
 import { openGeneralNotesModal } from './notes';
 import { applyInstructionVisibility } from './visibility';
 import { showToast } from './toast';
@@ -742,6 +742,7 @@ export function handlePresetChange(presetName: string): void {
 
   if (isSamePreset) {
     const reloadModal = document.createElement('div');
+    reloadModal.id = 'reloadPresetModal';
     reloadModal.className = 'modal active';
     reloadModal.style.zIndex = '10002';
     reloadModal.innerHTML = `
@@ -766,17 +767,16 @@ export function handlePresetChange(presetName: string): void {
                 </div>
             </div>
         `;
-    const close = () => {
-      reloadModal.remove();
-      removeCloseModalFromStack(close);
-    };
-    (reloadModal.querySelector('.close-btn') as HTMLElement).onclick = close;
+        const close = () => {
+          reloadModal.remove();
+        };
+        (reloadModal.querySelector('.close-btn') as HTMLElement).onclick = () => closeModalWithHistory(close);
     (reloadModal.querySelector('[data-action="export"]') as HTMLElement).onclick = () => {
       exportData();
       showToast('Data exported! You can now safely reload.', 3000, 'success');
     };
     (reloadModal.querySelector('[data-action="reload"]') as HTMLElement).onclick = () => {
-      reloadModal.remove();
+      closeModalWithHistory(close);
       document.documentElement.classList.remove('scroll-locked');
       closeSidebar();
       void applyPreset(presetName, false, false).then(() => {
@@ -784,7 +784,7 @@ export function handlePresetChange(presetName: string): void {
       });
     };
     (reloadModal.querySelector('[data-action="cancel"]') as HTMLElement).onclick = () => {
-      reloadModal.remove();
+      closeModalWithHistory(close);
     };
     pushModalState('reloadPresetModal', close);
     document.body.appendChild(reloadModal);
@@ -799,6 +799,7 @@ export function handlePresetChange(presetName: string): void {
 
   // Create a custom warning modal with export option
   const warningModal = document.createElement('div');
+  warningModal.id = 'presetWarningModal';
   warningModal.className = 'modal active';
   warningModal.style.zIndex = '10002';
   warningModal.innerHTML = `
@@ -832,15 +833,14 @@ export function handlePresetChange(presetName: string): void {
 
   const close = () => {
     warningModal.remove();
-    removeCloseModalFromStack(close);
   };
-  (warningModal.querySelector('.close-btn') as HTMLElement).onclick = close;
+  (warningModal.querySelector('.close-btn') as HTMLElement).onclick = () => closeModalWithHistory(close);
   (warningModal.querySelector('[data-action="export"]') as HTMLElement).onclick = () => {
     exportData();
     showToast('Data exported! You can now safely switch presets.', 3000, 'success');
   };
   (warningModal.querySelector('[data-action="switch"]') as HTMLElement).onclick = () => {
-    warningModal.remove();
+    closeModalWithHistory(close);
     document.documentElement.classList.remove('scroll-locked');
     closeSidebar();
     void applyPreset(presetName, false, false).then(() => {
@@ -849,7 +849,7 @@ export function handlePresetChange(presetName: string): void {
     });
   };
   (warningModal.querySelector('[data-action="cancel"]') as HTMLElement).onclick = () => {
-    warningModal.remove();
+    closeModalWithHistory(close);
     document.documentElement.classList.remove('scroll-locked');
   };
   pushModalState('presetWarningModal', close);
