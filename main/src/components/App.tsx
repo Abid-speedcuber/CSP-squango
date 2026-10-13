@@ -20,6 +20,7 @@ import {
 import { computeFilteredData, type LearnFilter } from '../app/filter';
 import { installWindowShims } from '../app/shims';
 import { renderCard } from '../app/cardHTML';
+import { reconcileGrid } from '../app/gridRender';
 import { openGeneralNotesModal } from '../app/notes';
 import { applyHintVisibility, applyInstructionVisibility } from '../app/visibility';
 // LoadingScreen intentionally disabled: the app now paints the shell first and
@@ -123,7 +124,9 @@ export default function App(): React.ReactNode {
   const [skeletonCardHeight, setSkeletonCardHeight] = useState(MATT_SKELETON_CARD_HEIGHT);
   const [initialCardCount, setInitialCardCount] = useState(MIN_INITIAL_CARD_COUNT);
   const [gridComplete, setGridComplete] = useState(false);
+  const [gridRenderTick, setGridRenderTick] = useState(0);
   const gridRef = useRef<HTMLDivElement | null>(null);
+  const gridPaintedRef = useRef(false);
   const parityStartedRef = useRef(false);
 
   const setSortType = useCallback((mode: SortMode) => {
@@ -257,17 +260,34 @@ export default function App(): React.ReactNode {
     if (!bootReady || !gridRef.current) return;
 
     const grid = gridRef.current;
+    const items = filtered;
 
     setGridComplete(false);
 
-    // This effect is the single owner of the grid's children. Reset the content
-    // to the freshly computed initial slice before appending, so cards appended
-    // by a previous render (e.g. a prior learn-filter mode) are cleared instead
-    // of accumulating into duplicates.
+    // After the first paint, reconcile the grid in place. This reuses existing
+    // card DOM nodes, so re-sorts/re-filters/toggles don't tear the list down
+    // (which collapses the document height, jumps the scroll to the top, and
+    // streams the rest of the cards back in).
+    if (gridPaintedRef.current) {
+      initializeSVGDataForCases(items);
+      if (needsParityRecalculation()) calculateAndCacheParityForCases(items);
+      reconcileGrid(grid, items);
+      updateProgress();
+      applyHintVisibility();
+      applyInstructionVisibility();
+      setGridComplete(true);
+      setGridRenderTick((tick) => tick + 1);
+      return;
+    }
+
+    // First paint: fill the grid progressively so the initial render stays
+    // non-blocking, ensuring SVG data per chunk as before.
+    gridPaintedRef.current = true;
     grid.innerHTML = gridHTML;
 
-    if (filtered.length <= initialCardCount) {
+    if (items.length <= initialCardCount) {
       setGridComplete(true);
+      setGridRenderTick((tick) => tick + 1);
       return;
     }
 
@@ -279,20 +299,21 @@ export default function App(): React.ReactNode {
 
     const appendChunk = () => {
       if (cancelled || !gridRef.current) return;
-      const end = Math.min(filtered.length, nextIndex + chunkSize);
-      const nextItems = filtered.slice(nextIndex, end);
+      const end = Math.min(items.length, nextIndex + chunkSize);
+      const nextItems = items.slice(nextIndex, end);
       if (needsParityRecalculation()) calculateAndCacheParityForCases(nextItems);
       initializeSVGDataForCases(nextItems);
       const html = nextItems.map((item) => renderCard(item)).join('');
       if (html) gridRef.current.insertAdjacentHTML('beforeend', html);
       nextIndex = end;
-      if (nextIndex < filtered.length) {
+      if (nextIndex < items.length) {
         scheduledHandle = scheduleGridChunk(appendChunk);
       } else {
         updateProgress();
         applyHintVisibility();
         applyInstructionVisibility();
         setGridComplete(true);
+        setGridRenderTick((tick) => tick + 1);
       }
     };
 
@@ -332,7 +353,7 @@ export default function App(): React.ReactNode {
       window.cancelAnimationFrame(frame);
       observer.disconnect();
     };
-  }, [bootReady, gridHTML, storeVersion]);
+  }, [bootReady, gridRenderTick, storeVersion]);
 
   const title = 'SquanGo CSP';
 
