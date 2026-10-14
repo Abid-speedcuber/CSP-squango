@@ -3289,10 +3289,9 @@ export function applyHideImgLive(val: boolean): void {
   trainingHideScrambleImage = val;
   applyHideScrambleImage();
   const imgEl = document.getElementById('trainingScrambleImage');
-  const current = scrambleHistory[currentHistoryIndex];
-  if (imgEl && current) {
-    imgEl.innerHTML = val ? '' : current.image;
-  }
+  if (!imgEl) return;
+  if (val) imgEl.innerHTML = '';
+  else resizeCurrentTrainingScramble();
 }
 
 export function setEnableInspectionLive(val: boolean): void {
