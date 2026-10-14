@@ -90,17 +90,98 @@ function _actionBtn(label: string, onAction: () => void, tipHtml?: string): Reac
 
 function Slider(props: {
   id: string;
+  label: string;
   min: number;
   max: number;
   step: number;
   value: number;
-  displayId: string;
-  onInput: (val: string) => void;
-  valueLabel?: (v: string) => string;
+  onChange: (val: number) => void;
+  unit?: string;
+  precision?: number;
+  tipHtml?: string;
 }): React.ReactNode {
-  const { id, min, max, step, value, displayId, onInput, valueLabel } = props;
+  const {
+    id,
+    label,
+    min,
+    max,
+    step,
+    value,
+    onChange,
+    unit = '',
+    precision,
+    tipHtml,
+  } = props;
+  const formatValue = useCallback(
+    (val: number) => (precision === undefined ? String(val) : val.toFixed(precision)),
+    [precision],
+  );
+  const [inputValue, setInputValue] = useState(() => formatValue(value));
+
+  useEffect(() => {
+    setInputValue(formatValue(value));
+  }, [value, formatValue]);
+
+  const commitInputValue = () => {
+    const input = inputValue.trim();
+    if (!/^[+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(input)) return;
+    const parsed = Number(input);
+    if (!Number.isFinite(parsed)) return;
+    const clamped = Math.min(max, Math.max(min, parsed));
+    const stepCount = Math.round((clamped - min) / step);
+    const stepped = Math.min(max, Math.max(min, min + stepCount * step));
+    const decimals = Math.max(
+      precision ?? 0,
+      (String(step).split('.')[1] || '').length,
+      (String(min).split('.')[1] || '').length,
+    );
+    const nextValue = Number(stepped.toFixed(decimals));
+    setInputValue(formatValue(nextValue));
+    onChange(nextValue);
+  };
+
   return (
-    <>
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
+        <label
+          htmlFor={`${id}Value`}
+          style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem', flex: 1 }}
+        >
+          {label}
+        </label>
+        {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input
+            id={`${id}Value`}
+            type="text"
+            inputMode="decimal"
+            value={inputValue}
+            aria-label={`${label} value`}
+            style={{
+              width: 48,
+              minWidth: 0,
+              flex: '0 0 48px',
+              boxSizing: 'border-box',
+              padding: '3px 5px',
+              border: '1px solid var(--border-color)',
+              borderRadius: 5,
+              background: 'var(--surface)',
+              color: 'var(--text-ui)',
+              textAlign: 'left',
+              font: 'inherit',
+              fontSize: '0.85rem',
+            }}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                commitInputValue();
+              }
+            }}
+          />
+          {unit ? <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{unit}</span> : null}
+        </div>
+      </div>
       <input
         id={id}
         type="range"
@@ -109,24 +190,9 @@ function Slider(props: {
         step={step}
         value={value}
         style={{ width: '100%', cursor: 'pointer' }}
-        onChange={(e) => onInput(e.target.value)}
+        onChange={(e) => onChange(Number(e.target.value))}
       />
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          fontSize: '0.78rem',
-          color: 'var(--text-secondary)',
-          marginTop: 3,
-        }}
-      >
-        <span>{min}</span>
-        <span id={displayId} style={{ fontWeight: 600 }}>
-          {valueLabel ? valueLabel(String(value)) : value}
-        </span>
-        <span>{max}</span>
-      </div>
-    </>
+    </div>
   );
 }
 
@@ -161,28 +227,20 @@ function HomescreenTab(): React.ReactNode {
         'Removes parentheses and switches the alg font from monospace to Arial for a cleaner look.<br><br><strong>Keyboard shortcut:</strong> Alt+P',
       )}
 
-      {_sectionTitle('Algorithm Font Size')}
-      <div style={{ marginBottom: 18 }}>
-        <Slider
-          id="hs_algFontSizeSlider"
-          min={10}
-          max={20}
-          step={1}
-          value={fontPreview}
-          displayId="hs_algFontSizeValue"
-          valueLabel={(v) => v + 'px'}
-          onInput={(v) => {
-            const size = parseInt(v, 10);
-            setFontPreview(size);
-            setAlgorithmFontSize(size);
-            applyAlgorithmFontSize(size);
-          }}
-        />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', color: 'var(--text-secondary)', marginTop: 2 }}>
-          <span>Small</span>
-          <span>Large</span>
-        </div>
-      </div>
+      <Slider
+        id="hs_algFontSizeSlider"
+        label="Algorithm Font Size"
+        min={10}
+        max={20}
+        step={1}
+        value={fontPreview}
+        unit="px"
+        onChange={(size) => {
+          setFontPreview(size);
+          setAlgorithmFontSize(size);
+          applyAlgorithmFontSize(size);
+        }}
+      />
 
       {_sectionTitle('Tools')}
       {_actionBtn(
@@ -291,29 +349,21 @@ function ParityTab(): React.ReactNode {
       )}
 
       {_sectionTitle('Visualization')}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label htmlFor="pt_imgSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-            Image Size: <span id="pt_imgSizeVal">{ptSize}px</span>
-          </label>
-          <InfoTip tipHtml="Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference." />
-        </div>
-        <input
-          id="pt_imgSize"
-          type="range"
-          min={100}
-          max={400}
-          step={10}
-          value={ptSize}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            setPtSize(val);
-            localStorage.setItem('parityTracerImageSize', String(val));
-            _triggerParityLiveUpdate();
-          }}
-        />
-      </div>
+      <Slider
+        id="pt_imgSize"
+        label="Image Size"
+        min={100}
+        max={400}
+        step={10}
+        value={ptSize}
+        unit="px"
+        tipHtml="Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference."
+        onChange={(val) => {
+          setPtSize(val);
+          localStorage.setItem('parityTracerImageSize', String(val));
+          _triggerParityLiveUpdate();
+        }}
+      />
       {_row(
         'Show Tracing Arrow',
         _toggle('pt_showArrow', showArrow, (v) => {
@@ -325,56 +375,36 @@ function ParityTab(): React.ReactNode {
       )}
 
       <div id="pt_arrowSettings" style={{ opacity: showArrow ? '1' : '0.4', pointerEvents: showArrow ? 'auto' : 'none' }}>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label htmlFor="pt_opacity" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Arrow Opacity: <span id="pt_opacityVal">{arrowOpacity}%</span>
-            </label>
-          </div>
-          <input
-            id="pt_opacity"
-            type="range"
-            min={0}
-            max={100}
-            value={arrowOpacity}
-            style={{ width: '100%', cursor: 'pointer' }}
-            onChange={(e) => saveArrowProp('opacity', parseInt(e.target.value, 10) / 100)}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label htmlFor="pt_stroke" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Stroke Width: <span id="pt_strokeVal">{arrowStroke.toFixed(1)}</span>
-            </label>
-          </div>
-          <input
-            id="pt_stroke"
-            type="range"
-            min={0.5}
-            max={5}
-            step={0.1}
-            value={arrowStroke}
-            style={{ width: '100%', cursor: 'pointer' }}
-            onChange={(e) => saveArrowProp('strokeWidth', parseFloat(e.target.value))}
-          />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 4 }}>
-            <label htmlFor="pt_radius" style={{ fontSize: '0.88rem', fontWeight: 500, color: 'var(--text-secondary)' }}>
-              Arrow Radius: <span id="pt_radiusVal">{arrowRadius.toFixed(2)}</span>
-            </label>
-          </div>
-          <input
-            id="pt_radius"
-            type="range"
-            min={0.1}
-            max={1.1}
-            step={0.01}
-            value={arrowRadius}
-            style={{ width: '100%', cursor: 'pointer' }}
-            onChange={(e) => saveArrowProp('radius', parseFloat(e.target.value))}
-          />
-        </div>
+        <Slider
+          id="pt_opacity"
+          label="Arrow Opacity"
+          min={0}
+          max={100}
+          step={1}
+          value={arrowOpacity}
+          unit="%"
+          onChange={(val) => saveArrowProp('opacity', val / 100)}
+        />
+        <Slider
+          id="pt_stroke"
+          label="Stroke Width"
+          min={0.5}
+          max={5}
+          step={0.1}
+          value={arrowStroke}
+          precision={1}
+          onChange={(val) => saveArrowProp('strokeWidth', val)}
+        />
+        <Slider
+          id="pt_radius"
+          label="Arrow Radius"
+          min={0.1}
+          max={1.1}
+          step={0.01}
+          value={arrowRadius}
+          precision={2}
+          onChange={(val) => saveArrowProp('radius', val)}
+        />
       </div>
 
       {_sectionTitle('Tools')}
@@ -450,97 +480,66 @@ function TrainerTab(): React.ReactNode {
   return (
     <>
       {_sectionTitle('Scramble Display')}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label htmlFor="tr_imgSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-            Image Size: <span id="tr_imgSizeVal">{imgSize}px</span>
-          </label>
-        </div>
-        <input
-          id="tr_imgSize"
-          type="range"
-          min={100}
-          max={400}
-          step={10}
-          value={imgSize}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            setImgSize(val);
-            localStorage.setItem('trainingScrambleImageSize', String(val));
-            applyImageSizeLive(val);
-          }}
-        />
-      </div>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label htmlFor="tr_txtSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-            Scramble Text Size: <span id="tr_txtSizeVal">{txtSize}px</span>
-          </label>
-        </div>
-        <input
-          id="tr_txtSize"
-          type="range"
-          min={10}
-          max={24}
-          step={1}
-          value={txtSize}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            setTxtSize(val);
-            localStorage.setItem('trainingScrambleTextSize', String(val));
-            applyTextSizeLive(val);
-          }}
-        />
-      </div>
+      <Slider
+        id="tr_imgSize"
+        label="Image Size"
+        min={100}
+        max={400}
+        step={10}
+        value={imgSize}
+        unit="px"
+        onChange={(val) => {
+          setImgSize(val);
+          localStorage.setItem('trainingScrambleImageSize', String(val));
+          applyImageSizeLive(val);
+        }}
+      />
+      <Slider
+        id="tr_txtSize"
+        label="Scramble Text Size"
+        min={10}
+        max={24}
+        step={1}
+        value={txtSize}
+        unit="px"
+        onChange={(val) => {
+          setTxtSize(val);
+          localStorage.setItem('trainingScrambleTextSize', String(val));
+          applyTextSizeLive(val);
+        }}
+      />
 
       {_sectionTitle('Timer')}
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label htmlFor="tr_tmrSize" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-            Timer Text Size: <span id="tr_tmrSizeVal">{tmrSize}px</span>
-          </label>
-        </div>
-        <input
-          id="tr_tmrSize"
-          type="range"
-          min={30}
-          max={120}
-          step={2}
-          value={tmrSize}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onChange={(e) => {
-            const val = parseInt(e.target.value, 10);
-            setTmrSize(val);
-            localStorage.setItem('trainingTimerSize', String(val));
-            applyTimerSizeLive(val);
-          }}
-        />
-      </div>
-      <div style={{ marginBottom: 18 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-          <label htmlFor="tr_hold" style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
-            Hold-to-Start: <span id="tr_holdVal">{holdVal.toFixed(2)}s</span>
-          </label>
-          <InfoTip tipHtml="How long you must hold the spacebar (or press the timer zone) before starting the timer." />
-        </div>
-        <input
-          id="tr_hold"
-          type="range"
-          min={0.1}
-          max={0.7}
-          step={0.01}
-          value={holdVal}
-          style={{ width: '100%', cursor: 'pointer' }}
-          onChange={(e) => {
-            const val = parseFloat(e.target.value);
-            setHoldVal(val);
-            localStorage.setItem('trainingHoldToStart', String(val));
-            applyHoldLive(val);
-          }}
-        />
-      </div>
+      <Slider
+        id="tr_tmrSize"
+        label="Timer Text Size"
+        min={30}
+        max={120}
+        step={2}
+        value={tmrSize}
+        unit="px"
+        onChange={(val) => {
+          setTmrSize(val);
+          localStorage.setItem('trainingTimerSize', String(val));
+          applyTimerSizeLive(val);
+        }}
+      />
+      <Slider
+        id="tr_hold"
+        label="Hold-to-Start"
+        min={0.1}
+        max={0.7}
+        step={0.01}
+        value={holdVal}
+        unit="s"
+        precision={2}
+        tipHtml="How long you must hold the spacebar (or press the timer zone) before starting the timer."
+        onChange={(val) => {
+          setHoldVal(val);
+          localStorage.setItem('trainingHoldToStart', String(val));
+          applyHoldLive(val);
+        }}
+      />
 
       {_sectionTitle('Display')}
       {_row(
