@@ -87,6 +87,11 @@ body.modal-open .training-modal {
     background: rgba(255, 255, 255, 0.2);
 }
 
+.training-modal-refresh:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .training-modal-refresh svg,
 .training-modal-close svg {
     width: 20px;

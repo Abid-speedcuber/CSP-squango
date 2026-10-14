@@ -1621,7 +1621,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
                 <button class="training-modal-refresh" id="evilQuizPrevBtn" title="Previous" style="display:none;">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
-                <button class="training-modal-refresh" id="evilQuizNextBtn" title="Next">
+                <button class="training-modal-refresh" id="evilQuizNextBtn" title="Next" disabled>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
                 </button>
                 <button class="training-modal-refresh" id="evilQuizSettingsBtn" title="Settings">
@@ -1929,6 +1929,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
       if (quizRunning) {
         quizRunning = false;
         if (timerInt) clearInterval(timerInt);
+        (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = true;
         resetEvilRemaining();
         const existing = document.getElementById('evilQuizAnswerOverlay');
         if (existing) existing.remove();
@@ -1950,6 +1951,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
         document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
           startOverlay.remove();
           quizRunning = true;
+          (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = false;
           nextQuestion();
         });
         return;
@@ -1976,6 +1978,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
   document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
     document.getElementById('evilQuizStartOverlay')!.remove();
     quizRunning = true;
+    (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = false;
     nextQuestion();
   });
 }
@@ -2335,6 +2338,7 @@ function startColorRecognitionPractice(): void {
   let currentParityVal: number | null = null;
   let quizStartTime = 0;
   let timerInt: ReturnType<typeof setInterval> | null = null;
+  let nextQuestionTimeout: ReturnType<typeof setTimeout> | null = null;
   let quizRunning = false;
   let sidebarOpen = false;
 
@@ -2357,7 +2361,7 @@ function startColorRecognitionPractice(): void {
             </div>
         </div>
         <div class="training-modal-timer-zone" id="colorRecogTimerZone" style="position:relative;flex-direction:column;gap:1rem;justify-content:center;align-items:center;cursor:default;">
-            <div id="colorRecogTrio" style="display:flex;justify-content:center;gap:1rem;"></div>
+            <div id="colorRecogTrio" style="position:relative;z-index:101;pointer-events:none;display:flex;justify-content:center;gap:1rem;"></div>
             <div class="training-modal-timer" id="colorRecogTimer">0.000</div>
             <div id="colorRecogStartOverlay" style="position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;">
                 <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
@@ -2382,7 +2386,9 @@ function startColorRecognitionPractice(): void {
   const closeQuiz = () => {
     closeModalWithHistory(() => {
       if (timerInt) clearInterval(timerInt);
+      if (nextQuestionTimeout) clearTimeout(nextQuestionTimeout);
       document.removeEventListener('keydown', handleColorKeyDown);
+      document.getElementById('colorRecogTrio')!.replaceChildren();
       modal.remove();
       document.body.classList.remove('modal-open');
     });
@@ -2440,6 +2446,11 @@ function startColorRecognitionPractice(): void {
   }
 
   function nextQuestion(): void {
+    if (!quizRunning) return;
+    if (nextQuestionTimeout) {
+      clearTimeout(nextQuestionTimeout);
+      nextQuestionTimeout = null;
+    }
     if (timerInt) clearInterval(timerInt);
     removeAnswerOverlay();
 
@@ -2519,7 +2530,10 @@ function startColorRecognitionPractice(): void {
           ? document.getElementById('colorRecogOdd')
           : document.getElementById('colorRecogEven')) as HTMLButtonElement | null;
         if (otherBtn) otherBtn.disabled = true;
-        setTimeout(nextQuestion, 600);
+        nextQuestionTimeout = setTimeout(() => {
+          nextQuestionTimeout = null;
+          nextQuestion();
+        }, 600);
       }
     }
   }
@@ -2592,8 +2606,17 @@ function startColorRecognitionPractice(): void {
       }
       if (quizRunning) {
         quizRunning = false;
+        if (questionCount > quizLog.length) questionCount--;
+        const score = quizLog.filter((entry) => entry.correct).length;
+        document.getElementById('colorRecogProgress')!.textContent =
+          `Q${questionCount} | ${score}/${quizLog.length}`;
         if (timerInt) clearInterval(timerInt);
+        if (nextQuestionTimeout) {
+          clearTimeout(nextQuestionTimeout);
+          nextQuestionTimeout = null;
+        }
         removeAnswerOverlay();
+        document.getElementById('colorRecogTrio')!.replaceChildren();
         showColorRecogStartOverlay();
         return;
       }
@@ -3065,7 +3088,10 @@ function toggleSelectorCase(caseName: string): void {
     resetGoThroughPool();
     updateMultiTrainingTitle();
     const current = scrambleHistory[currentHistoryIndex];
-    if (current && current.caseName === caseId && !selectorSelectedCases.has(caseId)) {
+    if (
+      current?.caseName !== undefined &&
+      !selectorSelectedCases.has(current.caseName)
+    ) {
       regenerateMultiScrambleLookahead();
     }
   }
