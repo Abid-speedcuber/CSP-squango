@@ -15,12 +15,17 @@ test('case IDs are stable numeric identities from 1 through 90', () => {
   expect(CASES.every((item) => typeof item.key === 'string' && !('name' in item))).toBe(true);
 });
 
-test('original case names are stored in numeric-ID order', () => {
+test('compact case names are stored in numeric-ID order and legacy names still resolve', () => {
   expect(CASE_NAMES).toHaveLength(90);
-  expect(CASE_NAMES[64]).toBe('Left 4-2/Paired Edges');
+  expect(CASE_NAMES[64]).toBe('Left 4-2/Pair');
+  expect(CASE_NAMES[67]).toBe('Right 4-2/Line');
+  expect(CASE_NAMES[25]).toBe('Left 4-2/L');
   expect(CASE_NAMES.map((name) => getCaseId(name))).toEqual(
     Array.from({ length: 90 }, (_, index) => index + 1),
   );
+  expect(getCaseId('Left 4-2/Paired Edges')).toBe(65);
+  expect(getCaseId('Right 4-2/Parallel Edges')).toBe(68);
+  expect(getCaseId('Left 4-2/Perpendicular Edges')).toBe(26);
 });
 
 test('data store validates cleanly', () => {

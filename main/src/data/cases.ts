@@ -9,7 +9,7 @@ const legacyEdgeNames: Record<string, string> = {
   L: 'Perpendicular Edges',
 };
 
-function getLegacyCaseName(key: string): string {
+function getExpandedLegacyCaseName(key: string): string {
   const separator = key.lastIndexOf('/');
   const suffix = key.slice(separator + 1);
   return separator === -1 || !legacyEdgeNames[suffix]
@@ -20,15 +20,15 @@ function getLegacyCaseName(key: string): string {
 const caseIdsByKey = new Map(
   CASES.flatMap((item) => [
     [item.key, item.id] as const,
-    [getLegacyCaseName(item.key), item.id] as const,
+    [getExpandedLegacyCaseName(item.key), item.id] as const,
   ]),
 );
 const casesById = new Map(CASES.map((item) => [item.id, item]));
 
-/** Original case names in stable numeric-ID order, for legacy-name UI surfaces. */
+/** Compact case names in stable numeric-ID order, for UI surfaces like Quick Edit. */
 export const CASE_NAMES = [...CASES]
   .sort((a, b) => a.id - b.id)
-  .map((item) => getLegacyCaseName(item.key));
+  .map((item) => item.key);
 
 /** Resolve both numeric IDs and legacy technical keys at import/UI boundaries. */
 export function getCaseId(ref: unknown): number | undefined {

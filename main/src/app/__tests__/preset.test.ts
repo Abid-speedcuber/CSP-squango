@@ -69,7 +69,13 @@ test("Matt's_Preset applies cleanly after slimming and rebuilds the parity cache
 test('legacy-format presets with redundant fields still load (backward compatible)', async () => {
   const slim = loadPresetFile("Matt's_Preset.json");
   const legacyNames = Object.fromEntries(
-    state.data.map((item) => [String(item.id), CASE_NAMES[item.id - 1]]),
+    state.data.map((item) => [
+      String(item.id),
+      CASE_NAMES[item.id - 1]
+        .replace(/\/Pair$/, '/Paired Edges')
+        .replace(/\/Line$/, '/Parallel Edges')
+        .replace(/\/L$/, '/Perpendicular Edges'),
+    ]),
   );
   const toLegacyCaseRecord = (record: Record<string, unknown>) =>
     Object.fromEntries(Object.entries(record).map(([id, value]) => [legacyNames[id], value]));
