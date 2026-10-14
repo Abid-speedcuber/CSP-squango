@@ -7,6 +7,7 @@
 import { getShapePath, stripParenthesisIfNeeded } from './algDisplay';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { normalizeScramble } from '../lib/normalizer';
+import { getCaseId } from '../data/cases';
 import { getParityText } from '../lib/parityAnalyzer';
 import {
   visualizeFromHex,
@@ -58,7 +59,8 @@ let popupHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function rerenderCaseCard(caseName: string): void {
   const cardElement = document.querySelector(`[data-case-name="${CSS.escape(caseName)}"]`);
-  const item = data.find((entry) => entry.name === caseName);
+  const caseId = getCaseId(caseName);
+  const item = caseId === undefined ? undefined : data.find((entry) => entry.id === caseId);
   if (cardElement && item) {
     cardElement.outerHTML = renderCard(item);
   }
@@ -254,14 +256,16 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
 
 // ── Context menu (legacy rendering.js showContextMenu) ───────────────────────
 function showContextMenu(caseName: string, event: MouseEvent): void {
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
   event.stopPropagation();
 
   const existingMenu = document.getElementById('caseContextMenu');
   if (existingMenu) existingMenu.remove();
 
-  const isLearned = learnedCases.has(caseName);
-  const isLearning = learningCases.has(caseName);
-  const priorityLevel = plannedLevels.get(caseName) || 4;
+  const isLearned = learnedCases.has(caseId);
+  const isLearning = learningCases.has(caseId);
+  const priorityLevel = plannedLevels.get(caseId) || 4;
   const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
 
   const menu = document.createElement('div');
@@ -307,7 +311,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
         label: 'Move Up in Priority',
         action: () => {
           adjustPriority(caseName, -1, false);
-          const newPriority = plannedLevels.get(caseName) || 4;
+          const newPriority = plannedLevels.get(caseId) || 4;
           statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
           rerenderCaseCard(caseName);
           requestManualReorder();
@@ -318,7 +322,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
         label: 'Move Down in Priority',
         action: () => {
           adjustPriority(caseName, 1, false);
-          const newPriority = plannedLevels.get(caseName) || 4;
+          const newPriority = plannedLevels.get(caseId) || 4;
           statusIndicator.textContent = `Priority: ${priorityNames[newPriority - 1]}`;
           rerenderCaseCard(caseName);
           requestManualReorder();

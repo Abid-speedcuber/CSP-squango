@@ -443,7 +443,7 @@ export function getHomepageShapeSVGs(
 export function applyHomepageSVGsLive(svgData: Record<string, string>): void {
   if (typeof document === 'undefined') return;
   const shapeByCase = new Map<string, { top: string; bottom: string }>();
-  for (const c of CASES) shapeByCase.set(c.name, { top: c.top, bottom: c.bottom });
+  for (const c of CASES) shapeByCase.set(c.key, { top: c.top, bottom: c.bottom });
   document.querySelectorAll('.card[data-case-name]').forEach((card) => {
     const name = card.getAttribute('data-case-name');
     if (!name) return;

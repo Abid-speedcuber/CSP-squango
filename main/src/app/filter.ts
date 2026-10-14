@@ -9,7 +9,7 @@ export type SearchMatch =
   | { type: 'slashed-flipped'; searchPart1: string; searchPart2: string };
 
 /** Stores search matches per case name for highlight rendering. */
-export const searchMatches = new Map<string, SearchMatch>();
+export const searchMatches = new Map<number, SearchMatch>();
 
 function escapeRegex(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -30,22 +30,22 @@ export function computeFilteredData(
   const filteredData = data.filter((item) => {
     let matchesLearnFilter = true;
     if (learnFilter === 'learned') {
-      matchesLearnFilter = learnedCases.has(item.name);
+      matchesLearnFilter = learnedCases.has(item.id);
     } else if (learnFilter === 'unlearned') {
-      matchesLearnFilter = !learnedCases.has(item.name);
+      matchesLearnFilter = !learnedCases.has(item.id);
     }
 
     if (!matchesLearnFilter) return false;
     if (!searchTerm) return true;
 
-    const displayName = getDisplayName(item.name);
+    const displayName = getDisplayName(item.id);
     const displayNameLower = displayName.toLowerCase();
     const titleHasSlash = displayName.includes('/');
     const searchHasSlash = searchTerm.includes('/');
 
     if (!searchHasSlash) {
       if (displayNameLower.includes(searchTerm)) {
-        searchMatches.set(item.name, { type: 'simple', searchTerm });
+        searchMatches.set(item.id, { type: 'simple', searchTerm });
         return true;
       }
       return false;
@@ -65,11 +65,11 @@ export function computeFilteredData(
         const flippedMatch = t2.includes(searchPart1) && t1.includes(searchPart2);
 
         if (normalMatch) {
-          searchMatches.set(item.name, { type: 'slashed-normal', searchPart1, searchPart2 });
+          searchMatches.set(item.id, { type: 'slashed-normal', searchPart1, searchPart2 });
           return true;
         }
         if (flippedMatch) {
-          searchMatches.set(item.name, { type: 'slashed-flipped', searchPart1, searchPart2 });
+          searchMatches.set(item.id, { type: 'slashed-flipped', searchPart1, searchPart2 });
           return true;
         }
       }
@@ -82,12 +82,12 @@ export function computeFilteredData(
   if (sortType === 'priority') {
     filteredData.sort((a, b) => b.probability - a.probability);
     filteredData.sort((a, b) => {
-      const aIsLearning = learningCases.has(a.name);
-      const bIsLearning = learningCases.has(b.name);
-      const aIsPlanned = plannedCases.has(a.name);
-      const bIsPlanned = plannedCases.has(b.name);
-      const aIsLearned = learnedCases.has(a.name);
-      const bIsLearned = learnedCases.has(b.name);
+      const aIsLearning = learningCases.has(a.id);
+      const bIsLearning = learningCases.has(b.id);
+      const aIsPlanned = plannedCases.has(a.id);
+      const bIsPlanned = plannedCases.has(b.id);
+      const aIsLearned = learnedCases.has(a.id);
+      const bIsLearned = learnedCases.has(b.id);
 
       if (aIsLearning && !bIsLearning) return -1;
       if (!aIsLearning && bIsLearning) return 1;
@@ -95,8 +95,8 @@ export function computeFilteredData(
       if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
       if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
       if (aIsPlanned && bIsPlanned) {
-        const aPriority = plannedLevels.get(a.name) || 4;
-        const bPriority = plannedLevels.get(b.name) || 4;
+        const aPriority = plannedLevels.get(a.id) || 4;
+        const bPriority = plannedLevels.get(b.id) || 4;
         return aPriority - bPriority;
       }
 

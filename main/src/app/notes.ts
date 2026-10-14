@@ -1,5 +1,6 @@
 import { closeModalWithHistory, lockScroll, pushModalState } from './modal';
 import { getDisplayName, comments, generalNotes, setComment, setGeneralNotes } from './state';
+import { getCaseId } from '../data/cases';
 import { showToast } from './toast';
 import { showSaveDiscardConfirmation } from './confirm';
 
@@ -7,7 +8,9 @@ import { showSaveDiscardConfirmation } from './confirm';
 let originalNoteContent = '';
 
 export function openNotesModal(caseName: string): void {
-  const comment = comments.get(caseName) || '';
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
+  const comment = comments.get(caseId) || '';
   originalNoteContent = comment;
 
   const existingMenu = document.getElementById('caseContextMenu');

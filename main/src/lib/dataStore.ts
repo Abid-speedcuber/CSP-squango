@@ -6,36 +6,44 @@
  * that share a canonical index with a case but have no case of their own), and
  * validates the datasets at startup.
  */
-import { CASES } from '../data/cases';
+import { CASES, getCaseId, getCaseKey } from '../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP } from '../data/shapeIndex';
-import type { AlgCase, ShapeIndexEntry } from '../data/types';
+import type { AlgCase, CaseRef, ShapeIndexEntry } from '../data/types';
 
 const caseList: AlgCase[] = Array.isArray(CASES) ? CASES : [];
 const shapeList: ShapeIndexEntry[] = Array.isArray(SHAPE_INDEX) ? SHAPE_INDEX : [];
 
 const canonicalShapeIndex: Record<string, number> = SHAPE_INDEX_MAP || {};
 
-const casesByName = new Map(caseList.map((item) => [item.name, item]));
+const casesById = new Map(caseList.map((item) => [item.id, item]));
+const casesByKey = new Map(caseList.map((item) => [item.key, item]));
 const shapeEntriesByName = new Map(shapeList.map((item) => [item.name, item]));
 const canonicalIndexByCase = new Map(
-  Object.entries(canonicalShapeIndex).map(([name, index]) => [name, Number(index)]),
+  caseList.map((item) => [item.id, Number(canonicalShapeIndex[String(item.id)])]),
 );
-const caseNameByShapeIndex = new Map<number, string>();
+const caseIdByShapeIndex = new Map<number, number>();
+const shapeEntryByCaseId = new Map<number, ShapeIndexEntry>();
 
-for (const [caseName, index] of canonicalIndexByCase) {
-  if (Number.isFinite(index)) caseNameByShapeIndex.set(index, caseName);
+for (const [caseId, index] of canonicalIndexByCase) {
+  if (Number.isFinite(index)) {
+    caseIdByShapeIndex.set(index, caseId);
+    const key = getCaseKey(caseId);
+    const entry = key ? shapeEntriesByName.get(key) : undefined;
+    if (entry) shapeEntryByCaseId.set(caseId, entry);
+  }
 }
 
 for (const entry of shapeList) {
   for (const index of [...(entry.org || []), ...(entry.mir || [])]) {
-    if (!caseNameByShapeIndex.has(index)) {
-      caseNameByShapeIndex.set(index, entry.name);
+    if (!caseIdByShapeIndex.has(index)) {
+      const caseId = getCaseId(entry.name);
+      if (caseId !== undefined) caseIdByShapeIndex.set(index, caseId);
     }
   }
 }
 
-for (const [caseName, index] of canonicalIndexByCase) {
-  if (shapeEntriesByName.has(caseName) || !Number.isFinite(index)) continue;
+for (const [caseId, index] of canonicalIndexByCase) {
+  if (shapeEntryByCaseId.has(caseId) || !Number.isFinite(index)) continue;
 
   const aliasedEntry = shapeList.find(
     (entry) =>
@@ -43,35 +51,36 @@ for (const [caseName, index] of canonicalIndexByCase) {
   );
 
   if (aliasedEntry) {
-    shapeEntriesByName.set(caseName, aliasedEntry);
+    shapeEntryByCaseId.set(caseId, aliasedEntry);
   }
 }
 
 function validateData(): string[] {
   const errors: string[] = [];
-  const seenNames = new Set<string>();
+  const seenIds = new Set<number>();
 
   for (const item of caseList) {
-    if (!item || typeof item.name !== 'string' || !item.name.trim()) {
-      errors.push('Case is missing a valid name.');
+    if (!item || !Number.isInteger(item.id) || item.id < 1 || item.id > caseList.length) {
+      errors.push('Case is missing a valid numeric ID.');
       continue;
     }
-    if (seenNames.has(item.name)) errors.push(`Duplicate case name: ${item.name}`);
-    seenNames.add(item.name);
+    if (seenIds.has(item.id)) errors.push(`Duplicate case ID: ${item.id}`);
+    seenIds.add(item.id);
 
-    if (!Array.isArray(item.odd)) errors.push(`${item.name} is missing odd algorithms.`);
-    if (!Array.isArray(item.even)) errors.push(`${item.name} is missing even algorithms.`);
-    if (!Number.isFinite(item.probability)) errors.push(`${item.name} has an invalid probability.`);
-    if (!shapeEntriesByName.has(item.name)) errors.push(`${item.name} is missing shape-index data.`);
-    if (!canonicalIndexByCase.has(item.name))
-      errors.push(`${item.name} is missing a canonical shape index.`);
+    if (!item.key || typeof item.key !== 'string') errors.push(`Case ${item.id} is missing a shape key.`);
+    if (!Array.isArray(item.odd)) errors.push(`Case ${item.id} is missing odd algorithms.`);
+    if (!Array.isArray(item.even)) errors.push(`Case ${item.id} is missing even algorithms.`);
+    if (!Number.isFinite(item.probability)) errors.push(`Case ${item.id} has an invalid probability.`);
+    if (!shapeEntryByCaseId.has(item.id)) errors.push(`Case ${item.id} is missing shape-index data.`);
+    if (!canonicalIndexByCase.has(item.id))
+      errors.push(`Case ${item.id} is missing a canonical shape index.`);
   }
 
   for (const entry of shapeList) {
     if (!entry || typeof entry.name !== 'string') continue;
     const hasCaseOrAlias =
-      casesByName.has(entry.name) ||
-      [...canonicalIndexByCase.keys()].some((caseName) => shapeEntriesByName.get(caseName) === entry);
+      casesByKey.has(entry.name) ||
+      [...canonicalIndexByCase.keys()].some((caseId) => shapeEntryByCaseId.get(caseId) === entry);
     if (!hasCaseOrAlias) errors.push(`${entry.name} has shape-index data but no algorithm case.`);
   }
 
@@ -81,18 +90,27 @@ function validateData(): string[] {
 export const CSPData = Object.freeze({
   cases: caseList,
   shapeEntries: shapeList,
-  casesByName,
+  casesById,
+  casesByKey,
   shapeEntriesByName,
   canonicalIndexByCase,
-  caseNameByShapeIndex,
-  getCase: (name: string): AlgCase | null => casesByName.get(name) || null,
-  getShapeEntry: (name: string): ShapeIndexEntry | null => shapeEntriesByName.get(name) || null,
-  getCanonicalShapeIndex: (name: string): number | null =>
-    canonicalIndexByCase.get(name) ?? null,
-  getCaseNameByShapeIndex: (index: number): string | null =>
-    caseNameByShapeIndex.get(Number(index)) || null,
-  hasCase: (name: string): boolean => casesByName.has(name),
-  getCaseNames: (): string[] => caseList.map((item) => item.name),
+  caseIdByShapeIndex,
+  getCase: (ref: CaseRef): AlgCase | null => {
+    const id = getCaseId(ref);
+    return id === undefined ? null : casesById.get(id) || null;
+  },
+  getShapeEntry: (ref: CaseRef): ShapeIndexEntry | null => {
+    const id = getCaseId(ref);
+    return id === undefined ? null : shapeEntryByCaseId.get(id) || null;
+  },
+  getCanonicalShapeIndex: (ref: CaseRef): number | null => {
+    const id = getCaseId(ref);
+    return id === undefined ? null : canonicalIndexByCase.get(id) ?? null;
+  },
+  getCaseIdByShapeIndex: (index: number): number | null =>
+    caseIdByShapeIndex.get(Number(index)) ?? null,
+  hasCase: (ref: CaseRef): boolean => getCaseId(ref) !== undefined,
+  getCaseIds: (): number[] => caseList.map((item) => item.id),
   validate: validateData,
 });
 

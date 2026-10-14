@@ -3,6 +3,7 @@
  * rename/info sub-modals, live parity color-coding, save/discard confirmation).
  */
 import type { AlgCase } from '../data/types';
+import { getCaseId } from '../data/cases';
 import {
   calculateAndCacheAllParity,
   colorScheme,
@@ -112,10 +113,10 @@ function getEditModalCaseName(modal: HTMLElement): string | null {
   if (!titleElement) return null;
   for (const dataItem of data) {
     if (
-      getDisplayName(dataItem.name) === titleElement.textContent ||
-      dataItem.name === titleElement.textContent
+      getDisplayName(dataItem.id) === titleElement.textContent ||
+      dataItem.key === titleElement.textContent
     ) {
-      return dataItem.name;
+      return String(dataItem.id);
     }
   }
   return null;
@@ -126,8 +127,8 @@ function findCaseByModalTitle(modal: HTMLElement): AlgCase | null {
   if (!titleElement) return null;
   for (const dataItem of data) {
     if (
-      getDisplayName(dataItem.name) === titleElement.textContent ||
-      dataItem.name === titleElement.textContent
+      getDisplayName(dataItem.id) === titleElement.textContent ||
+      dataItem.key === titleElement.textContent
     ) {
       return dataItem;
     }
@@ -265,6 +266,8 @@ export function applyCaseRename(caseName: string): void {
 }
 
 function saveCaseRename(caseName: string): void {
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
   const temp = window.tempCaseRename;
   if (temp && temp.caseName === caseName) {
     const newName = temp.newName;
@@ -272,15 +275,15 @@ function saveCaseRename(caseName: string): void {
     const defaultName = getDefaultDisplayName(caseName);
 
     if (newName) {
-      displayNames[caseName] = newName;
+      displayNames[caseId] = newName;
     } else {
-      displayNames[caseName] = defaultName;
+      displayNames[caseId] = defaultName;
     }
 
     if (newSubtitle) {
-      perCaseSubtitles.set(caseName, newSubtitle);
+      perCaseSubtitles.set(caseId, newSubtitle);
     } else {
-      perCaseSubtitles.delete(caseName);
+      perCaseSubtitles.delete(caseId);
     }
 
     window.tempCaseRename = null;
@@ -289,10 +292,12 @@ function saveCaseRename(caseName: string): void {
 
 // ── Main modal ────────────────────────────────────────────────────────────────
 export function openEditCaseModal(caseName: string): void {
-  const item = CSPData.getCase(caseName);
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
+  const item = CSPData.getCase(caseId);
   if (!item) return;
 
-  const customAlgs = customAlgorithms.get(caseName);
+  const customAlgs = customAlgorithms.get(caseId);
   const allAlgs: string[] = [];
   if (customAlgs) {
     allAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
@@ -300,8 +305,8 @@ export function openEditCaseModal(caseName: string): void {
     allAlgs.push(...(item.odd || []), ...(item.even || []));
   }
 
-  const customName = displayNames[caseName] || '';
-  const customSubtitle = perCaseSubtitles.get(caseName) || '';
+  const customName = displayNames[caseId] || '';
+  const customSubtitle = perCaseSubtitles.get(caseId) || '';
 
   const existingMenu = document.getElementById('caseContextMenu');
   if (existingMenu) existingMenu.remove();
@@ -328,7 +333,7 @@ export function openEditCaseModal(caseName: string): void {
                             </svg>
                         </button>
                     </div>
-                    ${perCaseSubtitles.has(caseName) ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseName)}</div>` : '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
+                    ${perCaseSubtitles.has(caseId) ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;" id="editCaseSubtitle">${perCaseSubtitles.get(caseId)}</div>` : '<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px; display: none;" id="editCaseSubtitle"></div>'}
                 </div>
                 <button class="close-btn" onclick="attemptCloseEditCaseModal()">&times;</button>
             </div>
@@ -356,9 +361,9 @@ export function openEditCaseModal(caseName: string): void {
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--surface-border);">
                     <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Mark as Evil</label>
                     <label class="evil-switch" style="position:relative;display:inline-block;width:42px;height:24px;">
-                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseName] ? 'checked' : ''} onchange="evilnessMap['${caseName.replace(/'/g, "\\'")}'] = this.checked; saveState();" style="opacity:0;width:0;height:0;">
-                        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseName] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
-                            <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseName] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
+                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseId] ? 'checked' : ''} onchange="evilnessMap['${caseId}'] = this.checked; saveState();" style="opacity:0;width:0;height:0;">
+                        <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseId] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
+                            <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseId] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
                         </span>
                     </label>
                 </div>
@@ -453,7 +458,7 @@ export function attemptCloseEditCaseModal(): void {
     return;
   }
 
-  const customAlgs = customAlgorithms.get(item.name);
+  const customAlgs = customAlgorithms.get(item.id);
   if (customAlgs) {
     originalAlgs.push(...(customAlgs.odd || []), ...(customAlgs.even || []));
   } else {
@@ -476,12 +481,12 @@ export function attemptCloseEditCaseModal(): void {
     }
   }
 
-  const nameChanged = !!(window.tempCaseRename && window.tempCaseRename.caseName === item.name);
+  const nameChanged = !!(window.tempCaseRename && window.tempCaseRename.caseName === String(item.id));
 
   if (algsChanged || nameChanged) {
     showSaveDiscardConfirmation(
       'You have unsaved changes. Do you want to save them?',
-      () => saveEditedCase(item.name),
+      () => saveEditedCase(String(item.id)),
       () => {
         window.tempCaseRename = null;
         closeEditCaseModal();
@@ -539,6 +544,8 @@ export function closeEditCaseInfoModal(): void {
 }
 
 export function saveEditedCase(caseName: string): void {
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
   saveCaseRename(caseName);
 
   const algInputs = document.querySelectorAll('#editAlgsList .alg-input');
@@ -547,12 +554,12 @@ export function saveEditedCase(caseName: string): void {
     .filter((v) => v);
 
   if (allAlgs.length > 0) {
-    customAlgorithms.set(caseName, {
+    customAlgorithms.set(caseId, {
       odd: [],
       even: allAlgs,
     });
   } else {
-    customAlgorithms.delete(caseName);
+    customAlgorithms.delete(caseId);
   }
 
   saveState();

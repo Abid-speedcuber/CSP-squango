@@ -104,7 +104,7 @@ describe('shapeTrace', () => {
   });
 
   it('every step names a known shape', () => {
-    const scr = CASES.find((c) => c.name === 'Left 4-2/Paired Edges')!.odd[0];
+    const scr = CASES.find((c) => c.key === 'Left 4-2/Paired Edges')!.odd[0];
     const steps = traceSolutionToSolutionShapePath(scr).split(' → ');
     expect(steps.length).toBeGreaterThan(1);
     const known = new Set(
@@ -186,7 +186,7 @@ describe('parityAnalyzer', () => {
         const { tlHex, blHex } = sq1AlgToHex(alg);
         if (!hasIntactHex(tlHex) || !hasIntactHex(blHex)) continue;
         for (const mode of ['clockwise', 'counterclockwise'] as const) {
-          expect(analyzeParity(alg, mode), `${c.name} ${alg} ${mode}`).toBe(
+          expect(analyzeParity(alg, mode), `${c.key} ${alg} ${mode}`).toBe(
             legacyGetParity(alg, {}, mode),
           );
         }

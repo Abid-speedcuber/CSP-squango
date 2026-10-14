@@ -30,13 +30,13 @@ export function reconcileGrid(
   // Index existing cards by case name; drop anything unexpected.
   const existing = new Map<string, Element>();
   Array.from(grid.children).forEach((node) => {
-    const name = node.getAttribute && node.getAttribute('data-case-name');
-    if (name) existing.set(name, node);
+    const id = node.getAttribute && node.getAttribute('data-case-name');
+    if (id) existing.set(id, node);
     else node.remove();
   });
 
   // Remove cards that are no longer in the result set.
-  const desired = new Set(items.map((item) => item.name));
+  const desired = new Set(items.map((item) => String(item.id)));
   existing.forEach((node, name) => {
     if (!desired.has(name)) {
       node.remove();
@@ -47,7 +47,8 @@ export function reconcileGrid(
   // Walk items in target order, reusing/updating/creating + positioning nodes.
   const ordered: Element[] = [];
   for (const item of items) {
-    let node = existing.get(item.name);
+    const id = String(item.id);
+    let node = existing.get(id);
     if (!node || refreshExisting) {
       const tmp = document.createElement('div');
       tmp.innerHTML = renderCard(item);
@@ -63,7 +64,7 @@ export function reconcileGrid(
         node = fresh;
       }
     }
-    existing.set(item.name, node);
+    existing.set(id, node);
 
     ordered.push(node);
   }

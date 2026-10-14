@@ -1,27 +1,43 @@
 import { test, expect } from 'vitest';
 import { CSPData } from '../dataStore';
-import { CASES } from '../../data/cases';
+import { CASES, CASE_NAMES } from '../../data/cases';
 
 test('data store exposes all 90 cases', () => {
   expect(CSPData.cases.length).toBe(90);
   expect(CSPData.cases).toBe(CASES);
-  expect(CSPData.getCaseNames().length).toBe(90);
+  expect(CSPData.getCaseIds().length).toBe(90);
+});
+
+test('case IDs are stable numeric identities from 1 through 90', () => {
+  expect(CASES.map((item) => item.id).sort((a, b) => a - b)).toEqual(
+    Array.from({ length: 90 }, (_, index) => index + 1),
+  );
+  expect(CASES.every((item) => typeof item.key === 'string' && !('name' in item))).toBe(true);
+});
+
+test('original case names are stored in numeric-ID order', () => {
+  expect(CASE_NAMES).toHaveLength(90);
+  expect(CASE_NAMES).toEqual(
+    Array.from({ length: 90 }, (_, index) => CASES.find((item) => item.id === index + 1)!.key),
+  );
 });
 
 test('data store validates cleanly', () => {
   expect(CSPData.validate()).toEqual([]);
 });
 
-test('getCase resolves cases by name', () => {
-  expect(CSPData.getCase('Kite/Square')?.name).toBe('Kite/Square');
+test('getCase resolves cases by numeric ID and legacy shape key', () => {
+  expect(CSPData.getCase(1)?.key).toBe(CASES[0].key);
+  expect(CSPData.getCase('Kite/Square')?.key).toBe('Kite/Square');
   expect(CSPData.getCase('Does Not Exist')).toBeNull();
-  expect(CSPData.hasCase('Kite/Square')).toBe(true);
+  expect(CSPData.hasCase(CASES[0].id)).toBe(true);
   expect(CSPData.hasCase('nope')).toBe(false);
 });
 
 test('canonical shape index lookups resolve', () => {
-  expect(CSPData.getCanonicalShapeIndex('8/Star')).toBe(58);
-  expect(CSPData.getCaseNameByShapeIndex(58)).toBe('8/Star');
+  const star = CASES.find((item) => item.key === '8/Star')!;
+  expect(CSPData.getCanonicalShapeIndex(star.id)).toBe(58);
+  expect(CSPData.getCaseIdByShapeIndex(58)).toBe(star.id);
   expect(CSPData.getCanonicalShapeIndex('missing')).toBeNull();
 });
 
@@ -31,7 +47,9 @@ test('shape entries resolve directly or via alias', () => {
   expect(direct?.org).toBeTruthy();
 
   // A case whose shape entry must be found via its canonical index.
-  const byAlias = CSPData.getShapeEntry('Kite/Square');
+  const byAlias = CSPData.getShapeEntry(CASES.find((item) => item.key === 'Kite/Square')!.id);
   expect(byAlias).not.toBeNull();
-  expect(byAlias?.org).toContain(CSPData.getCanonicalShapeIndex('Kite/Square') as number);
+  expect(byAlias?.org).toContain(
+    CSPData.getCanonicalShapeIndex(CASES.find((item) => item.key === 'Kite/Square')!.id) as number,
+  );
 });

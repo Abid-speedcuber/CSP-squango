@@ -25,6 +25,7 @@ import {
   plannedLevels,
 } from './state';
 import type { AlgCase } from '../data/types';
+import { getCaseId } from '../data/cases';
 import { CSPData } from '../lib/dataStore';
 import { parseHexFormat } from '../lib/scramble';
 import { scrambleFromState } from '../lib/solver';
@@ -37,7 +38,7 @@ import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
 
 // ── Training modal state (mirrors legacy) ───────────────────────────────────
-let currentTrainingCase: string | null = null;
+let currentTrainingCase: number | null = null;
 let trainingScrambles: number[] = [];
 let timerRunning = false;
 let timerStartTime = 0;
@@ -66,7 +67,7 @@ let spacePressed = false;
 interface ScrambleData {
   text: string;
   image: string;
-  caseName?: string;
+  caseName?: number;
 }
 
 // Live-setting mirrors (bridged to window so React settings can mutate them).
@@ -82,15 +83,15 @@ let _inspBeep15Fired = false;
 
 // ── Multi-case / selector state (mirrors legacy multi-trainer.js) ───────────
 const trainingSelections: Record<string, number[]> = {};
-let selectorSelectedCases = new Set<string>();
+let selectorSelectedCases = new Set<number>();
 let selectorSearchTerm = '';
 let selectorFilteredData: AlgCase[] = [];
-let multiTrainingCases: string[] = [];
-let _goThroughRemaining: string[] = [];
+let multiTrainingCases: number[] = [];
+let _goThroughRemaining: number[] = [];
 let selectorStorageKey = 'sq1-selector-cases';
 let multiCaseMode = false;
-let evilQuizOnSelectionChange: ((names: string[]) => void) | null = null;
-let parityQuizOnSelectionChange: ((names: string[]) => void) | null = null;
+let evilQuizOnSelectionChange: ((ids: number[]) => void) | null = null;
+let parityQuizOnSelectionChange: ((ids: number[]) => void) | null = null;
 
 const TIMER_SELECTOR_KEY = 'sq1-selector-cases';
 
@@ -147,7 +148,7 @@ function generateNextScrambleData(): ScrambleData | null {
 function generateMultiCaseScrambleData(): ScrambleData | null {
   if (!multiTrainingCases || multiTrainingCases.length === 0) return null;
 
-  let caseName: string | undefined;
+  let caseName: number | undefined;
   if (isGoThroughEnabled(TIMER_SELECTOR_KEY)) {
     if (_goThroughRemaining.length === 0) resetGoThroughPool();
     caseName = _goThroughRemaining[0];
@@ -292,18 +293,20 @@ function createTrainingModal(): HTMLElement {
 
 // ── Open/close ───────────────────────────────────────────────────────────────
 export function openTrainingModal(caseName: string): void {
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
   const modal = createTrainingModal();
   const titleEl = document.getElementById('trainingCaseName')!;
 
-  currentTrainingCase = caseName;
+  currentTrainingCase = caseId;
 
-  const dataItem = CSPData.getCase(caseName);
+  const dataItem = CSPData.getCase(caseId);
   if (!dataItem) {
     showToast('Case not found.', 2500, 'error');
     return;
   }
 
-  const shapeIndexItem = CSPData.getShapeEntry(dataItem.name);
+  const shapeIndexItem = CSPData.getShapeEntry(dataItem.id);
   if (!shapeIndexItem) {
     showToast('Case not found in shape index.', 2500, 'error');
     return;
@@ -311,7 +314,7 @@ export function openTrainingModal(caseName: string): void {
 
   const allScrambles = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
 
-  const selectedKey = `training_selected_${caseName}`;
+  const selectedKey = `training_selected_${caseId}`;
   if (trainingSelections[selectedKey]) {
     trainingScrambles = trainingSelections[selectedKey];
   } else {
@@ -326,7 +329,7 @@ export function openTrainingModal(caseName: string): void {
 
   pushModalState('trainingModal', closeTrainingModal);
 
-  titleEl.textContent = `Training: ${getDisplayName(caseName)}`;
+  titleEl.textContent = `Training: ${getDisplayName(caseId)}`;
   preGeneratedScrambles = [];
   timerElapsed = 0;
   scrambleHistory = [];
@@ -1521,26 +1524,30 @@ function quizGetParityFromHex(hexCode: string): 'Odd' | 'Even' | 'Error' | null 
   }
 }
 
+function readSelectedCaseIds(key: string): number[] | null {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!Array.isArray(value)) return null;
+    return value.map(getCaseId).filter((id): id is number => id !== undefined);
+  } catch {
+    return null;
+  }
+}
+
 // ── 1. EVILNESS QUIZ ─────────────────────────────────────────────────────────
 function openEvilnessQuiz(): void {
   const key = 'sq1-selector-evilness';
   selectorStorageKey = key;
-  let saved: string[] | null = null;
-  try {
-    saved = JSON.parse(localStorage.getItem(key) || 'null');
-  } catch {
-    // ignore
-  }
-  const chosen =
-    saved && saved.length > 0 ? saved.filter((n) => data.some((d) => d.name === n)) : data.map((d) => d.name);
+  const saved = readSelectedCaseIds(key);
+  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
   startEvilnessQuiz(chosen);
 }
 
-function startEvilnessQuiz(chosenCaseNames: string[]): void {
+function startEvilnessQuiz(chosenCaseNames: number[]): void {
   let evilCaseNames = chosenCaseNames.filter((cn) => CSPData.hasCase(cn));
   if (evilCaseNames.length === 0) return;
 
-  let evilRemaining: string[] = [];
+  let evilRemaining: number[] = [];
   let evilSawFirstPass = false;
   function resetEvilRemaining(): void {
     evilRemaining = [...evilCaseNames];
@@ -1552,9 +1559,9 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
   }
   resetEvilRemaining();
 
-  function pickEvilItem(): { idx: number; caseName: string } | null {
+  function pickEvilItem(): { idx: number; caseName: number } | null {
     if (evilCaseNames.length === 0) return null;
-    let caseName: string | undefined;
+    let caseName: number | undefined;
     if (isGoThroughEnabled('sq1-selector-evilness')) {
       if (evilRemaining.length === 0) {
         if (evilSawFirstPass) showToast('Gone through each case!', 3000, 'success');
@@ -1574,13 +1581,13 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
   }
 
   const quizLog: {
-    caseName: string;
+    caseName: number;
     wasEvil: boolean;
     correct: boolean;
     timeMs: number;
   }[] = [];
   let quizStartTime = 0;
-  let currentItem: { idx: number; caseName: string } | null = null;
+  let currentItem: { idx: number; caseName: number } | null = null;
   let timerInt: ReturnType<typeof setInterval> | null = null;
   let quizRunning = false;
   let sidebarOpen = false;
@@ -1701,7 +1708,7 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
         const evilStr = entry.wasEvil ? 'Evil' : 'Good';
         return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
-                <span style="font-weight:600;margin-left:4px;">${entry.caseName}</span>
+                <span style="font-weight:600;margin-left:4px;">${getDisplayName(entry.caseName)}</span>
                 <span style="color:var(--text-muted);margin-left:4px;">(${evilStr})</span>
                 <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
@@ -1961,20 +1968,14 @@ function startEvilnessQuiz(chosenCaseNames: string[]): void {
 function openParityQuiz(): void {
   const key = 'sq1-selector-parity';
   selectorStorageKey = key;
-  let saved: string[] | null = null;
-  try {
-    saved = JSON.parse(localStorage.getItem(key) || 'null');
-  } catch {
-    // ignore
-  }
-  const chosen =
-    saved && saved.length > 0 ? saved.filter((n) => data.some((d) => d.name === n)) : data.map((d) => d.name);
+  const saved = readSelectedCaseIds(key);
+  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
   startParityQuiz(chosen);
 }
 
-function startParityQuiz(chosenCaseNames: string[]): void {
-  let allIndices: { idx: number; caseName: string }[] = [];
-  function rebuildParityIndices(names: string[]): void {
+function startParityQuiz(chosenCaseNames: number[]): void {
+  let allIndices: { idx: number; caseName: number }[] = [];
+  function rebuildParityIndices(names: number[]): void {
     allIndices = [];
     (names || []).forEach((cn) => {
       const entry = CSPData.getShapeEntry(cn);
@@ -1987,9 +1988,9 @@ function startParityQuiz(chosenCaseNames: string[]): void {
   rebuildParityIndices(chosenCaseNames);
   if (allIndices.length === 0) return;
 
-  const quizLog: { caseName: string; parity: string | null; correct: boolean; timeMs: number }[] = [];
+  const quizLog: { caseName: number; parity: string | null; correct: boolean; timeMs: number }[] = [];
   let quizStartTime = 0;
-  let currentItem: { idx: number; caseName: string } | null = null;
+  let currentItem: { idx: number; caseName: number } | null = null;
   let currentParity: string | null = null;
   let timerInt: ReturnType<typeof setInterval> | null = null;
   let questionCount = 0;
@@ -2072,7 +2073,7 @@ function startParityQuiz(chosenCaseNames: string[]): void {
         const parityStr = entry.parity ?? 'Unknown';
         return `<div style="padding:6px 8px;border-radius:6px;background:${entry.correct ? 'var(--card-learned-bg)' : 'var(--toast-error-bg)'};border:1px solid ${entry.correct ? 'var(--card-learned-border)' : 'var(--bad-case)'};">
                 <span style="color:${color};font-weight:700;">${icon}</span>
-                <span style="font-weight:600;margin-left:4px;">${entry.caseName}</span>
+                <span style="font-weight:600;margin-left:4px;">${getDisplayName(entry.caseName)}</span>
                 <span style="color:var(--text-muted);margin-left:4px;">(${parityStr})</span>
                 <span style="float:right;color:var(--text-muted)">${timeStr}</span>
             </div>`;
@@ -2699,14 +2700,8 @@ function trainerPickerLaunch(type: 'timer' | 'evilness' | 'parity' | 'color'): v
   const key = KEYS[type];
   selectorStorageKey = key;
 
-  let saved: string[] | null = null;
-  try {
-    saved = JSON.parse(localStorage.getItem(key) || 'null');
-  } catch {
-    // ignore
-  }
-  const chosen =
-    saved && saved.length > 0 ? saved.filter((n) => data.some((d) => d.name === n)) : data.map((d) => d.name);
+  const saved = readSelectedCaseIds(key);
+  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
 
   if (type === 'timer') {
     selectorSelectedCases = new Set(chosen);
@@ -2735,14 +2730,18 @@ function loadSelectorSelection(key?: string): void {
     const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
     const raw = localStorage.getItem(storageKey);
     if (raw) {
-      const arr = JSON.parse(raw) as string[];
-      selectorSelectedCases = new Set(arr.filter((n) => data.some((d) => d.name === n)));
+      const arr: unknown = JSON.parse(raw);
+      if (Array.isArray(arr)) {
+        selectorSelectedCases = new Set(
+          arr.map(getCaseId).filter((id): id is number => id !== undefined),
+        );
+      }
     }
   } catch {
     // ignore
   }
   if (selectorSelectedCases.size === 0) {
-    data.forEach((item) => selectorSelectedCases.add(item.name));
+    data.forEach((item) => selectorSelectedCases.add(item.id));
     saveSelectorSelection(key);
   }
 }
@@ -2901,16 +2900,16 @@ function toggleGoThroughFromSelector(checked: boolean): void {
 
 function getSelectorSorted(arr: AlgCase[]): AlgCase[] {
   return [...arr].sort((a, b) => {
-    const aLearning = learningCases.has(a.name);
-    const bLearning = learningCases.has(b.name);
-    const aLearned = learnedCases.has(a.name);
-    const bLearned = learnedCases.has(b.name);
-    const aPlanned = plannedCases.has(a.name);
-    const bPlanned = plannedCases.has(b.name);
+    const aLearning = learningCases.has(a.id);
+    const bLearning = learningCases.has(b.id);
+    const aLearned = learnedCases.has(a.id);
+    const bLearned = learnedCases.has(b.id);
+    const aPlanned = plannedCases.has(a.id);
+    const bPlanned = plannedCases.has(b.id);
     if (aLearning && !bLearning) return -1;
     if (!aLearning && bLearning) return 1;
     if (aPlanned && bPlanned) {
-      return (plannedLevels.get(a.name) || 4) - (plannedLevels.get(b.name) || 4);
+      return (plannedLevels.get(a.id) || 4) - (plannedLevels.get(b.id) || 4);
     }
     if (aPlanned && !bPlanned) return -1;
     if (!aPlanned && bPlanned) return 1;
@@ -2924,8 +2923,8 @@ function getSelectorFilteredData(): AlgCase[] {
   if (!selectorSearchTerm) return getSelectorSorted(data);
   return getSelectorSorted(
     data.filter((item) => {
-      const displayName = getDisplayName(item.name).toLowerCase();
-      const name = item.name.toLowerCase();
+      const displayName = getDisplayName(item.id).toLowerCase();
+      const name = item.key.toLowerCase();
       const term = selectorSearchTerm;
       if (!term.includes('/')) {
         return displayName.includes(term) || name.includes(term);
@@ -2951,10 +2950,10 @@ function renderSelectorCases(): void {
 
   grid.innerHTML = selectorFilteredData
     .map((item) => {
-      const isSelected = selectorSelectedCases.has(item.name);
-      const isLearned = learnedCases.has(item.name);
-      const isLearning = learningCases.has(item.name);
-      const priorityLevel = plannedLevels.get(item.name) || 4;
+      const isSelected = selectorSelectedCases.has(item.id);
+      const isLearned = learnedCases.has(item.id);
+      const isLearning = learningCases.has(item.id);
+      const priorityLevel = plannedLevels.get(item.id) || 4;
 
       let bgColor: string;
       let borderColor: string;
@@ -2995,10 +2994,10 @@ function renderSelectorCases(): void {
         checkColor = 'var(--accent)';
       }
 
-      const displayName = getDisplayName(item.name);
+      const displayName = getDisplayName(item.id);
 
       return `
-            <div onclick="toggleSelectorCase('${item.name.replace(/'/g, "\\'")}')"
+            <div onclick="toggleSelectorCase('${item.id}')"
                 style="
                     padding: 7px 8px;
                     background: ${bgColor};
@@ -3036,10 +3035,12 @@ function renderSelectorCases(): void {
 }
 
 function toggleSelectorCase(caseName: string): void {
-  if (selectorSelectedCases.has(caseName)) {
-    selectorSelectedCases.delete(caseName);
+  const caseId = getCaseId(caseName);
+  if (caseId === undefined) return;
+  if (selectorSelectedCases.has(caseId)) {
+    selectorSelectedCases.delete(caseId);
   } else {
-    selectorSelectedCases.add(caseName);
+    selectorSelectedCases.add(caseId);
   }
   saveSelectorSelection(selectorStorageKey);
   renderSelectorCases();
@@ -3048,7 +3049,7 @@ function toggleSelectorCase(caseName: string): void {
     resetGoThroughPool();
     updateMultiTrainingTitle();
     const current = scrambleHistory[currentHistoryIndex];
-    if (current && current.caseName === caseName && !selectorSelectedCases.has(caseName)) {
+    if (current && current.caseName === caseId && !selectorSelectedCases.has(caseId)) {
       regenerateMultiScrambleLookahead();
     }
   }
@@ -3060,36 +3061,36 @@ function applySelectorBulkAction(action: string): void {
   switch (action) {
     case 'select_all':
       selectorSelectedCases.clear();
-      data.forEach((i) => selectorSelectedCases.add(i.name));
+      data.forEach((i) => selectorSelectedCases.add(i.id));
       break;
     case 'select_learning':
       selectorSelectedCases.clear();
       data.forEach((i) => {
-        if (learningCases.has(i.name)) selectorSelectedCases.add(i.name);
+        if (learningCases.has(i.id)) selectorSelectedCases.add(i.id);
       });
       break;
     case 'select_learned':
       selectorSelectedCases.clear();
       data.forEach((i) => {
-        if (learnedCases.has(i.name)) selectorSelectedCases.add(i.name);
+        if (learnedCases.has(i.id)) selectorSelectedCases.add(i.id);
       });
       break;
     case 'select_learning_learned':
       selectorSelectedCases.clear();
       data.forEach((i) => {
-        if (learningCases.has(i.name) || learnedCases.has(i.name)) selectorSelectedCases.add(i.name);
+        if (learningCases.has(i.id) || learnedCases.has(i.id)) selectorSelectedCases.add(i.id);
       });
       break;
     case 'select_these':
-      selectorFilteredData.forEach((i) => selectorSelectedCases.add(i.name));
+      selectorFilteredData.forEach((i) => selectorSelectedCases.add(i.id));
       break;
     case 'deselect_learned':
       data.forEach((i) => {
-        if (learnedCases.has(i.name)) selectorSelectedCases.delete(i.name);
+        if (learnedCases.has(i.id)) selectorSelectedCases.delete(i.id);
       });
       break;
     case 'deselect_these':
-      selectorFilteredData.forEach((i) => selectorSelectedCases.delete(i.name));
+      selectorFilteredData.forEach((i) => selectorSelectedCases.delete(i.id));
       break;
     case 'deselect_all':
       selectorSelectedCases.clear();
@@ -3111,7 +3112,7 @@ function applySelectorBulkAction(action: string): void {
 }
 
 // ── Multi-case training modal ────────────────────────────────────────────────
-function openMultiCaseTrainingModal(caseNames: string[]): void {
+function openMultiCaseTrainingModal(caseNames: number[]): void {
   multiTrainingCases = caseNames;
   resetGoThroughPool();
 
@@ -3166,7 +3167,7 @@ function regenerateMultiScrambleLookahead(): void {
   updateMultiTrainingTitle();
 }
 
-function resetGoThroughPool(avoidFirst?: string | null): void {
+function resetGoThroughPool(avoidFirst?: number | null): void {
   _goThroughRemaining = [...multiTrainingCases];
   for (let i = _goThroughRemaining.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -3208,7 +3209,9 @@ function selectorExportHook(stateObj: Record<string, unknown>): Record<string, u
 function selectorImportHook(stateObj: Record<string, unknown>): void {
   if (stateObj.selectorSelectedCases && Array.isArray(stateObj.selectorSelectedCases)) {
     selectorSelectedCases = new Set(
-      (stateObj.selectorSelectedCases as string[]).filter((n) => data.some((d) => d.name === n)),
+      (stateObj.selectorSelectedCases as unknown[])
+        .map(getCaseId)
+        .filter((id): id is number => id !== undefined),
     );
     saveSelectorSelection();
   }
@@ -3382,14 +3385,14 @@ export function installTrainingShims(): void {
   });
   Object.defineProperty(w, '_evilQuizOnSelectionChange', {
     get: () => evilQuizOnSelectionChange,
-    set: (v: ((names: string[]) => void) | null) => {
+    set: (v: ((ids: number[]) => void) | null) => {
       evilQuizOnSelectionChange = v;
     },
     configurable: true,
   });
   Object.defineProperty(w, '_parityQuizOnSelectionChange', {
     get: () => parityQuizOnSelectionChange,
-    set: (v: ((names: string[]) => void) | null) => {
+    set: (v: ((ids: number[]) => void) | null) => {
       parityQuizOnSelectionChange = v;
     },
     configurable: true,

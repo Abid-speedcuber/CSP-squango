@@ -469,13 +469,13 @@ function showEvilnessCasesModal(
   mainCloseBtn: HTMLElement | null,
   mainSettingsBtn: HTMLElement | null,
 ): void {
-  const allCases: string[] = data.map((d) => d.name);
-  const getDispName = (cn: string): string => getDisplayName(cn);
+  const allCases: number[] = data.map((d) => d.id);
+  const getDispName = (cn: number): string => getDisplayName(cn);
 
   const localEvilMap: Record<string, boolean> = { ...evilnessMap };
   let hasChanges = false;
   let evilSearchTerm = '';
-  let evilFilteredCases: string[] = [...allCases];
+  let evilFilteredCases: number[] = [...allCases];
 
   const evilModalDiv = document.createElement('div');
   evilModalDiv.id = 'evilModal';
@@ -544,7 +544,7 @@ function showEvilnessCasesModal(
       ? allCases.filter((cn) => {
           const dn = getDispName(cn).toLowerCase();
           const term = evilSearchTerm;
-          if (!term.includes('/')) return dn.includes(term) || cn.toLowerCase().includes(term);
+          if (!term.includes('/')) return dn.includes(term);
           const [p1, p2] = term.split('/').map((p) => p.trim());
           const parts = dn.split('/').map((p) => p.trim());
           if (parts.length === 2) {
@@ -568,7 +568,7 @@ function showEvilnessCasesModal(
         const bgColor = isEvil ? '#ffe0e0' : '#e8f5e9';
         const borderColor2 = isEvil ? '#e53e3e' : '#38a169';
         const textCol = isEvil ? '#7b1c1c' : '#1a4731';
-        const escaped = cn.replace(/'/g, "\\'");
+        const escaped = String(cn);
 
         return `<div
           data-case="${escaped}"

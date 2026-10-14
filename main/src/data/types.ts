@@ -1,6 +1,9 @@
 /** A single cubeshape parity case definition. */
 export interface AlgCase {
-  name: string;
+  /** Stable, compact identity used for state, presets, and exports. */
+  id: number;
+  /** Technical shape-data key; not a user-facing case name. */
+  key: string;
   top: string;
   bottom: string;
   odd: string[];
@@ -12,6 +15,8 @@ export interface AlgCase {
   probability: number;
 }
 
+export type CaseRef = number | string;
+
 /** Cubie permutation indices for a shape, used by the parity tracer. */
 export interface ShapeIndexEntry {
   name: string;
@@ -21,5 +26,5 @@ export interface ShapeIndexEntry {
   mir?: number[];
 }
 
-/** Maps each case name to its canonical cubie shape index. */
+/** Maps numeric case IDs (serialized as object keys) to canonical shape indices. */
 export type ShapeIndexMap = Record<string, number>;

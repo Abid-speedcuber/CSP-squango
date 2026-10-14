@@ -20,7 +20,7 @@ import {
 const algoFontFamily = () =>
   hideParenthesis ? 'Arial, sans-serif' : 'Consolas, Menlo, Monaco, "Courier New", monospace';
 
-function highlightCaseName(displayName: string, caseName: string): string {
+function highlightCaseName(displayName: string, caseName: number): string {
   if (!searchMatches.has(caseName)) return displayName;
   const matchInfo = searchMatches.get(caseName)!;
 
@@ -57,9 +57,9 @@ function highlightCaseName(displayName: string, caseName: string): string {
  */
 export function renderCard(item: AlgCase): string {
   const prob = ((item.probability / 3678) * 100).toFixed(3);
-  const isLearned = learnedCases.has(item.name);
-  const isLearning = learningCases.has(item.name);
-  const plannedLevel = getPlannedLevel(item.name);
+  const isLearned = learnedCases.has(item.id);
+  const isLearning = learningCases.has(item.id);
+  const plannedLevel = getPlannedLevel(item.id);
 
   let cardClass = '';
   if (isLearned) {
@@ -70,10 +70,10 @@ export function renderCard(item: AlgCase): string {
     cardClass = `planned priority-${plannedLevel}`;
   }
 
-  const comment = comments.get(item.name) || '';
+  const comment = comments.get(item.id) || '';
 
-  const cachedAlgs = cachedParityAlgorithms.get(item.name);
-  const fallbackAlgs = customAlgorithms.get(item.name);
+  const cachedAlgs = cachedParityAlgorithms.get(item.id);
+  const fallbackAlgs = customAlgorithms.get(item.id);
   const oddAlgos = cachedAlgs ? cachedAlgs.odd : fallbackAlgs?.odd || item.odd || [];
   const evenAlgos = cachedAlgs ? cachedAlgs.even : fallbackAlgs?.even || item.even || [];
 
@@ -83,11 +83,11 @@ export function renderCard(item: AlgCase): string {
   const fontFamily = algoFontFamily();
   const oddAlgoDisplay =
     oddAlgos.length > 0
-      ? renderAlgorithmWithPopup(oddAlgos, item.name, 'odd', hideParenthesis, fontFamily, false)
+      ? renderAlgorithmWithPopup(oddAlgos, String(item.id), 'odd', hideParenthesis, fontFamily, false)
       : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
   const evenAlgoDisplay =
     evenAlgos.length > 0
-      ? renderAlgorithmWithPopup(evenAlgos, item.name, 'even', hideParenthesis, fontFamily, false)
+      ? renderAlgorithmWithPopup(evenAlgos, String(item.id), 'even', hideParenthesis, fontFamily, false)
       : '<div class="algo-line" style="color: var(--text-muted); font-style: italic;">No algorithms available</div>';
 
   const learnedIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="${isLearned ? 'var(--card-learned-border)' : isLearning ? 'var(--card-learning-border)' : 'var(--border-color)'}" stroke-width="2">
@@ -100,25 +100,25 @@ export function renderCard(item: AlgCase): string {
         <circle cx="12" cy="19" r="2"/>
     </svg>`;
 
-  const displayName = getDisplayName(item.name);
-  const highlightedName = highlightCaseName(displayName, item.name);
+  const displayName = getDisplayName(item.id);
+  const highlightedName = highlightCaseName(displayName, item.id);
 
-  const subtitle = perCaseSubtitles.has(item.name)
+  const subtitle = perCaseSubtitles.has(item.id)
     ? `<div class="card-subtitle" style="font-size: 0.75rem; color: var(--text-secondary); font-weight: 400; margin-top: 2px;">${perCaseSubtitles.get(
-        item.name,
+        item.id,
       )}</div>`
     : '';
 
   const titleStyle = evilnessFactor
-    ? isCaseEvil(item.name)
+    ? isCaseEvil(item.id)
       ? 'color: var(--bad-case);'
       : 'color: var(--good-case);'
     : '';
 
-  const escapedName = item.name.replace(/'/g, "\\'");
+  const escapedName = String(item.id);
 
   return `
-        <div class="card ${cardClass}" data-case-name="${item.name}">
+        <div class="card ${cardClass}" data-case-name="${item.id}">
             <div class="card-header">
                 <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                     <div class="card-title" style="${titleStyle}">

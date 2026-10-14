@@ -465,7 +465,7 @@ function updateProfileStats(): void {
 
   const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
   const learnedProbability = data
-    .filter((item) => learnedCases.has(item.name))
+    .filter((item) => learnedCases.has(item.id))
     .reduce((sum, item) => sum + item.probability, 0);
 
   const coverage = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;

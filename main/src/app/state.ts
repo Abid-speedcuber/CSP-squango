@@ -1,6 +1,6 @@
-import { CASES } from '../data/cases';
+import { CASES, getCaseId, getCaseKey } from '../data/cases';
 import { SHAPE_INDEX, SHAPE_INDEX_MAP } from '../data/shapeIndex';
-import type { AlgCase } from '../data/types';
+import type { AlgCase, CaseRef } from '../data/types';
 import { algToShapeIndex, invertScramble } from '../lib/cube';
 import { getParityText, setCaseNameResolver, setEvilnessConfig, getShapePatterns } from '../lib/parityAnalyzer';
 import {
@@ -46,7 +46,6 @@ const DEFAULT_COLOR_SCHEME: ColorScheme = {
   dividerColor: '#7a0000',
   circleColor: 'transparent',
 };
-
 // ── Preset configuration (mirrors legacy window.PRESET_CONFIG) ─────────────
 export const PRESET_CONFIG: Record<string, string> = {
   "Matt's_Preset": "presets/Matt's_Preset.json",
@@ -58,97 +57,97 @@ const BOOT_PRESET_CONFIG: Record<string, string> = {
 };
 
 // ── Default display names for all 90 cases (fresh installs) ────────────────
-const defaultDisplayNames: Record<string, string> = {
-  '8/Star': '8/Star',
-  '7-1/Star': '7-1/Star',
-  '6-2/Star': '6-2/Star',
-  '5-3/Star': '5-3/Star',
-  '4-4/Star': '4-4/Star',
-  '2-2-2/Paired Edges': '2-2-2/Pair',
-  '2-2-2/Parallel Edges': '2-2-2/Line',
-  '2-2-2/Perpendicular Edges': '2-2-2/L',
-  '3-1-2/Paired Edges': '3-1-2/Pair',
-  '3-1-2/Parallel Edges': '3-1-2/Line',
-  '3-1-2/Perpendicular Edges': '3-1-2/L',
-  '3-2-1/Paired Edges': '3-2-1/Pair',
-  '3-2-1/Parallel Edges': '3-2-1/Line',
-  '3-2-1/Perpendicular Edges': '3-2-1/L',
-  '3-3/Paired Edges': '3-3/Pair',
-  '3-3/Parallel Edges': '3-3/Line',
-  '3-3/Perpendicular Edges': '3-3/L',
-  '4-1-1/Paired Edges': '4-1-1/Pair',
-  '4-1-1/Parallel Edges': '4-1-1/Line',
-  '4-1-1/Perpendicular Edges': '4-1-1/L',
-  'Left 4-2/Paired Edges': 'Left 4-2/Pair',
-  'Left 4-2/Parallel Edges': 'Left 4-2/Line',
-  'Left 4-2/Perpendicular Edges': 'Left 4-2/L',
-  'Right 4-2/Paired Edges': 'Right 4-2/Pair',
-  'Right 4-2/Parallel Edges': 'Right 4-2/Line',
-  'Right 4-2/Perpendicular Edges': 'Right 4-2/L',
-  'Left 5-1/Paired Edges': 'Left 5-1/Pair',
-  'Left 5-1/Parallel Edges': 'Left 5-1/Line',
-  'Left 5-1/Perpendicular Edges': 'Left 5-1/L',
-  'Right 5-1/Paired Edges': 'Right 5-1/Pair',
-  'Right 5-1/Parallel Edges': 'Right 5-1/Line',
-  'Right 5-1/Perpendicular Edges': 'Right 5-1/L',
-  '6/Paired Edges': '6/Pair',
-  '6/Parallel Edges': '6/Line',
-  '6/Perpendicular Edges': '6/L',
-  'Barrel/Barrel': 'Barrel/Barrel',
-  'Barrel/Square': 'Barrel/Square',
-  'Barrel/Left Fist': 'Barrel/Left Fist',
-  'Barrel/Right Fist': 'Barrel/Right Fist',
-  'Kite/Barrel': 'Kite/Barrel',
-  'Kite/Kite': 'Kite/Kite',
-  'Kite/Square': 'kite/Square',
-  'Kite/Left Fist': 'Kite/Left Fist',
-  'Kite/Right Fist': 'Kite/Right Fist',
-  'Muffin/Barrel': 'Muffin/Barrel',
-  'Muffin/Kite': 'Muffin/Kite',
-  'Muffin/Muffin': 'Muffin/Muffin',
-  'Muffin/Square': 'Muffin/Square',
-  'Muffin/Left Fist': 'Muffin/Left Fist',
-  'Muffin/Right Fist': 'Muffin/Right Fist',
-  'Shield/Barrel': 'Shield/Barrel',
-  'Shield/Kite': 'Shield/Kite',
-  'Shield/Muffin': 'Shield/Muffin',
-  'Shield/Shield': 'Shield/Shield',
-  'Shield/Square': 'Shield/Square',
-  'Shield/Left Fist': 'Shield/Left Fist',
-  'Shield/Right Fist': 'Shield/Right Fist',
-  'Scallop/Barrel': 'Scallop/Barrel',
-  'Scallop/Kite': 'Scallop/Kite',
-  'Scallop/Muffin': 'Scallop/Muffin',
-  'Scallop/Shield': 'Scallop/Shield',
-  'Scallop/Scallop': 'Scallop/Scallop',
-  'Scallop/Square': 'Scallop/Square',
-  'Scallop/Left Fist': 'Scallop/Left Fist',
-  'Scallop/Right Fist': 'Scallop/Right Fist',
-  'Scallop/Left Pawn': 'Scallop/Left Pawn',
-  'Scallop/Right Pawn': 'Scallop/Right Pawn',
-  'Square/Square': 'Square/Square',
-  'Left Fist/Square': 'Left Fist/Square',
-  'Left Fist/Left Fist': 'Left Fist/Left Fist',
-  'Left Fist/Right Fist': 'Left Fist/Right Fist',
-  'Right Fist/Square': 'Right Fist/Square',
-  'Right Fist/Right Fist': 'Right Fist/Right Fist',
-  'Left Pawn/Barrel': 'Left Pawn/Barrel',
-  'Left Pawn/Kite': 'Left Pawn/Kite',
-  'Left Pawn/Muffin': 'Left Pawn/Muffin',
-  'Left Pawn/Shield': 'Left Pawn/Shield',
-  'Left Pawn/Square': 'Left Pawn/Square',
-  'Left Pawn/Left Fist': 'Left Pawn/Left Fist',
-  'Left Pawn/Right Fist': 'Left Pawn/Right Fist',
-  'Left Pawn/Left Pawn': 'Left Pawn/Left Pawn',
-  'Left Pawn/Right Pawn': 'Left Pawn/Right Pawn',
-  'Right Pawn/Barrel': 'Right Pawn/Barrel',
-  'Right Pawn/Kite': 'Right Pawn/Kite',
-  'Right Pawn/Muffin': 'Right Pawn/Muffin',
-  'Right Pawn/Shield': 'Right Pawn/Shield',
-  'Right Pawn/Square': 'Right Pawn/Square',
-  'Right Pawn/Left Fist': 'Right Pawn/Left Fist',
-  'Right Pawn/Right Fist': 'Right Pawn/Right Fist',
-  'Right Pawn/Right Pawn': 'Right Pawn/Right Pawn',
+const defaultDisplayNames: Record<number, string> = {
+  3: '8/Star',
+  2: '7-1/Star',
+  4: '6-2/Star',
+  6: '5-3/Star',
+  5: '4-4/Star',
+  74: '2-2-2/Pair',
+  8: '2-2-2/Line',
+  7: '2-2-2/L',
+  31: '3-1-2/Pair',
+  33: '3-1-2/Line',
+  72: '3-1-2/L',
+  32: '3-2-1/Pair',
+  34: '3-2-1/Line',
+  73: '3-2-1/L',
+  28: '3-3/Pair',
+  29: '3-3/Line',
+  69: '3-3/L',
+  70: '4-1-1/Pair',
+  30: '4-1-1/Line',
+  71: '4-1-1/L',
+  65: 'Left 4-2/Pair',
+  67: 'Left 4-2/Line',
+  26: 'Left 4-2/L',
+  66: 'Right 4-2/Pair',
+  68: 'Right 4-2/Line',
+  27: 'Right 4-2/L',
+  61: 'Left 5-1/Pair',
+  24: 'Left 5-1/Line',
+  63: 'Left 5-1/L',
+  62: 'Right 5-1/Pair',
+  25: 'Right 5-1/Line',
+  64: 'Right 5-1/L',
+  60: '6/Pair',
+  23: '6/Line',
+  22: '6/L',
+  88: 'Barrel/Barrel',
+  21: 'Barrel/Square',
+  16: 'Barrel/Left Fist',
+  15: 'Barrel/Right Fist',
+  86: 'Kite/Barrel',
+  89: 'Kite/Kite',
+  1: 'kite/Square',
+  14: 'Kite/Left Fist',
+  13: 'Kite/Right Fist',
+  12: 'Muffin/Barrel',
+  11: 'Muffin/Kite',
+  84: 'Muffin/Muffin',
+  85: 'Muffin/Square',
+  10: 'Muffin/Left Fist',
+  9: 'Muffin/Right Fist',
+  59: 'Shield/Barrel',
+  58: 'Shield/Kite',
+  78: 'Shield/Muffin',
+  82: 'Shield/Shield',
+  83: 'Shield/Square',
+  56: 'Shield/Left Fist',
+  57: 'Shield/Right Fist',
+  75: 'Scallop/Barrel',
+  80: 'Scallop/Kite',
+  38: 'Scallop/Muffin',
+  37: 'Scallop/Shield',
+  79: 'Scallop/Scallop',
+  41: 'Scallop/Square',
+  39: 'Scallop/Left Fist',
+  40: 'Scallop/Right Fist',
+  36: 'Scallop/Left Pawn',
+  35: 'Scallop/Right Pawn',
+  90: 'Square/Square',
+  19: 'Left Fist/Square',
+  18: 'Left Fist/Left Fist',
+  87: 'Left Fist/Right Fist',
+  20: 'Right Fist/Square',
+  17: 'Right Fist/Right Fist',
+  53: 'Left Pawn/Barrel',
+  51: 'Left Pawn/Kite',
+  47: 'Left Pawn/Muffin',
+  42: 'Left Pawn/Shield',
+  55: 'Left Pawn/Square',
+  49: 'Left Pawn/Left Fist',
+  77: 'Left Pawn/Right Fist',
+  45: 'Left Pawn/Left Pawn',
+  81: 'Left Pawn/Right Pawn',
+  52: 'Right Pawn/Barrel',
+  50: 'Right Pawn/Kite',
+  46: 'Right Pawn/Muffin',
+  43: 'Right Pawn/Shield',
+  54: 'Right Pawn/Square',
+  76: 'Right Pawn/Left Fist',
+  48: 'Right Pawn/Right Fist',
+  44: 'Right Pawn/Right Pawn',
 };
 
 // ── Mutable app state ───────────────────────────────────────────────────────
@@ -156,15 +155,15 @@ export let displayNames: Record<string, string> = {};
 export const svgData: Record<string, string> = {};
 export let homepageImageSettings: HomepageImageSettings = loadHomepageImageSettings();
 
-export const learnedCases = new Set<string>();
-export const learningCases = new Set<string>();
-export const plannedCases = new Set<string>();
-export const comments = new Map<string, string>();
-export const plannedLevels = new Map<string, number>();
-export const parityOrientations = new Map<string, number>();
-export const perCaseSubtitles = new Map<string, string>();
-export const customAlgorithms = new Map<string, { odd?: string[]; even?: string[] }>();
-export const cachedParityAlgorithms = new Map<string, { odd: string[]; even: string[] }>();
+export const learnedCases = new Set<number>();
+export const learningCases = new Set<number>();
+export const plannedCases = new Set<number>();
+export const comments = new Map<number, string>();
+export const plannedLevels = new Map<number, number>();
+export const parityOrientations = new Map<number, number>();
+export const perCaseSubtitles = new Map<number, string>();
+export const customAlgorithms = new Map<number, { odd?: string[]; even?: string[] }>();
+export const cachedParityAlgorithms = new Map<number, { odd: string[]; even: string[] }>();
 export const algVariables = new Map<string, string>();
 
 export let cornerStickerMode: CornerMode = 'counterclockwise';
@@ -210,9 +209,9 @@ function yieldToBrowser(timeout = 250): Promise<void> {
 // ── Shape index → case name lookup ──────────────────────────────────────────
 function buildShapeIndexToCaseMap(): Record<number, string> {
   const map: Record<number, string> = {};
-  for (const [caseName, idxStr] of Object.entries(shapeIndexMap)) {
+  for (const [caseId, idxStr] of Object.entries(shapeIndexMap)) {
     const idx = parseInt(String(idxStr), 10);
-    map[idx] = caseName;
+    map[idx] = String(Number(caseId));
   }
   for (const entry of shapeIndex) {
     const allIndices = [...(entry.org || []), ...(entry.mir || [])];
@@ -243,9 +242,10 @@ export function getCaseNameFromScramble(scramble: string): string | null {
   }
 }
 
-export function isCaseEvil(caseName: string): boolean {
+export function isCaseEvil(caseName: CaseRef): boolean {
   if (!evilnessFactor) return false;
-  return evilnessMap[caseName] === true;
+  const caseId = getCaseId(caseName);
+  return caseId !== undefined && evilnessMap[String(caseId)] === true;
 }
 
 export function isScrambleEvil(scramble: string): boolean {
@@ -276,7 +276,7 @@ function getParityCalculationSettings(): Record<string, unknown> {
 }
 
 function cacheParityForItem(item: AlgCase): void {
-  const customAlgs = customAlgorithms.get(item.name);
+  const customAlgs = customAlgorithms.get(item.id);
   const oddAlgos = customAlgs && customAlgs.odd ? customAlgs.odd : item.odd || [];
   const evenAlgos = customAlgs && customAlgs.even ? customAlgs.even : item.even || [];
   const allAlgorithms = [...oddAlgos, ...evenAlgos];
@@ -314,7 +314,7 @@ function cacheParityForItem(item: AlgCase): void {
     }
   }
 
-  cachedParityAlgorithms.set(item.name, { odd: dynamicOddAlgos, even: dynamicEvenAlgos });
+  cachedParityAlgorithms.set(item.id, { odd: dynamicOddAlgos, even: dynamicEvenAlgos });
 }
 
 export function calculateAndCacheAllParity(): void {
@@ -378,25 +378,61 @@ export function recalculateAllParity(): void {
 // ── Persistence ─────────────────────────────────────────────────────────────
 type StoredProgressState = Record<string, unknown>;
 
+function normalizeCaseRecord<T>(source: Record<string, T> | undefined): Record<number, T> {
+  const normalized: Record<number, T> = {};
+  for (const [ref, value] of Object.entries(source || {})) {
+    const id = getCaseId(ref);
+    if (id !== undefined) normalized[id] = value;
+  }
+  return normalized;
+}
+
+function normalizeCaseIds(source: unknown): number[] {
+  if (!Array.isArray(source)) return [];
+  return source.map(getCaseId).filter((id): id is number => id !== undefined);
+}
+
+function normalizeCaseState(state: StoredProgressState): StoredProgressState {
+  const normalized = { ...state };
+  for (const key of ['learned', 'learning', 'planned', 'selectorSelectedCases']) {
+    if (key in state) normalized[key] = normalizeCaseIds(state[key]);
+  }
+  for (const key of [
+    'comments',
+    'plannedLevels',
+    'parityOrientations',
+    'displayNames',
+    'perCaseSubtitles',
+    'customAlgorithms',
+    'cachedParityAlgorithms',
+    'evilnessMap',
+  ]) {
+    if (key in state) {
+      normalized[key] = normalizeCaseRecord(state[key] as Record<string, unknown>);
+    }
+  }
+  return normalized;
+}
+
 function mergeDisplayNames(source: Record<string, string>): void {
-  displayNames = { ...source };
-  for (const caseName in defaultDisplayNames) {
-    if (!displayNames[caseName]) displayNames[caseName] = defaultDisplayNames[caseName];
+  displayNames = normalizeCaseRecord(source);
+  for (const caseId in defaultDisplayNames) {
+    if (!displayNames[caseId]) displayNames[caseId] = defaultDisplayNames[caseId];
   }
 }
 
 function ensureAllCasesHaveState(): void {
   data.forEach((item) => {
     if (
-      !learnedCases.has(item.name) &&
-      !learningCases.has(item.name) &&
-      !plannedCases.has(item.name)
+      !learnedCases.has(item.id) &&
+      !learningCases.has(item.id) &&
+      !plannedCases.has(item.id)
     ) {
-      plannedCases.add(item.name);
-      plannedLevels.set(item.name, 4);
+      plannedCases.add(item.id);
+      plannedLevels.set(item.id, 4);
     }
-    if (!plannedLevels.has(item.name) && plannedCases.has(item.name)) {
-      plannedLevels.set(item.name, 4);
+    if (!plannedLevels.has(item.id) && plannedCases.has(item.id)) {
+      plannedLevels.set(item.id, 4);
     }
   });
 }
@@ -411,16 +447,16 @@ export function initializeSVGDataForCases(cases: readonly Pick<AlgCase, 'top' | 
   ensureHomepageShapeSVGsForCases(homepageImageSettings, svgData, cases);
 }
 
-function getPriorityBootCaseNames(): string[] {
+function getPriorityBootCaseIds(): number[] {
   const sorted = [...data];
   sorted.sort((a, b) => b.probability - a.probability);
   sorted.sort((a, b) => {
-    const aIsLearning = learningCases.has(a.name);
-    const bIsLearning = learningCases.has(b.name);
-    const aIsPlanned = plannedCases.has(a.name);
-    const bIsPlanned = plannedCases.has(b.name);
-    const aIsLearned = learnedCases.has(a.name);
-    const bIsLearned = learnedCases.has(b.name);
+    const aIsLearning = learningCases.has(a.id);
+    const bIsLearning = learningCases.has(b.id);
+    const aIsPlanned = plannedCases.has(a.id);
+    const bIsPlanned = plannedCases.has(b.id);
+    const aIsLearned = learnedCases.has(a.id);
+    const bIsLearned = learnedCases.has(b.id);
 
     if (aIsLearning && !bIsLearning) return -1;
     if (!aIsLearning && bIsLearning) return 1;
@@ -428,8 +464,8 @@ function getPriorityBootCaseNames(): string[] {
     if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
     if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
     if (aIsPlanned && bIsPlanned) {
-      const aPriority = plannedLevels.get(a.name) || 4;
-      const bPriority = plannedLevels.get(b.name) || 4;
+      const aPriority = plannedLevels.get(a.id) || 4;
+      const bPriority = plannedLevels.get(b.id) || 4;
       return aPriority - bPriority;
     }
 
@@ -437,19 +473,19 @@ function getPriorityBootCaseNames(): string[] {
     if (!aIsLearned && bIsLearned) return -1;
     return 0;
   });
-  return sorted.slice(0, BOOT_STATE_CARD_COUNT).map((item) => item.name);
+  return sorted.slice(0, BOOT_STATE_CARD_COUNT).map((item) => item.id);
 }
 
-function pickRecordEntries<T>(source: Record<string, T>, keys: readonly string[]): Record<string, T> {
-  const picked: Record<string, T> = {};
+function pickRecordEntries<T>(source: Record<number, T>, keys: readonly number[]): Record<number, T> {
+  const picked: Record<number, T> = {};
   for (const key of keys) {
     if (source[key] !== undefined) picked[key] = source[key];
   }
   return picked;
 }
 
-function pickMapEntries<T>(source: Map<string, T>, keys: readonly string[]): Record<string, T> {
-  const picked: Record<string, T> = {};
+function pickMapEntries<T>(source: Map<number, T>, keys: readonly number[]): Record<number, T> {
+  const picked: Record<number, T> = {};
   for (const key of keys) {
     const value = source.get(key);
     if (value !== undefined) picked[key] = value;
@@ -458,19 +494,19 @@ function pickMapEntries<T>(source: Map<string, T>, keys: readonly string[]): Rec
 }
 
 function createStateSnapshot(bootOnly = false): StoredProgressState {
-  const bootCaseNames = bootOnly ? getPriorityBootCaseNames() : [];
+  const bootCaseIds = bootOnly ? getPriorityBootCaseIds() : [];
   return {
     learned: Array.from(learnedCases),
     learning: Array.from(learningCases),
     planned: Array.from(plannedCases),
-    comments: bootOnly ? pickMapEntries(comments, bootCaseNames) : Object.fromEntries(comments),
+    comments: bootOnly ? pickMapEntries(comments, bootCaseIds) : Object.fromEntries(comments),
     plannedLevels: Object.fromEntries(plannedLevels),
     parityOrientations: bootOnly
-      ? pickMapEntries(parityOrientations, bootCaseNames)
+      ? pickMapEntries(parityOrientations, bootCaseIds)
       : Object.fromEntries(parityOrientations),
     showPaths: true,
     enablePriorityLearning: true,
-    displayNames: bootOnly ? pickRecordEntries(displayNames, bootCaseNames) : displayNames,
+    displayNames: bootOnly ? pickRecordEntries(displayNames, bootCaseIds) : displayNames,
     hideInstructions,
     hideParenthesis,
     colorScheme,
@@ -479,14 +515,14 @@ function createStateSnapshot(bootOnly = false): StoredProgressState {
       'customShapesForParityTracerLibrary',
     ),
     perCaseSubtitles: bootOnly
-      ? pickMapEntries(perCaseSubtitles, bootCaseNames)
+      ? pickMapEntries(perCaseSubtitles, bootCaseIds)
       : Object.fromEntries(perCaseSubtitles),
     cornerStickerMode,
     customAlgorithms: bootOnly
-      ? pickMapEntries(customAlgorithms, bootCaseNames)
+      ? pickMapEntries(customAlgorithms, bootCaseIds)
       : Object.fromEntries(customAlgorithms),
     cachedParityAlgorithms: bootOnly
-      ? pickMapEntries(cachedParityAlgorithms, bootCaseNames)
+      ? pickMapEntries(cachedParityAlgorithms, bootCaseIds)
       : Object.fromEntries(cachedParityAlgorithms),
     lastParityCalculationSettings,
     generalNotes: bootOnly ? '' : generalNotes,
@@ -524,17 +560,18 @@ function applyStoredState(state: StoredProgressState): void {
   cachedParityAlgorithms.clear();
   algVariables.clear();
 
-  new Set<string>((state.learned as string[]) || []).forEach((v) => learnedCases.add(v));
-  new Set<string>((state.learning as string[]) || []).forEach((v) => learningCases.add(v));
-  new Set<string>((state.planned as string[]) || []).forEach((v) => plannedCases.add(v));
-  Object.entries((state.comments as Record<string, unknown>) || {}).forEach(([k, v]) =>
-    comments.set(k, String(v)),
+  const normalized = normalizeCaseState(state);
+  normalizeCaseIds(normalized.learned).forEach((v) => learnedCases.add(v));
+  normalizeCaseIds(normalized.learning).forEach((v) => learningCases.add(v));
+  normalizeCaseIds(normalized.planned).forEach((v) => plannedCases.add(v));
+  Object.entries(normalized.comments as Record<string, unknown>).forEach(([k, v]) =>
+    comments.set(Number(k), String(v)),
   );
-  Object.entries((state.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
-    plannedLevels.set(k, Number(v)),
+  Object.entries(normalized.plannedLevels as Record<string, unknown>).forEach(([k, v]) =>
+    plannedLevels.set(Number(k), Number(v)),
   );
-  Object.entries((state.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
-    parityOrientations.set(k, Number(v)),
+  Object.entries(normalized.parityOrientations as Record<string, unknown>).forEach(([k, v]) =>
+    parityOrientations.set(Number(k), Number(v)),
   );
   showPaths = true;
   enablePriorityLearning = true;
@@ -548,32 +585,36 @@ function applyStoredState(state: StoredProgressState): void {
       String(state.customShapesForParityTracerLibrary),
     );
   }
-  Object.entries((state.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
-    perCaseSubtitles.set(k, String(v)),
+  Object.entries(normalized.perCaseSubtitles as Record<string, unknown>).forEach(([k, v]) =>
+    perCaseSubtitles.set(Number(k), String(v)),
   );
   cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
-  Object.entries((state.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
-    .forEach(([k, v]) => customAlgorithms.set(k, v));
+  Object.entries(
+    normalized.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>,
+  )
+    .forEach(([k, v]) => customAlgorithms.set(Number(k), v));
   generalNotes = String(state.generalNotes || '');
   Object.entries((state.algVariables as Record<string, unknown>) || {}).forEach(([k, v]) =>
     algVariables.set(k, String(v)),
   );
 
   if (state.displayNames) {
-    mergeDisplayNames(state.displayNames as Record<string, string>);
+    mergeDisplayNames(normalized.displayNames as Record<string, string>);
   } else {
     displayNames = { ...defaultDisplayNames };
   }
 
-  Object.entries((state.cachedParityAlgorithms as Record<string, { odd: string[]; even: string[] }>) || {})
-    .forEach(([k, v]) => cachedParityAlgorithms.set(k, v));
+  Object.entries(
+    normalized.cachedParityAlgorithms as Record<string, { odd: string[]; even: string[] }>,
+  )
+    .forEach(([k, v]) => cachedParityAlgorithms.set(Number(k), v));
   lastParityCalculationSettings = (state.lastParityCalculationSettings as Record<string, unknown>) || null;
 
   if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
   if (state.evilnessStringReturn !== undefined) {
     evilnessStringReturn = Boolean(state.evilnessStringReturn);
   }
-  if (state.evilnessMap) evilnessMap = state.evilnessMap as Record<string, boolean>;
+  if (state.evilnessMap) evilnessMap = normalized.evilnessMap as Record<string, boolean>;
 }
 
 function loadStoredEvilnessOverrides(): void {
@@ -595,7 +636,9 @@ function loadStoredEvilnessOverrides(): void {
   const storedEvilnessMap = localStorage.getItem('evilnessMap');
   if (storedEvilnessMap !== null) {
     try {
-      evilnessMap = JSON.parse(storedEvilnessMap) as Record<string, boolean>;
+      evilnessMap = normalizeCaseRecord(
+        JSON.parse(storedEvilnessMap) as Record<string, boolean>,
+      );
     } catch {
       // ignore malformed stored map
     }
@@ -660,7 +703,7 @@ async function loadPresetData(presetName: string, boot = false): Promise<Record<
     }
     const response = await fetch(presetPath);
     if (!response.ok) throw new Error('Preset file not found');
-    return await response.json();
+    return normalizeCaseState(await response.json());
   } catch (error) {
     console.error('Error loading preset:', error);
     return null;
@@ -699,11 +742,11 @@ export async function applyPreset(
   if (!preset) return;
 
   if (preset.displayNames) {
-    displayNames = { ...(preset.displayNames as Record<string, string>) };
+    displayNames = normalizeCaseRecord(preset.displayNames as Record<string, string>);
   }
   comments.clear();
-  Object.entries((preset.comments as Record<string, string>) || {}).forEach(([k, v]) =>
-    comments.set(k, String(v)),
+  Object.entries(normalizeCaseRecord(preset.comments as Record<string, string> | undefined)).forEach(
+    ([k, v]) => comments.set(Number(k), String(v)),
   );
   colorScheme = { ...DEFAULT_COLOR_SCHEME, ...((preset.colorScheme as Partial<ColorScheme>) || {}) };
 
@@ -727,23 +770,31 @@ export async function applyPreset(
   if (patternsChanged) regenerateHomepageSVGs();
 
   perCaseSubtitles.clear();
-  Object.entries((preset.perCaseSubtitles as Record<string, string>) || {}).forEach(([k, v]) =>
-    perCaseSubtitles.set(k, String(v)),
+  Object.entries(
+    normalizeCaseRecord(preset.perCaseSubtitles as Record<string, string> | undefined),
+  ).forEach(([k, v]) => perCaseSubtitles.set(Number(k), String(v)),
   );
   cornerStickerMode = (preset.cornerStickerMode as CornerMode) || 'counterclockwise';
 
   customAlgorithms.clear();
-  Object.entries((preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
-    .forEach(([k, v]) => customAlgorithms.set(k, v));
+  Object.entries(
+    normalizeCaseRecord(
+      preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }> | undefined,
+    ),
+  ).forEach(([k, v]) => customAlgorithms.set(Number(k), v));
 
-  if (preset.evilnessMap !== undefined) evilnessMap = preset.evilnessMap as Record<string, boolean>;
+  if (preset.evilnessMap !== undefined) {
+    evilnessMap = normalizeCaseRecord(preset.evilnessMap as Record<string, boolean>);
+  }
   if (preset.evilnessFactor !== undefined) evilnessFactor = Boolean(preset.evilnessFactor);
   if (preset.evilnessStringReturn !== undefined)
     evilnessStringReturn = Boolean(preset.evilnessStringReturn);
 
   parityOrientations.clear();
-  Object.entries((preset.parityOrientations as Record<string, number>) || {}).forEach(([k, v]) =>
-    parityOrientations.set(k, Number(v)),
+  Object.entries(
+    normalizeCaseRecord(preset.parityOrientations as Record<string, number> | undefined),
+  ).forEach(([k, v]) =>
+    parityOrientations.set(Number(k), Number(v)),
   );
   generalNotes = (preset.generalNotes as string) || '';
 
@@ -752,7 +803,9 @@ export async function applyPreset(
     | undefined;
   cachedParityAlgorithms.clear();
   if (presetParityCache) {
-    Object.entries(presetParityCache).forEach(([k, v]) => cachedParityAlgorithms.set(k, v));
+    Object.entries(presetParityCache).forEach(([k, v]) =>
+      cachedParityAlgorithms.set(Number(k), v),
+    );
   }
 
   if (applyFull) {
@@ -804,18 +857,22 @@ export async function hydratePresetDetails(presetName: string): Promise<void> {
   if (preset.displayNames) mergeDisplayNames(preset.displayNames as Record<string, string>);
 
   comments.clear();
-  Object.entries((preset.comments as Record<string, string>) || {}).forEach(([k, v]) =>
-    comments.set(k, String(v)),
+  Object.entries(normalizeCaseRecord(preset.comments as Record<string, string> | undefined)).forEach(
+    ([k, v]) => comments.set(Number(k), String(v)),
   );
 
   perCaseSubtitles.clear();
-  Object.entries((preset.perCaseSubtitles as Record<string, string>) || {}).forEach(([k, v]) =>
-    perCaseSubtitles.set(k, String(v)),
+  Object.entries(
+    normalizeCaseRecord(preset.perCaseSubtitles as Record<string, string> | undefined),
+  ).forEach(([k, v]) => perCaseSubtitles.set(Number(k), String(v)),
   );
 
   customAlgorithms.clear();
-  Object.entries((preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>) || {})
-    .forEach(([k, v]) => customAlgorithms.set(k, v));
+  Object.entries(
+    normalizeCaseRecord(
+      preset.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }> | undefined,
+    ),
+  ).forEach(([k, v]) => customAlgorithms.set(Number(k), v));
 
   generalNotes = (preset.generalNotes as string) || generalNotes;
   presetData = { ...(presetData || {}), ...preset };
@@ -882,6 +939,7 @@ export function exportData(): void {
 export function importData(jsonStr: string): void {
   try {
     const state = JSON.parse(jsonStr);
+    const normalized = normalizeCaseState(state);
 
     if (state.customShapesForParityTracerLibrary) {
       localStorage.setItem(
@@ -901,18 +959,22 @@ export function importData(jsonStr: string): void {
     cachedParityAlgorithms.clear();
     algVariables.clear();
 
-    new Set<string>(state.learned || []).forEach((v) => learnedCases.add(v));
-    new Set<string>(state.learning || []).forEach((v) => learningCases.add(v));
-    new Set<string>(state.planned || []).forEach((v) => plannedCases.add(v));
-    Object.entries(state.comments || {}).forEach(([k, v]) => comments.set(k, String(v)));
-    Object.entries(state.plannedLevels || {}).forEach(([k, v]) => plannedLevels.set(k, Number(v)));
-    Object.entries(state.parityOrientations || {}).forEach(([k, v]) =>
-      parityOrientations.set(k, Number(v)),
+    normalizeCaseIds(normalized.learned).forEach((v) => learnedCases.add(v));
+    normalizeCaseIds(normalized.learning).forEach((v) => learningCases.add(v));
+    normalizeCaseIds(normalized.planned).forEach((v) => plannedCases.add(v));
+    Object.entries(normalized.comments as Record<string, unknown>).forEach(([k, v]) =>
+      comments.set(Number(k), String(v)),
+    );
+    Object.entries(normalized.plannedLevels as Record<string, unknown>).forEach(([k, v]) =>
+      plannedLevels.set(Number(k), Number(v)),
+    );
+    Object.entries(normalized.parityOrientations as Record<string, unknown>).forEach(([k, v]) =>
+      parityOrientations.set(Number(k), Number(v)),
     );
     showPaths = true;
 
     if (state.displayNames) {
-      mergeDisplayNames(state.displayNames);
+      mergeDisplayNames(normalized.displayNames as Record<string, string>);
     } else {
       displayNames = { ...defaultDisplayNames };
     }
@@ -925,12 +987,12 @@ export function importData(jsonStr: string): void {
         state.customShapesForParityTracerLibrary,
       );
     }
-    Object.entries(state.perCaseSubtitles || {}).forEach(([k, v]) =>
-      perCaseSubtitles.set(k, String(v)),
+    Object.entries(normalized.perCaseSubtitles as Record<string, unknown>).forEach(([k, v]) =>
+      perCaseSubtitles.set(Number(k), String(v)),
     );
     cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
-    Object.entries(state.customAlgorithms || {}).forEach(([k, v]) =>
-      customAlgorithms.set(k, v as { odd?: string[]; even?: string[] }),
+    Object.entries(normalized.customAlgorithms as Record<string, unknown>).forEach(([k, v]) =>
+      customAlgorithms.set(Number(k), v as { odd?: string[]; even?: string[] }),
     );
     generalNotes = state.generalNotes || '';
     Object.entries(state.algVariables || {}).forEach(([k, v]) =>
@@ -940,12 +1002,14 @@ export function importData(jsonStr: string): void {
     if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
     if (state.evilnessStringReturn !== undefined)
       evilnessStringReturn = Boolean(state.evilnessStringReturn);
-    if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap as Record<string, boolean>;
+    if (state.evilnessMap !== undefined) {
+      evilnessMap = normalized.evilnessMap as Record<string, boolean>;
+    }
 
     if (state.cachedParityAlgorithms) {
       cachedParityAlgorithms.clear();
-      Object.entries(state.cachedParityAlgorithms).forEach(([k, v]) =>
-        cachedParityAlgorithms.set(k, v as { odd: string[]; even: string[] }),
+      Object.entries(normalized.cachedParityAlgorithms as Record<string, unknown>).forEach(([k, v]) =>
+        cachedParityAlgorithms.set(Number(k), v as { odd: string[]; even: string[] }),
       );
     }
     if (state.lastParityCalculationSettings) {
@@ -962,12 +1026,14 @@ export function importData(jsonStr: string): void {
     if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
     if (state.evilnessStringReturn !== undefined)
       evilnessStringReturn = Boolean(state.evilnessStringReturn);
-    if (state.evilnessMap !== undefined) evilnessMap = state.evilnessMap as Record<string, boolean>;
+    if (state.evilnessMap !== undefined) {
+      evilnessMap = normalized.evilnessMap as Record<string, boolean>;
+    }
 
     if (typeof (window as unknown as { selectorImportHook?: (s: Record<string, unknown>) => void })
       .selectorImportHook === 'function') {
       (window as unknown as { selectorImportHook: (s: Record<string, unknown>) => void })
-        .selectorImportHook(state);
+        .selectorImportHook(normalized);
     }
 
     lastParityCalculationSettings = null;
@@ -1037,7 +1103,7 @@ export function updateProgress(): ProgressStats {
 
   const totalProbability = data.reduce((sum, item) => sum + item.probability, 0);
   const learnedProbability = data
-    .filter((item) => learnedCases.has(item.name))
+    .filter((item) => learnedCases.has(item.id))
     .reduce((sum, item) => sum + item.probability, 0);
 
   const p = Math.round((learnedProbability / totalProbability) * 100 * 2) / 2;
@@ -1058,34 +1124,36 @@ export function updateProgress(): ProgressStats {
 }
 
 // ── Learning-state mutations ────────────────────────────────────────────────
-export function toggleLearned(name: string, rightClick = false, notifyStore = true): void {
+export function toggleLearned(name: CaseRef, rightClick = false, notifyStore = true): void {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return;
   if (rightClick) {
-    if (learnedCases.has(name)) {
-      learnedCases.delete(name);
-      learningCases.add(name);
-      plannedCases.delete(name);
-    } else if (learningCases.has(name)) {
-      learningCases.delete(name);
-      plannedCases.add(name);
-      if (!plannedLevels.has(name)) plannedLevels.set(name, 4);
+    if (learnedCases.has(caseId)) {
+      learnedCases.delete(caseId);
+      learningCases.add(caseId);
+      plannedCases.delete(caseId);
+    } else if (learningCases.has(caseId)) {
+      learningCases.delete(caseId);
+      plannedCases.add(caseId);
+      if (!plannedLevels.has(caseId)) plannedLevels.set(caseId, 4);
     } else {
-      learnedCases.add(name);
-      learningCases.delete(name);
-      plannedCases.delete(name);
+      learnedCases.add(caseId);
+      learningCases.delete(caseId);
+      plannedCases.delete(caseId);
     }
   } else {
-    if (learnedCases.has(name)) {
-      learnedCases.delete(name);
-      learningCases.delete(name);
-      plannedCases.add(name);
-      if (!plannedLevels.has(name)) plannedLevels.set(name, 4);
-    } else if (learningCases.has(name)) {
-      learningCases.delete(name);
-      learnedCases.add(name);
-      plannedCases.delete(name);
+    if (learnedCases.has(caseId)) {
+      learnedCases.delete(caseId);
+      learningCases.delete(caseId);
+      plannedCases.add(caseId);
+      if (!plannedLevels.has(caseId)) plannedLevels.set(caseId, 4);
+    } else if (learningCases.has(caseId)) {
+      learningCases.delete(caseId);
+      learnedCases.add(caseId);
+      plannedCases.delete(caseId);
     } else {
-      learningCases.add(name);
-      plannedCases.delete(name);
+      learningCases.add(caseId);
+      plannedCases.delete(caseId);
     }
   }
   saveState();
@@ -1093,39 +1161,47 @@ export function toggleLearned(name: string, rightClick = false, notifyStore = tr
   if (notifyStore) notify();
 }
 
-export function adjustPriority(name: string, delta: number, notifyStore = true): number {
-  if (!plannedCases.has(name)) {
-    plannedCases.add(name);
-    learnedCases.delete(name);
-    learningCases.delete(name);
+export function adjustPriority(name: CaseRef, delta: number, notifyStore = true): number {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return 4;
+  if (!plannedCases.has(caseId)) {
+    plannedCases.add(caseId);
+    learnedCases.delete(caseId);
+    learningCases.delete(caseId);
   }
 
-  const currentLevel = plannedLevels.get(name) || 4;
+  const currentLevel = plannedLevels.get(caseId) || 4;
   let newLevel = currentLevel + delta;
   if (newLevel < 1) newLevel = 1;
   if (newLevel > 7) newLevel = 7;
 
-  plannedLevels.set(name, newLevel);
+  plannedLevels.set(caseId, newLevel);
   saveState();
   updateProgress();
   if (notifyStore) notify();
   return newLevel;
 }
 
-export function setPlannedLevel(name: string, level: number, notifyStore = true): void {
-  plannedLevels.set(name, level);
+export function setPlannedLevel(name: CaseRef, level: number, notifyStore = true): void {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return;
+  plannedLevels.set(caseId, level);
   saveState();
   updateProgress();
   if (notifyStore) notify();
 }
 
 // ── Display names & misc helpers ────────────────────────────────────────────
-export function getDisplayName(caseName: string): string {
-  return displayNames[caseName] || caseName;
+export function getDisplayName(caseName: CaseRef): string {
+  const caseId = getCaseId(caseName);
+  if (caseId !== undefined) return displayNames[caseId] || defaultDisplayNames[caseId] || getCaseKey(caseId) || String(caseId);
+  return String(caseName);
 }
 
-export function getDefaultDisplayName(caseName: string): string {
-  return defaultDisplayNames[caseName] || caseName;
+export function getDefaultDisplayName(caseName: CaseRef): string {
+  const caseId = getCaseId(caseName);
+  if (caseId !== undefined) return defaultDisplayNames[caseId] || getCaseKey(caseId) || String(caseId);
+  return String(caseName);
 }
 
 export function getShortDisplayName(fullName: string): string {
@@ -1150,9 +1226,10 @@ export function getShortDisplayName(fullName: string): string {
   return shortName;
 }
 
-export function getAliases(caseName: string): string[] {
+export function getAliases(caseName: CaseRef): string[] {
+  const caseKey = getCaseKey(caseName) || String(caseName);
   const displayName = getDisplayName(caseName);
-  const aliases = [caseName.toLowerCase(), displayName.toLowerCase()];
+  const aliases = [caseKey.toLowerCase(), displayName.toLowerCase()];
 
   if (displayName.includes('/')) {
     const parts = displayName.split('/');
@@ -1160,7 +1237,7 @@ export function getAliases(caseName: string): string[] {
   }
 
   aliases.push(displayName.replace(/-/g, '').toLowerCase());
-  aliases.push(caseName.replace(/-/g, '').toLowerCase());
+  aliases.push(caseKey.replace(/-/g, '').toLowerCase());
 
   const variations: Record<string, string[]> = {
     perpendicular: ['l-shape', 'l shape', 'arrow'],
@@ -1279,20 +1356,26 @@ export function setProfile(name: string, avatar: string): void {
   notify();
 }
 
-export function setComment(name: string, text: string): void {
-  comments.set(name, text);
+export function setComment(name: CaseRef, text: string): void {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return;
+  comments.set(caseId, text);
   saveState();
   notify();
 }
 
-export function setSubtitle(name: string, text: string): void {
-  perCaseSubtitles.set(name, text);
+export function setSubtitle(name: CaseRef, text: string): void {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return;
+  perCaseSubtitles.set(caseId, text);
   saveState();
   notify();
 }
 
-export function setCustomAlgorithms(name: string, value: { odd?: string[]; even?: string[] }): void {
-  customAlgorithms.set(name, value);
+export function setCustomAlgorithms(name: CaseRef, value: { odd?: string[]; even?: string[] }): void {
+  const caseId = getCaseId(name);
+  if (caseId === undefined) return;
+  customAlgorithms.set(caseId, value);
   saveState();
   notify();
 }
@@ -1351,8 +1434,9 @@ export function setNeedsReorder(value: boolean, notifyStore = true): void {
   if (notifyStore) notify();
 }
 
-export function getPlannedLevel(caseName: string): number {
-  return plannedLevels.get(caseName) || 4;
+export function getPlannedLevel(caseName: CaseRef): number {
+  const caseId = getCaseId(caseName);
+  return caseId === undefined ? 4 : plannedLevels.get(caseId) || 4;
 }
 
 /** Commit the draft only after its compressed reload cache is ready. */

@@ -27,7 +27,7 @@ describe('data integrity', () => {
   it('has exactly 90 cases, each with a shapeIndex entry and renderable shape SVGs', () => {
     expect(CASES.length).toBe(90);
     for (const c of CASES) {
-      expect(SHAPE_INDEX_MAP[c.name]).toBeDefined();
+      expect(SHAPE_INDEX_MAP[String(c.id)]).toBeDefined();
       expect(LAYER_SHAPE_BITS[c.top]).toBeDefined();
       expect(LAYER_SHAPE_BITS[c.bottom]).toBeDefined();
       const topSVG = renderLayerShapeSVG(c.top);
@@ -51,7 +51,7 @@ describe('data integrity', () => {
 
   it('findCase finds a case by exact name', () => {
     const first = CASES[0];
-    expect(findCase(first.name)?.name).toBe(first.name);
+    expect(findCase(first.id)?.id).toBe(first.id);
     expect(findCase('does-not-exist')).toBeUndefined();
   });
 });
@@ -80,8 +80,8 @@ describe('bottom-layer tracing starts', () => {
 
 describe('hex encoding round trips', () => {
   for (const c of CASES) {
-    it(`shapeIndexToHex <-> getShapeIndexFromHex round trip for ${c.name}`, () => {
-      const idx = shapeIndexForCase(c.name)!;
+    it(`shapeIndexToHex <-> getShapeIndexFromHex round trip for ${c.key}`, () => {
+      const idx = shapeIndexForCase(c.id)!;
       const hex = shapeIndexToHex(idx);
       const [tl, bl] = hex.split('|');
       expect(getShapeIndexFromHex(tl, bl)).toBe(idx);
@@ -91,14 +91,14 @@ describe('hex encoding round trips', () => {
 
 describe('case algorithms map to their recorded shapes', () => {
   for (const c of CASES) {
-    it(`odd alg of ${c.name} has shape ${c.name}`, () => {
-      const expected = shapeIndexForCase(c.name)!;
+    it(`odd alg of ${c.key} has shape ${c.key}`, () => {
+      const expected = shapeIndexForCase(c.id)!;
       for (const alg of c.odd) {
         expect(algToShapeIndex(alg).shapeIndex).toBe(expected);
       }
     });
-    it(`even alg of ${c.name} has shape ${c.name}`, () => {
-      const expected = shapeIndexForCase(c.name)!;
+    it(`even alg of ${c.key} has shape ${c.key}`, () => {
+      const expected = shapeIndexForCase(c.id)!;
       for (const alg of c.even) {
         expect(algToShapeIndex(alg).shapeIndex).toBe(expected);
       }
@@ -152,16 +152,16 @@ describe('solver', () => {
     'generates a scramble for every case shape and it stays in that shape',
     () => {
       for (const c of CASES) {
-        const idx = shapeIndexForCase(c.name)!;
+        const idx = shapeIndexForCase(c.id)!;
         const cubie = cubeFromShape(idx);
         const scramble = scrambleFromState(cubie);
-        expect(scramble, `no scramble for ${c.name}`).toBeTruthy();
+        expect(scramble, `no scramble for ${c.key}`).toBeTruthy();
         // Mirror legacy restoftheapp.js getCaseNameFromScramble: it inverts the
         // scramble and then algToShapeIndex inverts internally again, netting the
         // forward (scrambled) shape. A single algToShapeIndex(scramble) would
         // measure the inverse path's shape, which is undefined for solver scrambles.
         const hex = algToShapeIndex(invertScramble(scramble!));
-        expect(hex.shapeIndex, `${c.name} scramble: ${scramble}`).toBe(idx);
+        expect(hex.shapeIndex, `${c.key} scramble: ${scramble}`).toBe(idx);
       }
     },
     120000,

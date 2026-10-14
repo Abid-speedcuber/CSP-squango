@@ -1,6 +1,7 @@
 import { beforeAll, expect, test, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { getCaseId } from '../../data/cases';
 
 const store = new Map<string, string>();
 vi.stubGlobal('localStorage', {
@@ -60,7 +61,7 @@ test("Matt's_Preset applies cleanly after slimming and rebuilds the parity cache
   expect(state.getPlannedLevel('Kite/Square')).toBeGreaterThan(0);
   expect(state.getPlannedLevel('8/Star')).toBeGreaterThan(0);
   expect(state.cachedParityAlgorithms.size).toBe(90);
-  const kite = state.cachedParityAlgorithms.get('Kite/Square');
+  const kite = state.cachedParityAlgorithms.get(getCaseId('Kite/Square')!);
   expect(kite).toBeTruthy();
   expect((kite?.odd.length ?? 0) + (kite?.even.length ?? 0)).toBeGreaterThan(0);
 });
@@ -91,7 +92,7 @@ test("Matt's boot preset seeds parity cache for first paint", async () => {
 
   expect(state.cachedParityAlgorithms.size).toBe(90);
   expect(state.needsParityRecalculation()).toBe(false);
-  const left42 = state.cachedParityAlgorithms.get('Left 4-2/Paired Edges');
+  const left42 = state.cachedParityAlgorithms.get(getCaseId('Left 4-2/Paired Edges')!);
   expect(left42?.odd).toContain('(-2,-4)/(4,0)/(1,0)/(-3,-3)/');
   expect(left42?.even).toContain('(0,-2)/(-2,0)/(-1,-2)/(-3,-3)/');
 });
@@ -113,10 +114,13 @@ test("Matt's boot preset seeds the first four cards' homepage SVGs", async () =>
 
 test("Matt's boot preset includes comments for every card that can render before hydration", () => {
   const boot = loadPresetFile("Matt's_Preset.boot.json");
-  expect(Object.keys((boot.comments as Record<string, string>) || {})).toHaveLength(90);
-  expect(Object.keys((boot.perCaseSubtitles as Record<string, string>) || {})).toHaveLength(90);
-  expect(Object.keys((boot.displayNames as Record<string, string>) || {})).toHaveLength(90);
-  expect((boot.comments as Record<string, string>)['Scallop/Shield']).toBeTruthy();
+  const ids = new Set(state.data.map((item) => String(item.id)));
+  for (const field of ['comments', 'perCaseSubtitles', 'displayNames']) {
+    const keys = Object.keys((boot[field] as Record<string, unknown>) || {});
+    expect(keys).toHaveLength(90);
+    expect(keys.every((key) => ids.has(key))).toBe(true);
+  }
+  expect((boot.comments as Record<string, string>)[String(getCaseId('Scallop/Shield'))]).toBeTruthy();
 });
 
 test('Matt boot-visible algorithms are classified with evilness before render', async () => {
@@ -124,11 +128,11 @@ test('Matt boot-visible algorithms are classified with evilness before render', 
   await state.applyPreset("Matt's_Preset", true, true, true, true);
   state.cachedParityAlgorithms.clear();
 
-  const item = state.data.find((entry) => entry.name === 'Left 4-2/Paired Edges');
+  const item = state.data.find((entry) => entry.key === 'Left 4-2/Paired Edges');
   expect(item).toBeTruthy();
   state.calculateAndCacheParityForCases([item!]);
 
-  const classified = state.cachedParityAlgorithms.get('Left 4-2/Paired Edges');
+  const classified = state.cachedParityAlgorithms.get(item!.id);
   expect(classified?.odd).toContain('(-2,-4)/(4,0)/(1,0)/(-3,-3)/');
   expect(classified?.even).toContain('(0,-2)/(-2,0)/(-1,-2)/(-3,-3)/');
 });

@@ -4,6 +4,7 @@
  * and the algorithm-variables table).
  */
 import type { ShapeIndexEntry } from '../data/types';
+import { CASE_NAMES } from '../data/cases';
 import {
   algVariables,
   calculateAndCacheAllParity,
@@ -43,9 +44,9 @@ interface QuickEditState {
 
 interface AlgVarsSnapshot {
   displayNames: Record<string, string>;
-  perCaseSubtitles: Map<string, string>;
-  comments: Map<string, string>;
-  customAlgorithms: Map<string, { odd?: string[]; even?: string[] }>;
+  perCaseSubtitles: Map<number, string>;
+  comments: Map<number, string>;
+  customAlgorithms: Map<number, { odd?: string[]; even?: string[] }>;
 }
 
 let quickEditState: QuickEditState = {
@@ -85,11 +86,11 @@ export function expandForColorCheck(alg: string): string {
 
 // ── Row shells + lazy hydration ───────────────────────────────────────────────
 function generateGeneralTableRowsShell(): string {
-  const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+  const sortedData = [...data].sort((a, b) => getDisplayName(a.id).localeCompare(getDisplayName(b.id)));
   return sortedData
     .map(
       (item) =>
-        `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="general"><td colspan="${
+        `<tr data-case="${item.id}" class="qe-lazy-row" data-tab="general"><td colspan="${
           evilnessFactor ? 5 : 4
         }" style="height:41px;"></td></tr>`,
     )
@@ -97,29 +98,29 @@ function generateGeneralTableRowsShell(): string {
 }
 
 function generateAlgorithmsTableRowsShell(): string {
-  const sortedData = [...data].sort((a, b) => getDisplayName(a.name).localeCompare(getDisplayName(b.name)));
+  const sortedData = [...data].sort((a, b) => getDisplayName(a.id).localeCompare(getDisplayName(b.id)));
   return sortedData
-    .map((item) => `<tr data-case="${item.name}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`)
+    .map((item) => `<tr data-case="${item.id}" class="qe-lazy-row" data-tab="algorithms"><td colspan="7" style="height:41px;"></td></tr>`)
     .join('');
 }
 
 function hydrateGeneralRow(row: HTMLTableRowElement): void {
   const item = CSPData.getCase(row.dataset.case || '');
   if (!item) return;
-  const displayName = getDisplayName(item.name);
-  const subtitle = perCaseSubtitles.get(item.name) || '';
-  const note = comments.get(item.name) || '';
+  const displayName = getDisplayName(item.id);
+  const subtitle = perCaseSubtitles.get(item.id) || '';
+  const note = comments.get(item.id) || '';
   const formattedNote = sanitizeNoteHTML(note);
-  const isEvil = evilnessMap[item.name] === true;
+  const isEvil = evilnessMap[item.id] === true;
   row.classList.remove('qe-lazy-row');
   row.innerHTML = `
-        <td class="uneditable">${displayName}</td>
+        <td class="uneditable">${CASE_NAMES[item.id - 1]}</td>
         <td class="editable" contenteditable="true" data-field="displayName" data-original="${displayName}">${displayName}</td>
         <td class="editable" contenteditable="true" data-field="subtitle" data-original="${subtitle}">${subtitle}</td>
         <td class="editable notes-cell" contenteditable="true" data-field="notes" data-original="${note.replace(/"/g, '&quot;')}" data-raw-html="${note.replace(/"/g, '&quot;')}">${formattedNote}</td>
         ${
           evilnessFactor
-            ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.name}" ${
+            ? `<td style="text-align:center;vertical-align:middle;"><label style="position:relative;display:inline-block;width:36px;height:20px;"><input type="checkbox" class="evil-qe-toggle" data-case="${item.id}" ${
                 isEvil ? 'checked' : ''
               } style="opacity:0;width:0;height:0;" onchange="evilnessMap[this.dataset.case]=this.checked;saveState();const k=this.nextElementSibling;k.style.background=this.checked?'var(--parity-invalid,#c00)':'var(--surface-border)';k.querySelector('span').style.left=this.checked?'18px':'2px';"><span style="position:absolute;top:0;left:0;right:0;bottom:0;background:${
                 isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'
@@ -136,14 +137,13 @@ function hydrateAlgorithmsRow(row: HTMLTableRowElement): void {
   const item = CSPData.getCase(row.dataset.case || '');
   if (!item) return;
   const visibleCols = quickEditState.visibleAlgColumns || 6;
-  const displayName = getDisplayName(item.name);
-  const customAlgs = customAlgorithms.get(item.name);
+  const customAlgs = customAlgorithms.get(item.id);
   const allAlgs: string[] = customAlgs ? [...(customAlgs.odd || []), ...(customAlgs.even || [])] : [...(item.odd || []), ...(item.even || [])];
   const totalCols = Math.max(visibleCols, 6);
   while (allAlgs.length < totalCols) allAlgs.push('');
   row.classList.remove('qe-lazy-row');
   row.innerHTML = `
-        <td class="uneditable display-name-col">${displayName}</td>
+        <td class="uneditable display-name-col">${CASE_NAMES[item.id - 1]}</td>
         ${allAlgs
           .slice(0, totalCols)
           .map(
@@ -974,7 +974,7 @@ function replaceDisplayNames(next: Record<string, string>): void {
   Object.assign(displayNames, next);
 }
 
-function replaceMap<T>(target: Map<string, T>, next: Map<string, T>): void {
+function replaceMap<T>(target: Map<number, T>, next: Map<number, T>): void {
   target.clear();
   next.forEach((v, k) => target.set(k, v));
 }
@@ -996,6 +996,7 @@ function saveQuickEditChanges(): void {
   generalRows.forEach((row) => {
     const caseName = (row as HTMLElement).dataset.case;
     if (!caseName) return;
+    const caseId = Number(caseName);
     const displayNameCell = row.querySelector('[data-field="displayName"]') as HTMLElement;
     const subtitleCell = row.querySelector('[data-field="subtitle"]') as HTMLElement;
     const notesCell = row.querySelector('[data-field="notes"]') as HTMLElement;
@@ -1005,19 +1006,19 @@ function saveQuickEditChanges(): void {
     const notes = notesCell.dataset.rawHtml || (notesCell.textContent || '').trim();
 
     if (displayName) {
-      displayNames[caseName] = displayName;
+      displayNames[caseId] = displayName;
     }
 
     if (subtitle) {
-      perCaseSubtitles.set(caseName, subtitle);
+      perCaseSubtitles.set(caseId, subtitle);
     } else {
-      perCaseSubtitles.delete(caseName);
+      perCaseSubtitles.delete(caseId);
     }
 
     if (notes) {
-      comments.set(caseName, notes);
+      comments.set(caseId, notes);
     } else {
-      comments.delete(caseName);
+      comments.delete(caseId);
     }
 
     displayNameCell.dataset.original = displayName;
@@ -1030,6 +1031,7 @@ function saveQuickEditChanges(): void {
   algoRows.forEach((row) => {
     const caseName = (row as HTMLElement).dataset.case;
     if (!caseName) return;
+    const caseId = Number(caseName);
     const algCells = row.querySelectorAll('.alg-cell');
 
     const algs = Array.from(algCells)
@@ -1037,12 +1039,12 @@ function saveQuickEditChanges(): void {
       .filter((alg) => alg);
 
     if (algs.length > 0) {
-      customAlgorithms.set(caseName, {
+      customAlgorithms.set(caseId, {
         odd: [],
         even: algs,
       });
     } else {
-      customAlgorithms.delete(caseName);
+      customAlgorithms.delete(caseId);
     }
 
     algCells.forEach((cell) => {
