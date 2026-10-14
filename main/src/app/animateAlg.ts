@@ -49,7 +49,10 @@ function parseAlgorithm(algorithm: string): ViewerToken[] {
     } else if (raw.toLowerCase() === 'y2' || raw.toLowerCase() === 'z2') {
       tokens.push({ type: 'rotation', axis: raw.toLowerCase() as 'y2' | 'z2', text: raw });
     } else {
-      tokens.push({ type: 'turn', top: Number(match[1]), bottom: Number(match[2]), text: raw });
+      // The viewer's layer axes map (top, bottom) turns to (bottom, -top).
+      // Convert notation into the viewer's local axes so the visible move
+      // matches the requested top and bottom turns.
+      tokens.push({ type: 'turn', top: -Number(match[2]), bottom: Number(match[1]), text: raw });
     }
   }
   return tokens;
@@ -170,7 +173,7 @@ class Square1ThreeViewer {
   private readonly lineGeometry = new THREE.BufferGeometry();
   private readonly mesh: THREE.Mesh;
   private readonly lineMesh: THREE.LineSegments;
-  private readonly initialCameraVector = new THREE.Vector3(320, 260, 420);
+  private readonly initialCameraVector = new THREE.Vector3(300, 400, -300);
   private readonly initialCameraDistance = this.initialCameraVector.length();
   private dragging = false;
   private lastMouse = { x: 0, y: 0 };
@@ -188,10 +191,13 @@ class Square1ThreeViewer {
     this.camera.position.set(0, 0, this.initialCameraDistance);
     this.rig.add(this.camera);
     this.scene.add(this.rig);
-    this.rig.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 0, 1),
-      this.initialCameraVector.clone().normalize(),
+    const cameraOrientation = new THREE.Matrix4();
+    cameraOrientation.lookAt(
+      this.initialCameraVector,
+      new THREE.Vector3(),
+      new THREE.Vector3(0, 0, -1),
     );
+    this.rig.quaternion.setFromRotationMatrix(cameraOrientation);
 
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.domElement.className = 'sq1-three-canvas';
@@ -404,7 +410,7 @@ class Square1ThreeViewer {
   private commit(token: ViewerToken): void {
     if (token.type === 'turn') {
       this.up = turnLayer(this.up, token.top);
-      this.down = turnLayer(this.down, token.bottom);
+      this.down = turnLayer(this.down, -token.bottom);
     } else if (token.type === 'slash') {
       const upSection = this.up.slice(0, 6);
       const downSection = this.down.slice(0, 6);
@@ -446,7 +452,7 @@ class Square1ThreeViewer {
       this.drawUpLayer();
       this.im.pop();
       this.im.push();
-      this.im.rotateZ(ease(0, -token.bottom * Math.PI / 6, this.progress));
+      this.im.rotateZ(ease(0, token.bottom * Math.PI / 6, this.progress));
       this.drawDownLayer();
       this.im.pop();
     } else if (token?.type === 'slash') {
