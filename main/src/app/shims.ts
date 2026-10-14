@@ -502,7 +502,7 @@ export function installWindowShims(): void {
   w.closeGeneralNotesInfoModal = closeGeneralNotesInfoModal;
 
   w.openUnifiedSettings = (tab: string) => {
-    const valid = ['homescreen', 'parity', 'trainer', 'animate'];
-    openUnifiedSettings((valid.includes(tab) ? tab : 'homescreen') as 'homescreen' | 'parity' | 'trainer' | 'animate');
+    const valid = ['homescreen', 'parity', 'trainer'];
+    openUnifiedSettings((valid.includes(tab) ? tab : 'homescreen') as 'homescreen' | 'parity' | 'trainer');
   };
 }
