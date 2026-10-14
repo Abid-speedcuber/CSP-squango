@@ -1537,9 +1537,14 @@ function quizGetParityFromHex(hexCode: string): 'Odd' | 'Even' | 'Error' | null 
 
 function readSelectedCaseIds(key: string): number[] | null {
   try {
-    const value: unknown = JSON.parse(localStorage.getItem(key) || 'null');
+    const raw = localStorage.getItem(key);
+    const value: unknown = JSON.parse(raw || 'null');
     if (!Array.isArray(value)) return null;
-    return value.map(getCaseId).filter((id): id is number => id !== undefined);
+    const caseIds = value.map(getCaseId).filter((id): id is number => id !== undefined);
+    if (raw !== JSON.stringify(caseIds)) {
+      localStorage.setItem(key, JSON.stringify(caseIds));
+    }
+    return caseIds;
   } catch {
     return null;
   }

@@ -564,13 +564,13 @@ function applyStoredState(state: StoredProgressState): void {
   normalizeCaseIds(normalized.learned).forEach((v) => learnedCases.add(v));
   normalizeCaseIds(normalized.learning).forEach((v) => learningCases.add(v));
   normalizeCaseIds(normalized.planned).forEach((v) => plannedCases.add(v));
-  Object.entries(normalized.comments as Record<string, unknown>).forEach(([k, v]) =>
+  Object.entries((normalized.comments as Record<string, unknown>) || {}).forEach(([k, v]) =>
     comments.set(Number(k), String(v)),
   );
-  Object.entries(normalized.plannedLevels as Record<string, unknown>).forEach(([k, v]) =>
+  Object.entries((normalized.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
     plannedLevels.set(Number(k), Number(v)),
   );
-  Object.entries(normalized.parityOrientations as Record<string, unknown>).forEach(([k, v]) =>
+  Object.entries((normalized.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
     parityOrientations.set(Number(k), Number(v)),
   );
   showPaths = true;
@@ -585,7 +585,7 @@ function applyStoredState(state: StoredProgressState): void {
       String(state.customShapesForParityTracerLibrary),
     );
   }
-  Object.entries(normalized.perCaseSubtitles as Record<string, unknown>).forEach(([k, v]) =>
+  Object.entries((normalized.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
     perCaseSubtitles.set(Number(k), String(v)),
   );
   cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
@@ -962,13 +962,13 @@ export function importData(jsonStr: string): void {
     normalizeCaseIds(normalized.learned).forEach((v) => learnedCases.add(v));
     normalizeCaseIds(normalized.learning).forEach((v) => learningCases.add(v));
     normalizeCaseIds(normalized.planned).forEach((v) => plannedCases.add(v));
-    Object.entries(normalized.comments as Record<string, unknown>).forEach(([k, v]) =>
+    Object.entries((normalized.comments as Record<string, unknown>) || {}).forEach(([k, v]) =>
       comments.set(Number(k), String(v)),
     );
-    Object.entries(normalized.plannedLevels as Record<string, unknown>).forEach(([k, v]) =>
+    Object.entries((normalized.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
       plannedLevels.set(Number(k), Number(v)),
     );
-    Object.entries(normalized.parityOrientations as Record<string, unknown>).forEach(([k, v]) =>
+    Object.entries((normalized.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
       parityOrientations.set(Number(k), Number(v)),
     );
     showPaths = true;
@@ -987,11 +987,11 @@ export function importData(jsonStr: string): void {
         state.customShapesForParityTracerLibrary,
       );
     }
-    Object.entries(normalized.perCaseSubtitles as Record<string, unknown>).forEach(([k, v]) =>
+    Object.entries((normalized.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
       perCaseSubtitles.set(Number(k), String(v)),
     );
     cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
-    Object.entries(normalized.customAlgorithms as Record<string, unknown>).forEach(([k, v]) =>
+    Object.entries((normalized.customAlgorithms as Record<string, unknown>) || {}).forEach(([k, v]) =>
       customAlgorithms.set(Number(k), v as { odd?: string[]; even?: string[] }),
     );
     generalNotes = state.generalNotes || '';

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
-import { CASES } from '../../data/cases';
+import { CASES, getCaseId } from '../../data/cases';
 import { applyScramble, createSolvedState, invertScramble } from '../cube';
 import { generateScrambleFromHex, parseHexFormat } from '../scramble';
 import {
@@ -104,7 +104,8 @@ describe('shapeTrace', () => {
   });
 
   it('every step names a known shape', () => {
-    const scr = CASES.find((c) => c.key === 'Left 4-2/Paired Edges')!.odd[0];
+    const caseId = getCaseId('Left 4-2/Paired Edges');
+    const scr = CASES.find((c) => c.id === caseId)!.odd[0];
     const steps = traceSolutionToSolutionShapePath(scr).split(' → ');
     expect(steps.length).toBeGreaterThan(1);
     const known = new Set(

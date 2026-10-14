@@ -1,6 +1,6 @@
 import { test, expect } from 'vitest';
 import { CSPData } from '../dataStore';
-import { CASES, CASE_NAMES } from '../../data/cases';
+import { CASES, CASE_NAMES, getCaseId } from '../../data/cases';
 
 test('data store exposes all 90 cases', () => {
   expect(CSPData.cases.length).toBe(90);
@@ -17,8 +17,9 @@ test('case IDs are stable numeric identities from 1 through 90', () => {
 
 test('original case names are stored in numeric-ID order', () => {
   expect(CASE_NAMES).toHaveLength(90);
-  expect(CASE_NAMES).toEqual(
-    Array.from({ length: 90 }, (_, index) => CASES.find((item) => item.id === index + 1)!.key),
+  expect(CASE_NAMES[64]).toBe('Left 4-2/Paired Edges');
+  expect(CASE_NAMES.map((name) => getCaseId(name))).toEqual(
+    Array.from({ length: 90 }, (_, index) => index + 1),
   );
 });
 

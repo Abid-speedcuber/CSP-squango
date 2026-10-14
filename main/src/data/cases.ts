@@ -3,13 +3,32 @@ import rawCases from './cases.json';
 
 export const CASES: AlgCase[] = rawCases as AlgCase[];
 
-const caseIdsByKey = new Map(CASES.map((item) => [item.key, item.id]));
+const legacyEdgeNames: Record<string, string> = {
+  Pair: 'Paired Edges',
+  Line: 'Parallel Edges',
+  L: 'Perpendicular Edges',
+};
+
+function getLegacyCaseName(key: string): string {
+  const separator = key.lastIndexOf('/');
+  const suffix = key.slice(separator + 1);
+  return separator === -1 || !legacyEdgeNames[suffix]
+    ? key
+    : `${key.slice(0, separator + 1)}${legacyEdgeNames[suffix]}`;
+}
+
+const caseIdsByKey = new Map(
+  CASES.flatMap((item) => [
+    [item.key, item.id] as const,
+    [getLegacyCaseName(item.key), item.id] as const,
+  ]),
+);
 const casesById = new Map(CASES.map((item) => [item.id, item]));
 
 /** Original case names in stable numeric-ID order, for legacy-name UI surfaces. */
 export const CASE_NAMES = [...CASES]
   .sort((a, b) => a.id - b.id)
-  .map((item) => item.key);
+  .map((item) => getLegacyCaseName(item.key));
 
 /** Resolve both numeric IDs and legacy technical keys at import/UI boundaries. */
 export function getCaseId(ref: unknown): number | undefined {

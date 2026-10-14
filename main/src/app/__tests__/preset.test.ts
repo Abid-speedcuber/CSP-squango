@@ -1,7 +1,7 @@
 import { beforeAll, expect, test, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getCaseId } from '../../data/cases';
+import { CASE_NAMES, getCaseId } from '../../data/cases';
 
 const store = new Map<string, string>();
 vi.stubGlobal('localStorage', {
@@ -68,14 +68,25 @@ test("Matt's_Preset applies cleanly after slimming and rebuilds the parity cache
 
 test('legacy-format presets with redundant fields still load (backward compatible)', async () => {
   const slim = loadPresetFile("Matt's_Preset.json");
+  const legacyNames = Object.fromEntries(
+    state.data.map((item) => [String(item.id), CASE_NAMES[item.id - 1]]),
+  );
+  const toLegacyCaseRecord = (record: Record<string, unknown>) =>
+    Object.fromEntries(Object.entries(record).map(([id, value]) => [legacyNames[id], value]));
   presetPayload = {
     ...slim,
     learned: ['Kite/Square'],
     learning: [],
-    planned: Object.keys(slim.displayNames ?? {}),
-    plannedLevels: Object.fromEntries(Object.keys(slim.displayNames ?? {}).map((k) => [k, 4])),
+    planned: Object.keys(slim.displayNames ?? {}).map((id) => legacyNames[id]),
+    displayNames: toLegacyCaseRecord(slim.displayNames as Record<string, unknown>),
+    plannedLevels: toLegacyCaseRecord(
+      Object.fromEntries(Object.keys(slim.displayNames ?? {}).map((k) => [k, 4])),
+    ),
     cachedParityAlgorithms: Object.fromEntries(
-      Object.keys(slim.displayNames ?? {}).map((k) => [k, { odd: [], even: ['Done!'] }]),
+      Object.keys(slim.displayNames ?? {}).map((k) => [
+        legacyNames[k],
+        { odd: [], even: ['Done!'] },
+      ]),
     ),
     lastParityCalculationSettings: { colorScheme: 'legacy' },
   };
@@ -84,6 +95,28 @@ test('legacy-format presets with redundant fields still load (backward compatibl
   expect(state.currentPreset).toBe("Matt's_Preset");
   expect(state.getPlannedLevel('Kite/Square')).toBeGreaterThan(0);
   expect(state.cachedParityAlgorithms.size).toBe(90);
+});
+
+test('legacy imports normalize case names and rewrite saved progress with numeric IDs', () => {
+  vi.stubGlobal('window', {});
+  state.importData(
+    JSON.stringify({
+      learned: ['Kite/Square'],
+      learning: [],
+      planned: ['8/Star'],
+      comments: { 'Kite/Square': 'legacy note' },
+      plannedLevels: { '8/Star': 2 },
+      displayNames: { 'Kite/Square': 'My kite label' },
+    }),
+  );
+
+  const saved = JSON.parse(store.get('sq1-parity-progress') || '{}');
+  expect(state.learnedCases.has(getCaseId('Kite/Square')!)).toBe(true);
+  expect(state.comments.get(getCaseId('Kite/Square')!)).toBe('legacy note');
+  expect(saved.learned).toContain(getCaseId('Kite/Square'));
+  expect(saved.learned).not.toContain('Kite/Square');
+  expect(saved.plannedLevels[String(getCaseId('8/Star'))]).toBe(2);
+  expect(saved.displayNames[String(getCaseId('Kite/Square'))]).toBe('My kite label');
 });
 
 test("Matt's boot preset seeds parity cache for first paint", async () => {
@@ -128,7 +161,7 @@ test('Matt boot-visible algorithms are classified with evilness before render', 
   await state.applyPreset("Matt's_Preset", true, true, true, true);
   state.cachedParityAlgorithms.clear();
 
-  const item = state.data.find((entry) => entry.key === 'Left 4-2/Paired Edges');
+  const item = state.data.find((entry) => entry.id === getCaseId('Left 4-2/Paired Edges'));
   expect(item).toBeTruthy();
   state.calculateAndCacheParityForCases([item!]);
 
