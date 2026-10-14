@@ -144,12 +144,12 @@ export function renderCard(item: AlgCase): string {
             </div>
             <div class="card-body">
                 <div class="algo-section">
-                    <span class="algo-label">Odd:</span>
-                    ${oddAlgoDisplay}
-                </div>
-                <div class="algo-section">
                     <span class="algo-label">Even:</span>
                     ${evenAlgoDisplay}
+                </div>
+                <div class="algo-section">
+                    <span class="algo-label">Odd:</span>
+                    ${oddAlgoDisplay}
                 </div>
                 ${comment ? `<div style="font-size: 0.65rem; color: var(--text-secondary); margin-top: 8px; white-space: pre-wrap;">${sanitizeNoteHTML(comment)}</div>` : ''}
             </div>
