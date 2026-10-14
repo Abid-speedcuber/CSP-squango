@@ -199,9 +199,9 @@ function createTrainingModal(): HTMLElement {
                         <polyline points="15 18 9 12 15 6"></polyline>
                     </svg>
                 </button>
-                <button class="training-modal-refresh" id="trainingRefreshBtn" title="Regenerate scramble">
+                <button class="training-modal-refresh" id="trainingNextBtn" title="Next scramble">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                        <polyline points="9 6 15 12 9 18"></polyline>
                     </svg>
                 </button>
                 <button class="training-modal-refresh" id="trainingSettingsBtn" title="Training settings">
@@ -229,7 +229,7 @@ function createTrainingModal(): HTMLElement {
 
   document.body.appendChild(modal);
 
-  document.getElementById('trainingRefreshBtn')!.addEventListener('click', (e) => {
+  document.getElementById('trainingNextBtn')!.addEventListener('click', (e) => {
     e.stopPropagation();
     nextScrambleManual();
   });
@@ -404,18 +404,19 @@ function displayNextScramble(): void {
   const sub = document.getElementById('multiCaseSub');
   if (sub) sub.style.display = multiCaseMode ? 'block' : 'none';
 
+  if (currentHistoryIndex < scrambleHistory.length - 1) {
+    currentHistoryIndex++;
+    displayScrambleData(scrambleHistory[currentHistoryIndex]);
+    applyPrevScrambleBar();
+    return;
+  }
+
   if (preGeneratedScrambles.length === 0) return;
 
   const scrambleData = preGeneratedScrambles.shift();
 
   if (scrambleData) {
-    currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
-    const scrambleEl = document.getElementById('trainingScramble')!;
-    scrambleEl.innerHTML = scrambleData.text;
-    scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
-    const imgEl = document.getElementById('trainingScrambleImage')!;
-    imgEl.innerHTML = trainingHideScrambleImage ? '' : scrambleData.image;
-    applyHideScrambleImage();
+    displayScrambleData(scrambleData);
 
     scrambleHistory.push(scrambleData);
     currentHistoryIndex = scrambleHistory.length - 1;
@@ -431,6 +432,16 @@ function displayNextScramble(): void {
   }, 0);
 
   applyPrevScrambleBar();
+}
+
+function displayScrambleData(scrambleData: ScrambleData): void {
+  currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
+  const scrambleEl = document.getElementById('trainingScramble')!;
+  scrambleEl.innerHTML = scrambleData.text;
+  scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
+  const imgEl = document.getElementById('trainingScrambleImage')!;
+  imgEl.innerHTML = trainingHideScrambleImage ? '' : scrambleData.image;
+  applyHideScrambleImage();
 }
 
 function previousScramble(): void {
@@ -1461,7 +1472,7 @@ function openTrainingInfoModal(): void {
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">2</div>
-                        <div class="training-info-text">Use <b>< button</b> or keyboard <b>left arrow</b> for previous scramble, use the 🔄 <b>button</b> or keyboard <b>right key</b> to regenerate scramble.</div>
+                        <div class="training-info-text">Use the <b>&lt; / &gt;</b> buttons or <b>← / →</b> keys to navigate scrambles; moving past the latest generates a new one.</div>
                     </div>
                     <div class="training-info-item">
                         <div class="training-info-number">3</div>
