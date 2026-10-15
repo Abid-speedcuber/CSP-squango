@@ -1083,6 +1083,10 @@ body.modal-open .floating-buttons-container {
     overflow-y: auto;
 }
 
+#generalNotesModal .modal-content {
+    background-color: var(--background);
+}
+
 #svgEditorModal .modal-content {
     max-width: 100vw !important;
     width: 100vw !important;
