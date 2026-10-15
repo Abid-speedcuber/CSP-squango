@@ -13,7 +13,9 @@ let closeModalStack: CloseEntry[] = [];
 let sqgModalPopstateClosing = false;
 let sqgModalSkipPopstateCount = 0;
 let modalCloseInProgress = false;
-let backdropPointerDown: { entry: CloseEntry; overlay: HTMLElement; pointerId: number } | null = null;
+let backdropPointerDown:
+  | { entry: CloseEntry; overlay: HTMLElement; pointerId: number; released: boolean }
+  | null = null;
 
 export function pushModalState(modalId: string, closeFn: () => void, ...args: unknown[]): void {
   if (typeof closeFn !== 'function') return;
@@ -132,15 +134,26 @@ export function installModalStackGlobalListeners(): void {
     const entry = closeModalStack[closeModalStack.length - 1];
     const overlay = entry ? document.getElementById(entry.modalId) : null;
     if (overlay && e.target === overlay) {
-      backdropPointerDown = { entry, overlay, pointerId: e.pointerId };
+      backdropPointerDown = { entry, overlay, pointerId: e.pointerId, released: false };
     }
   });
 
   document.addEventListener('pointerup', (e) => {
     const pointerDown = backdropPointerDown;
+    if (!pointerDown) return;
+    if (pointerDown.pointerId === e.pointerId && e.target === pointerDown.overlay) {
+      pointerDown.released = true;
+    } else {
+      backdropPointerDown = null;
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    const pointerDown = backdropPointerDown;
     backdropPointerDown = null;
-    if (!pointerDown || pointerDown.pointerId !== e.pointerId || e.target !== pointerDown.overlay) return;
+    if (!pointerDown || !pointerDown.released || e.target !== pointerDown.overlay) return;
     if (closeModalStack[closeModalStack.length - 1] === pointerDown.entry) {
+      e.stopPropagation();
       popCloseModalStack();
     }
   });
@@ -156,10 +169,12 @@ export function attachOverlayClose(overlay: HTMLElement, closeFn: (e: Event) => 
   overlay.addEventListener('mousedown', (e) => {
     downOnSelf = e.target === overlay;
   });
-  overlay.addEventListener('mouseup', (e) => {
+  overlay.addEventListener('click', (e) => {
     const isOutsideClick = downOnSelf && e.target === overlay;
     downOnSelf = false;
-    if (isOutsideClick) closeFn(e);
+    if (!isOutsideClick) return;
+    e.stopPropagation();
+    closeFn(e);
   });
 }
 

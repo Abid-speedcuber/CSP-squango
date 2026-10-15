@@ -33,7 +33,7 @@ import { processScramble } from '../lib/colorizer';
 import { shapeIndexToHex } from '../lib/cube';
 import { visualizeFromScramble, visualizeShapes } from '../lib/drawScramble';
 import { getColorName, getParityText } from '../lib/parityAnalyzer';
-import { pushModalState, closeModalWithHistory, getTopModalId } from './modal';
+import { pushModalState, closeModalWithHistory, getTopModalId, hasOpenModal } from './modal';
 import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
 import { renderCard } from './cardHTML';
@@ -68,12 +68,22 @@ let spacePressed = false;
 let shiftKeyTimerWasRunning = false;
 let shiftShortcutTriggered = false;
 let resetDismissedTooltipOnPointerMove: ((event: PointerEvent) => void) | null = null;
+let shapeIndexRenderVersion = 0;
+let shapeIndexRenderFrame: number | null = null;
 
 interface ScrambleData {
   text: string;
   image: string;
   caseName?: number;
 }
+
+interface ShapeIndexRenderEntry {
+  index: number;
+  type: 'org' | 'mir';
+  button: HTMLButtonElement;
+}
+
+const SHAPE_INDEX_WRAPPER_PADDING = 16;
 
 // Live-setting mirrors (bridged to window so React settings can mutate them).
 let trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
@@ -1092,6 +1102,10 @@ function openShapeIndexSelector(): void {
   const shapeIndexItem = CSPData.getShapeEntry(currentTrainingCase);
   if (!shapeIndexItem) return;
 
+  if (shapeIndexRenderFrame !== null) cancelAnimationFrame(shapeIndexRenderFrame);
+  shapeIndexRenderFrame = null;
+  const renderVersion = ++shapeIndexRenderVersion;
+
   pushModalState('shapeIndexSelectorModal', closeShapeIndexSelector);
 
   document.body.classList.add('modal-open');
@@ -1120,55 +1134,27 @@ function openShapeIndexSelector(): void {
   const selectorGridStyle =
     'display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;';
 
+  selectorModal.style.visibility = 'hidden';
   selectorModal.classList.add('active');
-  const svgSize = getShapeIndexSvgSize('orgToggles', selectorGridStyle);
-  const orgShapes = (shapeIndexItem.org || [])
-    .map((idx) => {
-      const hexCode = shapeIndexToHex(idx);
-      const shapeHTML = visualizeShapes(
-        hexCode,
-        svgSize,
-        '#e7e7e7ff',
-        '#FFFFFF',
-        2,
-        TRAINING_SCRAMBLE_RING_DISTANCE,
-        '16px',
-      );
-      return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
+  const sizing = getShapeIndexSvgSize(selectorGridStyle);
+  const gridStyle = `${selectorGridStyle} grid-auto-rows: ${sizing.buttonHeight}px;`;
+  const orgIndices = shapeIndexItem.org || [];
+  const mirIndices = shapeIndexItem.mir || [];
+  const renderEntries = (indices: number[], type: 'org' | 'mir') =>
+    indices
+      .map((idx) => {
+        const active = currentSelection.includes(idx);
+        return `
+            <button class="shape-index-toggle ${active ? 'active' : ''}"
                     data-index="${idx}"
-                    data-type="org"
+                    data-type="${type}"
                     onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                ${shapeHTML}
+                    style="background: ${active ? 'var(--surface-border)' : 'var(--surface)'};">
+                <span class="shape-index-loading" aria-hidden="true"></span>
             </button>
         `;
-    })
-    .join('');
-
-  const mirShapes = (shapeIndexItem.mir || [])
-    .map((idx) => {
-      const hexCode = shapeIndexToHex(idx);
-      const shapeHTML = visualizeShapes(
-        hexCode,
-        svgSize,
-        '#e7e7e7ff',
-        '#FFFFFF',
-        2,
-        TRAINING_SCRAMBLE_RING_DISTANCE,
-        '16px',
-      );
-      return `
-            <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
-                    data-index="${idx}"
-                    data-type="mir"
-                    onclick="toggleShapeIndex(${idx})"
-                    style="padding: 8px; background: ${currentSelection.includes(idx) ? 'var(--surface-border)' : 'var(--surface)'}; border: 2px solid var(--border-color); border-radius: 8px; cursor: pointer; transition: all 0.2s;">
-                ${shapeHTML}
-            </button>
-        `;
-    })
-    .join('');
+      })
+      .join('');
 
   body.innerHTML = `
         <div class="shape-index-section">
@@ -1179,8 +1165,8 @@ function openShapeIndexSelector(): void {
                     <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="orgToggles" style="${selectorGridStyle}">
-                ${orgShapes}
+            <div class="shape-index-toggles" id="orgToggles" style="${gridStyle}">
+                ${renderEntries(orgIndices, 'org')}
             </div>
         </div>
         <div class="shape-index-section" style="margin-top: 20px;">
@@ -1191,21 +1177,71 @@ function openShapeIndexSelector(): void {
                     <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="mirToggles" style="${selectorGridStyle}">
-                ${mirShapes}
+            <div class="shape-index-toggles" id="mirToggles" style="${gridStyle}">
+                ${renderEntries(mirIndices, 'mir')}
             </div>
         </div>
     `;
 
+  const content = selectorModal.querySelector<HTMLElement>('.shape-index-selector-content')!;
+  const header = selectorModal.querySelector<HTMLElement>('.shape-index-selector-header')!;
+  content.style.height = '';
+  content.style.height = `${Math.max(
+    window.innerHeight * 0.2,
+    Math.min(body.scrollHeight + header.offsetHeight, window.innerHeight * 0.8),
+  )}px`;
+
+  const orgButtons = Array.from(
+    body.querySelectorAll<HTMLButtonElement>('#orgToggles .shape-index-toggle'),
+  );
+  const mirButtons = Array.from(
+    body.querySelectorAll<HTMLButtonElement>('#mirToggles .shape-index-toggle'),
+  );
+  const entries: ShapeIndexRenderEntry[] = [
+    ...orgIndices.map((index, i) => ({ index, type: 'org' as const, button: orgButtons[i] })),
+    ...mirIndices.map((index, i) => ({ index, type: 'mir' as const, button: mirButtons[i] })),
+  ];
+
+  const orgGrid = document.getElementById('orgToggles')!;
+  const orgGridRect = orgGrid.getBoundingClientRect();
+  const bodyRect = body.getBoundingClientRect();
+  const bodyStyle = getComputedStyle(body);
+  const paddingTop = parseFloat(bodyStyle.paddingTop);
+  const paddingBottom = parseFloat(bodyStyle.paddingBottom);
+  const rowGap = parseFloat(getComputedStyle(orgGrid).rowGap);
+  const visibleGridHeight = Math.max(
+    sizing.buttonHeight,
+    body.clientHeight - paddingTop - paddingBottom - (orgGridRect.top - bodyRect.top - paddingTop),
+  );
+  const visibleRows = Math.max(
+    1,
+    Math.ceil((visibleGridHeight + rowGap) / (sizing.buttonHeight + rowGap)),
+  );
+  const firstScreenCount = Math.min(
+    entries.length,
+    Math.max(sizing.columns, visibleRows * sizing.columns),
+    sizing.columns,
+  );
+
+  for (let i = 0; i < firstScreenCount; i++) {
+    renderShapeIndexEntry(entries[i], sizing.svgSize);
+  }
+  selectorModal.style.visibility = '';
+  body.scrollTop = 0;
+  renderRemainingShapeIndexEntries(entries, firstScreenCount, sizing.svgSize, renderVersion);
 }
 
-function getShapeIndexSvgSize(gridId: string, gridStyle: string): number {
+function getShapeIndexSvgSize(gridStyle: string): {
+  svgSize: number;
+  buttonHeight: number;
+  columns: number;
+} {
   const body = document.getElementById('shapeIndexSelectorBody');
-  if (!body) return 69;
+  if (!body) throw new Error('Shape index selector body is missing');
 
   const grid = document.createElement('div');
   grid.className = 'shape-index-toggles';
-  grid.id = gridId;
+  grid.id = 'shapeIndexSizingProbe';
   grid.style.cssText = gridStyle;
   for (let i = 0; i < 8; i++) {
     const probe = document.createElement('button');
@@ -1222,22 +1258,81 @@ function getShapeIndexSvgSize(gridId: string, gridStyle: string): number {
   const borderY = parseFloat(buttonStyle.borderTopWidth) + parseFloat(buttonStyle.borderBottomWidth);
   const paddingX = parseFloat(buttonStyle.paddingLeft) + parseFloat(buttonStyle.paddingRight);
   const paddingY = parseFloat(buttonStyle.paddingTop) + parseFloat(buttonStyle.paddingBottom);
+  const rowTop = probe.getBoundingClientRect().top;
+  const columns = Math.max(
+    1,
+    Array.from(grid.children).filter(
+      (child) => Math.abs((child as HTMLElement).getBoundingClientRect().top - rowTop) < 1,
+    ).length,
+  );
+  const buttonHeight = buttonRect.height;
   grid.remove();
 
-  const wrapperPadding = 8;
-  const svgAvailableWidth = buttonRect.width - borderX - paddingX - wrapperPadding * 2;
-  const svgAvailableHeight = buttonRect.height - borderY - paddingY - wrapperPadding * 2;
+  const svgAvailableWidth =
+    buttonRect.width - borderX - paddingX - SHAPE_INDEX_WRAPPER_PADDING * 2;
+  const svgAvailableHeight =
+    buttonHeight - borderY - paddingY - SHAPE_INDEX_WRAPPER_PADDING * 2;
   const coreSizeRatio = 220 / 400;
   const ringGapRatio =
     coreSizeRatio * (0.44 * (2 + TRAINING_SCRAMBLE_RING_DISTANCE / 100) - 1);
   const pairedSvgWidthRatio = coreSizeRatio * 2 + ringGapRatio;
   const svgHeightRatio = coreSizeRatio * (1 + 0.0891);
-  return Math.max(
-    1,
-    Math.floor(
-      Math.min(svgAvailableWidth / pairedSvgWidthRatio, svgAvailableHeight / svgHeightRatio),
+  return {
+    svgSize: Math.max(
+      1,
+      Math.floor(
+        Math.min(svgAvailableWidth / pairedSvgWidthRatio, svgAvailableHeight / svgHeightRatio),
+      ),
     ),
+    buttonHeight,
+    columns,
+  };
+}
+
+function renderShapeIndexEntry(entry: ShapeIndexRenderEntry, svgSize: number): void {
+  const shapeHTML = visualizeShapes(
+    shapeIndexToHex(entry.index),
+    svgSize,
+    '#e7e7e7ff',
+    '#FFFFFF',
+    2,
+    TRAINING_SCRAMBLE_RING_DISTANCE,
+    `${SHAPE_INDEX_WRAPPER_PADDING}px`,
   );
+  entry.button.innerHTML = shapeHTML;
+}
+
+function renderRemainingShapeIndexEntries(
+  entries: ShapeIndexRenderEntry[],
+  startIndex: number,
+  svgSize: number,
+  renderVersion: number,
+): void {
+  let nextIndex = startIndex;
+  const renderFrame = (): void => {
+    if (
+      renderVersion !== shapeIndexRenderVersion ||
+      !document.getElementById('shapeIndexSelectorModal')?.classList.contains('active')
+    ) {
+      shapeIndexRenderFrame = null;
+      return;
+    }
+
+    const deadline = performance.now() + 8;
+    while (nextIndex < entries.length && performance.now() < deadline) {
+      renderShapeIndexEntry(entries[nextIndex++], svgSize);
+    }
+
+    if (nextIndex < entries.length) {
+      shapeIndexRenderFrame = requestAnimationFrame(renderFrame);
+    } else {
+      shapeIndexRenderFrame = null;
+    }
+  };
+
+  if (startIndex < entries.length) {
+    shapeIndexRenderFrame = requestAnimationFrame(renderFrame);
+  }
 }
 
 function toggleShapeIndex(index: number): void {
@@ -1330,10 +1425,13 @@ function deselectAllIndices(type: 'org' | 'mir'): void {
 
 function closeShapeIndexSelector(): void {
   closeModalWithHistory(() => {
+    shapeIndexRenderVersion++;
+    if (shapeIndexRenderFrame !== null) cancelAnimationFrame(shapeIndexRenderFrame);
+    shapeIndexRenderFrame = null;
     const modal = document.getElementById('shapeIndexSelectorModal');
     if (modal) {
       modal.classList.remove('active');
-      document.body.classList.remove('modal-open');
+      if (!hasOpenModal()) document.body.classList.remove('modal-open');
     }
   });
 }
@@ -3058,8 +3156,17 @@ function openSelectorModal(storageKey?: string): void {
   pushModalState('trainingSelectorModal', closeSelectorModal);
 
   renderSelectorCases();
+  const caseGrid = document.getElementById('selectorCaseGrid');
   modal.style.display = 'flex';
   document.body.classList.add('modal-open');
+  const resetScrollPosition = (): void => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    if (caseGrid) caseGrid.scrollTop = 0;
+  };
+  resetScrollPosition();
+  requestAnimationFrame(resetScrollPosition);
 
   const inp = document.getElementById('selectorSearchInput') as HTMLInputElement | null;
   if (inp) inp.value = selectorSearchTerm;

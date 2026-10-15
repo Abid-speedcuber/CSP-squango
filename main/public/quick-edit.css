@@ -139,9 +139,11 @@
     transition: all 0.2s;
 }
 
-.quick-edit-tab:hover {
-    color: white;
-    background: rgba(255, 255, 255, 0.15);
+@media (hover: hover) {
+    .quick-edit-tab:hover {
+        color: white;
+        background: rgba(255, 255, 255, 0.15);
+    }
 }
 
 .quick-edit-tab.active {
@@ -163,8 +165,10 @@
     transition: background 0.2s;
 }
 
-.quick-edit-icon-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
+@media (hover: hover) {
+    .quick-edit-icon-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
 }
 
 .quick-edit-icon-btn img {
@@ -362,9 +366,11 @@
     transition: all 0.2s;
 }
 
-.close-find-btn:hover {
-    background: #e9ecef;
-    color: #495057;
+@media (hover: hover) {
+    .close-find-btn:hover {
+        background: #e9ecef;
+        color: #495057;
+    }
 }
 
 .find-replace-inputs {
@@ -415,9 +421,11 @@
     transition: all 0.2s;
 }
 
-.find-nav-buttons button:hover {
-    background: #f8f9fa;
-    border-color: #007bff;
+@media (hover: hover) {
+    .find-nav-buttons button:hover {
+        background: #f8f9fa;
+        border-color: #007bff;
+    }
 }
 
 .find-nav-buttons button img {
@@ -439,8 +447,10 @@
     white-space: nowrap;
 }
 
-.replace-buttons button:hover {
-    background: #0056b3;
+@media (hover: hover) {
+    .replace-buttons button:hover {
+        background: #0056b3;
+    }
 }
 
 .find-replace-footer {
@@ -600,16 +610,20 @@
     transition: background 0.2s;
 }
 
-.find-replace-buttons button:hover {
-    background: #0056b3;
+@media (hover: hover) {
+    .find-replace-buttons button:hover {
+        background: #0056b3;
+    }
 }
 
 .find-replace-buttons button:last-child {
     background: #6c757d;
 }
 
-.find-replace-buttons button:last-child:hover {
-    background: #5a6268;
+@media (hover: hover) {
+    .find-replace-buttons button:last-child:hover {
+        background: #5a6268;
+    }
 }
 
 .find-replace-info {
@@ -672,8 +686,10 @@
     transition: background 0.2s;
 }
 
-.quick-edit-table td.editable:hover {
-    background: #f8f9fa;
+@media (hover: hover) {
+    .quick-edit-table td.editable:hover {
+        background: #f8f9fa;
+    }
 }
 
 .quick-edit-table td.editable:focus {
@@ -682,12 +698,16 @@
     background: white;
 }
 
-.quick-edit-table tr:hover td {
-    background: #f8f9fa;
+@media (hover: hover) {
+    .quick-edit-table tr:hover td {
+        background: #f8f9fa;
+    }
 }
 
-.quick-edit-table tr:hover td.editable:hover {
-    background: #e9ecef;
+@media (hover: hover) {
+    .quick-edit-table tr:hover td.editable:hover {
+        background: #e9ecef;
+    }
 }
 
 .quick-edit-footer {
@@ -716,10 +736,12 @@
     color: white;
 }
 
-.quick-edit-save-btn:hover {
-    background: #218838;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+@media (hover: hover) {
+    .quick-edit-save-btn:hover {
+        background: #218838;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(40, 167, 69, 0.3);
+    }
 }
 
 .quick-edit-cancel-btn {
@@ -727,10 +749,12 @@
     color: white;
 }
 
-.quick-edit-cancel-btn:hover {
-    background: #5a6268;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+@media (hover: hover) {
+    .quick-edit-cancel-btn:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(108, 117, 125, 0.3);
+    }
 }
 
 /* Tablet adjustments */
@@ -841,8 +865,10 @@
     background: var(--surface2);
 }
 
-.quick-edit-table td.editable:hover {
-    background: var(--hover-bg);
+@media (hover: hover) {
+    .quick-edit-table td.editable:hover {
+        background: var(--hover-bg);
+    }
 }
 
 .quick-edit-table td.editable:focus {
@@ -850,12 +876,16 @@
     outline-color: var(--accent);
 }
 
-.quick-edit-table tr:hover td {
-    background: var(--hover-bg);
+@media (hover: hover) {
+    .quick-edit-table tr:hover td {
+        background: var(--hover-bg);
+    }
 }
 
-.quick-edit-table tr:hover td.editable:hover {
-    background: var(--step-highlight-bg);
+@media (hover: hover) {
+    .quick-edit-table tr:hover td.editable:hover {
+        background: var(--step-highlight-bg);
+    }
 }
 
 .quick-edit-find-replace-popup {
@@ -873,9 +903,11 @@
     color: var(--text-secondary);
 }
 
-.close-find-btn:hover {
-    background: var(--surface-border);
-    color: var(--text-ui);
+@media (hover: hover) {
+    .close-find-btn:hover {
+        background: var(--surface-border);
+        color: var(--text-ui);
+    }
 }
 
 .find-input-row input,
@@ -897,9 +929,11 @@
     color: var(--text-ui);
 }
 
-.find-nav-buttons button:hover {
-    background: var(--hover-bg);
-    border-color: var(--accent);
+@media (hover: hover) {
+    .find-nav-buttons button:hover {
+        background: var(--hover-bg);
+        border-color: var(--accent);
+    }
 }
 
 .find-replace-footer {

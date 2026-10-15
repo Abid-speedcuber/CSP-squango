@@ -61,8 +61,10 @@ body.modal-open .training-modal {
     user-select: none;
 }
 
-.training-modal-title:hover {
-    color: var(--accent);
+@media (hover: hover) {
+    .training-modal-title:hover {
+        color: var(--accent);
+    }
 }
 
 .training-modal-refresh,
@@ -82,9 +84,11 @@ body.modal-open .training-modal {
     height: 36px;
 }
 
-.training-modal-refresh:hover,
-.training-modal-close:hover {
-    background: rgba(255, 255, 255, 0.2);
+@media (hover: hover) {
+    .training-modal-refresh:hover,
+    .training-modal-close:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
 }
 
 .training-modal-refresh:disabled {
@@ -114,8 +118,10 @@ body.modal-open .training-modal {
     transition: background 0.2s ease;
 }
 
-.training-modal-scramble:hover {
-    background: var(--hover-bg);
+@media (hover: hover) {
+    .training-modal-scramble:hover {
+        background: var(--hover-bg);
+    }
 }
 
 .training-modal-image-container {
@@ -199,9 +205,11 @@ body.modal-open .training-modal {
     transition: background 0.2s ease, border-color 0.2s ease;
 }
 
-.training-case-action:hover {
-    background: var(--hover-bg);
-    border-color: var(--accent);
+@media (hover: hover) {
+    .training-case-action:hover {
+        background: var(--hover-bg);
+        border-color: var(--accent);
+    }
 }
 
 .training-case-action svg {
@@ -236,10 +244,12 @@ body.modal-open .training-modal {
     pointer-events: none;
 }
 
-.training-case-action:hover::after {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, 0);
+@media (hover: hover) {
+    .training-case-action:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translate(-50%, 0);
+    }
 }
 
 .training-case-action.tooltip-dismissed::after {
@@ -285,9 +295,11 @@ body.modal-open .training-modal {
     cursor: pointer;
 }
 
-.training-case-info-close:hover {
-    background: var(--hover-bg);
-    color: var(--text-ui);
+@media (hover: hover) {
+    .training-case-info-close:hover {
+        background: var(--hover-bg);
+        color: var(--text-ui);
+    }
 }
 
 .training-case-info-close svg {
@@ -476,13 +488,17 @@ body.modal-open .training-modal {
     transition: background 0.2s;
 }
 
-.shape-index-selector-close:hover {
-    background: rgba(0, 0, 0, 0.05);
+@media (hover: hover) {
+    .shape-index-selector-close:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
 }
 
 .shape-index-selector-body {
     padding: 25px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .shape-index-section-header {
@@ -509,11 +525,29 @@ body.modal-open .training-modal {
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--text-primary);
-    transition: all 0.2s;
+    transition: background 0.2s, border-color 0.2s;
     min-height: 40px;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 100px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-sizing: border-box;
+}
+
+.shape-index-loading {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: shape-index-loading-spin 0.8s linear infinite;
+}
+
+@keyframes shape-index-loading-spin {
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .shape-index-toggle > div {
@@ -522,9 +556,11 @@ body.modal-open .training-modal {
     box-sizing: border-box;
 }
 
-.shape-index-toggle:hover {
-    border-color: var(--accent);
-    background: var(--hover-bg);
+@media (hover: hover) {
+    .shape-index-toggle:hover {
+        border-color: rgb(from var(--accent) r g b / 0.6);
+        background: var(--hover-bg);
+    }
 }
 
 .shape-index-toggle.active {
@@ -548,8 +584,10 @@ body.modal-open .training-modal {
     height: 36px;
 }
 
-.training-modal-info:hover {
-    background: rgba(255, 255, 255, 0.2);
+@media (hover: hover) {
+    .training-modal-info:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
 }
 
 .training-modal-info svg {
@@ -625,8 +663,10 @@ body.modal-open .training-modal {
     transition: background 0.2s;
 }
 
-.training-info-close:hover {
-    background: rgba(0, 0, 0, 0.05);
+@media (hover: hover) {
+    .training-info-close:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
 }
 
 .training-info-body {
@@ -757,6 +797,8 @@ body.modal-open .training-modal {
     font-size: 0.85rem;
 }
 
-#selectorStartBtn:hover {
-    background: var(--accent-hover) !important;
+@media (hover: hover) {
+    #selectorStartBtn:hover {
+        background: var(--accent-hover) !important;
+    }
 }

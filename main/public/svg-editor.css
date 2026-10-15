@@ -71,9 +71,11 @@
     flex-shrink: 0;
 }
 
-.svg-editor-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-1px);
+@media (hover: hover) {
+    .svg-editor-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        transform: translateY(-1px);
+    }
 }
 
 .svg-editor-btn:active {
@@ -101,8 +103,10 @@
     line-height: 1;
 }
 
-.svg-editor-close:hover {
-    opacity: 1;
+@media (hover: hover) {
+    .svg-editor-close:hover {
+        opacity: 1;
+    }
 }
 
 /* Main Container */
@@ -138,8 +142,10 @@
     border: 2px solid transparent;
 }
 
-.svg-editor-item:hover {
-    background: var(--surface-border);
+@media (hover: hover) {
+    .svg-editor-item:hover {
+        background: var(--surface-border);
+    }
 }
 
 .svg-editor-item.active {
@@ -152,8 +158,10 @@
     border: 2px solid var(--accent);
 }
 
-.svg-editor-item.unsaved:hover {
-    background: var(--hover-bg);
+@media (hover: hover) {
+    .svg-editor-item.unsaved:hover {
+        background: var(--hover-bg);
+    }
 }
 
 .svg-editor-item-name {
@@ -231,9 +239,11 @@
     border: 1px solid var(--border-color);
 }
 
-.svg-editor-toolbar .svg-editor-btn:hover {
-    background: var(--surface-border);
-    border-color: var(--border-color);
+@media (hover: hover) {
+    .svg-editor-toolbar .svg-editor-btn:hover {
+        background: var(--surface-border);
+        border-color: var(--border-color);
+    }
 }
 
 .svg-editor-toolbar .svg-editor-btn img {
@@ -385,8 +395,10 @@
         background: rgba(255, 255, 255, 0.2);
     }
 
-    .svg-editor-header .svg-editor-btn:hover {
-        background: rgba(255, 255, 255, 0.3);
+    @media (hover: hover) {
+        .svg-editor-header .svg-editor-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
     }
 
     .svg-editor-header .svg-editor-btn img {
