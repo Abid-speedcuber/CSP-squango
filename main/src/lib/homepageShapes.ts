@@ -18,8 +18,10 @@ import { CASES } from '../data/cases';
 import type { AlgCase } from '../data/types';
 
 export interface HomepageImageSettings {
-  /** Tracing-start piece color (the '2'/'3' marked slots). */
+  /** Light-theme tracing-start piece color (the '2'/'3' marked slots). */
   specialPieceColor: string;
+  /** Dark-theme tracing-start piece color. */
+  specialPieceColorDark: string;
   /** Stroke color for piece outlines. Empty string = follow the theme. */
   borderColor: string;
   /** Slice indicator color. Empty string = follow the theme. */
@@ -37,6 +39,7 @@ export interface HomepageImageSettings {
 
 export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
   specialPieceColor: '#FFD700',
+  specialPieceColorDark: '#00ffffc0',
   borderColor: '',
   sliceColor: '',
   strokeWidthOuter: 0.012,
@@ -53,7 +56,7 @@ export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
 const SETTINGS_STORAGE_KEY = 'sq1-homepage-image-settings';
 const SVG_CACHE_HASH_KEY = 'sq1-homepage-svg-cache-settings';
 const SVG_CACHE_ITEM_PREFIX = 'sq1-homepage-svg-cache-item';
-const SVG_CACHE_VERSION = 9;
+const SVG_CACHE_VERSION = 11;
 const HOMEPAGE_SLICE_STROKE_SCALE = 0.22;
 const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
 
@@ -88,7 +91,11 @@ export function resetHomepageImageSettings(): HomepageImageSettings {
 
 function resolveStrokeColor(color: string): string {
   if (color && color.trim() !== '') return color;
-  return isDarkTheme() ? '#c0c0c0' : '#000000';
+  return isDarkTheme() ? 'var(--text-primary)' : '#000000';
+}
+
+function resolveSpecialPieceColor(settings: HomepageImageSettings): string {
+  return isDarkTheme() ? settings.specialPieceColorDark : settings.specialPieceColor;
 }
 
 /** Marked, display-rotated expanded layer for a homepage image (see expandedShape.ts). */
@@ -108,6 +115,7 @@ export function renderLayerShapeSVG(
   if (!marked) return null;
   const border = resolveStrokeColor(settings.borderColor);
   const slice = resolveStrokeColor(settings.sliceColor);
+  const specialPieceColor = resolveSpecialPieceColor(settings);
 
   const options: Square1RenderOptions = {
     size: 200,
@@ -132,14 +140,14 @@ export function renderLayerShapeSVG(
     piecesColors: {
       edgeColors: {
         '0': { inner: 'top', outer: 'back' },
-        '2': { inner: settings.specialPieceColor, outer: settings.specialPieceColor },
+        '2': { inner: specialPieceColor, outer: specialPieceColor },
       },
       cornerColors: {
         '1': { top: 'top', left: 'back', right: 'left' },
         '3': {
-          top: settings.specialPieceColor,
-          left: settings.specialPieceColor,
-          right: settings.specialPieceColor,
+          top: specialPieceColor,
+          left: specialPieceColor,
+          right: specialPieceColor,
         },
       },
       sliceColors: { top: 'top', bottom: 'bottom' },
@@ -169,6 +177,7 @@ function splitHomepageShapeSVGKey(key: string): { layer: 'top' | 'bottom'; layer
 function createHomepageCoreOptions(settings: HomepageImageSettings): Square1RenderOptions {
   const border = resolveStrokeColor(settings.borderColor);
   const slice = resolveStrokeColor(settings.sliceColor);
+  const specialPieceColor = resolveSpecialPieceColor(settings);
   return {
     size: 200,
     showSlice: true,
@@ -192,14 +201,14 @@ function createHomepageCoreOptions(settings: HomepageImageSettings): Square1Rend
     piecesColors: {
       edgeColors: {
         '0': { inner: 'top', outer: 'back' },
-        '2': { inner: settings.specialPieceColor, outer: settings.specialPieceColor },
+        '2': { inner: specialPieceColor, outer: specialPieceColor },
       },
       cornerColors: {
         '1': { top: 'top', left: 'back', right: 'left' },
         '3': {
-          top: settings.specialPieceColor,
-          left: settings.specialPieceColor,
-          right: settings.specialPieceColor,
+          top: specialPieceColor,
+          left: specialPieceColor,
+          right: specialPieceColor,
         },
       },
       sliceColors: { top: 'top', bottom: 'bottom' },

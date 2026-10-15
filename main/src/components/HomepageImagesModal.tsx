@@ -89,15 +89,31 @@ function HomepageImagesSection(): React.ReactNode {
       <LinkedStrokeWidthControl settings={settings} onChange={update} />
       {_row(
         'Tracing-start Highlight',
-        <input
-          type="color"
-          value={settings.specialPieceColor}
-          style={{ width: 44, height: 28, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
-          onChange={(e) => update({ specialPieceColor: e.target.value })}
-        />,
-        'Color of the piece where parity tracing starts on each homepage image.',
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+            Light
+            <input
+              type="color"
+              aria-label="Light theme tracing-start highlight"
+              value={settings.specialPieceColor}
+              style={{ width: 38, height: 26, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
+              onChange={(e) => update({ specialPieceColor: e.target.value })}
+            />
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+            Dark
+            <input
+              type="color"
+              aria-label="Dark theme tracing-start highlight"
+              value={settings.specialPieceColorDark}
+              style={{ width: 38, height: 26, padding: 0, border: 'none', cursor: 'pointer', background: 'transparent' }}
+              onChange={(e) => update({ specialPieceColorDark: e.target.value })}
+            />
+          </label>
+        </div>,
+        'Color of the piece where parity tracing starts on each homepage image. Set a separate color for light and dark themes.',
       )}
-      {autoColorRow('borderColor', 'Outline Color', 'Color of the piece outlines. In "Auto" it follows the app theme (black in light mode, light grey in dark mode).')}
+      {autoColorRow('borderColor', 'Outline Color', 'Color of the piece outlines. In "Auto" it follows the app theme (black in light mode, text color in dark mode).')}
       {autoColorRow('sliceColor', 'Slice Line Color', 'Color of the slice indicator line. In "Auto" it follows the app theme.')}
       <div style={{ marginTop: 6, marginBottom: 8, fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>
         Face Colors

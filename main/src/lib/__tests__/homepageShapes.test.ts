@@ -36,6 +36,36 @@ test('unused side colors do not affect homepage images', () => {
   expect(altered).toBe(original);
 });
 
+test('tracing-start highlight uses the active theme color', () => {
+  const settings = {
+    ...DEFAULT_HOMEPAGE_IMAGE_SETTINGS,
+    specialPieceColor: '#FFD700',
+    specialPieceColorDark: '#F4C542',
+  };
+  vi.stubGlobal('document', {
+    documentElement: { getAttribute: vi.fn().mockReturnValue('light') },
+  });
+  const lightSVG = renderLayerShapeSVG('Left_4_2', settings)!;
+  expect(lightSVG).toContain('#FFD700');
+  expect(lightSVG).not.toContain('#F4C542');
+
+  vi.stubGlobal('document', {
+    documentElement: { getAttribute: vi.fn().mockReturnValue('dark') },
+  });
+  const darkSVG = renderLayerShapeSVG('Left_4_2', settings)!;
+  expect(darkSVG).toContain('#F4C542');
+  expect(darkSVG).not.toContain('#FFD700');
+});
+
+test('dark-theme auto stroke uses the primary text color token', () => {
+  vi.stubGlobal('document', {
+    documentElement: { getAttribute: vi.fn().mockReturnValue('dark') },
+  });
+  const svg = renderLayerShapeSVG('Left_4_2')!;
+  expect(svg).toContain('var(--text-primary)');
+  expect(svg).not.toContain('#c0c0c0');
+});
+
 test('save preparation makes every card shape available from the compressed reload cache', async () => {
   const storage = new Map<string, string>();
   vi.stubGlobal('localStorage', {
