@@ -4,10 +4,12 @@ import App from './components/App';
 import { installModalStackGlobalListeners } from './app/modal';
 import { installAppBoot } from './app/boot';
 import { installFocusRingTracking } from './app/focusRing';
+import { installCustomDropdowns } from './app/customDropdowns';
 
 installModalStackGlobalListeners();
 installAppBoot();
 installFocusRingTracking();
+installCustomDropdowns();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {

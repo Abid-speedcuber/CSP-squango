@@ -521,7 +521,7 @@ function showEvilnessCasesModal(
         </svg>
       </div>
       <select id="evilBulkAction"
-        style="padding:7px 8px; border:1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;">
+        style="padding:7px 32px 7px 8px; border:1px solid var(--border-color); border-radius:8px; font-size:0.82rem; background-color:var(--surface); cursor:pointer; color:var(--text-ui); flex-shrink:0;">
         <option value="" disabled selected>Select…</option>
         <option value="mark_all_evil">Mark All Evil</option>
         <option value="mark_all_good">Mark All Good</option>

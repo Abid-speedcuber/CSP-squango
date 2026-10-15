@@ -29,6 +29,7 @@ import { applyInstructionVisibility } from '../app/visibility';
 // import LoadingScreen from './LoadingScreen';
 import SettingsModal from './SettingsModal';
 import HomepageImagesModal from './HomepageImagesModal';
+import Dropdown from './Dropdown';
 
 const CARD_HEIGHT_CACHE_KEY = 'sqg-card-height-estimates-v1';
 const DEFAULT_SKELETON_CARD_HEIGHT = 360;
@@ -432,40 +433,30 @@ export default function App(): React.ReactNode {
               }
             }}
           />
-          <select
+          <Dropdown
             id="sort"
             value={sortType}
-            onChange={(e) => {
-              setSortType(e.target.value as SortMode);
+            options={[
+              { value: 'priority', label: 'By Priority', shortLabel: 'Priority', compactLabel: 'Priority' },
+              { value: 'probability', label: 'Highest Probability', shortLabel: 'Highest Probability', compactLabel: 'Highest prob.' },
+              { value: 'antiProbability', label: 'Lowest Probability', shortLabel: 'Lowest Probability', compactLabel: 'Lowest Prob.' },
+            ]}
+            onChange={(value) => {
+              setSortType(value);
               setNeedsReorder(false, false);
               setShowReorderButton(false);
             }}
-          >
-            <option value="priority" data-short="Priority" data-xs="Priority">
-              By Priority
-            </option>
-            <option value="probability" data-short="Highest Probability" data-xs="Highest prob.">
-              Highest Probability
-            </option>
-            <option value="antiProbability" data-short="Lowest Probability" data-xs="Lowest Prob.">
-              Lowest Probability
-            </option>
-          </select>
-          <select
+          />
+          <Dropdown
             id="learnFilter"
             value={learnFilter}
-            onChange={(e) => setLearnFilter(e.target.value as LearnFilter)}
-          >
-            <option value="all" data-short="All" data-xs="All">
-              Show All
-            </option>
-            <option value="learned" data-short="Learned" data-xs="✓">
-              Show Only Learned
-            </option>
-            <option value="unlearned" data-short="Unlearned" data-xs="✗">
-              Exclude Learned
-            </option>
-          </select>
+            options={[
+              { value: 'all', label: 'Show All', shortLabel: 'All', compactLabel: 'All' },
+              { value: 'learned', label: 'Show Only Learned', shortLabel: 'Learned', compactLabel: '✓' },
+              { value: 'unlearned', label: 'Exclude Learned', shortLabel: 'Unlearned', compactLabel: '✗' },
+            ]}
+            onChange={setLearnFilter}
+          />
         </div>
 
         {bootReady ? (

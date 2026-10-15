@@ -3232,7 +3232,7 @@ function createSelectorModal(): void {
                     </svg>
                 </div>
                 <select id="selectorBulkAction"
-                    style="padding:7px 8px; border: 1px solid var(--border-color); border-radius:7px; font-size:0.82rem; background:var(--surface); cursor:pointer; color:var(--text-secondary); flex-shrink:0;"
+                    style="padding:7px 32px 7px 8px; border:1px solid var(--border-color); border-radius:8px; font-size:0.82rem; background-color:var(--surface); cursor:pointer; color:var(--text-secondary); flex-shrink:0;"
                     onchange="applySelectorBulkAction(this.value); this.value='';">
                     <option value="" disabled selected>Select…</option>
                     <option value="select_all">Select All</option>

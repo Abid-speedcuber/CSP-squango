@@ -36,6 +36,7 @@ import {
 import { applyAlgorithmFontSize, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
 import InfoTip from './InfoTip';
+import Dropdown from './Dropdown';
 import { settingsRow as _row, sectionTitle as _sectionTitle } from './SettingsControls';
 import {
   applyHideImgLive,
@@ -143,13 +144,15 @@ function Slider(props: {
   return (
     <div style={{ marginBottom: 18 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 6 }}>
-        <label
-          htmlFor={`${id}Value`}
-          style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem', flex: 1 }}
-        >
-          {label}
-        </label>
-        {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7, flex: 1, minWidth: 0 }}>
+          <label
+            htmlFor={`${id}Value`}
+            style={{ fontWeight: 500, color: 'var(--text-secondary)', fontSize: '0.92rem' }}
+          >
+            {label}
+          </label>
+          {tipHtml ? <InfoTip tipHtml={tipHtml} /> : null}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
           <input
             id={`${id}Value`}
@@ -318,24 +321,26 @@ function ParityTab(): React.ReactNode {
       {_sectionTitle('Tracing Method')}
       {_row(
         'Corner Sticker for Tracing',
-        <select
+        <Dropdown
           id="pt_cornerSticker"
+          className="custom-dropdown--fit-options"
           value={cornerStickerMode}
-          onChange={(e) => {
-            setCornerStickerMode(e.target.value as 'counterclockwise' | 'clockwise');
+          options={[
+            { value: 'counterclockwise', label: 'Counter-clockwise sticker' },
+            { value: 'clockwise', label: 'Clockwise sticker' },
+          ]}
+          onChange={(value) => {
+            setCornerStickerMode(value);
             _triggerParityLiveUpdate();
           }}
           style={{
             padding: '5px 8px',
             border: '1px solid var(--border-color)',
-            borderRadius: 6,
-            background: 'var(--surface)',
+            borderRadius: 8,
+            backgroundColor: 'var(--surface)',
             color: 'var(--text-ui)',
           }}
-        >
-          <option value="counterclockwise">Counter-clockwise sticker</option>
-          <option value="clockwise">Clockwise sticker</option>
-        </select>,
+        />,
         'Corner sticker mode determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn not affect parity calculations, just your personal preference.',
       )}
       {_row(
