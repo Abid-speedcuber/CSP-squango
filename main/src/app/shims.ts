@@ -57,6 +57,7 @@ let activePopup: HTMLElement | null = null;
 let activePopupElement: HTMLElement | null = null;
 let activePopupCleanup: (() => void) | null = null;
 let popupHoverTimeout: ReturnType<typeof setTimeout> | null = null;
+let caseUpdateListenerInstalled = false;
 
 function rerenderCaseCard(caseName: string): void {
   const caseId = getCaseId(caseName);
@@ -494,6 +495,13 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
 // ── Install all shims ────────────────────────────────────────────────────────
 export function installWindowShims(): void {
   const w = window as unknown as Record<string, unknown>;
+
+  if (!caseUpdateListenerInstalled) {
+    window.addEventListener('sqg:case-updated', ((event: CustomEvent<{ caseId: number }>) => {
+      rerenderCaseCard(String(event.detail.caseId));
+    }) as EventListener);
+    caseUpdateListenerInstalled = true;
+  }
 
   w.openHomepageImageSettings = openHomepageImageSettings;
   installSidebarShims();

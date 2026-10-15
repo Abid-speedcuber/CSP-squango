@@ -23,6 +23,7 @@ import { CSPData } from '../lib/dataStore';
 import { normalizeScramble } from '../lib/normalizer';
 import { getParityText } from '../lib/parityAnalyzer';
 import { expandAndNormalize, expandForColorCheck } from './quickEdit';
+import { notify } from './store';
 import { closeModalWithHistory, pushModalState } from './modal';
 import { showSaveDiscardConfirmation } from './confirm';
 import { showToast } from './toast';
@@ -363,7 +364,7 @@ export function openEditCaseModal(caseName: string, openedFromTrainingCaseInfo =
                 <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding: 12px 0; border-top: 1px solid var(--surface-border);">
                     <label style="font-weight: 500; color: var(--text-secondary); font-size: 0.95rem;">Mark as Evil</label>
                     <label class="evil-switch" style="position:relative;display:inline-block;width:42px;height:24px;">
-                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseId] ? 'checked' : ''} onchange="evilnessMap['${caseId}'] = this.checked; saveState();" style="opacity:0;width:0;height:0;">
+                        <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseId] ? 'checked' : ''} style="opacity:0;width:0;height:0;">
                         <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseId] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
                             <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseId] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
                         </span>
@@ -484,8 +485,10 @@ export function attemptCloseEditCaseModal(): void {
   }
 
   const nameChanged = !!(window.tempCaseRename && window.tempCaseRename.caseName === String(item.id));
+  const evilToggle = modal.querySelector<HTMLInputElement>('#evilCaseToggle');
+  const evilnessChanged = !!evilToggle && evilToggle.checked !== (evilnessMap[String(item.id)] === true);
 
-  if (algsChanged || nameChanged) {
+  if (algsChanged || nameChanged || evilnessChanged) {
     showSaveDiscardConfirmation(
       'You have unsaved changes. Do you want to save them?',
       () => saveEditedCase(String(item.id)),
@@ -555,17 +558,17 @@ export function saveEditedCase(caseName: string): void {
     .map((input) => (input as HTMLInputElement).value.trim())
     .filter((v) => v);
 
-  if (allAlgs.length > 0) {
-    customAlgorithms.set(caseId, {
-      odd: [],
-      even: allAlgs,
-    });
-  } else {
-    customAlgorithms.delete(caseId);
-  }
+  customAlgorithms.set(caseId, {
+    odd: [],
+    even: allAlgs,
+  });
+  const evilToggle = document.querySelector<HTMLInputElement>('#editCaseModal #evilCaseToggle');
+  if (evilToggle) evilnessMap[String(caseId)] = evilToggle.checked;
 
   saveState();
   calculateAndCacheAllParity();
+  notify();
+  window.dispatchEvent(new CustomEvent('sqg:case-updated', { detail: { caseId } }));
   closeEditCaseModal();
   setTimeout(() => showToast('Case updated successfully!', 2000, 'success'), 0);
 }
