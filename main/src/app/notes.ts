@@ -36,7 +36,7 @@ export function openNotesModal(
             <div class="modal-header">
                 <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    ${startInViewMode ? `<button id="notesModalEditBtn" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>` : ''}
+                    ${startInViewMode ? `<button id="notesModalEditBtn" style="padding: 6px 16px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>` : ''}
                     <button onclick="showNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -52,8 +52,8 @@ export function openNotesModal(
                 <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;${startInViewMode ? ' display: none;' : ''}"></textarea>
                 ${startInViewMode ? '' : `
                 <div style="text-align: center; margin-top: 15px;">
-                    <button onclick="saveNotes('${escaped}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
-                    <button onclick="attemptCloseNotesModal('${escaped}')" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="saveNotes('${escaped}')" style="padding: 10px 20px; background: var(--bar-learned); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
+                    <button onclick="attemptCloseNotesModal('${escaped}')" style="padding: 10px 20px; background: var(--delete-btn-bg); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>`}
             </div>
         </div>
@@ -213,8 +213,8 @@ export function openGeneralNotesModal(): void {
             <div class="modal-header" style="flex-shrink: 0;">
                 <span class="modal-title">General Notes</span>
                 <div style="display: flex; gap: 10px; align-items: center;">
-                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
-                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
+                    <button id="editGeneralNotesBtn" onclick="toggleEditGeneralNotes()" style="padding: 6px 16px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>
+                    <button id="saveGeneralNotesBtn" onclick="saveGeneralNotes()" style="padding: 6px 16px; background: var(--bar-learned); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem; display: none;">Save</button>
                     <button id="generalNotesInfoBtn" onclick="showGeneralNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: none; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -301,7 +301,7 @@ function renderGeneralNotes(): void {
                 :root {
                     --background: ${readVar('--background')};
                     --surface:    ${readVar('--surface')};
-                    --text-primary:   ${readVar('--text-primary')};
+                    --text-ui:        ${readVar('--text-ui')};
                     --text-secondary: ${readVar('--text-secondary')};
                     --accent:     ${readVar('--accent')};
                     --border-color: ${readVar('--border-color')};
@@ -309,7 +309,7 @@ function renderGeneralNotes(): void {
                 }
                 body {
                     background: var(--background);
-                    color: var(--text-primary);
+                    color: var(--text-ui);
                 }
                 a { color: var(--accent); }
             `;

@@ -56,7 +56,7 @@ body.modal-open .training-modal {
 .training-modal-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-ui);
     cursor: pointer;
     user-select: none;
 }
@@ -97,7 +97,8 @@ body.modal-open .training-modal {
 }
 
 .training-modal-refresh svg,
-.training-modal-close svg {
+.training-modal-close svg,
+.training-modal-refresh .themed-icon {
     width: 20px;
     height: 20px;
 }
@@ -109,7 +110,7 @@ body.modal-open .training-modal {
     border-bottom: 1px solid var(--surface-border);
     font-family: Consolas, Monaco, 'Courier New', monospace;
     font-size: 1rem;
-    color: var(--text-primary);
+    color: var(--text-ui);
     text-align: center;
     cursor: pointer;
     user-select: none;
@@ -197,7 +198,7 @@ body.modal-open .training-modal {
     border: 1px solid var(--border-color);
     border-radius: 8px;
     background: var(--surface2);
-    color: var(--text-primary);
+    color: var(--text-ui);
     font: inherit;
     font-size: 0.92rem;
     font-weight: 600;
@@ -208,7 +209,7 @@ body.modal-open .training-modal {
 @media (hover: hover) {
     .training-case-action:hover {
         background: var(--hover-bg);
-        border-color: var(--accent);
+        border-color: var(--accent-hover);
     }
 }
 
@@ -230,7 +231,7 @@ body.modal-open .training-modal {
     border: 1px solid var(--border-color);
     border-radius: 6px;
     background: var(--surface-raised);
-    color: var(--text-primary);
+    color: var(--text-ui);
     font-size: 0.78rem;
     font-weight: 500;
     line-height: 1.35;
@@ -336,7 +337,8 @@ body.modal-open .training-modal {
         height: 40px;
     }
 
-    .training-modal-refresh svg {
+    .training-modal-refresh svg,
+    .training-modal-refresh .themed-icon {
         width: 20px;
         height: 20px;
     }
@@ -371,7 +373,8 @@ body.modal-open .training-modal {
         height: 36px;
     }
 
-    .training-modal-refresh svg {
+    .training-modal-refresh svg,
+    .training-modal-refresh .themed-icon {
         width: 18px;
         height: 18px;
     }
@@ -524,7 +527,7 @@ body.modal-open .training-modal {
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--text-ui);
     transition: background 0.2s, border-color 0.2s;
     min-height: 40px;
     content-visibility: auto;
@@ -558,14 +561,14 @@ body.modal-open .training-modal {
 
 @media (hover: hover) {
     .shape-index-toggle:hover {
-        border-color: rgb(from var(--accent) r g b / 0.6);
+        border-color: rgb(from var(--accent-hover) r g b / 0.6);
         background: var(--hover-bg);
     }
 }
 
 .shape-index-toggle.active {
     background: var(--accent);
-    color: white;
+    color: var(--text-on-color);
     border-color: var(--accent);
 }
 
@@ -690,7 +693,7 @@ body.modal-open .training-modal {
     width: 32px;
     height: 32px;
     background: var(--accent);
-    color: white;
+    color: var(--text-on-color);
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -702,7 +705,7 @@ body.modal-open .training-modal {
 .training-info-text {
     flex: 1;
     line-height: 1.6;
-    color: var(--text-primary);
+    color: var(--text-ui);
     font-size: 1rem;
 }
 
@@ -790,7 +793,7 @@ body.modal-open .training-modal {
     display: flex;
     align-items: center;
     background: var(--modal-algo-label) !important;
-    color: white !important;
+    color: var(--text-on-color) !important;
     width: auto !important;
     padding: 0 14px !important;
     font-weight: 600;

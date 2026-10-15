@@ -390,7 +390,7 @@ export default function App(): React.ReactNode {
               window.dispatchEvent(new CustomEvent('sqg:toggle-sidebar'));
             }}
           >
-            <img src="res/menu.svg" height={24} width={24} alt="Menu" />
+            <span className="themed-icon themed-icon--menu" style={{ width: 24, height: 24 }} aria-hidden="true" />
           </button>
 
           <button
@@ -413,7 +413,7 @@ export default function App(): React.ReactNode {
             className="search-toggle-btn search-toggle-icon-btn"
             aria-label="Toggle Search"
           >
-            <img src="res/search.svg" height={22} width={22} alt="Search" />
+            <span className="themed-icon themed-icon--search" style={{ width: 22, height: 22 }} aria-hidden="true" />
           </button>
           <input
             ref={searchRef}

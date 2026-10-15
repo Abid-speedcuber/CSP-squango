@@ -8,6 +8,7 @@
 import * as THREE from 'three';
 import { invertScramble } from '../lib/cube';
 import { getParityText } from '../lib/parityAnalyzer';
+import { resolveThemeAwareWhite } from '../lib/drawScramble';
 import { closeModalWithHistory, pushModalState } from './modal';
 import { colorScheme, cornerStickerMode } from './state';
 
@@ -22,7 +23,6 @@ const BLUE = 0x0433ff;
 const RED = 0xff2600;
 const GREEN = 0x60d937;
 const ORANGE = 0xff9300;
-const POLES = [0xffffff, 0x1e1e1e];
 const EDGE_RIGHT_COLORS = [ORANGE, BLUE, RED, GREEN, RED, BLUE, ORANGE, GREEN];
 const LEFT_COLORS = [BLUE, RED, GREEN, ORANGE, BLUE, ORANGE, GREEN, RED];
 const INITIAL_UP = [1, -1, 0.02, 2, -2, 0.03, 3, -3, 0.04, 4, -4, 0.01];
@@ -154,6 +154,10 @@ class ImmediateRenderer {
 }
 
 class Square1ThreeViewer {
+  private readonly poles = [
+    new THREE.Color(resolveThemeAwareWhite('#ffffff')).getHex(),
+    0x1e1e1e,
+  ];
   private up = INITIAL_UP.slice();
   private down = INITIAL_DOWN.slice();
   private bar = false;
@@ -499,13 +503,13 @@ class Square1ThreeViewer {
   private edgeFill(isTop: boolean, internal: boolean, idx: number): number {
     if (internal) return INTERNAL_COL;
     const value = isTop ? this.up[idx] : this.down[idx];
-    return POLES[Math.round((100 / 8 * value - 0.01) % 1)];
+    return this.poles[Math.round((100 / 8 * value - 0.01) % 1)];
   }
 
   private cornerFill(isTop: boolean, internal: boolean, idx: number): number {
     if (internal) return INTERNAL_COL;
     const value = isTop ? this.up[idx] : this.down[idx];
-    return POLES[Math.round((Math.abs(value) / 8.5) % 1)];
+    return this.poles[Math.round((Math.abs(value) / 8.5) % 1)];
   }
 
   private cshape(isTop: boolean, isRight: boolean, internal: boolean): void {
@@ -788,7 +792,7 @@ function ensureStyles(): void {
       padding: 12px 16px 6px;
       min-height: 46px;
       font: 14px/1.8 Consolas, Menlo, monospace;
-      color: var(--text-primary);
+      color: var(--text-ui);
       overflow-x: auto;
       white-space: nowrap;
     }
@@ -819,7 +823,58 @@ function ensureStyles(): void {
       color: var(--text-secondary);
       font-size: 13px;
     }
-    .sq1-speed input { width: 110px; accent-color: var(--accent); }
+    .sq1-speed input {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 110px;
+      height: 20px;
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+    }
+    .sq1-speed input::-webkit-slider-runnable-track {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(
+        to right,
+        var(--accent) 0%,
+        var(--accent) var(--range-progress, 22.3%),
+        var(--surface-border) var(--range-progress, 22.3%),
+        var(--surface-border) 100%
+      );
+    }
+    .sq1-speed input::-moz-range-track {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--surface-border);
+    }
+    .sq1-speed input::-moz-range-progress {
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+    .sq1-speed input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      margin-top: -5px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .sq1-speed input::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    .sq1-speed input:focus-visible {
+      outline: 2px solid var(--focus-ring);
+      outline-offset: 4px;
+      border-radius: 999px;
+    }
     .sq1-status {
       min-width: 78px;
       color: var(--text-muted);
@@ -892,9 +947,17 @@ export function openAnimateAlgModal(
   document.getElementById(`${modalId}-reset`)!.onclick = () => viewer.reset();
   document.getElementById(`${modalId}-prev`)!.onclick = () => viewer.previous();
   document.getElementById(`${modalId}-next`)!.onclick = () => viewer.next();
-  (document.getElementById(`${modalId}-speed`) as HTMLInputElement).oninput = (event) => {
-    viewer.setSpeed(Number((event.target as HTMLInputElement).value));
+  const speedInput = document.getElementById(`${modalId}-speed`) as HTMLInputElement;
+  const updateSpeed = () => {
+    const min = Number(speedInput.min);
+    const max = Number(speedInput.max);
+    const value = Number(speedInput.value);
+    const progress = ((value - min) / (max - min)) * 100;
+    speedInput.style.setProperty('--range-progress', `${progress}%`);
+    viewer.setSpeed(value);
   };
+  speedInput.oninput = updateSpeed;
+  updateSpeed();
   pushModalState(modalId, close);
 }
 

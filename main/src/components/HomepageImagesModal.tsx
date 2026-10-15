@@ -174,6 +174,7 @@ function HomepageImagesSection(): React.ReactNode {
           width: '100%',
           fontWeight: 600,
           fontSize: '0.92rem',
+          transition: '0.2s',
           textAlign: 'center',
           background: 'var(--surface2)',
           border: '1px solid var(--border-color)',

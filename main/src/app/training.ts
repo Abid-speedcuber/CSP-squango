@@ -224,7 +224,7 @@ function createTrainingModal(): HTMLElement {
                     </svg>
                 </button>
                 <button class="training-modal-refresh" id="trainingSettingsBtn" title="Training settings">
-                    <img src="res/training-settings.svg" height="20" width="20">
+                    <span class="themed-icon themed-icon--training-settings" aria-hidden="true"></span>
                 </button>
                 <button class="training-modal-close" id="trainingCloseBtn" title="Close training">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -751,7 +751,7 @@ function handleTimerMouseLeave(): void {
   if (isHolding && !timerRunning) {
     isHolding = false;
     isHoldReady = false;
-    document.getElementById('trainingTimer')!.style.color = 'var(--text-primary)';
+    document.getElementById('trainingTimer')!.style.color = 'var(--text-ui)';
   }
 }
 
@@ -805,7 +805,7 @@ function releaseHold(): void {
   if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
     isHolding = false;
     isHoldReady = false;
-    timerEl.style.color = 'var(--text-primary)';
+    timerEl.style.color = 'var(--text-ui)';
     stopInspectionAndStartTimer();
     return;
   }
@@ -818,14 +818,14 @@ function releaseHold(): void {
   if (!isInspectionPhase && isHolding && isHoldReady) {
     isHolding = false;
     isHoldReady = false;
-    timerEl.style.color = 'var(--text-primary)';
+    timerEl.style.color = 'var(--text-ui)';
     startTimer();
     return;
   }
   if (isHolding) {
     isHolding = false;
     isHoldReady = false;
-    timerEl.style.color = 'var(--text-primary)';
+    timerEl.style.color = 'var(--text-ui)';
   }
 }
 
@@ -1042,7 +1042,7 @@ function startTimer(): void {
   timerStartTime = Date.now();
 
   const timerEl = document.getElementById('trainingTimer')!;
-  timerEl.style.color = 'var(--text-primary)';
+  timerEl.style.color = 'var(--text-ui)';
 
   if (timerInterval) clearInterval(timerInterval);
   timerInterval = setInterval(() => {
@@ -1061,7 +1061,7 @@ function stopTimerOnly(): void {
   const wasParityWrong = lastParityQuizWrong;
   lastParityQuizWrong = false;
   const timerEl = document.getElementById('trainingTimer')!;
-  timerEl.style.color = 'var(--text-primary)';
+  timerEl.style.color = 'var(--text-ui)';
   timerEl.textContent = (timerElapsed / 1000).toFixed(3);
 
   const insLabel = document.getElementById('trainingInspectionLabel');
@@ -1457,7 +1457,7 @@ function resetTimerStateOnEscape(wasTimerRunning: boolean): void {
 
   const timerEl = document.getElementById('trainingTimer');
   if (timerEl) {
-    timerEl.style.color = 'var(--text-primary)';
+    timerEl.style.color = 'var(--text-ui)';
     if (wasTimerRunning) {
       timerElapsed = 0;
       timerEl.textContent = '0.000';
@@ -1761,7 +1761,7 @@ function handleTrainingKeyUp(e: KeyboardEvent): void {
     if (isInspectionPhase && !parityQuizPhase && isHolding && isHoldReady) {
       isHolding = false;
       isHoldReady = false;
-      timerEl.style.color = 'var(--text-primary)';
+      timerEl.style.color = 'var(--text-ui)';
       stopInspectionAndStartTimer();
       return;
     }
@@ -1774,14 +1774,14 @@ function handleTrainingKeyUp(e: KeyboardEvent): void {
     if (!isInspectionPhase && isHolding && isHoldReady) {
       isHolding = false;
       isHoldReady = false;
-      timerEl.style.color = 'var(--text-primary)';
+      timerEl.style.color = 'var(--text-ui)';
       startTimer();
       return;
     }
     if (isHolding) {
       isHolding = false;
       isHoldReady = false;
-      timerEl.style.color = 'var(--text-primary)';
+      timerEl.style.color = 'var(--text-ui)';
     }
   }
 }
@@ -1967,7 +1967,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"></polyline></svg>
                 </button>
                 <button class="training-modal-refresh" id="evilQuizSettingsBtn" title="Settings">
-                    <img src="res/training-settings.svg" height="20" width="20">
+                    <span class="themed-icon themed-icon--training-settings" aria-hidden="true"></span>
                 </button>
                 <button class="training-modal-close" id="evilQuizClose">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -1986,7 +1986,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
                         You'll be shown an image of a scramble. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or an <span style="color:#8b0000;font-weight:700;">Evil</span> alg.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
                     </div>
-                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+                    <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
@@ -1996,7 +1996,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
                 <button id="evilQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
             <div id="evilQuizMedian" style="padding:10px 12px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border-color);"></div>
-            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="evilQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-ui);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
@@ -2287,7 +2287,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
             You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
             Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
         </div>
-        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
     </div>`;
         timerZone.appendChild(startOverlay);
         document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
@@ -2383,8 +2383,8 @@ function startParityQuiz(chosenCaseNames: number[]): void {
             </div>
             <div style="font-size:1.1rem;font-weight:600;color:var(--text-ui);">Which alg do you need?</div>
             <div style="display:flex;gap:1rem;justify-content:center;width:100%;max-width:320px;">
-                <button id="parityQuizGood" style="flex:1;padding:0.9rem;background:#2d6a2d;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Good Alg</button>
-                <button id="parityQuizBad" style="flex:1;padding:0.9rem;background:#8b0000;color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Bad Alg</button>
+                <button id="parityQuizGood" style="flex:1;padding:0.9rem;background:#2d6a2d;color:var(--text-on-color);border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Good Alg</button>
+                <button id="parityQuizBad" style="flex:1;padding:0.9rem;background:#8b0000;color:var(--text-on-color);border:none;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:opacity 0.2s;">Bad Alg</button>
             </div>
             <div id="parityQuizFeedback" style="min-height:26px;font-size:0.95rem;font-weight:600;color:var(--text-ui);"></div>
             <div class="training-modal-timer" id="parityQuizTimer">0.000</div>
@@ -2395,7 +2395,7 @@ function startParityQuiz(chosenCaseNames: number[]): void {
                 <button id="parityQuizSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
             <div id="parityQuizMedian" style="padding:10px 12px;font-size:0.85rem;font-weight:600;color:var(--text-secondary);border-bottom:1px solid var(--border-color);"></div>
-            <div id="parityQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="parityQuizLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-ui);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
@@ -2712,7 +2712,7 @@ function startColorRecognitionPractice(): void {
                         You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
                         Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                     </div>
-                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+                    <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
                 </div>
             </div>
         </div>
@@ -2721,7 +2721,7 @@ function startColorRecognitionPractice(): void {
                 <span>Answer Log</span>
                 <button id="colorRecogSidebarClose" style="background:none;border:none;font-size:1.4rem;cursor:pointer;color:var(--text-muted);line-height:1;">&times;</button>
             </div>
-            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-primary);display:flex;flex-direction:column;gap:6px;"></div>
+            <div id="colorRecogLogList" style="padding:10px 12px;font-size:0.82rem;color:var(--text-ui);display:flex;flex-direction:column;gap:6px;"></div>
         </div>
     `;
 
@@ -3010,7 +3010,7 @@ function startColorRecognitionPractice(): void {
                     You'll see three colors. Based on their colors, determine whether the parity is <span style="color:#2d6a2d;font-weight:700;">Even</span> or <span style="color:#8b0000;font-weight:700;">Odd</span>.<br><br>
                     Press the <strong>left half</strong> of the screen (or left-side keys) for Even, and the <strong>right half</strong> (or right-side keys) for Odd.
                 </div>
-                <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+                <button id="colorRecogStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
             </div>`;
     timerZone.appendChild(startOverlay);
     document.getElementById('colorRecogStartBtn')!.addEventListener('click', () => {
@@ -3053,7 +3053,7 @@ function openTrainerPickerModal(): void {
 
   const style = document.getElementById('trainerPickerStyle') || document.createElement('style');
   style.id = 'trainerPickerStyle';
-  style.textContent = `.trainer-pick-btn{padding:14px 18px;background:var(--surface2);border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:var(--accent);background:var(--hover-bg);}`;
+  style.textContent = `.trainer-pick-btn{padding:14px 18px;background:var(--surface2);border:2px solid var(--border-color);border-radius:10px;cursor:pointer;font-size:0.95rem;font-weight:600;color:var(--text-ui);text-align:left;width:100%;transition:all 0.15s;} .trainer-pick-btn:hover{border-color:var(--accent-hover);background:var(--hover-bg);}`;
   if (!style.parentNode) document.head.appendChild(style);
 
   document.body.appendChild(picker);
@@ -3213,7 +3213,7 @@ function createSelectorModal(): void {
         ">
             <div style="flex-shrink:0; padding: 16px 20px; background: var(--modal-header-bg); border-bottom: 1px solid var(--surface-border); display:flex; align-items:center; justify-content:space-between;">
                 <div style="display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;">
-                    <span style="font-size:1.15rem; font-weight:700; color: var(--text-primary);">Select Cases</span>
+                    <span style="font-size:1.15rem; font-weight:700; color: var(--text-ui);">Select Cases</span>
                     <span id="selectorCountBar" style="font-size:0.8rem; color:var(--text-secondary); font-weight:400;"></span>
                 </div>
                 <button onclick="closeSelectorModal()" style="background:none; border:none; font-size:1.6rem; cursor:pointer; color:var(--text-secondary); line-height:1; padding:0;">&times;</button>
@@ -3352,12 +3352,12 @@ function renderSelectorCases(): void {
       if (isLearned) {
         bgColor = isSelected ? 'var(--card-learned-header)' : 'var(--card-learned-bg)';
         borderColor = 'var(--card-learned-border)';
-        textColor = 'var(--text-primary)';
+        textColor = 'var(--text-ui)';
         checkColor = 'var(--card-learned-border)';
       } else if (isLearning) {
         bgColor = isSelected ? 'var(--card-learning-header)' : 'var(--card-learning-bg)';
         borderColor = 'var(--card-learning-border)';
-        textColor = 'var(--text-primary)';
+        textColor = 'var(--text-ui)';
         checkColor = 'var(--card-learning-border)';
       } else {
         const priorityBgs = [
@@ -3380,7 +3380,7 @@ function renderSelectorCases(): void {
         ];
         bgColor = isSelected ? priorityBgs[priorityLevel - 1] : 'var(--surface)';
         borderColor = isSelected ? priorityBords[priorityLevel - 1] : 'var(--border-color)';
-        textColor = 'var(--text-primary)';
+        textColor = 'var(--text-ui)';
         checkColor = 'var(--accent)';
       }
 
@@ -3407,7 +3407,7 @@ function renderSelectorCases(): void {
                     background:${isSelected ? checkColor : 'var(--surface)'};
                     display:flex; align-items:center; justify-content:center;
                 ">
-                    ${isSelected ? `<svg viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:9px;height:9px;"><polyline points="2 6 5 9 10 3"/></svg>` : ''}
+                    ${isSelected ? `<svg viewBox="0 0 12 12" fill="none" stroke="var(--text-on-color)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:9px;height:9px;"><polyline points="2 6 5 9 10 3"/></svg>` : ''}
                 </div>
                 <span style="font-size:0.78rem; font-weight:600; color:${textColor}; line-height:1.3; word-break:break-word;">${displayName.includes('/') ? displayName.replace(/ /g, '\u00A0').replace('/', '/\u200B') : displayName}</span>
             </div>

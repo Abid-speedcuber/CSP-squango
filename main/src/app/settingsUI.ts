@@ -1,9 +1,9 @@
 import { notify } from './store';
 
 export const SETTINGS_TABS = [
-  { id: 'homescreen', label: 'Personalization', icon: 'res/settings.svg' },
-  { id: 'parity', label: 'Parity Tracer Settings', icon: 'res/tracing.svg' },
-  { id: 'trainer', label: 'Trainer Settings', icon: 'res/training.svg' },
+  { id: 'homescreen', label: 'Personalization' },
+  { id: 'parity', label: 'Parity Tracer Settings' },
+  { id: 'trainer', label: 'Trainer Settings' },
 ] as const;
 
 export type SettingsTabId = (typeof SETTINGS_TABS)[number]['id'];

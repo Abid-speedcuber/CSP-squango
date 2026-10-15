@@ -126,7 +126,7 @@ function hydrateGeneralRow(row: HTMLTableRowElement): void {
                 isEvil ? 'var(--parity-invalid,#c00)' : 'var(--surface-border)'
               };border-radius:20px;cursor:pointer;transition:.3s;"><span style="position:absolute;height:16px;width:16px;left:${
                 isEvil ? '18px' : '2px'
-              };bottom:2px;background:white;border-radius:50%;transition:.3s;display:block;"></span></span></label></td>`
+              };bottom:2px;background:var(--surface-raised);border-radius:50%;transition:.3s;display:block;"></span></span></label></td>`
             : ''
         }
     `;
@@ -1184,7 +1184,7 @@ export function openQuickEditModal(): void {
                     <div class="quick-edit-title-wrapper">
                         <h2 onclick="toggleQuickEditTab()">Quick Edit</h2>
                         <button class="quick-edit-icon-btn instruction-btn" onclick="showQuickEditInfoModal()" title="Help">
-                            <img src="res/info.svg" alt="Help">
+                            <span class="themed-icon themed-icon--info" aria-hidden="true"></span>
                         </button>
                     </div>
                     <div class="quick-edit-subtitle" id="quickEditSubtitle">General Info</div>
@@ -1198,16 +1198,16 @@ export function openQuickEditModal(): void {
                         +2
                     </button>
                     <button class="quick-edit-icon-btn alg-variables-btn-header" onclick="openAlgVariablesModal()" title="Algorithm Variables" style="display: none;">
-                        <img src="res/var.svg" alt="Variables">
+                        <span class="themed-icon themed-icon--variables" aria-hidden="true"></span>
                     </button>
                     <button class="quick-edit-icon-btn" onclick="openQuickEditFindReplace()" title="Find and Replace (Ctrl+F)">
-                        <img src="res/search.svg" alt="Find">
+                        <span class="themed-icon themed-icon--search" aria-hidden="true"></span>
                     </button>
                     <button class="quick-edit-icon-btn" onclick="saveQuickEditChanges()" title="Save changes">
-                        <img src="res/save.svg" alt="Save">
+                        <span class="themed-icon themed-icon--save" aria-hidden="true"></span>
                     </button>
                     <button class="quick-edit-icon-btn" onclick="closeQuickEditModal()" title="Exit">
-                        <img src="res/exit.svg" alt="Exit">
+                        <span class="themed-icon themed-icon--exit" aria-hidden="true"></span>
                     </button>
                 </div>
             </div>
@@ -1222,10 +1222,10 @@ export function openQuickEditModal(): void {
                         <input type="text" id="quickEditFindInput" placeholder="Find" oninput="liveSearchQuickEdit()">
                         <div class="find-nav-buttons">
                             <button onclick="findPreviousQuickEdit()" title="Previous match">
-                                <img src="res/previous.svg" alt="Previous">
+                                <span class="themed-icon themed-icon--previous" aria-hidden="true"></span>
                             </button>
                             <button onclick="findNextQuickEdit()" title="Next match">
-                                <img src="res/next.svg" alt="Next">
+                                <span class="themed-icon themed-icon--next" aria-hidden="true"></span>
                             </button>
                         </div>
                     </div>
@@ -1387,8 +1387,8 @@ function algVarRowHTML(name: string, value: string): string {
             <td style="padding: 6px 4px; text-align:center;">
                 <button onclick="this.closest('tr').remove()" style="
                     background: var(--delete-btn-bg); border: none; border-radius: 5px;
-                    cursor: pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
-                "><img src="res/delete.svg" style="width:14px;height:14px;" alt="Delete"></button>
+                    color: var(--text-ui); cursor: pointer; width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+                "><span class="themed-icon themed-icon--delete" aria-hidden="true" style="width:14px;height:14px;"></span></button>
             </td>
         </tr>
     `;
@@ -1433,7 +1433,7 @@ function openAlgVariablesModal(): void {
                 <span style="font-size: 1.15rem; font-weight: 700; color: var(--text-ui);">Algorithm Variables</span>
                 <div style="display: flex; gap: 8px; align-items: center;">
                     <button onclick="saveAlgVariables()" style="
-                        padding: 7px 18px; background: var(--accent); color: white;
+                        padding: 7px 18px; background: var(--accent); color: var(--text-on-color);
                         border: none; border-radius: 7px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
                     ">Save</button>
                     <button onclick="closeAlgVariablesModal()" style="
@@ -1443,7 +1443,7 @@ function openAlgVariablesModal(): void {
                 </div>
             </div>
             <div style="padding: 14px 22px 6px; flex-shrink: 0; color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; background: var(--surface);">
-                Use <code style="background:var(--surface2);border:1px solid var(--border-color);padding:1px 5px;border-radius:4px;font-size:0.82rem;color:var(--text-primary);">:varName:</code> inside any algorithm to insert the variable's value at defocus.
+                Use <code style="background:var(--surface2);border:1px solid var(--border-color);padding:1px 5px;border-radius:4px;font-size:0.82rem;color:var(--text-ui);">:varName:</code> inside any algorithm to insert the variable's value at defocus.
                 Variable values are normalized when you click away.
             </div>
             <div style="overflow-y: auto; flex: 1; padding: 10px 22px 18px;">

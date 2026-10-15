@@ -103,7 +103,7 @@ export function confirmExpensiveOp(title: string, message: string, onConfirm: ()
             <p style="margin:0 0 18px;color:var(--text-secondary);font-size:0.9rem;line-height:1.5;">${message}</p>
             <div style="display:flex;gap:8px;justify-content:flex-end;">
                 <button id="_ceo_cancel" style="padding:7px 16px;background:var(--surface2);color:var(--text-ui);border:1px solid var(--border-color);border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-                <button id="_ceo_confirm" style="padding:7px 16px;background:var(--bar-learned);color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
+                <button id="_ceo_confirm" style="padding:7px 16px;background:var(--bar-learned);color:var(--text-on-color);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Apply</button>
             </div>
         </div>`;
   document.body.appendChild(overlay);

@@ -171,8 +171,8 @@ export function addNewAlgorithmField(): void {
   newField.style.cssText = 'display: flex; gap: 8px; align-items: center;';
   newField.innerHTML = `
         <input type="text" class="alg-input" value="" placeholder="Enter algorithm" data-original="" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
-        <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
-            <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
+        <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: var(--text-ui); border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+            <span class="themed-icon themed-icon--delete" aria-hidden="true" style="width:16px;height:16px;"></span>
         </button>
     `;
 
@@ -207,8 +207,8 @@ export function openCaseRenameModal(caseName: string, currentName: string, curre
                     <input type="text" id="caseSubtitleRenameInput" value="${escapeAttr(currentSubtitle)}" placeholder="Enter a subtitle for this case" style="width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem;">
                 </div>
                 <div style="text-align: center; margin-top: 20px;">
-                    <button onclick="applyCaseRename('${escapeAttr(caseName)}')" style="padding: 10px 20px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
-                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="applyCaseRename('${escapeAttr(caseName)}')" style="padding: 10px 20px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">OK</button>
+                    <button onclick="closeCaseRenameModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>
@@ -325,8 +325,8 @@ export function openEditCaseModal(caseName: string, openedFromTrainingCaseInfo =
                 <div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <span class="modal-title" id="editCaseTitle">${getDisplayName(caseName)}</span>
-                        <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}', '${customSubtitle.replace(/'/g, "\\'")}')" style="background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center;">
-                            <img src="res/pen.svg" style="width: 20px; height: 20px;" alt="Edit name">
+                        <button onclick="openCaseRenameModal('${caseName.replace(/'/g, "\\'")}', '${customName.replace(/'/g, "\\'")}', '${customSubtitle.replace(/'/g, "\\'")}')" style="background: none; border: none; color: var(--text-ui); cursor: pointer; padding: 4px; display: flex; align-items: center;">
+                            <span class="themed-icon themed-icon--pen" aria-hidden="true" style="width:20px;height:20px;"></span>
                         </button>
                         <button onclick="showEditCaseInfoModal()" class="case-detail-info-btn" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
@@ -349,15 +349,15 @@ export function openEditCaseModal(caseName: string, openedFromTrainingCaseInfo =
                             (alg) => `
                             <div style="display: flex; gap: 8px; align-items: center;">
                                 <input type="text" class="alg-input" value="${alg.replace(/"/g, '&quot;')}" data-original="${alg.replace(/"/g, '&quot;')}" style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-family: monospace; font-size: 0.9rem; font-weight: 600; transition: color 0.15s;">
-                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
-                                    <img src="res/delete.svg" style="width: 16px; height: 16px;" alt="Delete">
+                                <button onclick="this.parentElement.remove()" style="padding: 6px; background: var(--delete-btn-bg); color: var(--text-ui); border: none; border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;">
+                                    <span class="themed-icon themed-icon--delete" aria-hidden="true" style="width:16px;height:16px;"></span>
                                 </button>
                             </div>
                         `,
                           )
                           .join('')}
                     </div>
-                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
+                    <button id="addAlgorithmBtn" onclick="addNewAlgorithmField()" style="margin-top: 10px; padding: 8px 16px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">+ Add Algorithm</button>
                 </div>
 
                 ${evilnessFactor ? `
@@ -366,14 +366,14 @@ export function openEditCaseModal(caseName: string, openedFromTrainingCaseInfo =
                     <label class="evil-switch" style="position:relative;display:inline-block;width:42px;height:24px;">
                         <input type="checkbox" id="evilCaseToggle" ${evilnessMap[caseId] ? 'checked' : ''} style="opacity:0;width:0;height:0;">
                         <span style="position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:${evilnessMap[caseId] ? 'var(--parity-invalid, #c00)' : 'var(--surface-border)'};border-radius:24px;transition:.3s;">
-                            <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseId] ? '21px' : '3px'};bottom:3px;background:white;border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
+                            <span style="position:absolute;content:'';height:18px;width:18px;left:${evilnessMap[caseId] ? '21px' : '3px'};bottom:3px;background:var(--surface-raised);border-radius:50%;transition:.3s;display:block;" id="evilSwitchKnob"></span>
                         </span>
                     </label>
                 </div>
                 ` : ''}
                 <div style="text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--surface-border);">
-                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
-                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
+                    <button onclick="saveEditedCase('${caseName.replace(/'/g, "\\'")}')" style="padding: 10px 20px; background: var(--bar-learned); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save Changes</button>
+                    <button onclick="closeEditCaseModal()" style="padding: 10px 20px; background: var(--delete-btn-bg); color: var(--text-on-color); border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
                 </div>
             </div>
         </div>

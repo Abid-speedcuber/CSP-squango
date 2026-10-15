@@ -21,10 +21,11 @@
     --border-color:    #dddddd;    /* input and card borders (slightly stronger) */
 
     /* ── Typography ── */
-    --text-primary:   #333333;     /* body text, titles, input text, modal titles */
-    --text-ui:        #2d3748;     /* sidebar, profile header, settings chrome labels */
+    --text-primary:   #333333;     /* cube faces and text that should stand out */
+    --text-ui:        #2d3748;     /* normal interface text */
     --text-secondary: #666666;     /* muted labels, icons, descriptions, subtitles */
     --text-muted:     #999999;     /* disabled, empty states, finish moves, close btn */
+    --text-on-color:  #ffffff;     /* text/icons on saturated or always-dark surfaces */
 
     /* ── Accent / interactive ── */
     --bar-learned:       #28a745;
@@ -89,7 +90,7 @@
 
     /* ── Info box ── */
     --info-box-bg:    rgba(0, 0, 0, 0.75);
-    --info-box-color: #ffffff;
+    --info-box-color: var(--text-on-color);
 
     /* ── Scrollbar ── */
     --scrollbar-thumb:       rgba(0, 0, 0, 0.2);
@@ -138,8 +139,8 @@
 /* ═══════════════════════════════════════════════════════════
    DARK THEME OVERRIDES
    All contrast ratios are WCAG AA compliant (≥4.5:1 for
-   normal text). SVG piece fills stay white — they are legible
-   on every dark card background chosen below.
+   normal text). Canonical white cube faces resolve to --text-primary
+   in dark mode; internal SVG mask geometry remains white.
    ═══════════════════════════════════════════════════════════ */
 [data-theme="dark"] {
     color-scheme: dark;
@@ -156,6 +157,7 @@
     --text-ui:        #c4c8d8;
     --text-secondary: #9299b0;
     --text-muted:     #6b7080;
+    --text-on-color:  var(--text-primary);
 
     --accent:            #3a7bd5;
     --accent-hover:      #5596f0;
@@ -184,7 +186,7 @@
     --parity-invalid:     #ff0000;
 
     --svg-stroke:   #c8ccd8;
-    --svg-fill:     #d0d4e0;
+    --svg-fill:     var(--text-primary);
     --svg-label-bg: rgba(30, 32, 40, 0.75);
     --card-labels:  #7fa8ff;
 
@@ -208,7 +210,7 @@
     --p7-bg: #252832; --p7-border: #585c70; --p7-header: #2e3040; --p7-svg: #2a2d3a;
 
     --info-box-bg:    rgba(6, 8, 14, 0.94);
-    --info-box-color: #e2e4ed;
+    --info-box-color: var(--text-primary);
 
     --scrollbar-thumb:       rgba(255, 255, 255, 0.12);
     --scrollbar-thumb-hover: rgba(255, 255, 255, 0.24);
@@ -320,7 +322,7 @@ html.scroll-locked body {
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: var(--background);
-    color: var(--text-primary);
+    color: var(--text-ui);
     padding: 20px;
     overflow-y: scroll;
     scrollbar-gutter: stable;
@@ -341,7 +343,7 @@ header {
 h1 {
     font-size: 3rem;
     margin-bottom: 5px;
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .subtitle {
@@ -411,7 +413,7 @@ h1 {
     min-width: 44px;
     border-radius: 8px;
     background: var(--accent);
-    color: white;
+    color: var(--text-on-color);
     border: none;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -427,7 +429,7 @@ h1 {
     }
 }
 
-.search-toggle-btn svg {
+.search-toggle-btn .themed-icon {
     width: 22px;
     height: 22px;
 }
@@ -440,7 +442,7 @@ input[type="text"] {
     border-radius: 5px;
     font-size: 1rem;
     background: var(--surface-raised);
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 select {
@@ -451,7 +453,7 @@ select {
     border-radius: 5px;
     font-size: 1rem;
     background: var(--surface-raised);
-    color: var(--text-primary);
+    color: var(--text-ui);
     cursor: pointer;
 }
 
@@ -570,7 +572,7 @@ select {
 .card-title {
     font-size: 1.1rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-ui);
     flex: 1;
 }
 
@@ -766,7 +768,7 @@ select {
     word-wrap: break-word;
     overflow-wrap: anywhere;
     white-space: normal;
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .topbar {
@@ -775,7 +777,7 @@ select {
     padding: 20px;
     margin-bottom: 20px;
     box-shadow: var(--card-shadow);
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .topbar-vw-mode {
@@ -945,11 +947,36 @@ body.modal-open .floating-buttons-container {
 }
 
 .sidebar-item img,
-.sidebar-item svg {
+.sidebar-item svg,
+.sidebar-item .themed-icon {
     width: 24px;
     height: 24px;
     flex-shrink: 0;
 }
+
+.themed-icon {
+    display: inline-block;
+    flex: 0 0 auto;
+    background-color: currentColor;
+    mask: var(--icon-mask) center / contain no-repeat;
+    -webkit-mask: var(--icon-mask) center / contain no-repeat;
+}
+
+.themed-icon--menu { --icon-mask: url("res/menu.svg"); }
+.themed-icon--search { --icon-mask: url("res/search.svg"); }
+.themed-icon--info { --icon-mask: url("res/info.svg"); }
+.themed-icon--variables { --icon-mask: url("res/var.svg"); }
+.themed-icon--save { --icon-mask: url("res/save.svg"); }
+.themed-icon--exit { --icon-mask: url("res/exit.svg"); }
+.themed-icon--previous { --icon-mask: url("res/previous.svg"); }
+.themed-icon--next { --icon-mask: url("res/next.svg"); }
+.themed-icon--delete { --icon-mask: url("res/delete.svg"); }
+.themed-icon--pen { --icon-mask: url("res/pen.svg"); }
+.themed-icon--notes { --icon-mask: url("res/notes.svg"); }
+.themed-icon--training { --icon-mask: url("res/training.svg"); }
+.themed-icon--tracing { --icon-mask: url("res/tracing.svg"); }
+.themed-icon--settings { --icon-mask: url("res/settings.svg"); }
+.themed-icon--training-settings { --icon-mask: url("res/training-settings.svg"); }
 
 .sidebar-divider {
     height: 1px;
@@ -985,7 +1012,7 @@ body.modal-open .floating-buttons-container {
     }
 }
 
-.sidebar-toggle-btn img {
+.sidebar-toggle-btn .themed-icon {
     width: 24px;
     height: 24px;
 }
@@ -1003,7 +1030,7 @@ body.modal-open .floating-buttons-container {
         height: 40px;
     }
 
-    .sidebar-toggle-btn img {
+    .sidebar-toggle-btn .themed-icon {
         width: 20px;
         height: 20px;
     }
@@ -1015,7 +1042,7 @@ body.modal-open .floating-buttons-container {
         height: 36px;
     }
 
-    .sidebar-toggle-btn img {
+    .sidebar-toggle-btn .themed-icon {
         width: 18px;
         height: 18px;
     }
@@ -1107,7 +1134,7 @@ body.modal-open .floating-buttons-container {
 .modal-title {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .close-btn {
@@ -1189,7 +1216,7 @@ body.modal-open .floating-buttons-container {
     padding: 8px;
     background: var(--surface2);
     border-radius: 4px;
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 footer {
@@ -1424,7 +1451,7 @@ body.modal-open .homepage-info-btn {
     width: 300px;
     pointer-events: auto;
     border: 1px solid var(--surface-border);
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 @media (max-width: 620px) {
@@ -1572,7 +1599,7 @@ body.modal-open .homepage-info-btn {
         max-height: 48px;
     }
 
-    .sidebar-toggle-btn img {
+    .sidebar-toggle-btn .themed-icon {
         width: 5vw;
         height: 5vw;
         min-width: 18px;
@@ -1717,7 +1744,7 @@ body.modal-open .homepage-info-btn {
         flex-shrink: 0;
     }
 
-    .search-toggle-btn img {
+    .search-toggle-btn .themed-icon {
         width: 20px;
         height: 20px;
     }
@@ -2037,7 +2064,7 @@ body.modal-open .homepage-info-btn {
     z-index: 9999;
     max-width: 400px;
     pointer-events: auto;
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .algo-popup.permanent {
@@ -2084,7 +2111,7 @@ body.modal-open .homepage-info-btn {
     }
 }
 
-.settings-info-btn img {
+.settings-info-btn .themed-icon {
     width: 12px;
     height: 12px;
 }
@@ -2120,7 +2147,7 @@ body.modal-open .homepage-info-btn {
 /* color theme stuff */
 /* ── Algo popup elements ── */
 .popup-label    { font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px; font-weight: 600; }
-.popup-setup    { font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: var(--surface2); color: var(--text-primary); border-radius: 3px; cursor: pointer; transition: background 0.15s; }
+.popup-setup    { font-size: 0.8rem; margin-bottom: 8px; padding: 4px; background: var(--surface2); color: var(--text-ui); border-radius: 3px; cursor: pointer; transition: background 0.15s; }
 @media (hover: hover) {
     .popup-setup:hover {
         background: var(--hover-bg);
@@ -2159,7 +2186,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
 .priority-opt.selected { background: var(--hover-bg); color: var(--link-color); }
 
 /* ── Render loading indicator ── */
-#renderLoadingIndicator { background: var(--loading-overlay-bg) !important; color: var(--text-primary) !important; }
+#renderLoadingIndicator { background: var(--loading-overlay-bg) !important; color: var(--text-ui) !important; }
 
 /* ── Training previous-scramble bar ── */
 #prevScrambleBar { background: var(--prevscramble-bar-bg) !important; border-top-color: var(--prevscramble-bar-border) !important; color: var(--text-secondary) !important; }
@@ -2311,7 +2338,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
 /* ── Search toggle override (was inline in html) ─────────────── */
 .search-toggle-icon-btn {
     background-color: var(--surface-raised);
-    color: var(--text-primary);
+    color: var(--text-ui);
     height: 35px;
     width: 35px;
 }
@@ -2410,7 +2437,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     right: 20px;
     padding: 12px 24px;
     background: var(--accent);
-    color: white;
+    color: var(--text-on-color);
     border: none;
     border-radius: 8px;
     cursor: pointer;
@@ -2446,7 +2473,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     align-items: center;
     gap: 12px;
     font-size: 0.95rem;
-    color: var(--text-primary);
+    color: var(--text-ui);
     font-weight: 500;
 }
 
@@ -2546,10 +2573,10 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     font-weight: 600;
 }
 
-.confirm-btn--primary  { background: var(--accent);        color: white; }
-.confirm-btn--neutral  { background: var(--delete-btn-bg); color: var(--text-primary); }
-.confirm-btn--secondary { background: var(--delete-btn-bg); color: var(--text-primary); }
-.confirm-btn--danger   { background: #c0392b;              color: white; }
+.confirm-btn--primary  { background: var(--accent);        color: var(--text-on-color); }
+.confirm-btn--neutral  { background: var(--delete-btn-bg); color: var(--text-ui); }
+.confirm-btn--secondary { background: var(--delete-btn-bg); color: var(--text-ui); }
+.confirm-btn--danger   { background: #c0392b;              color: var(--text-on-color); }
 @media (hover: hover) {
     .confirm-btn--danger:hover {
         background: #a93226;
@@ -2581,7 +2608,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     max-width: 500px;
     width: 100%;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    color: var(--text-primary);
+    color: var(--text-ui);
     line-height: 1.6;
 }
 
@@ -2590,7 +2617,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     margin: 20px auto 0;
     padding: 10px 24px;
     background: var(--accent);
-    color: white;
+    color: var(--text-on-color);
     border: none;
     border-radius: 6px;
     cursor: pointer;
@@ -2694,13 +2721,13 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     font-family: monospace;
     font-size: 0.9rem;
     background: var(--surface-raised);
-    color: var(--text-primary);
+    color: var(--text-ui);
 }
 
 .alg-delete-btn {
     padding: 6px;
     background: var(--delete-btn-bg);
-    color: var(--text-primary);
+    color: var(--text-ui);
     border: none;
     border-radius: 4px;
     cursor: pointer;
@@ -2723,49 +2750,6 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
 
 
 /* ================================================================
-   DARK-MODE SVG ICON INVERSION
-   Using html[data-theme="dark"] gives specificity (0,2,0) + element
-   selectors, which beats all plain class-based filter rules in other
-   stylesheets (svg-editor, quick-edit) without needing !important.
-
-   How it works: filter is applied to the <img> element in the host
-   document — it is NOT blocked by SVG's <img> isolation boundary.
-   (Only CSS custom properties / currentColor are blocked.)
-
-   Excluded: avatar images (semantic shape/color, must not invert).
-   The always-dark headers (svg-editor, quick-edit) already have their
-   own permanent brightness(0) invert(1) rules; this block leaves them
-   alone in light mode and correctly overrides to plain invert(1) in
-   dark mode — visually the same (black icon → white either way).
-   ================================================================ */
-
-/* Smooth transition on theme switch for all SVG <img> icons */
-img[src$=".svg"] {
-    transition: filter 0.25s ease;
-}
-
-/* All pure-black icon SVGs — invert to white in dark mode */
-html[data-theme="dark"] img[src$="settings.svg"],
-html[data-theme="dark"] img[src$="tracing.svg"],
-html[data-theme="dark"] img[src$="training.svg"],
-html[data-theme="dark"] img[src$="delete.svg"],
-html[data-theme="dark"] img[src$="exit.svg"],
-html[data-theme="dark"] img[src$="info.svg"],
-html[data-theme="dark"] img[src$="menu.svg"],
-html[data-theme="dark"] img[src$="next.svg"],
-html[data-theme="dark"] img[src$="notes.svg"],
-html[data-theme="dark"] img[src$="pen.svg"],
-html[data-theme="dark"] img[src$="previous.svg"],
-html[data-theme="dark"] img[src$="redo.svg"],
-html[data-theme="dark"] img[src$="reset.svg"],
-html[data-theme="dark"] img[src$="revert.svg"],
-html[data-theme="dark"] img[src$="save.svg"],
-html[data-theme="dark"] img[src$="search.svg"] {
-    filter: invert(1);
-}
-
-
-/* ================================================================
    CUBESHAPE SVG THEMING
    The .cubeshape-svg elements are injected inline (from svg.js),
    so CSS properties DO cross into the SVG — unlike <img>-loaded SVGs.
@@ -2774,8 +2758,7 @@ html[data-theme="dark"] img[src$="search.svg"] {
    - path:first-child → the single diagonal divider line
      (stroke="#848484", no fill). This is the ONLY path without
      fill="white", and it always appears first.
-   - All other path:not(.label-toggle) → the actual shape piece faces
-     (fill="white" stroke="black" stroke-width="4").
+   - All other path:not(.label-toggle) → the actual shape piece faces.
    - .label-toggle paths → colored position numbers (red/blue).
      NOT overridden — user-meaningful colors.
 
@@ -2787,7 +2770,7 @@ html[data-theme="dark"] img[src$="search.svg"] {
 
 /* Shape piece fills and strokes — pieces only (not divider line) */
 .cubeshape-svg path:not(:first-child):not(.label-toggle) {
-    /* fill: var(--svg-fill); */
+    fill: var(--svg-fill);
     stroke: var(--svg-stroke);
 }
 
@@ -2818,8 +2801,8 @@ html[data-theme="dark"] img[src$="search.svg"] {
 @media (hover: hover) {
     .settings-action-btn:hover {
         background: var(--hover-bg) !important;
-        border-color: var(--accent) !important;
-        color: var(--accent) !important;
+        border-color: var(--accent-hover) !important;
+        color: var(--accent-hover) !important;
     }
 }
 
@@ -2883,7 +2866,7 @@ html[data-theme="dark"] img[src$="search.svg"] {
     text-align: left;
     cursor: pointer;
 }
-#settingsSidebar button img { flex-shrink: 0; opacity: .55; }
+#settingsSidebar button .themed-icon { flex-shrink: 0; opacity: .55; }
 #settingsSidebar button[aria-current] { background: var(--surface-border); color: var(--text-ui); }
 @media (hover: hover) {
     #settingsSidebar button:hover {
@@ -2891,7 +2874,7 @@ html[data-theme="dark"] img[src$="search.svg"] {
         color: var(--text-ui);
     }
 }
-#settingsSidebar button[aria-current] img { opacity: 1; }
+#settingsSidebar button[aria-current] .themed-icon { opacity: 1; }
 #settingsPanel {
     flex: 1;
     min-width: 0;

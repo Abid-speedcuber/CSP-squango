@@ -88,7 +88,7 @@ export default function InfoTip({ tipHtml, label = 'More info' }: InfoTipProps):
           setOpen(!open);
         }}
       >
-        <img src="res/info.svg" alt="" />
+        <span className="themed-icon themed-icon--info" aria-hidden="true" />
       </button>
       {open ? createPortal(
         <span

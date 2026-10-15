@@ -59,23 +59,23 @@ function ensureStaticModals(): void {
                 </div>
                 <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Top Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Top Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="top" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="top" data-color="#474747" style="background: #474747; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
+                            <button class="color-btn" data-face="top" data-color="#474747" style="background: #474747; color: var(--text-on-color); width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
                             <button class="color-btn" data-face="top" data-color="#FFFFFF" style="background: #FFFFFF; color: #000000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Bottom Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Bottom Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="bottom" data-color="#FFFF00" style="background: #FFFF00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Yellow</button>
-                            <button class="color-btn" data-face="bottom" data-color="#474747" style="background: #474747; color: white; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
+                            <button class="color-btn" data-face="bottom" data-color="#474747" style="background: #474747; color: var(--text-on-color); width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Black</button>
                             <button class="color-btn" data-face="bottom" data-color="#FFFFFF" style="background: #FFFFFF; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">White</button>
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Front Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Front Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="front" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="front" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -84,7 +84,7 @@ function ensureStaticModals(): void {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Right Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Right Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="right" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="right" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -93,7 +93,7 @@ function ensureStaticModals(): void {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Back Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Back Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="back" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="back" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -102,7 +102,7 @@ function ensureStaticModals(): void {
                         </div>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-primary);">Left Color:</label>
+                        <label style="display: block; font-weight: 600; margin-bottom: 8px; color: var(--text-ui);">Left Color:</label>
                         <div style="display: flex; gap: 10px;">
                             <button class="color-btn" data-face="left" data-color="#CC0000" style="background: #CC0000; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Red</button>
                             <button class="color-btn" data-face="left" data-color="#00AA00" style="background: #00AA00; width: 60px; height: 40px; border-radius: 4px; cursor: pointer;">Green</button>
@@ -172,7 +172,7 @@ function ensureStaticModals(): void {
                         <input id="profileNameInputDesktop" type="text" maxlength="24" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; margin-bottom: 14px;" placeholder="Your name">
                         <label style="display: block; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">Choose Avatar</label>
                         <div id="avatarGridDesktop" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px;"></div>
-                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
+                        <button onclick="saveProfileEdit('Desktop')" style="width: 100%; padding: 9px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -242,7 +242,7 @@ function ensureStaticModals(): void {
                         <input id="profileNameInputMobile" type="text" maxlength="24" style="width: 100%; padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 1rem; margin-bottom: 16px;" placeholder="Your name">
                         <label style="display: block; font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;">Choose Avatar</label>
                         <div id="avatarGridMobile" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px;"></div>
-                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
+                        <button onclick="saveProfileEdit('Mobile')" style="width: 100%; padding: 11px; background: var(--accent); color: var(--text-on-color); border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem;">Save</button>
                     </div>
                 </div>
             </div>
@@ -258,7 +258,7 @@ function ensureStaticModals(): void {
             <!-- Header -->
             <div style="
                 background: var(--about-header-bg);
-                color: #ffffff;
+                color: var(--text-on-color);
                 padding: 22px 26px;
                 display: flex;
                 justify-content: space-between;
@@ -268,7 +268,7 @@ function ensureStaticModals(): void {
                     About SquanGo CSP
                 </span>
                 <button class="close-btn" onclick="closeAboutModal()" style="
-                    color: white;
+                    color: var(--text-on-color);
                     font-size: 1.6rem;
                     opacity: 0.9;
                 ">&times;</button>
@@ -375,7 +375,9 @@ function ensureStaticModals(): void {
       const g = parseInt(bg.substr(3, 2), 16);
       const b = parseInt(bg.substr(5, 2), 16);
       (btn as HTMLElement).style.color =
-        0.299 * r + 0.587 * g + 0.114 * b > 128 ? '#000000' : '#ffffff';
+        0.299 * r + 0.587 * g + 0.114 * b > 128
+          ? '#000000'
+          : getComputedStyle(document.documentElement).getPropertyValue('--text-on-color').trim() || '#ffffff';
     }
     btn.addEventListener('click', () => {
       const face = btn.getAttribute('data-face');
@@ -400,6 +402,8 @@ export function openColorSchemeModal(): void {
   const modal = document.getElementById('colorSchemeModal');
   if (!modal) return;
 
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
   document.documentElement.classList.add('scroll-locked');
   modal.style.zIndex = '10015';
   modal.classList.add('active');
@@ -413,6 +417,9 @@ export function openColorSchemeModal(): void {
     if (!face || !color) return;
     const currentColor = (colorScheme as unknown as Record<string, string>)[face + 'Color'];
     btn.classList.toggle('selected', color === currentColor);
+    if (color.toLowerCase() === '#ffffff') {
+      (btn as HTMLElement).style.backgroundColor = isDark ? themeTextColor : color;
+    }
   });
 }
 
@@ -752,7 +759,7 @@ export function handlePresetChange(presetName: string): void {
                     <button class="close-btn">&times;</button>
                 </div>
                 <div class="modal-body">
-                    <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
+                    <p style="margin: 0 0 10px 0; font-size: 1rem; line-height: 1.6; color: var(--text-ui);">
                         Reloading will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
                         It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the newest version of this preset.
                     </p>
@@ -805,11 +812,11 @@ export function handlePresetChange(presetName: string): void {
   warningModal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header" style="background: var(--surface); border-bottom: 2px solid var(--border-color);">
-                <span class="modal-title" style="color: var(--text-primary);">Warning: Data Loss</span>
+                <span class="modal-title" style="color: var(--text-ui);">Warning: Data Loss</span>
                 <button class="close-btn">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: var(--text-primary);">
+                <p style="margin: 0 0 15px 0; font-size: 1rem; line-height: 1.6; color: var(--text-ui);">
                     Switching to "<strong>${presetName.replace(/_/g, ' ')}</strong>" will <strong>keep</strong> your learning progress (learned/learning/planned states) and personal preferences (font size, hints, etc.).<br><br>
                     It will <strong>replace</strong> your algs, color scheme, tracing guides, case display names, subtitles, and notes with what's in the preset.
                 </p>
@@ -954,19 +961,19 @@ export function generateSidebarHTML(): void {
                     <span>Profile</span>
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openGeneralNotesModal(), 350);">
-                    <img src="res/notes.svg" alt="Notes">
+                    <span class="themed-icon themed-icon--notes" aria-hidden="true"></span>
                     <span>General Notes</span>
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(() => openTrainerPickerModal(), 350);">
-                    <img src="res/training.svg" alt="Trainer">
+                    <span class="themed-icon themed-icon--training" aria-hidden="true"></span>
                     <span>Trainer</span>
                 </button>
                 <button class="sidebar-item" onclick="openNewParityAnalysis(null); closeSidebar();">
-                    <img src="res/tracing.svg" alt="Parity Tracer">
+                    <span class="themed-icon themed-icon--tracing" aria-hidden="true"></span>
                     <span>Parity Tracer</span>
                 </button>
                 <button class="sidebar-item" onclick="closeSidebar(); setTimeout(()=>window.openUnifiedSettings('homescreen'),350);">
-                    <img src="res/training-settings.svg" alt="Settings">
+                    <span class="themed-icon themed-icon--training-settings" aria-hidden="true"></span>
                     <span>Settings</span>
                 </button>
                 <div class="sidebar-divider"></div>

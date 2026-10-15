@@ -28,14 +28,25 @@ export interface DrawColorScheme {
 // Only explicitly-provided colors are forwarded so core defaults fill the rest.
 function toCoreColorScheme(colors: Partial<DrawColorScheme>): Record<string, string> {
   const mapped: Record<string, string> = {};
-  if (colors.topColor !== undefined) mapped.top = colors.topColor;
-  if (colors.bottomColor !== undefined) mapped.bottom = colors.bottomColor;
-  if (colors.frontColor !== undefined) mapped.front = colors.frontColor;
-  if (colors.rightColor !== undefined) mapped.right = colors.rightColor;
-  if (colors.backColor !== undefined) mapped.back = colors.backColor;
-  if (colors.leftColor !== undefined) mapped.left = colors.leftColor;
+  if (colors.topColor !== undefined) mapped.top = resolveThemeAwareWhite(colors.topColor);
+  if (colors.bottomColor !== undefined) mapped.bottom = resolveThemeAwareWhite(colors.bottomColor);
+  if (colors.frontColor !== undefined) mapped.front = resolveThemeAwareWhite(colors.frontColor);
+  if (colors.rightColor !== undefined) mapped.right = resolveThemeAwareWhite(colors.rightColor);
+  if (colors.backColor !== undefined) mapped.back = resolveThemeAwareWhite(colors.backColor);
+  if (colors.leftColor !== undefined) mapped.left = resolveThemeAwareWhite(colors.leftColor);
   if (colors.dividerColor !== undefined) mapped['slice-indicator'] = colors.dividerColor;
   return mapped;
+}
+
+export function resolveThemeAwareWhite(color: string): string {
+  if (
+    !/^#(?:fff|ffffff)$/i.test(color) ||
+    typeof document === 'undefined' ||
+    document.documentElement.getAttribute('data-theme') !== 'dark'
+  ) {
+    return color;
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim() || color;
 }
 
 function errorDiv(message: string): string {

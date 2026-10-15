@@ -40,7 +40,7 @@ import {
   setZ2TracingMode,
   TOP_HEX,
 } from '../lib/parityAnalyzer';
-import { visualizeFromHex } from '../lib/drawScramble';
+import { resolveThemeAwareWhite, visualizeFromHex } from '../lib/drawScramble';
 import {
   closeModalWithHistory,
   pushModalState,
@@ -103,6 +103,22 @@ function getEvilnessFactor(): boolean {
 
 function getEvilnessStringReturn(): boolean {
   return getEvilnessConfig().stringReturn;
+}
+
+function getTracerTextColor(backgroundColor: string): string {
+  const contrastColor = getContrastColor(backgroundColor);
+  if (
+    contrastColor === '#FFFFFF' &&
+    document.documentElement.getAttribute('data-theme') === 'dark'
+  ) {
+    const themeTextColor = getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim();
+    if (themeTextColor) return themeTextColor;
+  }
+  return contrastColor;
+}
+
+function isDarkTracerSurface(backgroundColor: string): boolean {
+  return getContrastColor(backgroundColor) === '#FFFFFF';
 }
 
 // Re-read the live tracer settings from localStorage (SettingsModal writes them
@@ -179,10 +195,10 @@ function buildTracerConfig(options: ParityTracerOptions = {}): TracerConfig {
     instructionText1: options.instructionText1 || 'Enter your scramble in the top input bar and press Analyze to trace parity.',
     instructionText2: options.instructionText2 || 'You can change the color scheme from Settings.',
     instructionText3: options.instructionText4 || 'Personalize your tracing methods and tracing positions from the settings button.',
-    topLayerMainColor: options.topColor || '#000000',
+    topLayerMainColor: resolveThemeAwareWhite(options.topColor || '#000000'),
     topLayerColorFullName: options.topColorName || 'Black',
     topLayerColorAbbreviation: options.topColorShort || 'B',
-    bottomLayerMainColor: options.bottomColor || '#FFFFFF',
+    bottomLayerMainColor: resolveThemeAwareWhite(options.bottomColor || '#FFFFFF'),
     bottomLayerColorFullName: options.bottomColorName || 'White',
     bottomLayerColorAbbreviation: options.bottomColorShort || 'W',
     frontFaceColorForVisualization: options.frontColor || '#CC0000',
@@ -262,21 +278,14 @@ function displayResults(container: HTMLElement, sixStepParity: SixStepParity, co
         const isTopLayer = TOP_HEX.has(h);
         const letter = isTopLayer ? config.topLayerColorAbbreviation : config.bottomLayerColorAbbreviation;
         const bgColor = isTopLayer ? config.topLayerMainColor : config.bottomLayerMainColor;
-        const textColor =
-          isTopLayer
-            ? config.topLayerMainColor === '#FFD700'
-              ? '#000000'
-              : '#FFFFFF'
-            : config.bottomLayerMainColor === '#FFFFFF'
-              ? '#000000'
-              : '#FFFFFF';
+        const textColor = getTracerTextColor(bgColor);
         return `<span style="display: inline-block; width: 18px; height: 18px; border-radius: 3px; margin: 0 1px; background: ${bgColor}; color: ${textColor}; text-align: center; line-height: 18px; font-size: 11px; font-weight: bold; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">${letter}</span>`;
       })
       .join('');
   }
 
-  const textColor = getContrastColor(config.backgroundColor);
-  const isDark = textColor === '#FFFFFF';
+  const textColor = getTracerTextColor(config.backgroundColor);
+  const isDark = isDarkTracerSurface(config.backgroundColor);
   const cardBgColor = isDark
     ? adjustColorBrightness(config.backgroundColor, DM_CARD_BG)
     : adjustColorBrightness(config.backgroundColor, LM_CARD_BG);
@@ -370,8 +379,8 @@ function setShapeOrientation(pattern: string, clickedIndex: number): void {
 
 // ── Instruction modals ───────────────────────────────────────────────────────
 function showInstructionModal(config: TracerConfig, title: string, bodyHTML: string, zIndex: string): void {
-  const textColor = getContrastColor(config.backgroundColor);
-  const isDark = textColor === '#FFFFFF';
+  const textColor = getTracerTextColor(config.backgroundColor);
+  const isDark = isDarkTracerSurface(config.backgroundColor);
   const cardBgColor = isDark
     ? adjustColorBrightness(config.backgroundColor, 12)
     : adjustColorBrightness(config.backgroundColor, -4);
@@ -412,19 +421,19 @@ function showParityTracerInstructionModal(config: TracerConfig): void {
     `
       <div class="training-info-item">
         <div class="training-info-number">1</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">Enter your scramble in the input bar to analyze the parity of the scramble using the <span style="font-weight: 550; font-style:italic;">Cale's tracing</span> method.</div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">Enter your scramble in the input bar to analyze the parity of the scramble using the <span style="font-weight: 550; font-style:italic;">Cale's tracing</span> method.</div>
       </div>
       <div class="training-info-item">
         <div class="training-info-number">2</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">You can customize your entire parity tracer from the settings button down below. If you need to change the color scheme, go the <b>Color Scheme Settings</b> under personalization tab in settings.</div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">You can customize your entire parity tracer from the settings button down below. If you need to change the color scheme, go the <b>Color Scheme Settings</b> under personalization tab in settings.</div>
       </div>
       <div class="training-info-item">
         <div class="training-info-number">3</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">Toggle the <b>z2</b> button on if you want to trace parity from the z2 orientation. Similarly toggle the <b>y2</b> button on to trace parity from y2 orientation. If you scrambled you square one with wrong color on front, toggle <b>Flip Color</b> on.</div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">Toggle the <b>z2</b> button on if you want to trace parity from the z2 orientation. Similarly toggle the <b>y2</b> button on to trace parity from y2 orientation. If you scrambled you square one with wrong color on front, toggle <b>Flip Color</b> on.</div>
       </div>
       <div class="training-info-item">
         <div class="training-info-number">4</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">Personalize your tracing methods and tracing positions from the Settings:
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">Personalize your tracing methods and tracing positions from the Settings:
           <ol>
             <li><b>Corner sticker mode</b> determines which sticker (left-most sticker or right-most sticker) of the corner you use for tracing. This doesn't affect parity calculations, just your personal preference.</li>
             <li><b>z2 tracing for 6 and 8 edge cases</b> means you prioritize the more edge-dense face to start your tracing, regardless of which layer it's on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped.</li>
@@ -437,7 +446,7 @@ function showParityTracerInstructionModal(config: TracerConfig): void {
       </div>
       <div class="training-info-item">
         <div class="training-info-number">5</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">For <b>symmetric shapes</b> (eg. square, barrel, 2-2-2, 4-4, star), click the center of the image of the shape to trace from <span style="font-weight: 550; font-style:italic;">different symmetry.</span></div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">For <b>symmetric shapes</b> (eg. square, barrel, 2-2-2, 4-4, star), click the center of the image of the shape to trace from <span style="font-weight: 550; font-style:italic;">different symmetry.</span></div>
       </div>
     `,
     '10010',
@@ -451,11 +460,11 @@ function showConfigOrientationInstructionModal(config: TracerConfig): void {
     `
       <div class="training-info-item">
         <div class="training-info-number">1</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">For each shape, select one piece as your starting point. When you trace CSP, you would start from this piece, and go clockwise.</div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">For each shape, select one piece as your starting point. When you trace CSP, you would start from this piece, and go clockwise.</div>
       </div>
       <div class="training-info-item">
         <div class="training-info-number">2</div>
-        <div class="training-info-text" style="color: ${getContrastColor(config.backgroundColor)};">Please just don't trace counterclockwise.</div>
+        <div class="training-info-text" style="color: ${getTracerTextColor(config.backgroundColor)};">Please just don't trace counterclockwise.</div>
       </div>
     `,
     '10011',
@@ -529,7 +538,7 @@ function showEvilnessCasesModal(
       <span id="evilUnsavedDot" style="font-size:0.8rem; color:var(--warning-color,#e08000); font-weight:600; display:none;">● Unsaved changes</span>
       <button id="evilResetBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Reset to Default</button>
       <button id="evilCancelBtn" style="padding:6px 14px; background:var(--surface); color:var(--text-ui); border:1px solid var(--border-color); border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600;">Cancel</button>
-      <button id="evilSaveBtn" style="padding:6px 14px; background:var(--bar-learned); color:#fff; border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
+      <button id="evilSaveBtn" style="padding:6px 14px; background:var(--bar-learned); color:var(--text-on-color); border:none; border-radius:7px; cursor:pointer; font-size:0.85rem; font-weight:600; opacity:0.4; pointer-events:none;" disabled>Save &amp; Apply</button>
     </div>
   `;
 
@@ -677,13 +686,13 @@ function showEvilnessCasesModal(
       const overlay = document.createElement('div');
       overlay.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:2147483646;`;
       const box = document.createElement('div');
-      box.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:white;padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:300px;`;
-      box.innerHTML = `<h3 style="margin:0 0 12px;color:#333;font-size:1.1rem;">Unsaved Changes</h3>
-        <p style="margin:0 0 20px;color:#666;font-size:0.9rem;">You have unsaved changes. What would you like to do?</p>
+      box.style.cssText = `position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--surface-raised);color:var(--text-ui);padding:24px;border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,0.4);z-index:2147483647;min-width:300px;`;
+      box.innerHTML = `<h3 style="margin:0 0 12px;color:var(--text-ui);font-size:1.1rem;">Unsaved Changes</h3>
+        <p style="margin:0 0 20px;color:var(--text-secondary);font-size:0.9rem;">You have unsaved changes. What would you like to do?</p>
         <div style="display:flex;gap:10px;justify-content:flex-end;">
-          <button class="d-btn" style="padding:8px 16px;background:#6c757d;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Discard</button>
-          <button class="c-btn" style="padding:8px 16px;background:#f8f9fa;color:#333;border:1px solid #dee2e6;border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
-          <button class="s-btn" style="padding:8px 16px;background:#28a745;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save</button>
+          <button class="d-btn" style="padding:8px 16px;background:#6c757d;color:var(--text-on-color);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Discard</button>
+          <button class="c-btn" style="padding:8px 16px;background:var(--surface2);color:var(--text-ui);border:1px solid var(--border-color);border-radius:6px;cursor:pointer;font-weight:600;">Cancel</button>
+          <button class="s-btn" style="padding:8px 16px;background:#28a745;color:var(--text-on-color);border:none;border-radius:6px;cursor:pointer;font-weight:600;">Save</button>
         </div>`;
       overlay.appendChild(box);
       document.body.appendChild(overlay);
@@ -739,8 +748,8 @@ function showTracingPositionSettingsModal(
   mainCloseBtn: HTMLElement | null,
   mainSettingsBtn: HTMLElement | null,
 ): void {
-  const textColor = getContrastColor(config.backgroundColor);
-  const isDark = textColor === '#FFFFFF';
+  const textColor = getTracerTextColor(config.backgroundColor);
+  const isDark = isDarkTracerSurface(config.backgroundColor);
   const borderColor = isDark
     ? adjustColorBrightness(config.backgroundColor, 20)
     : adjustColorBrightness(config.backgroundColor, -10);
@@ -987,7 +996,7 @@ function showTracingPositionSettingsModal(
     transition: all 0.2s;
     padding: 0;
   `;
-  floatingSaveBtn.innerHTML = '<img src="res/save.svg" style="width: 24px; height: 24px;">';
+  floatingSaveBtn.innerHTML = '<span class="themed-icon themed-icon--save" aria-hidden="true" style="width:24px;height:24px;"></span>';
   floatingSaveBtn.onmouseover = () => {
     floatingSaveBtn.style.background = saveBtnHover;
     floatingSaveBtn.style.transform = 'scale(1.1)';
@@ -1210,7 +1219,8 @@ function showTracingPositionSettingsModal(
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: white;
+        background: var(--surface-raised);
+        color: var(--text-ui);
         padding: 24px;
         border-radius: 12px;
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
@@ -1219,12 +1229,12 @@ function showTracingPositionSettingsModal(
       `;
 
       choiceContainer.innerHTML = `
-        <h3 style="margin: 0 0 12px 0; color: #333; font-size: 1.1rem;">Unsaved Changes</h3>
-        <p style="margin: 0 0 20px 0; color: #666; font-size: 0.95rem;">You have unsaved changes. What would you like to do?</p>
+        <h3 style="margin: 0 0 12px 0; color: var(--text-ui); font-size: 1.1rem;">Unsaved Changes</h3>
+        <p style="margin: 0 0 20px 0; color: var(--text-secondary); font-size: 0.95rem;">You have unsaved changes. What would you like to do?</p>
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-          <button class="discard-btn" style="padding: 8px 16px; background: #6c757d; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Discard</button>
-          <button class="cancel-btn" style="padding: 8px 16px; background: #f8f9fa; color: #333; border: 1px solid #dee2e6; border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
-          <button class="save-btn" style="padding: 8px 16px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save</button>
+          <button class="discard-btn" style="padding: 8px 16px; background: #6c757d; color: var(--text-on-color); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Discard</button>
+          <button class="cancel-btn" style="padding: 8px 16px; background: var(--surface2); color: var(--text-ui); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 600;">Cancel</button>
+          <button class="save-btn" style="padding: 8px 16px; background: #28a745; color: var(--text-on-color); border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">Save</button>
         </div>
       `;
 
@@ -1358,8 +1368,8 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
     }
   }
 
-  const textColor = getContrastColor(config.backgroundColor);
-  const isDark = textColor === '#FFFFFF';
+  const textColor = getTracerTextColor(config.backgroundColor);
+  const isDark = isDarkTracerSurface(config.backgroundColor);
   const borderColor = isDark
     ? adjustColorBrightness(config.backgroundColor, 20)
     : adjustColorBrightness(config.backgroundColor, -10);
@@ -1597,8 +1607,8 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
         box-shadow: 0 1px 3px rgba(0,0,0,0.2);
       }
       .parity-tracer-modal-container .W {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
+        background: var(--text-primary);
+        border: 1px solid var(--surface-border);
       }
       .parity-tracer-modal-container .Y { background: #ffd700; }
       .parity-tracer-modal-container .G { background: #48bb78; }
@@ -1945,10 +1955,10 @@ function buildConfigFromColorScheme(): TracerConfig {
     instructionText1: '',
     instructionText2: '',
     instructionText3: '',
-    topLayerMainColor: colorScheme.topColor,
+    topLayerMainColor: resolveThemeAwareWhite(colorScheme.topColor),
     topLayerColorFullName: getColorName(colorScheme.topColor),
     topLayerColorAbbreviation: getColorName(colorScheme.topColor).charAt(0),
-    bottomLayerMainColor: colorScheme.bottomColor,
+    bottomLayerMainColor: resolveThemeAwareWhite(colorScheme.bottomColor),
     bottomLayerColorFullName: getColorName(colorScheme.bottomColor),
     bottomLayerColorAbbreviation: getColorName(colorScheme.bottomColor).charAt(0),
     frontFaceColorForVisualization: colorScheme.frontColor,

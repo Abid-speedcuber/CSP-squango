@@ -678,7 +678,15 @@ export default function SettingsModal(): React.ReactNode {
                 aria-current={activeSection === section.id ? 'location' : undefined}
                 onClick={() => jumpToSection(section.id)}
               >
-                <img src={section.icon} width={24} height={24} alt="" />
+                <span
+                  className={
+                    `themed-icon themed-icon--${
+                      section.id === 'homescreen' ? 'settings' : section.id === 'parity' ? 'tracing' : 'training'
+                    }`
+                  }
+                  style={{ width: 24, height: 24 }}
+                  aria-hidden="true"
+                />
               </button>
             ))}
           </nav>

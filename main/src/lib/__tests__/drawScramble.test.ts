@@ -1,10 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { afterEach, describe, it, expect, vi } from 'vitest';
 import {
   visualizeFromHex,
   visualizeFromScramble,
   visualizeFromSolution,
   visualizeShapes,
 } from '../drawScramble';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('drawScramble visualizer', () => {
   it('renders a valid two-svg layout from a hex code', () => {
@@ -21,6 +25,28 @@ describe('drawScramble visualizer', () => {
       topColor: '#123456',
     });
     expect(html).toContain('#123456');
+  });
+
+  it('uses the dark theme text color for white cube faces', () => {
+    vi.stubGlobal('document', {
+      documentElement: {
+        getAttribute: () => 'dark',
+      },
+    });
+    vi.stubGlobal('getComputedStyle', () => ({
+      getPropertyValue: () => '#e2e4ed',
+    }));
+
+    const html = visualizeFromHex('6e0cc804a2a6|0e8c64ee20c4', 200, {
+      topColor: '#fff',
+      bottomColor: '#FFFFFF',
+      frontColor: '#fff',
+      rightColor: '#ffffff',
+      backColor: '#FFF',
+      leftColor: '#FFFFFF',
+    });
+    expect(html).toContain('#e2e4ed');
+    expect(html).not.toContain('#FFFFFF');
   });
 
   it('supports default argument values for size', () => {
