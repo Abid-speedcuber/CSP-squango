@@ -298,26 +298,39 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
 }
 
 // ── Context menu (legacy rendering.js showContextMenu) ───────────────────────
+type ContextMenuWithTrigger = HTMLElement & { _trigger?: Node | null; _close?: () => void };
+
 function showContextMenu(caseName: string, event: MouseEvent): void {
   const caseId = getCaseId(caseName);
   if (caseId === undefined) return;
   event.stopPropagation();
   const isTrainingCaseInfoCard = (event.target as HTMLElement).closest('#trainingCaseInfoModal') !== null;
 
-  const existingMenu = document.getElementById('caseContextMenu');
-  if (existingMenu) existingMenu.remove();
+  // Normalise the click target to the ⋯ button itself so repeat clicks on
+  // different SVG children of the same button still match.
+  const trigger: Node = (event.target as HTMLElement).closest('.icon-btn') ?? (event.target as Node);
+
+  const existingMenu = document.getElementById('caseContextMenu') as ContextMenuWithTrigger | null;
+  if (existingMenu) {
+    const sameTrigger = existingMenu._trigger === trigger;
+    existingMenu._close?.();
+    existingMenu.remove();
+    // Second click on the same ⋯ button: dismiss the menu, don't respawn it.
+    if (sameTrigger) return;
+  }
 
   const isLearned = learnedCases.has(caseId);
   const isLearning = learningCases.has(caseId);
   const priorityLevel = plannedLevels.get(caseId) || 4;
   const priorityNames = ['Highest', 'Higher', 'High', 'Normal', 'Low', 'Lower', 'Lowest'];
 
-  const menu = document.createElement('div');
+  const menu = document.createElement('div') as ContextMenuWithTrigger;
   menu.id = 'caseContextMenu';
+  menu._trigger = trigger;
   menu.style.cssText = `
         position: fixed;
         background: var(--surface);
-        border-bottom: 1px solid var(--surface-border);
+        border: 1px solid var(--border-color);
         border-radius: 6px;
         box-shadow: 0 4px 12px var(--card-shadow);
         z-index: ${isTrainingCaseInfoCard ? '10002' : '10000'};
@@ -473,19 +486,26 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
   }, 0);
 
   setTimeout(() => {
+    // Menu may already have been dismissed (e.g. fast double-click on the trigger).
+    if (!menu.isConnected) return;
+
     const closeMenu = (e: MouseEvent) => {
-      if (!menu.contains(e.target as Node) && e.target !== event.target) {
-        menu.remove();
-        document.removeEventListener('mousedown', closeMenu);
-        window.removeEventListener('scroll', scrollCloseMenu, true);
+      // Leave clicks on the trigger alone — the trigger's click handler toggles the menu.
+      if (!menu.contains(e.target as Node) && !trigger.contains(e.target as Node)) {
+        dismiss();
       }
     };
 
     const scrollCloseMenu = () => {
+      dismiss();
+    };
+
+    const dismiss = () => {
       menu.remove();
       document.removeEventListener('mousedown', closeMenu);
       window.removeEventListener('scroll', scrollCloseMenu, true);
     };
+    menu._close = dismiss;
 
     document.addEventListener('mousedown', closeMenu);
     window.addEventListener('scroll', scrollCloseMenu, true);
