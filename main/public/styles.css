@@ -242,10 +242,10 @@
     /* ── Always-dark header chrome — same in both themes ── */
     --header-dark-bg:   #2d3748;
 
-    --toast-success-bg: #0f2d18;
-    --toast-error-bg:   #2d0f14;
-    --toast-info-bg:    #252830;
-    --toast-color:      #e2e4ed;
+    --toast-success-bg: #1e5234;
+    --toast-error-bg:   #921023;
+    --toast-info-bg:    #103394;
+    --toast-color:      var(--text-primary);
 
     --search-highlight-bg:    #6b5a00;
     --search-highlight-color: #ffe680;
