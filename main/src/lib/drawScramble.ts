@@ -98,6 +98,7 @@ export function visualizeShapes(
   cornerFill = 'transparent',
   _strokeWidth = 2,
   ringDistance = 5,
+  wrapperPadding = '2rem',
 ): string {
   let hexCode: string;
 
@@ -119,6 +120,7 @@ export function visualizeShapes(
   return renderSquare1SVG(hexCode, {
     size,
     ringDistance,
+    wrapperPadding,
     showSideColors: false,
     showSlice: true,
     colorScheme: {

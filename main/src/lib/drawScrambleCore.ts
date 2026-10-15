@@ -120,6 +120,7 @@ export interface Square1Core {
     showSlice?: boolean,
     _showSides?: boolean,
     exportPad?: number,
+    wrapperPadding?: string,
   ): string;
   getSingleLayerSVG(
     rawHex: string,
@@ -174,6 +175,7 @@ export interface Square1RenderOptions {
   showSlice?: boolean;
   showSideColors?: boolean;
   exportPad?: number;
+  wrapperPadding?: string;
   styleIndex?: number;
   styleSettings?: Partial<StyleSettings>;
   colorScheme?: Record<string, string>;
@@ -1115,6 +1117,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     showSlice?: boolean,
     _showSides?: boolean,
     exportPad = 0,
+    wrapperPadding = '2rem',
   ): string {
     // _showSides is ignored — controlled via setShowSideColors()
     const hex = rawHex.replace(/[|/]/g, '');
@@ -1137,7 +1140,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     const vbH = size + padTop + padOther;
 
     const dir = isVert ? 'flex-direction:column;' : 'flex-direction:row;';
-    let html = `<div style="display:flex;align-items:center;overflow:visible;padding:2rem;${dir}">`;
+    let html = `<div style="display:flex;align-items:center;overflow:visible;padding:${wrapperPadding};${dir}">`;
 
     const svgAttrs = `width="${vbW}" height="${vbH}" viewBox="${vbX} ${vbY} ${vbW} ${vbH}" data-origin-x="${cx}" data-origin-y="${cy}" data-puzzle-size="${size}" style="overflow:visible;" class="squan"`;
     const gap = isVert ? `margin-top:${margin.toFixed(1)}px;` : `margin-left:${margin.toFixed(1)}px;`;
@@ -1244,6 +1247,7 @@ export function renderSquare1SVG(rawHex: string, options: Square1RenderOptions =
     options.showSlice ?? true,
     options.showSideColors ?? true,
     options.exportPad ?? 0,
+    options.wrapperPadding ?? '2rem',
   );
 }
 

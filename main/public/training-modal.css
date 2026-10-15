@@ -499,7 +499,9 @@ body.modal-open .training-modal {
 }
 
 .shape-index-toggle {
-    padding: 10px 8px;
+    aspect-ratio: 1.45;
+    min-height: 0;
+    padding: 4px !important;
     border: 2px solid var(--border-color);
     background: var(--surface);
     border-radius: 6px;
@@ -512,6 +514,12 @@ body.modal-open .training-modal {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.shape-index-toggle > div {
+    width: 100%;
+    justify-content: center;
+    box-sizing: border-box;
 }
 
 .shape-index-toggle:hover {

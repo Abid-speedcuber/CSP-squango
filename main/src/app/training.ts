@@ -1117,11 +1117,23 @@ function openShapeIndexSelector(): void {
   const currentSelection = trainingSelections[selectedKey] || [];
 
   const body = document.getElementById('shapeIndexSelectorBody')!;
+  const selectorGridStyle =
+    'display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;';
 
+  selectorModal.classList.add('active');
+  const svgSize = getShapeIndexSvgSize('orgToggles', selectorGridStyle);
   const orgShapes = (shapeIndexItem.org || [])
     .map((idx) => {
       const hexCode = shapeIndexToHex(idx);
-      const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+      const shapeHTML = visualizeShapes(
+        hexCode,
+        svgSize,
+        '#e7e7e7ff',
+        '#FFFFFF',
+        2,
+        TRAINING_SCRAMBLE_RING_DISTANCE,
+        '16px',
+      );
       return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -1137,7 +1149,15 @@ function openShapeIndexSelector(): void {
   const mirShapes = (shapeIndexItem.mir || [])
     .map((idx) => {
       const hexCode = shapeIndexToHex(idx);
-      const shapeHTML = visualizeShapes(hexCode, 69, '#e7e7e7ff', '#FFFFFF', 2, -4);
+      const shapeHTML = visualizeShapes(
+        hexCode,
+        svgSize,
+        '#e7e7e7ff',
+        '#FFFFFF',
+        2,
+        TRAINING_SCRAMBLE_RING_DISTANCE,
+        '16px',
+      );
       return `
             <button class="shape-index-toggle ${currentSelection.includes(idx) ? 'active' : ''}"
                     data-index="${idx}"
@@ -1159,7 +1179,7 @@ function openShapeIndexSelector(): void {
                     <button onclick="deselectAllIndices('org')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="orgToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
+            <div class="shape-index-toggles" id="orgToggles" style="${selectorGridStyle}">
                 ${orgShapes}
             </div>
         </div>
@@ -1171,13 +1191,53 @@ function openShapeIndexSelector(): void {
                     <button onclick="deselectAllIndices('mir')" style="padding: 3px 10px; background: var(--surface2); color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.8rem;">Deselect All</button>
                 </div>
             </div>
-            <div class="shape-index-toggles" id="mirToggles" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); max-width: 100%; gap: 10px; margin-top: 10px;">
+            <div class="shape-index-toggles" id="mirToggles" style="${selectorGridStyle}">
                 ${mirShapes}
             </div>
         </div>
     `;
 
-  selectorModal.classList.add('active');
+}
+
+function getShapeIndexSvgSize(gridId: string, gridStyle: string): number {
+  const body = document.getElementById('shapeIndexSelectorBody');
+  if (!body) return 69;
+
+  const grid = document.createElement('div');
+  grid.className = 'shape-index-toggles';
+  grid.id = gridId;
+  grid.style.cssText = gridStyle;
+  for (let i = 0; i < 8; i++) {
+    const probe = document.createElement('button');
+    probe.type = 'button';
+    probe.className = 'shape-index-toggle';
+    grid.appendChild(probe);
+  }
+  body.appendChild(grid);
+
+  const probe = grid.firstElementChild as HTMLButtonElement;
+  const buttonRect = probe.getBoundingClientRect();
+  const buttonStyle = getComputedStyle(probe);
+  const borderX = parseFloat(buttonStyle.borderLeftWidth) + parseFloat(buttonStyle.borderRightWidth);
+  const borderY = parseFloat(buttonStyle.borderTopWidth) + parseFloat(buttonStyle.borderBottomWidth);
+  const paddingX = parseFloat(buttonStyle.paddingLeft) + parseFloat(buttonStyle.paddingRight);
+  const paddingY = parseFloat(buttonStyle.paddingTop) + parseFloat(buttonStyle.paddingBottom);
+  grid.remove();
+
+  const wrapperPadding = 8;
+  const svgAvailableWidth = buttonRect.width - borderX - paddingX - wrapperPadding * 2;
+  const svgAvailableHeight = buttonRect.height - borderY - paddingY - wrapperPadding * 2;
+  const coreSizeRatio = 220 / 400;
+  const ringGapRatio =
+    coreSizeRatio * (0.44 * (2 + TRAINING_SCRAMBLE_RING_DISTANCE / 100) - 1);
+  const pairedSvgWidthRatio = coreSizeRatio * 2 + ringGapRatio;
+  const svgHeightRatio = coreSizeRatio * (1 + 0.0891);
+  return Math.max(
+    1,
+    Math.floor(
+      Math.min(svgAvailableWidth / pairedSvgWidthRatio, svgAvailableHeight / svgHeightRatio),
+    ),
+  );
 }
 
 function toggleShapeIndex(index: number): void {
@@ -1572,7 +1632,6 @@ function handleTrainingKeyUp(e: KeyboardEvent): void {
     }
     return;
   }
-
   if (e.code === 'ArrowRight') {
     e.preventDefault();
     if (timerRunning) {
