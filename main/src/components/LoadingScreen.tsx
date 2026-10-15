@@ -97,7 +97,7 @@ export default function LoadingScreen({ hidden }: { hidden: boolean }): React.Re
         SquanGo CSP
       </h1>
       <p id="loadingAuthor" className="loading-author">
-        by Abid Ibn Ashraf
+        by Abid & Matt
       </p>
       <div id="loadingTipContainer">
         <p id="loadingTip" className="loading-tip">

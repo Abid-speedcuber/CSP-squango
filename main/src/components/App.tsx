@@ -380,7 +380,7 @@ export default function App(): React.ReactNode {
           <h1 className="desktop-title">{title}</h1>
           <h1 className="tablet-title">{title}</h1>
           <h1 className="mobile-title">{title}</h1>
-          <div className="subtitle">By Abid Ibn Ashraf</div>
+          <div className="subtitle">By Abid & Matt</div>
           <button
             id="sidebarToggleBtn"
             className="sidebar-toggle-btn"
