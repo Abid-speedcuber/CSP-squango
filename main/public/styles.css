@@ -169,7 +169,7 @@
     --select-option-selected-bg: #263e62;
 
     --floating-btn-color:  #e2e4ed;
-    --floating-btn-shadow: rgba(0, 0, 0, 0.55);
+    --floating-btn-shadow: rgba(0, 0, 0, 0.65);
 
     --sidebar-item-hover:  rgba(255, 255, 255, 0.06);
     --sidebar-close-color: #7a8099;
@@ -1548,6 +1548,10 @@ details summary::marker {
     transform-origin: top right;
     flex-shrink: 0;
     overflow: hidden;
+}
+
+[data-theme="dark"] .floating-profile-btn, .sidebar-toggle-btn {
+    border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 @media (hover: hover) {
