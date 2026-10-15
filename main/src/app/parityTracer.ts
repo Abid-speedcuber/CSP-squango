@@ -1912,8 +1912,8 @@ function createParityTracerModalWithAllParametersIncluded(options: ParityTracerO
 }
 
 // ── Public entry points (mirror legacy window functions) ─────────────────────
-function openNewParityAnalysis(setup: string | null): void {
-  createParityTracerModalWithAllParametersIncluded({
+function openNewParityAnalysis(setup: string | null, fromTrainingCaseInfo = false): void {
+  const modal = createParityTracerModalWithAllParametersIncluded({
     backgroundColor: getComputedStyle(document.documentElement).getPropertyValue('--surface').trim() || '#ffffff',
     hideInstructionButton: hideInstructionsSetting(),
     instructionText1: 'Enter your scramble in the top input bar to trace parity using Cale\'s method.',
@@ -1933,6 +1933,9 @@ function openNewParityAnalysis(setup: string | null): void {
     generateImage: true,
     imageSize: parseInt(localStorage.getItem('parityTracerImageSize') || '280', 10) || 280,
   });
+  if (fromTrainingCaseInfo && modal instanceof HTMLElement) {
+    modal.classList.add('training-followup-modal');
+  }
 }
 
 function buildConfigFromColorScheme(): TracerConfig {

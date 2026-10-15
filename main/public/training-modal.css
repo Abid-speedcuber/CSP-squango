@@ -171,6 +171,143 @@ body.modal-open .training-modal {
     margin-top: 20px;
 }
 
+.training-case-actions {
+    position: relative;
+    z-index: 11;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 14px;
+    padding: 0 16px;
+}
+
+.training-case-action {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 7px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface2);
+    color: var(--text-primary);
+    font: inherit;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.training-case-action:hover {
+    background: var(--hover-bg);
+    border-color: var(--accent);
+}
+
+.training-case-action svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.training-case-action::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 9px);
+    z-index: 2;
+    width: max-content;
+    max-width: min(260px, calc(100vw - 32px));
+    padding: 7px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-raised);
+    color: var(--text-primary);
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    white-space: normal;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, 4px);
+    transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+    pointer-events: none;
+}
+
+.training-case-action:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+}
+
+.training-case-action.tooltip-dismissed::after {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.training-overlay-modal {
+    z-index: 10001;
+}
+
+.training-followup-modal {
+    z-index: 10003;
+}
+
+.training-case-info-content {
+    width: min(560px, calc(100vw - 24px));
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.training-case-info-content > .card {
+    margin: 0;
+    border-radius: 18px;
+}
+
+.training-case-info-content > .card .card-header {
+    min-height: 74px;
+}
+
+.training-case-info-close {
+    display: flex;
+    flex: 0 0 28px;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.training-case-info-close:hover {
+    background: var(--hover-bg);
+    color: var(--text-ui);
+}
+
+.training-case-info-close svg {
+    display: block;
+    width: 20px;
+    height: 20px;
+}
+
+@media (max-width: 420px) {
+    .training-case-actions {
+        gap: 8px;
+    }
+
+    .training-case-action {
+        gap: 6px;
+        padding: 9px 11px;
+        font-size: 0.9rem;
+    }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .training-modal-header {

@@ -3,15 +3,24 @@ import { getDisplayName, comments, generalNotes, setComment, setGeneralNotes } f
 import { getCaseId } from '../data/cases';
 import { showToast } from './toast';
 import { showSaveDiscardConfirmation } from './confirm';
+import { sanitizeNoteHTML } from './algDisplay';
 
 // ── Case Notes ───────────────────────────────────────────────────────────────
 let originalNoteContent = '';
+let notesModalCaseName = '';
+let notesModalViewMode = false;
 
-export function openNotesModal(caseName: string): void {
+export function openNotesModal(
+  caseName: string,
+  startInViewMode = false,
+  openedFromTrainingCaseInfo = false,
+): void {
   const caseId = getCaseId(caseName);
   if (caseId === undefined) return;
   const comment = comments.get(caseId) || '';
   originalNoteContent = comment;
+  notesModalCaseName = caseName;
+  notesModalViewMode = startInViewMode;
 
   const existingMenu = document.getElementById('caseContextMenu');
   if (existingMenu) existingMenu.remove();
@@ -19,14 +28,15 @@ export function openNotesModal(caseName: string): void {
   pushModalState('notesModal', closeNotesModal);
 
   const modal = document.createElement('div');
-  modal.className = 'modal active';
+  modal.className = `modal active${startInViewMode ? ' training-overlay-modal' : ''}${openedFromTrainingCaseInfo ? ' training-followup-modal' : ''}`;
   modal.id = 'notesModal';
   const escaped = caseName.replace(/'/g, "\\'");
   modal.innerHTML = `
         <div class="modal-content" style="max-width: 600px; max-height: 80vh; min-height: 20vh;">
             <div class="modal-header">
+                <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
                 <div style="display: flex; align-items: center; gap: 10px;">
-                    <span class="modal-title">Notes: ${getDisplayName(caseName)}</span>
+                    ${startInViewMode ? `<button id="notesModalEditBtn" style="padding: 6px 16px; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 0.9rem;">Edit</button>` : ''}
                     <button onclick="showNotesInfoModal()" style="background: var(--surface2); border: 1px solid var(--border-color); color: var(--text-secondary); cursor: pointer; padding: 6px; border-radius: 8px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; width: 32px; height: 32px;" title="Help" onmouseover="this.style.background='var(--surface-border)'" onmouseout="this.style.background='var(--surface2)'">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px;">
                             <circle cx="12" cy="12" r="10"></circle>
@@ -34,21 +44,60 @@ export function openNotesModal(caseName: string): void {
                             <line x1="12" y1="8" x2="12.01" y2="8"></line>
                         </svg>
                     </button>
+                    <button class="close-btn" onclick="attemptCloseNotesModal('${escaped}')">&times;</button>
                 </div>
-                <button class="close-btn" onclick="attemptCloseNotesModal('${escaped}')">&times;</button>
             </div>
             <div class="modal-body">
-                <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;">${comment}</textarea>
+                ${startInViewMode ? `<div id="notesView" style="min-height: 100px; overflow-wrap: anywhere;"></div>` : ''}
+                <textarea id="notesTextarea" style="width: 100%; height: 200px; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-family: inherit; resize: vertical;${startInViewMode ? ' display: none;' : ''}"></textarea>
+                ${startInViewMode ? '' : `
                 <div style="text-align: center; margin-top: 15px;">
                     <button onclick="saveNotes('${escaped}')" style="padding: 10px 20px; background: var(--bar-learned); color: white; border: none; border-radius: 4px; cursor: pointer; margin-right: 10px; font-weight: 600;">Save</button>
                     <button onclick="attemptCloseNotesModal('${escaped}')" style="padding: 10px 20px; background: var(--delete-btn-bg); color: white; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
-                </div>
+                </div>`}
             </div>
         </div>
     `;
 
   lockScroll();
   document.body.appendChild(modal);
+  const textarea = document.getElementById('notesTextarea') as HTMLTextAreaElement;
+  textarea.value = comment;
+  if (startInViewMode) {
+    renderNotesView(comment);
+    const editButton = document.getElementById('notesModalEditBtn');
+    if (editButton) editButton.onclick = toggleTrainingNotesEdit;
+  }
+}
+
+function renderNotesView(content: string): void {
+  const view = document.getElementById('notesView');
+  if (!view) return;
+  view.innerHTML = content.trim()
+    ? sanitizeNoteHTML(content)
+    : '<span style="color: var(--text-muted); font-style: italic;">No notes for this case.</span>';
+}
+
+function toggleTrainingNotesEdit(): void {
+  const view = document.getElementById('notesView');
+  const textarea = document.getElementById('notesTextarea') as HTMLTextAreaElement | null;
+  const button = document.getElementById('notesModalEditBtn');
+  if (!view || !textarea || !button) return;
+
+  if (notesModalViewMode) {
+    notesModalViewMode = false;
+    view.style.display = 'none';
+    textarea.style.display = 'block';
+    button.textContent = 'Save';
+    button.onclick = () => saveNotes(notesModalCaseName);
+  } else {
+    notesModalViewMode = true;
+    renderNotesView(textarea.value);
+    view.style.display = 'block';
+    textarea.style.display = 'none';
+    button.textContent = 'Edit';
+    button.onclick = toggleTrainingNotesEdit;
+  }
 }
 
 export function closeNotesModal(): void {

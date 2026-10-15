@@ -46,7 +46,7 @@ import {
 import { openHomepageImageSettings, openUnifiedSettings } from './settingsUI';
 import { installSidebarShims } from './sidebar';
 import { installEditCaseShims, openEditCaseModal } from './editCase';
-import { installTrainingShims, openTrainingModal } from './training';
+import { installTrainingShims, trainCaseFromContextMenu } from './training';
 import { installParityTracerShims } from './parityTracer';
 import { scrambleFromState } from '../lib/solver';
 import { installAnimateAlgShims, openAnimateAlgModal } from './animateAlg';
@@ -55,15 +55,33 @@ import { installQuickEditShims } from './quickEdit';
 // ── Algo popup (legacy rendering.js showAlgoPopup/hideAlgoPopup) ─────────────
 let activePopup: HTMLElement | null = null;
 let activePopupElement: HTMLElement | null = null;
+let activePopupCleanup: (() => void) | null = null;
 let popupHoverTimeout: ReturnType<typeof setTimeout> | null = null;
 
 function rerenderCaseCard(caseName: string): void {
-  const cardElement = document.querySelector(`[data-case-name="${CSS.escape(caseName)}"]`);
   const caseId = getCaseId(caseName);
   const item = caseId === undefined ? undefined : data.find((entry) => entry.id === caseId);
-  if (cardElement && item) {
-    cardElement.outerHTML = renderCard(item);
-  }
+  if (!item) return;
+
+  document.querySelectorAll<HTMLElement>(`[data-case-name="${CSS.escape(caseName)}"]`).forEach((cardElement) => {
+    const container = document.createElement('div');
+    container.innerHTML = renderCard(item);
+    const replacement = container.firstElementChild as HTMLElement | null;
+    if (!replacement) return;
+
+    if (cardElement.closest('#trainingCaseInfoModal')) {
+      const cardActions = replacement.querySelector('.card-header-actions');
+      if (cardActions) {
+        const closeButton = document.createElement('button');
+        closeButton.className = 'training-case-info-close';
+        closeButton.type = 'button';
+        closeButton.setAttribute('aria-label', 'Close case information');
+        closeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+        cardActions.appendChild(closeButton);
+      }
+    }
+    cardElement.replaceWith(replacement);
+  });
 }
 
 function requestManualReorder(): void {
@@ -79,6 +97,8 @@ function closeAlgoPopup(isPermanent: boolean): void {
       activePopup = null;
       activePopupElement = null;
     }
+    activePopupCleanup?.();
+    activePopupCleanup = null;
   } else {
     const hoverPopup = document.querySelector('.algo-popup:not(.permanent)');
     if (hoverPopup) hoverPopup.remove();
@@ -120,6 +140,7 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
   }
 
   if (algo === 'Done!' || !algo || algo.trim() === '') return;
+  const ownerModal = element.closest<HTMLElement>('#trainingCaseInfoModal');
 
   const setup = invertScramble(algo);
   const shapePath = getShapePath(algo);
@@ -156,7 +177,9 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
       e.stopPropagation();
       closeAlgoPopup(isPermanent);
       const opener = (window as unknown as Record<string, unknown>).openNewParityAnalysis;
-      if (typeof opener === 'function') (opener as (s: string) => void)(setup);
+      if (typeof opener === 'function') {
+        (opener as (s: string, fromTrainingCaseInfo?: boolean) => void)(setup, Boolean(ownerModal));
+      }
     };
     setupElement.onmouseenter = () => {
       setupElement.style.background = 'var(--hover-bg)';
@@ -176,7 +199,12 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
       const parityType = element.getAttribute('data-parity') || '';
       const displayName = getDisplayName(caseName);
 
-      openAnimateAlgModal(algo, displayName, parityType);
+      openAnimateAlgModal(
+        algo,
+        displayName,
+        parityType,
+        element.closest('#trainingCaseInfoModal') !== null,
+      );
     };
     shapePathElement.onmouseenter = () => {
       shapePathElement.style.background = 'var(--hover-bg)';
@@ -228,6 +256,9 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
 
   popup.style.top = top + 'px';
   popup.style.left = left + 'px';
+  if (element.closest('#trainingCaseInfoModal')) {
+    popup.style.zIndex = '10002';
+  }
 
   const scrollHandler = () => {
     closeAlgoPopup(isPermanent);
@@ -243,7 +274,8 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
 
     setTimeout(() => {
       clickHandler = (e) => {
-        if (!popup.contains(e.target as Node) && e.target !== element) {
+        const target = e.target as Node;
+        if (!popup.contains(target) && e.target !== element && !ownerModal?.contains(target)) {
           closeAlgoPopup(true);
           document.removeEventListener('mousedown', clickHandler!);
           window.removeEventListener('scroll', scrollHandler, true);
@@ -251,6 +283,16 @@ function showAlgoPopup(element: HTMLElement, algo: string, isPermanent: boolean)
       };
       document.addEventListener('mousedown', clickHandler);
     }, 100);
+    const cleanup = () => {
+      if (clickHandler) document.removeEventListener('mousedown', clickHandler);
+      window.removeEventListener('scroll', scrollHandler, true);
+      ownerModal?.removeEventListener('sqg:training-case-info-closing', closeOwnedPopup);
+    };
+    const closeOwnedPopup = () => {
+      if (activePopupElement === element) closeAlgoPopup(true);
+    };
+    ownerModal?.addEventListener('sqg:training-case-info-closing', closeOwnedPopup, { once: true });
+    activePopupCleanup = cleanup;
   }
 }
 
@@ -259,6 +301,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
   const caseId = getCaseId(caseName);
   if (caseId === undefined) return;
   event.stopPropagation();
+  const isTrainingCaseInfoCard = (event.target as HTMLElement).closest('#trainingCaseInfoModal') !== null;
 
   const existingMenu = document.getElementById('caseContextMenu');
   if (existingMenu) existingMenu.remove();
@@ -276,7 +319,7 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
         border-bottom: 1px solid var(--surface-border);
         border-radius: 6px;
         box-shadow: 0 4px 12px var(--card-shadow);
-        z-index: 10000;
+        z-index: ${isTrainingCaseInfoCard ? '10002' : '10000'};
         padding: 4px 0;
         min-width: 180px;
         max-width: 200px;
@@ -338,21 +381,21 @@ function showContextMenu(caseName: string, event: MouseEvent): void {
       label: 'Add/Edit Notes',
       action: () => {
         menu.remove();
-        openNotesModal(caseName);
+        openNotesModal(caseName, false, isTrainingCaseInfoCard);
       },
     },
     {
       label: 'Train This Case',
       action: () => {
         menu.remove();
-        openTrainingModal(caseName);
+        trainCaseFromContextMenu(caseName, isTrainingCaseInfoCard);
       },
     },
     {
       label: 'Edit Case',
       action: () => {
         menu.remove();
-        openEditCaseModal(caseName);
+        openEditCaseModal(caseName, isTrainingCaseInfoCard);
       },
     },
   );

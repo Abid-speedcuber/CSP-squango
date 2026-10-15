@@ -36,6 +36,8 @@ import { getColorName, getParityText } from '../lib/parityAnalyzer';
 import { pushModalState, closeModalWithHistory, getTopModalId } from './modal';
 import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
+import { renderCard } from './cardHTML';
+import { openNotesModal } from './notes';
 
 // ── Training modal state (mirrors legacy) ───────────────────────────────────
 let currentTrainingCase: number | null = null;
@@ -63,6 +65,9 @@ let isInspectionPhase = false;
 let parityQuizPhase = false;
 let parityQuizAnswer: 'even' | 'odd' | null = null;
 let spacePressed = false;
+let shiftKeyTimerWasRunning = false;
+let shiftShortcutTriggered = false;
+let resetDismissedTooltipOnPointerMove: ((event: PointerEvent) => void) | null = null;
 
 interface ScrambleData {
   text: string;
@@ -136,13 +141,17 @@ function hexToScrambleImage(hexCode: string, size = trainingScrambleImageSize): 
 // ── Scramble generation ──────────────────────────────────────────────────────
 function generateNextScrambleData(): ScrambleData | null {
   if (multiCaseMode) return generateMultiCaseScrambleData();
-  if (trainingScrambles.length === 0) return null;
+  if (trainingScrambles.length === 0 || currentTrainingCase === null) return null;
 
   const randomIndex = Math.floor(Math.random() * trainingScrambles.length);
   const scramble = trainingScrambles[randomIndex];
   const hexCode = shapeIndexToHex(scramble);
 
-  return { text: hexToScrambleText(hexCode), image: hexToScrambleImage(hexCode) };
+  return {
+    text: hexToScrambleText(hexCode),
+    image: hexToScrambleImage(hexCode),
+    caseName: currentTrainingCase,
+  };
 }
 
 function generateMultiCaseScrambleData(): ScrambleData | null {
@@ -222,6 +231,20 @@ function createTrainingModal(): HTMLElement {
             </div>
             <div id="trainingTimerSubInfo" style="display:none; font-size:0.78rem;color:var(--text-muted);font-weight:500;text-align:center;line-height:1.6;width:100%;"></div>
             <div class="training-modal-timer" id="trainingTimer">0.000</div>
+            <div class="training-case-actions">
+                <button class="training-case-action" id="trainingPeekNotesBtn" data-tooltip="Peek the notes for this CSP (Shift + H)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M8.5 14.5a7 7 0 1 1 7 0c-.8.6-1.2 1.3-1.4 2.5h-4.2c-.2-1.2-.6-1.9-1.4-2.5Z"></path>
+                    </svg>
+                    <span>Peek notes</span>
+                </button>
+                <button class="training-case-action" id="trainingCaseInfoBtn" data-tooltip="See the full info for this CSP (Shift + I)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <circle cx="10.8" cy="10.8" r="6.8"></circle><path d="m16 16 5 5"></path>
+                    </svg>
+                    <span>Case info</span>
+                </button>
+            </div>
             <div id="trainingInspectionLabel" style="display:none; font-size:0.78rem;color:var(--accent);font-weight:600;letter-spacing:0.05em;"></div>
         </div>
     <div id="prevScrambleBar" style="position:fixed; bottom:0; left:0; width:100%; display:none; padding:8px 16px; font-family:Consolas,Monaco,'Courier New',monospace; text-align:center; z-index:10001; box-sizing:border-box;"><span style="color: var(--prevscramble-empty-color); font-style:italic;">No previous scramble to show</span></div>
@@ -264,6 +287,31 @@ function createTrainingModal(): HTMLElement {
     openTrainingSettingsModal();
   });
 
+  document.getElementById('trainingPeekNotesBtn')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (shiftKeyTimerWasRunning) shiftShortcutTriggered = true;
+    const caseId = getCurrentTrainingCaseId();
+    if (caseId === undefined) {
+      showToast('No case is assigned to this scramble.', 2500, 'error');
+      return;
+    }
+    openNotesModal(String(caseId), true);
+    if (document.getElementById('notesModal')) {
+      dismissTrainingCaseTooltip(e.currentTarget as HTMLElement);
+    }
+  });
+
+  document.getElementById('trainingCaseInfoBtn')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (shiftKeyTimerWasRunning) shiftShortcutTriggered = true;
+    openTrainingCaseInfoModal();
+  });
+
+  const caseActions = document.querySelector('.training-case-actions')!;
+  ['mousedown', 'mouseup', 'mouseleave', 'touchstart', 'touchend'].forEach((eventName) => {
+    caseActions.addEventListener(eventName, (e) => e.stopPropagation());
+  });
+
   const timerZone = document.getElementById('trainingTimerZone')!;
 
   timerZone.addEventListener('mousedown', () => {
@@ -291,6 +339,90 @@ function createTrainingModal(): HTMLElement {
   return modal;
 }
 
+function getCurrentTrainingCaseId(): number | undefined {
+  return scrambleHistory[currentHistoryIndex]?.caseName ?? currentTrainingCase ?? undefined;
+}
+
+function dismissTrainingCaseTooltip(button: HTMLElement): void {
+  button.classList.add('tooltip-dismissed');
+  if (resetDismissedTooltipOnPointerMove) {
+    document.removeEventListener('pointermove', resetDismissedTooltipOnPointerMove);
+  }
+
+  resetDismissedTooltipOnPointerMove = (event: PointerEvent) => {
+    const bounds = button.getBoundingClientRect();
+    if (
+      event.clientX >= bounds.left &&
+      event.clientX <= bounds.right &&
+      event.clientY >= bounds.top &&
+      event.clientY <= bounds.bottom
+    ) {
+      return;
+    }
+
+    button.classList.remove('tooltip-dismissed');
+    document.removeEventListener('pointermove', resetDismissedTooltipOnPointerMove!);
+    resetDismissedTooltipOnPointerMove = null;
+  };
+  document.addEventListener('pointermove', resetDismissedTooltipOnPointerMove);
+}
+
+function openTrainingCaseInfoModal(): void {
+  const caseId = getCurrentTrainingCaseId();
+  if (caseId === undefined) {
+    showToast('No case is assigned to this scramble.', 2500, 'error');
+    return;
+  }
+
+  const item = data.find((entry) => entry.id === caseId);
+  if (!item) {
+    showToast('Case information is unavailable.', 2500, 'error');
+    return;
+  }
+
+  const modalId = 'trainingCaseInfoModal';
+  const existing = document.getElementById(modalId);
+  if (existing) existing.remove();
+  const modal = document.createElement('div');
+  modal.id = modalId;
+  modal.className = 'modal active training-overlay-modal';
+  modal.innerHTML = `
+    <div class="training-case-info-content">
+      ${renderCard(item)}
+    </div>
+  `;
+  document.body.appendChild(modal);
+  dismissTrainingCaseTooltip(
+    document.getElementById('trainingCaseInfoBtn')!,
+  );
+  modal.addEventListener('click', (event) => {
+    if ((event.target as Element).closest('.training-case-info-close')) {
+      event.stopPropagation();
+      closeTrainingCaseInfoModal();
+    }
+  });
+  const cardActions = modal.querySelector('.card-header-actions');
+  if (cardActions) {
+    const closeButton = document.createElement('button');
+    closeButton.className = 'training-case-info-close';
+    closeButton.type = 'button';
+    closeButton.setAttribute('aria-label', 'Close case information');
+    closeButton.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    cardActions.appendChild(closeButton);
+  }
+  pushModalState(modalId, closeTrainingCaseInfoModal);
+}
+
+function closeTrainingCaseInfoModal(): void {
+  closeModalWithHistory(() => {
+    const modal = document.getElementById('trainingCaseInfoModal');
+    if (modal) {
+      modal.dispatchEvent(new Event('sqg:training-case-info-closing'));
+      modal.remove();
+    }
+  });
+}
+
 // ── Open/close ───────────────────────────────────────────────────────────────
 export function openTrainingModal(caseName: string): void {
   const caseId = getCaseId(caseName);
@@ -298,6 +430,8 @@ export function openTrainingModal(caseName: string): void {
   const modal = createTrainingModal();
   const titleEl = document.getElementById('trainingCaseName')!;
 
+  multiCaseMode = false;
+  titleEl.onclick = null;
   currentTrainingCase = caseId;
 
   const dataItem = CSPData.getCase(caseId);
@@ -348,6 +482,19 @@ export function openTrainingModal(caseName: string): void {
   document.body.classList.add('modal-open');
   applyPrevScrambleBar();
   applyTimerSize();
+}
+
+export function trainCaseFromContextMenu(caseName: string, openedFromTrainingCaseInfo: boolean): void {
+  if (!openedFromTrainingCaseInfo) {
+    openTrainingModal(caseName);
+    return;
+  }
+
+  if (!multiCaseMode) return;
+
+  closeTrainingCaseInfoModal();
+  closeTrainingModal();
+  openTrainingModal(caseName);
 }
 
 function closeTrainingModal(): void {
@@ -435,6 +582,7 @@ function displayNextScramble(): void {
 }
 
 function displayScrambleData(scrambleData: ScrambleData): void {
+  if (scrambleData.caseName !== undefined) currentTrainingCase = scrambleData.caseName;
   currentScrambleText = scrambleData.text.replace(/<[^>]*>/g, '');
   const scrambleEl = document.getElementById('trainingScramble')!;
   scrambleEl.innerHTML = scrambleData.text;
@@ -1172,6 +1320,24 @@ function handleTrainingKeyDown(e: KeyboardEvent): void {
   if (document.getElementById('evilnessQuizModal')) return;
   const modal = document.getElementById('trainingModal');
   if (!modal || !modal.classList.contains('active')) return;
+  if (getTopModalId() && getTopModalId() !== 'trainingModal') return;
+
+  if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && timerRunning) {
+    shiftKeyTimerWasRunning = true;
+    shiftShortcutTriggered = false;
+    return;
+  }
+
+  if (e.shiftKey && e.code === 'KeyH') {
+    e.preventDefault();
+    document.getElementById('trainingPeekNotesBtn')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return;
+  }
+  if (e.shiftKey && e.code === 'KeyI') {
+    e.preventDefault();
+    document.getElementById('trainingCaseInfoBtn')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    return;
+  }
 
   if (parityQuizPhase) {
     const leftKeys = new Set([
@@ -1263,6 +1429,11 @@ function handleTrainingKeyDown(e: KeyboardEvent): void {
       return;
     }
     closeTrainingModal();
+    return;
+  }
+
+  if (timerRunning && e.shiftKey) {
+    e.preventDefault();
     return;
   }
 
@@ -1387,6 +1558,20 @@ function handleTrainingKeyUp(e: KeyboardEvent): void {
   if (document.getElementById('evilnessQuizModal')) return;
   const modal = document.getElementById('trainingModal');
   if (!modal || !modal.classList.contains('active')) return;
+
+  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') {
+    const shouldStopTimer = shiftKeyTimerWasRunning && !shiftShortcutTriggered;
+    shiftKeyTimerWasRunning = false;
+    shiftShortcutTriggered = false;
+    if (shouldStopTimer && timerRunning) {
+      e.preventDefault();
+      stopTimerOnly();
+      goThroughConsume();
+      displayNextScramble();
+      spacePressed = false;
+    }
+    return;
+  }
 
   if (e.code === 'ArrowRight') {
     e.preventDefault();

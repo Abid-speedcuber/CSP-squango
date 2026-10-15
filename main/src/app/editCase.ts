@@ -189,7 +189,7 @@ export function openCaseRenameModal(caseName: string, currentName: string, curre
   const renameModal = document.createElement('div');
   renameModal.className = 'modal active';
   renameModal.id = 'caseRenameModal';
-  renameModal.style.zIndex = '10002';
+  renameModal.style.zIndex = '10004';
   renameModal.innerHTML = `
         <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
@@ -213,6 +213,7 @@ export function openCaseRenameModal(caseName: string, currentName: string, curre
         </div>
     `;
 
+  pushModalState('caseRenameModal', closeCaseRenameModal);
   document.body.appendChild(renameModal);
 
   setTimeout(() => {
@@ -225,8 +226,9 @@ export function openCaseRenameModal(caseName: string, currentName: string, curre
 }
 
 export function closeCaseRenameModal(): void {
-  const modal = document.getElementById('caseRenameModal');
-  if (modal) modal.remove();
+  closeModalWithHistory(() => {
+    document.getElementById('caseRenameModal')?.remove();
+  });
 }
 
 export function applyCaseRename(caseName: string): void {
@@ -291,7 +293,7 @@ function saveCaseRename(caseName: string): void {
 }
 
 // ── Main modal ────────────────────────────────────────────────────────────────
-export function openEditCaseModal(caseName: string): void {
+export function openEditCaseModal(caseName: string, openedFromTrainingCaseInfo = false): void {
   const caseId = getCaseId(caseName);
   if (caseId === undefined) return;
   const item = CSPData.getCase(caseId);
@@ -314,7 +316,7 @@ export function openEditCaseModal(caseName: string): void {
   pushModalState('editCaseModal', closeEditCaseModal);
 
   const modal = document.createElement('div');
-  modal.className = 'modal active';
+  modal.className = `modal active${openedFromTrainingCaseInfo ? ' training-followup-modal' : ''}`;
   modal.id = 'editCaseModal';
   modal.innerHTML = `
         <div class="modal-content" style="max-width: 600px; max-height: 80vh; min-height: 20vh;">

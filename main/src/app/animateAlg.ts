@@ -836,7 +836,12 @@ function ensureStyles(): void {
   document.head.appendChild(style);
 }
 
-export function openAnimateAlgModal(algorithm = '', caseName = '', computedParity = ''): void {
+export function openAnimateAlgModal(
+  algorithm = '',
+  caseName = '',
+  computedParity = '',
+  openedFromTrainingCaseInfo = false,
+): void {
   const alg = algorithm || '(0,0)';
   const tokens = parseAlgorithm(alg);
   const presetTokens = parseAlgorithm(invertScramble(alg));
@@ -867,6 +872,7 @@ export function openAnimateAlgModal(algorithm = '', caseName = '', computedParit
   document.body.classList.add('modal-open');
 
   const modal = document.getElementById(modalId)!;
+  if (openedFromTrainingCaseInfo) modal.classList.add('training-followup-modal');
   const host = document.getElementById(`${modalId}-stage`)!;
   const status = document.getElementById(`${modalId}-status`)!;
   const algEl = document.getElementById(`${modalId}-alg`)!;
