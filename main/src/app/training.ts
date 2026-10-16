@@ -1294,8 +1294,9 @@ function renderShapeIndexEntry(entry: ShapeIndexRenderEntry, svgSize: number): v
     shapeIndexToHex(entry.index),
     svgSize,
     '#e7e7e7ff',
-    '#FFFFFF',
-    2,
+    'transparent',
+    window.getComputedStyle(document.documentElement).getPropertyValue('--text-primary').trim(),
+    1,
     TRAINING_SCRAMBLE_RING_DISTANCE,
     `${SHAPE_INDEX_WRAPPER_PADDING}px`,
   );

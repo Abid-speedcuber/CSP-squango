@@ -537,7 +537,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
     name: "Abid's Design",
     placeholderScheme: { sticker: '#4d4d4d', slice: 'rgb(94, 94, 94)', border: '#000000' },
     source: 'Abid',
-    hidableSideColor: false,
+    hidableSideColor: true,
     hasSliceIndicator: true,
     controls: [
       {
@@ -763,7 +763,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
         { id: 'slice-indicator', label: 'Slice Indicator', default: 'rgba(111,0,0,1)' },
       ],
 
-      drawEdge(piece, colors, size, muted, ph = DEFAULT_PLACEHOLDER) {
+      drawEdge(piece, colors, size, muted, ph = DEFAULT_PLACEHOLDER, settings = {}) {
         let innerColor = resolveColor(edgeColors[piece].inner, colors);
         if (muted) {
           const def = defaultPieceColors().edgeColors[piece];
@@ -781,11 +781,11 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
         const pi = { x: 0, y: 0 };
         const pA = pt(rOuter, -half);
         const pB = pt(rOuter, half);
-        const sw = (size * 0.004).toFixed(2);
+        const sw = (size * settings.strokeWidthOuter).toFixed(2);
         return `<polygon class="sticker" id="${piece} inner" points="${ps([pi, pA, pB])}" fill="${innerColor}" stroke="${muted ? ph.border : colors.border}" stroke-width="${sw}"/>`;
       },
 
-      drawCorner(piece, colors, size, muted, ph = DEFAULT_PLACEHOLDER) {
+      drawCorner(piece, colors, size, muted, ph = DEFAULT_PLACEHOLDER, settings = {}) {
         let topColor = resolveColor(cornerColors[piece].top, colors);
         if (muted) {
           const def = defaultPieceColors().cornerColors[piece];
@@ -805,7 +805,7 @@ export function createSquare1Core(initialState: { piecesColors?: PiecesColors } 
         const pOR = pt(rOuter, -half);
         const pAp = pt(rApex, 0);
         const pOL = pt(rOuter, half);
-        const sw = (size * 0.004).toFixed(2);
+        const sw = (size * settings.strokeWidthOuter).toFixed(2);
         return `<polygon class="sticker" id="${piece} top" points="${ps([pi, pOR, pAp, pOL])}" fill="${topColor}" stroke="${muted ? ph.border : colors.border}" stroke-width="${sw}"/>`;
       },
 

@@ -27,7 +27,6 @@ test('differential: TS port matches original JS output', () => {
       ['size300', { size: 300 }],
       ['ring30', { ringDistance: 30 }],
       ['colorized', { colorScheme: { top: '#111111', front: '#ff0000' } }],
-      ['noSide', { showSideColors: false }],
       ['sac2', { styleIndex: 0 }],
       ['sac2noside', { styleIndex: 0, showSideColors: false }],
     ] as [string, Record<string, unknown>][]) {
@@ -39,6 +38,20 @@ test('differential: TS port matches original JS output', () => {
     const b = deterministic(() => ts.renderSquare1LayerSVG(hex, { styleSettings: legacyWidths }));
     expect(b, `${hex} layer`).toBe(a);
   }
+});
+
+test('explicitly disabling side colors selects the side-color-free variant', () => {
+  const html = deterministic(() =>
+    ts.renderSquare1SVG(HEXES[0], {
+      showSideColors: false,
+      styleSettings: legacyWidths,
+    }),
+  );
+
+  expect(html).not.toContain('rgba(204,0,0,1)');
+  expect(html).not.toContain('rgba(0,170,0,0.98)');
+  expect(html).not.toContain('rgba(255,140,0,1)');
+  expect(html).not.toContain('rgba(0,128,255,1)');
 });
 
 test('differential: layer + side-color variants match', () => {

@@ -107,7 +107,8 @@ export function visualizeShapes(
   size = 200,
   edgeFill = 'transparent',
   cornerFill = 'transparent',
-  _strokeWidth = 2,
+  border = '#333333',
+  strokeWidth = 2,
   ringDistance = 5,
   wrapperPadding = '2rem',
 ): string {
@@ -128,12 +129,24 @@ export function visualizeShapes(
     return errorDiv('Error: Invalid input type');
   }
 
+  const coreSize = size * (220 / 400);
+  const normalizedStrokeWidth = coreSize > 0 ? strokeWidth / coreSize : undefined;
+
   return renderSquare1SVG(hexCode, {
     size,
     ringDistance,
     wrapperPadding,
     showSideColors: false,
     showSlice: true,
+    ...(normalizedStrokeWidth === undefined
+      ? {}
+      : {
+          styleSettings: {
+            strokeWidthOuter: normalizedStrokeWidth,
+            sliceStrokeWidth: normalizedStrokeWidth,
+            strokeWidthInner: normalizedStrokeWidth,
+          },
+        }),
     colorScheme: {
       top: cornerFill,
       bottom: cornerFill,
@@ -141,7 +154,7 @@ export function visualizeShapes(
       right: edgeFill,
       back: edgeFill,
       left: edgeFill,
-      border: '#333333',
+      border: border,
     },
   });
 }

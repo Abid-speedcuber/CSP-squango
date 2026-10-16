@@ -75,6 +75,15 @@ describe('drawScramble visualizer', () => {
     expect(html).toContain('fill="transparent"');
   });
 
+  it('applies the requested shape outline stroke width in SVG units', () => {
+    const html = visualizeShapes('6e0cc804a2a6|0e8c64ee20c4', 200, 'transparent', 'transparent', '#333333', 3);
+    const stickerStrokeWidths = [...html.matchAll(/<polygon class="sticker"[^>]*stroke-width="([^"]+)"/g)].map(
+      ([, strokeWidth]) => strokeWidth,
+    );
+    expect(stickerStrokeWidths.length).toBeGreaterThan(0);
+    expect(stickerStrokeWidths.every((strokeWidth) => strokeWidth === '3.00')).toBe(true);
+  });
+
   it('renders shape outlines from a hex code with pipe separator', () => {
     const html = visualizeShapes('6e0cc804a2a6|0e8c64ee20c4');
     expect(html).toContain('<svg');
