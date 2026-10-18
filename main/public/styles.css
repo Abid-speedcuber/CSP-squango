@@ -80,6 +80,14 @@
     --card-learning-bg: #fff3cd;  --card-learning-border: #ffc107;
     --card-learning-header: #ffe69c; --card-learning-svg: #fffae6;
 
+    /* ── Evil-case picker ── */
+    --evil-case-bg:     #ffe0e0;
+    --evil-case-border: #e53e3e;
+    --evil-case-text:   #7b1c1c;
+    --good-case-bg:     #e8f5e9;
+    --good-case-border: #38a169;
+    --good-case-text:   #1a4731;
+
     /* ── Priority tiers ── */
     --p1-bg: #b3d9ff; --p1-border: #80bfff; --p1-header: #cce6ff; --p1-svg: #d9edff;
     --p2-bg: #d4ebf7; --p2-border: #a9d6ed; --p2-header: #e3f2fa; --p2-svg: #e8f4fa;
@@ -181,11 +189,11 @@
     --z2-prefix-color:    #6a9ef8;
     --algo-invalid-color: #ff6b6b;
 
-    --parity-odd:         #3fff86;
-    --parity-even:        #42c9ff;
-    --parity-odd-mirror:  #02c23c;
-    --parity-even-mirror: #0088ff;
-    --parity-invalid:     #ff0000;
+    --parity-odd:         #63c98f;
+    --parity-even:        #79a9d6;
+    --parity-odd-mirror:  #4b9c70;
+    --parity-even-mirror: #5e86b2;
+    --parity-invalid:     #d96b73;
 
     --svg-stroke:   #c8ccd8;
     --svg-fill:     var(--text-primary);
@@ -202,6 +210,13 @@
     --card-planned-header: #122344;
     --card-learning-bg: #272500;  --card-learning-border: #8e8510;
     --card-learning-header: #2c2108; --card-learning-svg: #302d00;
+
+    --evil-case-bg:     #3a1f26;
+    --evil-case-border: #d35f6b;
+    --evil-case-text:   #ffb8be;
+    --good-case-bg:     #183524;
+    --good-case-border: #49b978;
+    --good-case-text:   #a8e6bd;
 
     --p1-bg: #0e2240; --p1-border: #2558a0; --p1-header: #122648; --p1-svg: #102440;
     --p2-bg: #112232; --p2-border: #236080; --p2-header: #162a3c; --p2-svg: #142838;

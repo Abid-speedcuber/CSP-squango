@@ -574,9 +574,9 @@ function showEvilnessCasesModal(
           ? dn.replace(/ /g, '\u00A0').replace('/', '/\u200B')
           : dn;
 
-        const bgColor = isEvil ? '#ffe0e0' : '#e8f5e9';
-        const borderColor2 = isEvil ? '#e53e3e' : '#38a169';
-        const textCol = isEvil ? '#7b1c1c' : '#1a4731';
+        const bgColor = isEvil ? 'var(--evil-case-bg)' : 'var(--good-case-bg)';
+        const borderColor2 = isEvil ? 'var(--evil-case-border)' : 'var(--good-case-border)';
+        const textCol = isEvil ? 'var(--evil-case-text)' : 'var(--good-case-text)';
         const escaped = String(cn);
 
         return `<div
