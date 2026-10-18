@@ -277,8 +277,8 @@ export default function App(): React.ReactNode {
 
   useEffect(() => {
     if (!bootReady || !gridRef.current) return;
-    decorateLearningOrderGrid(gridRef.current);
-  }, [bootReady, filtered, gridRenderTick, storeVersion]);
+    decorateLearningOrderGrid(gridRef.current, '.card', 'data-case-name', sortType);
+  }, [bootReady, filtered, gridRenderTick, storeVersion, sortType]);
 
   useEffect(() => {
     if (!bootReady || !gridRef.current) return;

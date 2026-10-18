@@ -1,5 +1,12 @@
 import { getCaseId } from '../data/cases';
-import { data, getDisplayName, getLearningOrder, setLearningOrder } from './state';
+import {
+  data,
+  getDisplayName,
+  getLearningOrder,
+  isUniformProbabilityGroup,
+  setLearningOrder,
+  type SortMode,
+} from './state';
 import { showSaveDiscardConfirmation } from './confirm';
 import {
   attachOverlayClose,
@@ -227,7 +234,7 @@ function renderEntry(entry: EditorEntry, index: number): string {
   }
   return `<div class="learning-order-unit">
     ${insertion(index)}
-    <div class="learning-order-group" data-entry-index="${index}" draggable="true">
+    <div class="learning-order-group" data-tone="${index % 4}" data-entry-index="${index}" draggable="true">
       <div class="learning-order-group-header learning-order-selectable" tabindex="0" data-entry-index="${index}">
         <span class="learning-order-drag-handle" draggable="true" aria-label="Drag group">${dragHandleIcon()}</span>
       </div>
@@ -258,6 +265,11 @@ function render(): void {
   const redo = modal.querySelector<HTMLButtonElement>('#learningOrderRedo');
   if (undo) undo.disabled = undoStack.length === 0;
   if (redo) redo.disabled = redoStack.length === 0;
+  const count = modal.querySelector('#learningOrderCount');
+  if (count) {
+    const groups = editorEntries.filter((entry) => Array.isArray(entry)).length;
+    count.textContent = `${groups} groups`;
+  }
 }
 
 function clearSelection(): void {
@@ -476,10 +488,16 @@ export function openLearningOrderModal(): void {
         <button class="close-btn" id="learningOrderClose" aria-label="Close">&times;</button>
       </div>
       <div class="learning-order-body">
-        <p class="learning-order-help">Drag the handle between items to reorder. Drop a case onto a group to add it. Click a case or group, then use Left/Right to move it.</p>
+        <p class="learning-order-help">
+          Cases are learned from first to last; cases in a group are learned together.
+          Drag to reorder, or drop a case onto a group to add it.
+          Select an item and press <kbd>←</kbd> <kbd>→</kbd> to move it
+          (<kbd>Ctrl</kbd> moves 5, <kbd>Shift</kbd> groups with its neighbor).
+        </p>
         <div class="learning-order-toolbar">
-          <button id="learningOrderUndo" class="confirm-btn confirm-btn--neutral" type="button">Undo</button>
-          <button id="learningOrderRedo" class="confirm-btn confirm-btn--neutral" type="button">Redo</button>
+          <button id="learningOrderUndo" class="confirm-btn confirm-btn--neutral" type="button">↶ Undo</button>
+          <button id="learningOrderRedo" class="confirm-btn confirm-btn--neutral" type="button">Redo ↷</button>
+          <span id="learningOrderCount" class="learning-order-count"></span>
         </div>
         <div id="learningOrderList" class="learning-order-list" aria-label="Learning order"></div>
       </div>
@@ -529,21 +547,28 @@ export function installLearningOrderShims(): void {
 
 const groupObservers = new WeakMap<HTMLElement, ResizeObserver>();
 const groupLayers = new WeakMap<HTMLElement, HTMLElement>();
+const groupArgs = new WeakMap<
+  HTMLElement,
+  { cardSelector: string; caseAttribute: string; sortMode: SortMode }
+>();
 
 /** Draws one continuous outline around each run of same-group cards within a grid row. */
 export function decorateLearningOrderGrid(
   grid: HTMLElement,
   cardSelector = '.card',
   caseAttribute = 'data-case-name',
+  sortMode: SortMode = 'priority',
 ): void {
   groupLayers.get(grid)?.remove();
   groupLayers.delete(grid);
+  groupArgs.set(grid, { cardSelector, caseAttribute, sortMode });
 
   // Redraw when the grid resizes (column changes, late image loads).
   if (!groupObservers.has(grid) && typeof ResizeObserver !== 'undefined') {
-    const observer = new ResizeObserver(() =>
-      decorateLearningOrderGrid(grid, cardSelector, caseAttribute),
-    );
+    const observer = new ResizeObserver(() => {
+      const args = groupArgs.get(grid);
+      if (args) decorateLearningOrderGrid(grid, args.cardSelector, args.caseAttribute, args.sortMode);
+    });
     observer.observe(grid);
     groupObservers.set(grid, observer);
   }
@@ -553,7 +578,10 @@ export function decorateLearningOrderGrid(
 
   const groups = new Map<number, number>();
   getLearningOrder()?.forEach((entry, groupId) => {
-    if (Array.isArray(entry) && entry.length > 1) entry.forEach((id) => groups.set(id, groupId));
+    if (!Array.isArray(entry) || entry.length < 2) return;
+    // Probability sorts only keep groups whose members share one probability.
+    if (sortMode !== 'priority' && !isUniformProbabilityGroup(entry)) return;
+    entry.forEach((id) => groups.set(id, groupId));
   });
   if (groups.size === 0) return;
 

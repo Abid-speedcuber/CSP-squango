@@ -2,6 +2,7 @@ import type { AlgCase } from '../data/types';
 import {
   comparePriorityCases,
   data,
+  getProbabilityTieRanks,
   getDisplayName,
   learnedCases,
   type SortMode,
@@ -89,8 +90,14 @@ export function computeFilteredData(
     filteredData.sort((a, b) => b.probability - a.probability);
     filteredData.sort(comparePriorityCases);
   } else {
-    filteredData.sort((a, b) => b.probability - a.probability);
-    if (sortType === 'antiProbability') filteredData.reverse();
+    // Probability tiers first; order within a tier follows the learning order.
+    const ranks = getProbabilityTieRanks();
+    const direction = sortType === 'antiProbability' ? -1 : 1;
+    filteredData.sort((a, b) => {
+      const diff = b.probability - a.probability;
+      if (Math.abs(diff) > 1e-9) return diff * direction;
+      return (ranks.get(a.id) ?? 0) - (ranks.get(b.id) ?? 0);
+    });
   }
 
   return filteredData;

@@ -450,6 +450,33 @@ function getLearningOrderPositions(): Map<number, { position: number; memberPosi
   return result;
 }
 
+const PROBABILITY_EPSILON = 1e-9;
+
+/** True when all members of a learning group share one probability. */
+export function isUniformProbabilityGroup(caseIds: number[]): boolean {
+  const probabilities = caseIds.map((id) => data.find((item) => item.id === id)?.probability);
+  const first = probabilities[0];
+  return (
+    first !== undefined &&
+    probabilities.every((p) => p !== undefined && Math.abs(p - first) < PROBABILITY_EPSILON)
+  );
+}
+
+/**
+ * Tie-break ranks for probability sorts: the flattened learning order.
+ */
+export function getProbabilityTieRanks(): Map<number, number> {
+  const ranks = new Map<number, number>();
+  let next = 0;
+  learningOrder?.forEach((entry) => {
+    (Array.isArray(entry) ? entry : [entry]).forEach((id) => ranks.set(id, next++));
+  });
+  data.forEach((item) => {
+    if (!ranks.has(item.id)) ranks.set(item.id, next++);
+  });
+  return ranks;
+}
+
 function getLegacyPriorityComparison(a: AlgCase, b: AlgCase): number {
   const aIsLearning = learningCases.has(a.id);
   const bIsLearning = learningCases.has(b.id);
