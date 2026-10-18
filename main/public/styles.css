@@ -208,8 +208,8 @@
     --card-learned-header: #132819;  --card-learned-svg: #162c1a;
     --card-planned-bg: #0e1f3a;   --card-planned-border: #2558a0;
     --card-planned-header: #122344;
-    --card-learning-bg: #272500;  --card-learning-border: #8e8510;
-    --card-learning-header: #2c2108; --card-learning-svg: #302d00;
+    --card-learning-bg: #221a0d;  --card-learning-border: #a47818;
+    --card-learning-header: #292010; --card-learning-svg: #2c2212;
 
     --evil-case-bg:     #3a1f26;
     --evil-case-border: #d35f6b;
@@ -262,8 +262,8 @@
     --toast-info-bg:    #103394;
     --toast-color:      var(--text-primary);
 
-    --search-highlight-bg:    #6b5a00;
-    --search-highlight-color: #ffe680;
+    --search-highlight-bg:    #d9b92e;
+    --search-highlight-color: #14161c;
 
     --double-align-color:    #6a9ef8;
     --double-misalign-color: #ff6b6b;
