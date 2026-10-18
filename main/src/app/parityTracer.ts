@@ -41,6 +41,7 @@ import {
   TOP_HEX,
 } from '../lib/parityAnalyzer';
 import { resolveThemeAwareWhite, visualizeFromHex } from '../lib/drawScramble';
+import { decorateLearningOrderGrid } from './learningOrder';
 import {
   closeModalWithHistory,
   pushModalState,
@@ -592,6 +593,7 @@ function showEvilnessCasesModal(
         </div>`;
       })
       .join('');
+    decorateLearningOrderGrid(grid, '[data-case]', 'data-case');
 
     const countBar = evilInner.querySelector('#evilCountBar');
     if (countBar) {

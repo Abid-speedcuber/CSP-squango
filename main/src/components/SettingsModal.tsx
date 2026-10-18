@@ -261,6 +261,11 @@ function HomescreenTab(): React.ReactNode {
         () => (window as unknown as { openQuickEditModal?: () => void }).openQuickEditModal?.(),
         'Bulk-edit case algs, names and subtitles. Intended for preset creators.<br><br><strong>Keyboard shortcut:</strong> Alt+Q',
       )}
+      {_actionBtn(
+        'Learning Order',
+        () => (window as unknown as { openLearningOrderModal?: () => void }).openLearningOrderModal?.(),
+        'Arrange cases into a learning order and group related cases together. Intended for preset creators.',
+      )}
 
       {_sectionTitle('Access')}
       {_row(

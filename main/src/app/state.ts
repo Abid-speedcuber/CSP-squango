@@ -24,6 +24,8 @@ export const shapeIndexMap = SHAPE_INDEX_MAP;
 export type SortMode = 'priority' | 'probability' | 'antiProbability';
 export type LearnFilter = 'all' | 'learned' | 'unlearned';
 export type CornerMode = 'counterclockwise' | 'clockwise';
+export type LearningOrderEntry = number | number[];
+export type LearningOrder = LearningOrderEntry[];
 
 export interface ColorScheme {
   topColor: string;
@@ -160,6 +162,7 @@ export const learningCases = new Set<number>();
 export const plannedCases = new Set<number>();
 export const comments = new Map<number, string>();
 export const plannedLevels = new Map<number, number>();
+export let learningOrder: LearningOrder | null = null;
 export const parityOrientations = new Map<number, number>();
 export const perCaseSubtitles = new Map<number, string>();
 export const customAlgorithms = new Map<number, { odd?: string[]; even?: string[] }>();
@@ -392,6 +395,123 @@ function normalizeCaseIds(source: unknown): number[] {
   return source.map(getCaseId).filter((id): id is number => id !== undefined);
 }
 
+function normalizeLearningOrder(source: unknown): LearningOrder | null {
+  if (!Array.isArray(source)) return null;
+  const seen = new Set<number>();
+  const normalized: LearningOrder = [];
+  for (const entry of source) {
+    const refs = Array.isArray(entry) ? entry : [entry];
+    const ids = refs
+      .map(getCaseId)
+      .filter((id): id is number => id !== undefined && !seen.has(id))
+      .filter((id) => {
+        seen.add(id);
+        return true;
+      });
+    if (ids.length === 1 && !Array.isArray(entry)) normalized.push(ids[0]);
+    else if (ids.length > 0) normalized.push(ids);
+  }
+  return normalized;
+}
+
+export function getLearningOrder(): LearningOrder | null {
+  return learningOrder ? learningOrder.map((entry) => (Array.isArray(entry) ? [...entry] : entry)) : null;
+}
+
+export function setLearningOrder(order: LearningOrder | null, notifyStore = true): void {
+  learningOrder = normalizeLearningOrder(order);
+  saveState();
+  if (notifyStore) notify();
+}
+
+export interface PriorityGroupMetadata {
+  groupId: number;
+  caseIds: number[];
+  position: number;
+}
+
+export function getPriorityGroupMetadata(): Map<number, PriorityGroupMetadata> {
+  const result = new Map<number, PriorityGroupMetadata>();
+  if (!learningOrder) return result;
+  learningOrder.forEach((entry, position) => {
+    if (!Array.isArray(entry) || entry.length < 2) return;
+    const group = { groupId: position, caseIds: [...entry], position };
+    entry.forEach((caseId) => result.set(caseId, group));
+  });
+  return result;
+}
+
+function getLearningOrderPositions(): Map<number, { position: number; memberPosition: number }> {
+  const result = new Map<number, { position: number; memberPosition: number }>();
+  learningOrder?.forEach((entry, position) => {
+    const ids = Array.isArray(entry) ? entry : [entry];
+    ids.forEach((caseId, memberPosition) => result.set(caseId, { position, memberPosition }));
+  });
+  return result;
+}
+
+function getLegacyPriorityComparison(a: AlgCase, b: AlgCase): number {
+  const aIsLearning = learningCases.has(a.id);
+  const bIsLearning = learningCases.has(b.id);
+  const aIsPlanned = plannedCases.has(a.id);
+  const bIsPlanned = plannedCases.has(b.id);
+  const aIsLearned = learnedCases.has(a.id);
+  const bIsLearned = learnedCases.has(b.id);
+
+  if (aIsLearning && !bIsLearning) return -1;
+  if (!aIsLearning && bIsLearning) return 1;
+  if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
+  if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
+  if (aIsPlanned && bIsPlanned) {
+    return (plannedLevels.get(a.id) || 4) - (plannedLevels.get(b.id) || 4);
+  }
+  if (aIsLearned && !bIsLearned) return 1;
+  if (!aIsLearned && bIsLearned) return -1;
+  return 0;
+}
+
+/** Sorts priority-mode cases while preserving legacy behavior when unset. */
+export function comparePriorityCases(a: AlgCase, b: AlgCase): number {
+  if (!learningOrder) return getLegacyPriorityComparison(a, b);
+
+  const positions = getLearningOrderPositions();
+  const aPosition = positions.get(a.id);
+  const bPosition = positions.get(b.id);
+  if (!aPosition || !bPosition) return getLegacyPriorityComparison(a, b);
+  if (aPosition.position === bPosition.position) {
+    const entry = learningOrder[aPosition.position];
+    if (Array.isArray(entry)) return aPosition.memberPosition - bPosition.memberPosition;
+    return getLegacyPriorityComparison(a, b);
+  }
+
+  const aEntry = learningOrder[aPosition.position];
+  const bEntry = learningOrder[bPosition.position];
+  const aGroup = Array.isArray(aEntry) && aEntry.length > 1 ? aEntry : null;
+  const bGroup = Array.isArray(bEntry) && bEntry.length > 1 ? bEntry : null;
+  const aLearningCount = aGroup?.filter((id) => learningCases.has(id)).length || 0;
+  const bLearningCount = bGroup?.filter((id) => learningCases.has(id)).length || 0;
+  const aIsLearningGroup = !!aGroup && aLearningCount > 0;
+  const bIsLearningGroup = !!bGroup && bLearningCount > 0;
+  const aIsLearnedGroup = !!aGroup && aGroup.every((id) => learnedCases.has(id));
+  const bIsLearnedGroup = !!bGroup && bGroup.every((id) => learnedCases.has(id));
+  const aIsLearningSingle = !aGroup && learningCases.has(a.id);
+  const bIsLearningSingle = !bGroup && learningCases.has(b.id);
+  const aIsLearnedSingle = !aGroup && learnedCases.has(a.id);
+  const bIsLearnedSingle = !bGroup && learnedCases.has(b.id);
+
+  if (aIsLearningGroup !== bIsLearningGroup) return aIsLearningGroup ? -1 : 1;
+  if (aIsLearningSingle !== bIsLearningSingle) return aIsLearningSingle ? -1 : 1;
+  if (aIsLearningGroup && bIsLearningGroup) {
+    const aRatio = aLearningCount / aGroup!.length;
+    const bRatio = bLearningCount / bGroup!.length;
+    if (aRatio !== bRatio) return bRatio - aRatio;
+  }
+  const aLearned = aIsLearnedGroup || aIsLearnedSingle;
+  const bLearned = bIsLearnedGroup || bIsLearnedSingle;
+  if (aLearned !== bLearned) return aLearned ? 1 : -1;
+  return aPosition.position - bPosition.position;
+}
+
 function normalizeCaseState(state: StoredProgressState): StoredProgressState {
   const normalized = { ...state };
   for (const key of ['learned', 'learning', 'planned', 'selectorSelectedCases']) {
@@ -410,6 +530,9 @@ function normalizeCaseState(state: StoredProgressState): StoredProgressState {
     if (key in state) {
       normalized[key] = normalizeCaseRecord(state[key] as Record<string, unknown>);
     }
+  }
+  if ('learningOrder' in state) {
+    normalized.learningOrder = normalizeLearningOrder(state.learningOrder);
   }
   return normalized;
 }
@@ -450,29 +573,7 @@ export function initializeSVGDataForCases(cases: readonly Pick<AlgCase, 'top' | 
 function getPriorityBootCaseIds(): number[] {
   const sorted = [...data];
   sorted.sort((a, b) => b.probability - a.probability);
-  sorted.sort((a, b) => {
-    const aIsLearning = learningCases.has(a.id);
-    const bIsLearning = learningCases.has(b.id);
-    const aIsPlanned = plannedCases.has(a.id);
-    const bIsPlanned = plannedCases.has(b.id);
-    const aIsLearned = learnedCases.has(a.id);
-    const bIsLearned = learnedCases.has(b.id);
-
-    if (aIsLearning && !bIsLearning) return -1;
-    if (!aIsLearning && bIsLearning) return 1;
-
-    if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
-    if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
-    if (aIsPlanned && bIsPlanned) {
-      const aPriority = plannedLevels.get(a.id) || 4;
-      const bPriority = plannedLevels.get(b.id) || 4;
-      return aPriority - bPriority;
-    }
-
-    if (aIsLearned && !bIsLearned) return 1;
-    if (!aIsLearned && bIsLearned) return -1;
-    return 0;
-  });
+  sorted.sort(learningOrder ? comparePriorityCases : getLegacyPriorityComparison);
   return sorted.slice(0, BOOT_STATE_CARD_COUNT).map((item) => item.id);
 }
 
@@ -501,6 +602,7 @@ function createStateSnapshot(bootOnly = false): StoredProgressState {
     planned: Array.from(plannedCases),
     comments: bootOnly ? pickMapEntries(comments, bootCaseIds) : Object.fromEntries(comments),
     plannedLevels: Object.fromEntries(plannedLevels),
+    learningOrder: learningOrder ? getLearningOrder() : undefined,
     parityOrientations: bootOnly
       ? pickMapEntries(parityOrientations, bootCaseIds)
       : Object.fromEntries(parityOrientations),
@@ -561,6 +663,7 @@ function applyStoredState(state: StoredProgressState): void {
   algVariables.clear();
 
   const normalized = normalizeCaseState(state);
+  learningOrder = normalizeLearningOrder(normalized.learningOrder);
   normalizeCaseIds(normalized.learned).forEach((v) => learnedCases.add(v));
   normalizeCaseIds(normalized.learning).forEach((v) => learningCases.add(v));
   normalizeCaseIds(normalized.planned).forEach((v) => plannedCases.add(v));
@@ -741,6 +844,7 @@ export async function applyPreset(
   const preset = await loadPresetData(presetName, boot);
   if (!preset) return;
 
+  learningOrder = normalizeLearningOrder(preset.learningOrder);
   if (preset.displayNames) {
     displayNames = normalizeCaseRecord(preset.displayNames as Record<string, string>);
   }
@@ -856,6 +960,10 @@ export async function hydratePresetDetails(presetName: string): Promise<void> {
 
   if (preset.displayNames) mergeDisplayNames(preset.displayNames as Record<string, string>);
 
+  if (preset.learningOrder !== undefined) {
+    learningOrder = normalizeLearningOrder(preset.learningOrder);
+  }
+
   comments.clear();
   Object.entries(normalizeCaseRecord(preset.comments as Record<string, string> | undefined)).forEach(
     ([k, v]) => comments.set(Number(k), String(v)),
@@ -890,6 +998,7 @@ export function exportData(): void {
     planned: Array.from(plannedCases),
     comments: Object.fromEntries(comments),
     plannedLevels: Object.fromEntries(plannedLevels),
+    learningOrder: learningOrder ? getLearningOrder() : undefined,
     parityOrientations: Object.fromEntries(parityOrientations),
     showPaths: true,
     displayNames,
@@ -953,6 +1062,7 @@ export function importData(jsonStr: string): void {
     plannedCases.clear();
     comments.clear();
     plannedLevels.clear();
+    learningOrder = normalizeLearningOrder(normalized.learningOrder);
     parityOrientations.clear();
     perCaseSubtitles.clear();
     customAlgorithms.clear();

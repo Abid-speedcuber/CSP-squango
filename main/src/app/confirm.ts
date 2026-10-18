@@ -8,7 +8,7 @@ export function showConfirmation(
 ): void {
   const modal = document.createElement('div');
   modal.className = 'modal active';
-  modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
+  modal.style.cssText = 'z-index: 20001; display: flex; align-items: center; justify-content: center;';
   modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px; margin: 0;">
             <div class="modal-header">
@@ -51,7 +51,7 @@ export function showSaveDiscardConfirmation(
 ): void {
   const modal = document.createElement('div');
   modal.className = 'modal active';
-  modal.style.cssText = 'z-index: 10001; display: flex; align-items: center; justify-content: center;';
+  modal.style.cssText = 'z-index: 20001; display: flex; align-items: center; justify-content: center;';
   modal.innerHTML = `
         <div class="modal-content" style="max-width: 400px; margin: 0;">
             <div class="modal-header">

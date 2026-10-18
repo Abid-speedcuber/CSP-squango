@@ -51,6 +51,7 @@ import { installParityTracerShims } from './parityTracer';
 import { scrambleFromState } from '../lib/solver';
 import { installAnimateAlgShims, openAnimateAlgModal } from './animateAlg';
 import { installQuickEditShims } from './quickEdit';
+import { installLearningOrderShims } from './learningOrder';
 
 // ── Algo popup (legacy rendering.js showAlgoPopup/hideAlgoPopup) ─────────────
 let activePopup: HTMLElement | null = null;
@@ -530,6 +531,7 @@ export function installWindowShims(): void {
   installParityTracerShims();
   installAnimateAlgShims();
   installQuickEditShims();
+  installLearningOrderShims();
 
   // Algorithm-analysis bridges used by edit-case, quick-edit, trainer, tracer.
   w.algToShapeIndex = algToShapeIndex;

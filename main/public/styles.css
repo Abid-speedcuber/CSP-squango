@@ -3173,3 +3173,78 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
 .stroke-width-values { display: flex; justify-content: space-between; gap: 8px; font-size: .72rem; color: var(--text-secondary); margin-top: 5px; }
 .homepage-images-save { display: block; width: 100%; margin-top: 14px; padding: 12px; border: 0; border-radius: 10px; background: var(--text-ui); color: var(--surface); font-size: .95rem; font-weight: 600; cursor: pointer; }
 .homepage-images-save:disabled { opacity: .6; cursor: wait; }
+/* Learning-order group decoration and editor */
+.learning-group-layer {
+    --lg-0: var(--accent);
+    --lg-1: #7c4dff;
+    --lg-2: #00897b;
+    --lg-3: #64748b;
+    position: absolute; inset: 0; z-index: 0; pointer-events: none;
+}
+[data-theme="dark"] .learning-group-layer {
+    --lg-1: #9d82f0;
+    --lg-2: #3fb8aa;
+    --lg-3: #8a96ab;
+}
+.learning-group-box { --lg: var(--lg-0); position: absolute; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--lg) 50%, transparent); border-radius: 12px; }
+.learning-group-box[data-tone="1"] { --lg: var(--lg-1); }
+.learning-group-box[data-tone="2"] { --lg: var(--lg-2); }
+.learning-group-box[data-tone="3"] { --lg: var(--lg-3); }
+/* Group continues on the previous/next row: leave that edge open. */
+.learning-group-box.cont-start { border-left-color: transparent; border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.learning-group-box.cont-end { border-right-color: transparent; border-top-right-radius: 0; border-bottom-right-radius: 0; }
+.learning-order-content { max-width: 900px; width: min(94vw, 900px); max-height: 88vh; display: flex; flex-direction: column; }
+.learning-order-body { padding: 16px 20px; min-height: 0; overflow-y: auto; overflow-x: hidden; }
+.learning-order-help { color: var(--text-secondary); margin: 0 0 14px; line-height: 1.5; }
+.learning-order-toolbar { display: flex; gap: 8px; margin-bottom: 12px; }
+.learning-order-toolbar button:disabled { opacity: .45; cursor: not-allowed; }
+.learning-order-list { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px 0; min-height: 80px; max-width: 100%; overflow-x: hidden; }
+.learning-order-unit { display: flex; flex: 0 0 auto; align-items: center; gap: 0; }
+.learning-order-insertion {
+    position: relative;
+    flex: 0 0 16px;
+    min-height: 46px;
+}
+.learning-order-insertion::after {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: transparent;
+}
+.learning-order-insertion.learning-order-drop-target::after {
+    background: var(--accent);
+}
+.learning-order-entry,
+.learning-order-group {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--text-ui);
+    cursor: grab;
+    user-select: none;
+}
+.learning-order-entry { display: flex; align-items: center; gap: 8px; padding: 10px 12px; }
+.learning-order-group { display: flex; flex-direction: row; align-items: center; min-width: max-content; padding: 7px; }
+.learning-order-group-header { display: inline-flex; align-items: center; flex: 0 0 auto; color: var(--text-secondary); font-size: .78rem; padding: 2px 8px 2px 4px; }
+.learning-order-group-items { display: flex; flex-direction: row; flex-wrap: nowrap; align-items: stretch; gap: 0; overflow: visible; }
+.learning-order-group-case { display: flex; align-items: center; gap: 8px; padding: 8px; border: 1px solid var(--border-color); border-radius: 5px; background: var(--surface); cursor: grab; }
+.learning-order-group-items .learning-order-insertion { min-height: 38px; flex-basis: 16px; }
+.learning-order-selectable { cursor: pointer; }
+.learning-order-selectable:focus { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+.learning-order-group-header:focus { outline: none; }
+.learning-order-group:has(> .learning-order-group-header:focus) { outline: 2px solid var(--accent); outline-offset: 2px; border-color: var(--accent); }
+.learning-order-drag-handle { display: inline-flex; flex: 0 0 auto; align-items: center; cursor: grab; color: var(--text-muted); }
+.learning-order-drag-icon { width: 16px; height: 16px; fill: currentColor; }
+.learning-order-dragging { opacity: .45; }
+.learning-order-entry.learning-order-drop-target,
+.learning-order-group.learning-order-drop-target,
+.learning-order-group-case.learning-order-drop-target { outline: 2px solid var(--accent); outline-offset: 2px; }
+.learning-order-footer { flex: 0 0 auto; display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px 18px; border-top: 1px solid var(--surface-border); background: var(--surface); }
+@media (max-width: 560px) {
+    .learning-order-content { width: 100%; max-height: 92vh; }
+    .learning-order-entry, .learning-order-group { max-width: 100%; box-sizing: border-box; }
+}

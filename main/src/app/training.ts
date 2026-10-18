@@ -12,6 +12,7 @@
  * settings.js did.
  */
 import {
+  comparePriorityCases,
   data,
   colorScheme,
   cornerStickerMode,
@@ -21,7 +22,6 @@ import {
   isCaseEvil,
   learnedCases,
   learningCases,
-  plannedCases,
   plannedLevels,
 } from './state';
 import type { AlgCase } from '../data/types';
@@ -3290,24 +3290,7 @@ function toggleGoThroughFromSelector(checked: boolean): void {
 }
 
 function getSelectorSorted(arr: AlgCase[]): AlgCase[] {
-  return [...arr].sort((a, b) => {
-    const aLearning = learningCases.has(a.id);
-    const bLearning = learningCases.has(b.id);
-    const aLearned = learnedCases.has(a.id);
-    const bLearned = learnedCases.has(b.id);
-    const aPlanned = plannedCases.has(a.id);
-    const bPlanned = plannedCases.has(b.id);
-    if (aLearning && !bLearning) return -1;
-    if (!aLearning && bLearning) return 1;
-    if (aPlanned && bPlanned) {
-      return (plannedLevels.get(a.id) || 4) - (plannedLevels.get(b.id) || 4);
-    }
-    if (aPlanned && !bPlanned) return -1;
-    if (!aPlanned && bPlanned) return 1;
-    if (aLearned && !bLearned) return 1;
-    if (!aLearned && bLearned) return -1;
-    return 0;
-  });
+  return [...arr].sort(comparePriorityCases);
 }
 
 function getSelectorFilteredData(): AlgCase[] {

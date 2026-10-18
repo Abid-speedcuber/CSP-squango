@@ -1,5 +1,11 @@
 import type { AlgCase } from '../data/types';
-import { data, getDisplayName, learnedCases, learningCases, plannedCases, plannedLevels, type SortMode } from './state';
+import {
+  comparePriorityCases,
+  data,
+  getDisplayName,
+  learnedCases,
+  type SortMode,
+} from './state';
 
 export type LearnFilter = 'all' | 'learned' | 'unlearned';
 
@@ -81,29 +87,7 @@ export function computeFilteredData(
 
   if (sortType === 'priority') {
     filteredData.sort((a, b) => b.probability - a.probability);
-    filteredData.sort((a, b) => {
-      const aIsLearning = learningCases.has(a.id);
-      const bIsLearning = learningCases.has(b.id);
-      const aIsPlanned = plannedCases.has(a.id);
-      const bIsPlanned = plannedCases.has(b.id);
-      const aIsLearned = learnedCases.has(a.id);
-      const bIsLearned = learnedCases.has(b.id);
-
-      if (aIsLearning && !bIsLearning) return -1;
-      if (!aIsLearning && bIsLearning) return 1;
-
-      if (aIsPlanned && !bIsPlanned && !bIsLearning && !bIsLearned) return -1;
-      if (!aIsPlanned && bIsPlanned && !aIsLearning && !aIsLearned) return 1;
-      if (aIsPlanned && bIsPlanned) {
-        const aPriority = plannedLevels.get(a.id) || 4;
-        const bPriority = plannedLevels.get(b.id) || 4;
-        return aPriority - bPriority;
-      }
-
-      if (aIsLearned && !bIsLearned) return 1;
-      if (!aIsLearned && bIsLearned) return -1;
-      return 0;
-    });
+    filteredData.sort(comparePriorityCases);
   } else {
     filteredData.sort((a, b) => b.probability - a.probability);
     if (sortType === 'antiProbability') filteredData.reverse();

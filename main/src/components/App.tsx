@@ -30,6 +30,7 @@ import { applyInstructionVisibility } from '../app/visibility';
 import SettingsModal from './SettingsModal';
 import HomepageImagesModal from './HomepageImagesModal';
 import Dropdown from './Dropdown';
+import { decorateLearningOrderGrid } from '../app/learningOrder';
 
 const CARD_HEIGHT_CACHE_KEY = 'sqg-card-height-estimates-v1';
 const DEFAULT_SKELETON_CARD_HEIGHT = 360;
@@ -273,6 +274,11 @@ export default function App(): React.ReactNode {
   useEffect(() => {
     if (bootReady) updateProgress();
   }, [bootReady, storeVersion]);
+
+  useEffect(() => {
+    if (!bootReady || !gridRef.current) return;
+    decorateLearningOrderGrid(gridRef.current);
+  }, [bootReady, filtered, gridRenderTick, storeVersion]);
 
   useEffect(() => {
     if (!bootReady || !gridRef.current) return;
