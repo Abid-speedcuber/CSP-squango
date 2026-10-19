@@ -33,7 +33,7 @@ function getModalCaseShapeData(caseName: string) {
   return CSPData.getShapeEntry(caseName);
 }
 
-function getParityColorsForInput(alg: string): { color: string } | null {
+function getParityForInput(alg: string): 'odd' | 'even' | null {
   const modal = document.getElementById('editCaseModal');
   if (!modal) return null;
   const caseName = getEditModalCaseName(modal);
@@ -60,7 +60,7 @@ function getParityColorsForInput(alg: string): { color: string } | null {
       },
       cornerStickerMode,
     );
-    return { color: parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)' };
+    return parityText === 'Odd' ? 'odd' : 'even';
   } else if (isInMir) {
     const setup = invertScramble(normalized);
     const parityText = getParityText(
@@ -75,12 +75,16 @@ function getParityColorsForInput(alg: string): { color: string } | null {
       },
       cornerStickerMode,
     );
-    return {
-      color: parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)',
-    };
+    return parityText === 'Odd' ? 'odd' : 'even';
   } else {
-    return { color: 'var(--parity-invalid)' };
+    return null;
   }
+}
+
+function getParityColorsForInput(alg: string): { color: string } | null {
+  const parity = getParityForInput(alg);
+  if (!parity) return { color: 'var(--parity-invalid)' };
+  return { color: parity === 'odd' ? 'var(--parity-odd)' : 'var(--parity-even)' };
 }
 
 function updateInputColorLive(input: HTMLInputElement): void {
@@ -558,10 +562,14 @@ export function saveEditedCase(caseName: string): void {
     .map((input) => (input as HTMLInputElement).value.trim())
     .filter((v) => v);
 
-  customAlgorithms.set(caseId, {
-    odd: [],
-    even: allAlgs,
-  });
+  const odd: string[] = [];
+  const even: string[] = [];
+  for (const alg of allAlgs) {
+    const parity = getParityForInput(alg);
+    if (parity === 'odd') odd.push(alg);
+    else if (parity === 'even') even.push(alg);
+  }
+  customAlgorithms.set(caseId, { odd, even });
   const evilToggle = document.querySelector<HTMLInputElement>('#editCaseModal #evilCaseToggle');
   if (evilToggle) evilnessMap[String(caseId)] = evilToggle.checked;
 

@@ -19,7 +19,13 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <script>
       (function () {
-        let saved = localStorage.getItem('sqg-csp-theme');
+        let saved = null;
+        try {
+          const progress = JSON.parse(localStorage.getItem('cspProgress') || '{}');
+          saved = progress.theme;
+        } catch {
+          saved = null;
+        }
         if (saved === 'dark' || saved === 'light') {
           document.documentElement.setAttribute('data-theme', saved);
         }

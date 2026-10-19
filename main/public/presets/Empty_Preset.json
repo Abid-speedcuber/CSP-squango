@@ -1,6 +1,5 @@
 {
   "comments": {},
-  "parityOrientations": {},
   "showPaths": true,
   "displayNames": {
     "1": "kite/Square",
@@ -106,9 +105,39 @@
     "circleColor": "transparent"
   },
   "scrambleImageSize": 200,
-  "customShapesForParityTracerLibrary": "{\"ECECECEC\":\"Square\",\"EECECCEC\":\"Kite\",\"EECCEECC\":\"Barrel\",\"EECCECEC\":\"Left Fist\",\"EECECECC\":\"Right Fist\",\"EECEECCC\":\"Shield\",\"EEECCECC\":\"Muffin\",\"EEECECCC\":\"Left Pawn\",\"ECEEECCC\":\"Right Pawn\",\"EEEECCCC\":\"Scallop\",\"EECCCCC\":\"Pair\",\"ECECCCC\":\"L-Shape\",\"ECCCECC\":\"Line\",\"EEEEEECCC\":\"6-0\",\"ECEEEEECC\":\"Right 5-1\",\"EEEEECECC\":\"Left 5-1\",\"EECEEEECC\":\"Right 4-2\",\"EEEECEECC\":\"Left 4-2\",\"EEECEEECC\":\"3-3\",\"ECEECEEEC\":\"3-1-2\",\"ECEEECEEC\":\"3-2-1\",\"EECEECEEC\":\"2-2-2\",\"EEEEEEEECC\":\"8-0\",\"EEEEEECEEC\":\"6-2\",\"EEEECEEEEC\":\"4-4\",\"EEEEEEECEC\":\"7-1\",\"EEEEECEEEC\":\"5-3\",\"CCCCCC\":\"Star\",\"EEEECECEC\":\"4-1-1\"}",
   "perCaseSubtitles": {},
   "cornerStickerMode": "counterclockwise",
   "customAlgorithms": {},
-  "generalNotes": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Default Preset</title>\n    <style>\n        body {\n            margin: 0;\n            overflow-y: hidden;\n            padding: 0;\n            background-color: var(--background);\n            font-family: Arial, Helvetica, sans-serif;\n            color: var(--text-primary);\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            text-align: center;\n        }\n\n        .container {\n            max-width: 700px;\n            padding: 40px;\n        }\n\n        h1 {\n            font-size: 32px;\n            margin-bottom: 20px;\n        }\n\n        p {\n            font-size: 16px;\n            line-height: 1.7;\n            margin-bottom: 15px;\n        }\n\n        .footer {\n            margin-top: 30px;\n            font-style: italic;\n            color: var(--text-secondary);\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Welcome to the Default Preset</h1>\n\n        <p>\n            The default preset is available, but it's not the most exciting or optimized option.\n            It's fairly basic and may not give you the best overall experience.\n        </p>\n\n        <p>\n            We strongly suggest switching to Matt's preset and adjusting it to suit your preferences.\n            That said, the default preset can be useful if you're planning to completely rebuild the app's data and structure,\n            or if you want to design a custom preset from scratch.\n        </p>\n\n        <p>\n            If you'd like your own preset to be officially added to the app, reach out on Discord\n            at <strong>@abid_ibn_ashraf</strong>.\n        </p>\n\n        <div class=\"footer\">\n            Enjoy.\n        </div>\n    </div>\n</body>\n</html>"
+  "generalNotes": "<!DOCTYPE html>\n<html>\n<head>\n    <title>Default Preset</title>\n    <style>\n        body {\n            margin: 0;\n            overflow-y: hidden;\n            padding: 0;\n            background-color: var(--background);\n            font-family: Arial, Helvetica, sans-serif;\n            color: var(--text-primary);\n            display: flex;\n            justify-content: center;\n            align-items: center;\n            height: 100vh;\n            text-align: center;\n        }\n\n        .container {\n            max-width: 700px;\n            padding: 40px;\n        }\n\n        h1 {\n            font-size: 32px;\n            margin-bottom: 20px;\n        }\n\n        p {\n            font-size: 16px;\n            line-height: 1.7;\n            margin-bottom: 15px;\n        }\n\n        .footer {\n            margin-top: 30px;\n            font-style: italic;\n            color: var(--text-secondary);\n        }\n    </style>\n</head>\n<body>\n    <div class=\"container\">\n        <h1>Welcome to the Default Preset</h1>\n\n        <p>\n            The default preset is available, but it's not the most exciting or optimized option.\n            It's fairly basic and may not give you the best overall experience.\n        </p>\n\n        <p>\n            We strongly suggest switching to Matt's preset and adjusting it to suit your preferences.\n            That said, the default preset can be useful if you're planning to completely rebuild the app's data and structure,\n            or if you want to design a custom preset from scratch.\n        </p>\n\n        <p>\n            If you'd like your own preset to be officially added to the app, reach out on Discord\n            at <strong>@abid_ibn_ashraf</strong>.\n        </p>\n\n        <div class=\"footer\">\n            Enjoy.\n        </div>\n    </div>\n</body>\n</html>",
+  "tracingPositions": {
+    "ECECECEC": "Square",
+    "EECECCEC": "Kite",
+    "EECCEECC": "Barrel",
+    "EECCECEC": "Left Fist",
+    "EECECECC": "Right Fist",
+    "EECEECCC": "Shield",
+    "EEECCECC": "Muffin",
+    "EEECECCC": "Left Pawn",
+    "ECEEECCC": "Right Pawn",
+    "EEEECCCC": "Scallop",
+    "EECCCCC": "Pair",
+    "ECECCCC": "L-Shape",
+    "ECCCECC": "Line",
+    "EEEEEECCC": "6-0",
+    "ECEEEEECC": "Right 5-1",
+    "EEEEECECC": "Left 5-1",
+    "EECEEEECC": "Right 4-2",
+    "EEEECEECC": "Left 4-2",
+    "EEECEEECC": "3-3",
+    "ECEECEEEC": "3-1-2",
+    "ECEEECEEC": "3-2-1",
+    "EECEECEEC": "2-2-2",
+    "EEEEEEEECC": "8-0",
+    "EEEEEECEEC": "6-2",
+    "EEEECEEEEC": "4-4",
+    "EEEEEEECEC": "7-1",
+    "EEEEECEEEC": "5-3",
+    "CCCCCC": "Star",
+    "EEEECECEC": "4-1-1"
+  }
 }

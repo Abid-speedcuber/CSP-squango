@@ -33,6 +33,7 @@ import {
   setHideParenthesis,
   toggleTheme,
 } from '../app/state';
+import { CSP_PREFERENCES_KEY, CSP_TRAINING_KEY, readCspObject, updateCspObject } from '../lib/storage';
 import { applyAlgorithmFontSize, applyInstructionVisibility } from '../app/visibility';
 import { showToast } from '../app/toast';
 import InfoTip from './InfoTip';
@@ -280,17 +281,19 @@ function HomescreenTab(): React.ReactNode {
 // ── TAB: Parity Tracer ────────────────────────────────────────────────────────
 function ParityTab(): React.ReactNode {
   useAppStore();
-  const [ptSize, setPtSize] = useState<number>(parseInt(localStorage.getItem('parityTracerImageSize') || '200', 10));
+  const [ptSize, setPtSize] = useState<number>(Number(readCspObject(CSP_PREFERENCES_KEY).ptImageSize) || 200);
   const [z2On, setZ2On] = useState<boolean>(() => {
-    const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
-    return storedZ2 !== null ? storedZ2 === 'true' : true;
+    return readCspObject(CSP_PREFERENCES_KEY).z2Tracing !== false;
   });
-  const [showArrow, setShowArrow] = useState<boolean>(() => localStorage.getItem('parityTracerShowArrow') !== 'false');
+  const [showArrow, setShowArrow] = useState<boolean>(() => {
+    const arrow = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+    return !arrow || typeof arrow !== 'object' || (arrow as { enabled?: boolean }).enabled !== false;
+  });
 
   let arrowSettings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
   try {
-    const s = localStorage.getItem('parityTracerArrowSettings');
-    if (s) arrowSettings = JSON.parse(s);
+    const arrow = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+    if (arrow && typeof arrow === 'object') arrowSettings = { ...arrowSettings, ...arrow as Partial<typeof arrowSettings> };
   } catch {
     // ignore
   }
@@ -302,13 +305,15 @@ function ParityTab(): React.ReactNode {
   const saveArrowProp = (prop: 'opacity' | 'strokeWidth' | 'radius', val: number) => {
     let settings = { color: 'rgba(253,34,34,0.7)', opacity: 0.7, strokeWidth: 1.6, radius: 0.3 };
     try {
-      const s = localStorage.getItem('parityTracerArrowSettings');
-      if (s) settings = JSON.parse(s);
+      const arrow = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+      if (arrow && typeof arrow === 'object') settings = { ...settings, ...arrow as Partial<typeof settings> };
     } catch {
       // ignore
     }
     settings[prop] = val;
-    localStorage.setItem('parityTracerArrowSettings', JSON.stringify(settings));
+    updateCspObject(CSP_PREFERENCES_KEY, {
+      ptArrow: { ...settings, enabled: showArrow },
+    });
     if (prop === 'opacity') setArrowOpacity(Math.round(val * 100));
     if (prop === 'strokeWidth') setArrowStroke(val);
     if (prop === 'radius') setArrowRadius(val);
@@ -352,7 +357,7 @@ function ParityTab(): React.ReactNode {
         'z2 Tracing for 6/8-Edge Cases',
         _toggle('pt_z2', z2On, (v) => {
           setZ2On(v);
-          localStorage.setItem('z2TracingModeForParityTracerLibrary', v.toString());
+          updateCspObject(CSP_PREFERENCES_KEY, { z2Tracing: v });
           _triggerParityLiveUpdate();
         }),
         'z2 tracing for 6 and 8 edge cases means you prioritize the more edge-dense face to start your tracing, regardless of which layer it is on. This is the safest tracing mode. If you do not do z2 tracing, for 2E6E cases parity gets flipped',
@@ -370,7 +375,7 @@ function ParityTab(): React.ReactNode {
         tipHtml="Image size controls how big the square-1 visualization appears. Adjust this based on your screen size and preference."
         onChange={(val) => {
           setPtSize(val);
-          localStorage.setItem('parityTracerImageSize', String(val));
+          updateCspObject(CSP_PREFERENCES_KEY, { ptImageSize: val });
           _triggerParityLiveUpdate();
         }}
       />
@@ -378,7 +383,13 @@ function ParityTab(): React.ReactNode {
         'Show Tracing Arrow',
         _toggle('pt_showArrow', showArrow, (v) => {
           setShowArrow(v);
-          localStorage.setItem('parityTracerShowArrow', v.toString());
+          const current = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+          updateCspObject(CSP_PREFERENCES_KEY, {
+            ptArrow: {
+              ...(current && typeof current === 'object' ? current : {}),
+              enabled: v,
+            },
+          });
           _triggerParityLiveUpdate();
         }),
         'The circular arrow shows where your tracing starts on each layer. You can customize its appearance or hide it completely.',
@@ -477,15 +488,16 @@ function ParityTab(): React.ReactNode {
 
 // ── TAB: Trainer ──────────────────────────────────────────────────────────────
 function TrainerTab(): React.ReactNode {
-  const [imgSize, setImgSize] = useState<number>(parseInt(localStorage.getItem('trainingScrambleImageSize') || '280', 10));
-  const [txtSize, setTxtSize] = useState<number>(parseInt(localStorage.getItem('trainingScrambleTextSize') || '16', 10));
-  const [tmrSize, setTmrSize] = useState<number>(parseInt(localStorage.getItem('trainingTimerSize') || '80', 10));
-  const [holdVal, setHoldVal] = useState<number>(parseFloat(localStorage.getItem('trainingHoldToStart') || '0.22'));
-  const [showPrev, setShowPrev] = useState<boolean>(localStorage.getItem('trainingShowPrevScramble') === 'true');
-  const [insp, setInsp] = useState<boolean>(localStorage.getItem('trainingEnableInspection') === 'true');
-  const [pquiz, setPquiz] = useState<boolean>(localStorage.getItem('trainingEnableParityQuiz') === 'true');
-  const [beep, setBeep] = useState<boolean>(localStorage.getItem('trainingInspectionBeep') === 'true');
-  const [hideImg, setHideImg] = useState<boolean>(localStorage.getItem('trainingHideScrambleImage') === 'true');
+  const training = readCspObject(CSP_TRAINING_KEY);
+  const [imgSize, setImgSize] = useState<number>(Number(training.scramImageSize) || 280);
+  const [txtSize, setTxtSize] = useState<number>(Number(training.scramTextSize) || 16);
+  const [tmrSize, setTmrSize] = useState<number>(Number(training.timerSize) || 80);
+  const [holdVal, setHoldVal] = useState<number>(Number(training.holdToStart) || 0.22);
+  const [showPrev, setShowPrev] = useState<boolean>(training.showPrevScram === true);
+  const [insp, setInsp] = useState<boolean>(training.inspection === true);
+  const [pquiz, setPquiz] = useState<boolean>(training.parityQuiz === true);
+  const [beep, setBeep] = useState<boolean>(training.inspectionBeep === true);
+  const [hideImg, setHideImg] = useState<boolean>(training.hideScramImage === true);
 
   return (
     <>
@@ -500,7 +512,7 @@ function TrainerTab(): React.ReactNode {
         unit="px"
         onChange={(val) => {
           setImgSize(val);
-          localStorage.setItem('trainingScrambleImageSize', String(val));
+          updateCspObject(CSP_TRAINING_KEY, { scramImageSize: val });
           applyImageSizeLive(val);
         }}
       />
@@ -514,7 +526,7 @@ function TrainerTab(): React.ReactNode {
         unit="px"
         onChange={(val) => {
           setTxtSize(val);
-          localStorage.setItem('trainingScrambleTextSize', String(val));
+          updateCspObject(CSP_TRAINING_KEY, { scramTextSize: val });
           applyTextSizeLive(val);
         }}
       />
@@ -530,7 +542,7 @@ function TrainerTab(): React.ReactNode {
         unit="px"
         onChange={(val) => {
           setTmrSize(val);
-          localStorage.setItem('trainingTimerSize', String(val));
+          updateCspObject(CSP_TRAINING_KEY, { timerSize: val });
           applyTimerSizeLive(val);
         }}
       />
@@ -546,7 +558,7 @@ function TrainerTab(): React.ReactNode {
         tipHtml="How long you must hold the spacebar (or press the timer zone) before starting the timer."
         onChange={(val) => {
           setHoldVal(val);
-          localStorage.setItem('trainingHoldToStart', String(val));
+          updateCspObject(CSP_TRAINING_KEY, { holdToStart: val });
           applyHoldLive(val);
         }}
       />
@@ -556,7 +568,7 @@ function TrainerTab(): React.ReactNode {
         'Hide Scramble Image',
         _toggle('tr_hideImg', hideImg, (v) => {
           setHideImg(v);
-          localStorage.setItem('trainingHideScrambleImage', v.toString());
+          updateCspObject(CSP_TRAINING_KEY, { hideScramImage: v });
           applyHideImgLive(v);
         }),
         'Hides the scramble image and centers the timer.',
@@ -566,7 +578,7 @@ function TrainerTab(): React.ReactNode {
         'Show Previous Scramble',
         _toggle('tr_showPrev', showPrev, (v) => {
           setShowPrev(v);
-          localStorage.setItem('trainingShowPrevScramble', v.toString());
+          updateCspObject(CSP_TRAINING_KEY, { showPrevScram: v });
           applyPrevBarLive();
         }),
         'Shows the previous scramble at the very bottom of the screen.',
@@ -575,11 +587,11 @@ function TrainerTab(): React.ReactNode {
       {_sectionTitle('Inspection')}
       {_row('Enable Inspection', _toggle('tr_insp', insp, (v) => {
         setInsp(v);
-        localStorage.setItem('trainingEnableInspection', v.toString());
+        updateCspObject(CSP_TRAINING_KEY, { inspection: v });
         setEnableInspectionLive(v);
         if (!v) {
           setPquiz(false);
-          localStorage.setItem('trainingEnableParityQuiz', 'false');
+          updateCspObject(CSP_TRAINING_KEY, { parityQuiz: false });
           setEnableParityQuizLive(false);
         }
       }))}
@@ -587,13 +599,13 @@ function TrainerTab(): React.ReactNode {
         {_row(
           'Parity Quiz During Inspection',
           _toggle('tr_pquiz', pquiz, (v) => {
-            const inspOn = localStorage.getItem('trainingEnableInspection') === 'true';
+            const inspOn = readCspObject(CSP_TRAINING_KEY).inspection === true;
             if (!inspOn) {
               setPquiz(false);
               return;
             }
             setPquiz(v);
-            localStorage.setItem('trainingEnableParityQuiz', v.toString());
+            updateCspObject(CSP_TRAINING_KEY, { parityQuiz: v });
             setEnableParityQuizLive(v);
           }),
           'During inspection, the trainer will quiz you about the parity state of the current scramble',
@@ -602,7 +614,7 @@ function TrainerTab(): React.ReactNode {
           'Inspection Beep (8s / 12s)',
           _toggle('tr_beep', beep, (v) => {
             setBeep(v);
-            localStorage.setItem('trainingInspectionBeep', v.toString());
+            updateCspObject(CSP_TRAINING_KEY, { inspectionBeep: v });
           }),
           'Play a beep once at 8 seconds, a double beep at 12 seconds, and a triple beep at 15 seconds.',
         )}

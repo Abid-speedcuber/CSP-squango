@@ -5,6 +5,7 @@ import {
   ensureHomepageShapeSVGsForCases,
   prepareHomepageShapeSVGCache,
   renderLayerShapeSVG,
+  seedHomepageShapeSVGs,
 } from '../homepageShapes';
 import { CASES } from '../../data/cases';
 
@@ -61,9 +62,27 @@ test('dark-theme auto stroke uses the primary text color token', () => {
   vi.stubGlobal('document', {
     documentElement: { getAttribute: vi.fn().mockReturnValue('dark') },
   });
+
   const svg = renderLayerShapeSVG('Left_4_2')!;
   expect(svg).toContain('var(--text-primary)');
   expect(svg).not.toContain('#c0c0c0');
+});
+
+test('legacy preset SVG caches are not reused across themes', () => {
+  vi.stubGlobal('document', {
+    documentElement: { getAttribute: vi.fn().mockReturnValue('dark') },
+  });
+  const svgData: Record<string, string> = {};
+  const accepted = seedHomepageShapeSVGs(
+    DEFAULT_HOMEPAGE_IMAGE_SETTINGS,
+    svgData,
+    {
+      hash: JSON.stringify({ __dark: false }),
+      shapes: { 'top:Left_4_2': '<svg>light</svg>' },
+    },
+  );
+  expect(accepted).toBe(false);
+  expect(svgData).toEqual({});
 });
 
 test('save preparation makes every card shape available from the compressed reload cache', async () => {
@@ -81,6 +100,7 @@ test('save preparation makes every card shape available from the compressed relo
   for (const [key, svg] of Object.entries(loaded)) {
     expect(svg, key).toContain('<svg');
     expect(svg, key).not.toContain('<mask');
-    expect([...storage.values()]).toContain(svg);
   }
+  const cache = JSON.parse(storage.get('cspCache') || '{}');
+  expect(Object.values(cache.homepageSVG)).toEqual(expect.arrayContaining(Object.values(loaded)));
 }, 15000);

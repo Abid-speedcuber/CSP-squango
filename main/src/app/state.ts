@@ -16,6 +16,14 @@ import {
   type HomepageImageSettings,
 } from '../lib/homepageShapes';
 import { notify } from './store';
+import {
+  CSP_BOOT_KEY,
+  CSP_PREFERENCES_KEY,
+  CSP_PROGRESS_KEY,
+  hadStoredProgress,
+  readCspObject,
+  updateCspObject,
+} from '../lib/storage';
 
 export const data: AlgCase[] = CASES;
 export const shapeIndex = SHAPE_INDEX;
@@ -163,37 +171,61 @@ export const plannedCases = new Set<number>();
 export const comments = new Map<number, string>();
 export const plannedLevels = new Map<number, number>();
 export let learningOrder: LearningOrder | null = null;
-export const parityOrientations = new Map<number, number>();
 export const perCaseSubtitles = new Map<number, string>();
 export const customAlgorithms = new Map<number, { odd?: string[]; even?: string[] }>();
 export const cachedParityAlgorithms = new Map<number, { odd: string[]; even: string[] }>();
 export const algVariables = new Map<string, string>();
 
 export let cornerStickerMode: CornerMode = 'counterclockwise';
-export let evilnessFactor = false;
-export let evilnessStringReturn = false;
-export let evilnessMap: Record<string, boolean> = {};
-export let showPaths = true;
-export let enablePriorityLearning = true;
+const progressStorage = readCspObject(CSP_PROGRESS_KEY);
+const preferencesStorage = readCspObject(CSP_PREFERENCES_KEY);
+export let evilnessFactor = Boolean(progressStorage.evilnessEnabled);
+export let evilnessStringReturn = Boolean(progressStorage.evilnessAffectsHomescreen);
+export let evilnessMap: Record<string, boolean> =
+  Array.isArray(progressStorage.evilCases)
+    ? Object.fromEntries((progressStorage.evilCases as unknown[]).map((id) => [String(id), true]))
+    : (progressStorage.evilnessMap as Record<string, boolean> | undefined) || {};
+
+function evilCasesFromMap(map: Record<string, boolean>): number[] {
+  return Object.entries(map)
+    .filter(([, enabled]) => enabled === true)
+    .map(([id]) => Number(id))
+    .filter(Number.isInteger)
+    .sort((a, b) => a - b);
+}
+
+function evilMapFromCases(value: unknown): Record<string, boolean> {
+  if (Array.isArray(value)) {
+    return Object.fromEntries(
+      value.map(Number).filter(Number.isInteger).map((id) => [String(id), true]),
+    );
+  }
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, enabled]) => enabled === true)
+        .map(([id]) => [id, true]),
+    );
+  }
+  return {};
+}
 export let hideInstructions = false;
 export let hideParenthesis = false;
-export let algorithmFontSize = parseInt(localStorage.getItem('algorithmFontSize') || '', 10) || 14;
+export let algorithmFontSize = Number(preferencesStorage.algorithmFontSize) || 14;
 export let generalNotes = '';
-export let enhancedAccess = localStorage.getItem('enhancedAccess') === 'true';
+export let enhancedAccess = preferencesStorage.enhancedAccess === true;
 export let currentSortMode: SortMode =
-  (localStorage.getItem('sortMode') as SortMode) || 'probability';
+  (progressStorage.sortMode as SortMode) || 'probability';
 export let needsReorder = false;
 
 export let colorScheme: ColorScheme = { ...DEFAULT_COLOR_SCHEME };
 export let scrambleImageSize = 200;
-export let profileName = localStorage.getItem('profileName') || 'Profile';
-export let profileAvatar = localStorage.getItem('profileAvatar') || 'res/avatar.svg';
-export let currentPreset = localStorage.getItem('currentPreset') || "Matt's_Preset";
+export let profileName = String(preferencesStorage.profileName || 'Profile');
+export let profileAvatar = String(preferencesStorage.profileAvatar || 'res/avatar.svg');
+export let currentPreset = String(preferencesStorage.currentPreset || "Matt's_Preset");
 export let presetData: Record<string, unknown> | null = null;
 
-export const isFirstLoad = !localStorage.getItem('sq1-parity-progress');
-const PROGRESS_STORAGE_KEY = 'sq1-parity-progress';
-const BOOT_PROGRESS_STORAGE_KEY = 'sq1-parity-boot-progress-v1';
+export const isFirstLoad = !hadStoredProgress;
 const BOOT_STATE_CARD_COUNT = 12;
 let fullSavedStateLoaded = false;
 
@@ -270,7 +302,7 @@ function getParityCalculationSettings(): Record<string, unknown> {
   return {
     colorScheme: JSON.stringify(colorScheme),
     cornerStickerMode,
-    customShapes: localStorage.getItem('customShapesForParityTracerLibrary'),
+    customShapes: JSON.stringify(readCspObject(CSP_PROGRESS_KEY).tracingPositions || {}),
     customAlgorithms: JSON.stringify(Array.from(customAlgorithms.entries())),
     evilnessFactor,
     evilnessStringReturn,
@@ -541,13 +573,21 @@ export function comparePriorityCases(a: AlgCase, b: AlgCase): number {
 
 function normalizeCaseState(state: StoredProgressState): StoredProgressState {
   const normalized = { ...state };
+  if (normalized.evilnessEnabled === undefined && normalized.evilnessFactor !== undefined) {
+    normalized.evilnessEnabled = normalized.evilnessFactor;
+  }
+  if (
+    normalized.evilnessAffectsHomescreen === undefined &&
+    normalized.evilnessStringReturn !== undefined
+  ) {
+    normalized.evilnessAffectsHomescreen = normalized.evilnessStringReturn;
+  }
   for (const key of ['learned', 'learning', 'planned', 'selectorSelectedCases']) {
     if (key in state) normalized[key] = normalizeCaseIds(state[key]);
   }
   for (const key of [
     'comments',
     'plannedLevels',
-    'parityOrientations',
     'displayNames',
     'perCaseSubtitles',
     'customAlgorithms',
@@ -556,6 +596,11 @@ function normalizeCaseState(state: StoredProgressState): StoredProgressState {
   ]) {
     if (key in state) {
       normalized[key] = normalizeCaseRecord(state[key] as Record<string, unknown>);
+    }
+    if (Array.isArray(normalized.evilCases)) {
+      normalized.evilCases = normalized.evilCases
+        .map(Number)
+        .filter(Number.isInteger);
     }
   }
   if ('learningOrder' in state) {
@@ -630,19 +675,10 @@ function createStateSnapshot(bootOnly = false): StoredProgressState {
     comments: bootOnly ? pickMapEntries(comments, bootCaseIds) : Object.fromEntries(comments),
     plannedLevels: Object.fromEntries(plannedLevels),
     learningOrder: learningOrder ? getLearningOrder() : undefined,
-    parityOrientations: bootOnly
-      ? pickMapEntries(parityOrientations, bootCaseIds)
-      : Object.fromEntries(parityOrientations),
-    showPaths: true,
-    enablePriorityLearning: true,
     displayNames: bootOnly ? pickRecordEntries(displayNames, bootCaseIds) : displayNames,
     hideInstructions,
-    hideParenthesis,
     colorScheme,
-    scrambleImageSize,
-    customShapesForParityTracerLibrary: localStorage.getItem(
-      'customShapesForParityTracerLibrary',
-    ),
+    tracingPositions: getShapePatterns(),
     perCaseSubtitles: bootOnly
       ? pickMapEntries(perCaseSubtitles, bootCaseIds)
       : Object.fromEntries(perCaseSubtitles),
@@ -656,22 +692,31 @@ function createStateSnapshot(bootOnly = false): StoredProgressState {
     lastParityCalculationSettings,
     generalNotes: bootOnly ? '' : generalNotes,
     algVariables: bootOnly ? {} : Object.fromEntries(algVariables),
-    evilnessFactor,
-    evilnessStringReturn,
-    evilnessMap,
+    evilCases: evilCasesFromMap(evilnessMap),
   };
 }
 
 export function saveState(): void {
-  localStorage.setItem('sortMode', currentSortMode);
-  localStorage.setItem('enhancedAccess', enhancedAccess.toString());
-  localStorage.setItem('currentPreset', currentPreset);
-  localStorage.setItem('evilnessFactor', evilnessFactor.toString());
-  localStorage.setItem('evilnessStringReturn', evilnessStringReturn.toString());
-  localStorage.setItem('evilnessMap', JSON.stringify(evilnessMap));
   try {
-    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(createStateSnapshot()));
-    localStorage.setItem(BOOT_PROGRESS_STORAGE_KEY, JSON.stringify(createStateSnapshot(true)));
+    updateCspObject(CSP_PROGRESS_KEY, {
+      ...createStateSnapshot(),
+      sortMode: currentSortMode,
+      evilnessEnabled: evilnessFactor,
+      evilnessAffectsHomescreen: evilnessStringReturn,
+      evilCases: evilCasesFromMap(evilnessMap),
+    });
+    updateCspObject(CSP_BOOT_KEY, { ...createStateSnapshot(true), version: 1 });
+    updateCspObject(CSP_PREFERENCES_KEY, {
+      currentPreset,
+      enhancedAccess,
+      algorithmFontSize,
+      profileName,
+      profileAvatar,
+      theme:
+        typeof document !== 'undefined'
+          ? document.documentElement.getAttribute('data-theme') || undefined
+          : undefined,
+    });
   } catch (e) {
     console.error('Error saving state:', e);
   }
@@ -683,7 +728,6 @@ function applyStoredState(state: StoredProgressState): void {
   plannedCases.clear();
   comments.clear();
   plannedLevels.clear();
-  parityOrientations.clear();
   perCaseSubtitles.clear();
   customAlgorithms.clear();
   cachedParityAlgorithms.clear();
@@ -700,27 +744,31 @@ function applyStoredState(state: StoredProgressState): void {
   Object.entries((normalized.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
     plannedLevels.set(Number(k), Number(v)),
   );
-  Object.entries((normalized.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
-    parityOrientations.set(Number(k), Number(v)),
-  );
-  showPaths = true;
-  enablePriorityLearning = true;
   hideInstructions = !!state.hideInstructions;
-  hideParenthesis = !!state.hideParenthesis;
+  hideParenthesis = Boolean(
+    (state.preferences as Record<string, unknown> | undefined)?.hideParentheses ??
+      state.hideParenthesis,
+  );
   colorScheme = { ...DEFAULT_COLOR_SCHEME, ...((state.colorScheme as Partial<ColorScheme>) || {}) };
   scrambleImageSize = Number(state.scrambleImageSize) || 200;
-  if (state.customShapesForParityTracerLibrary) {
-    localStorage.setItem(
-      'customShapesForParityTracerLibrary',
-      String(state.customShapesForParityTracerLibrary),
-    );
+  const patternsBeforeImport = JSON.stringify(getShapePatterns());
+  if (state.tracingPositions || state.customShapesForParityTracerLibrary) {
+    const tracingPositions = state.tracingPositions || state.customShapesForParityTracerLibrary;
+    updateCspObject(CSP_PROGRESS_KEY, {
+      tracingPositions:
+        typeof tracingPositions === 'string'
+          ? JSON.parse(tracingPositions)
+          : tracingPositions,
+    });
   }
+  const patternsChanged = JSON.stringify(getShapePatterns()) !== patternsBeforeImport;
+  if (patternsChanged) refreshHomepageSVGs();
   Object.entries((normalized.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
     perCaseSubtitles.set(Number(k), String(v)),
   );
   cornerStickerMode = (state.cornerStickerMode as CornerMode) || 'counterclockwise';
   Object.entries(
-    normalized.customAlgorithms as Record<string, { odd?: string[]; even?: string[] }>,
+    (normalized.customAlgorithms || {}) as Record<string, { odd?: string[]; even?: string[] }>,
   )
     .forEach(([k, v]) => customAlgorithms.set(Number(k), v));
   generalNotes = String(state.generalNotes || '');
@@ -735,49 +783,44 @@ function applyStoredState(state: StoredProgressState): void {
   }
 
   Object.entries(
-    normalized.cachedParityAlgorithms as Record<string, { odd: string[]; even: string[] }>,
+    (normalized.cachedParityAlgorithms || {}) as Record<string, { odd: string[]; even: string[] }>,
   )
     .forEach(([k, v]) => cachedParityAlgorithms.set(Number(k), v));
   lastParityCalculationSettings = (state.lastParityCalculationSettings as Record<string, unknown>) || null;
 
-  if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
-  if (state.evilnessStringReturn !== undefined) {
-    evilnessStringReturn = Boolean(state.evilnessStringReturn);
+  if (state.evilnessEnabled !== undefined) evilnessFactor = Boolean(state.evilnessEnabled);
+  if (state.evilnessAffectsHomescreen !== undefined) {
+    evilnessStringReturn = Boolean(state.evilnessAffectsHomescreen);
   }
-  if (state.evilnessMap) evilnessMap = normalized.evilnessMap as Record<string, boolean>;
+  if (state.evilCases !== undefined || state.evilnessMap !== undefined) {
+    evilnessMap = evilMapFromCases(state.evilCases ?? normalized.evilnessMap);
+  }
 }
 
 function loadStoredEvilnessOverrides(): void {
-  const enhancedAccessSaved = localStorage.getItem('enhancedAccess');
-  if (enhancedAccessSaved !== null) {
-    enhancedAccess = enhancedAccessSaved === 'true';
+  const progress = readCspObject(CSP_PROGRESS_KEY);
+  const preferences = readCspObject(CSP_PREFERENCES_KEY);
+  const theme = preferences.theme;
+  if (
+    typeof document !== 'undefined' &&
+    (theme === 'dark' || theme === 'light')
+  ) {
+    document.documentElement.setAttribute('data-theme', theme);
   }
-
-  const storedEvilnessFactor = localStorage.getItem('evilnessFactor');
-  if (storedEvilnessFactor !== null) {
-    evilnessFactor = storedEvilnessFactor === 'true';
+  if (preferences.enhancedAccess !== undefined) enhancedAccess = Boolean(preferences.enhancedAccess);
+  if (progress.evilnessEnabled !== undefined) evilnessFactor = Boolean(progress.evilnessEnabled);
+  if (progress.evilnessAffectsHomescreen !== undefined) {
+    evilnessStringReturn = Boolean(progress.evilnessAffectsHomescreen);
   }
-
-  const storedEvilnessStringReturn = localStorage.getItem('evilnessStringReturn');
-  if (storedEvilnessStringReturn !== null) {
-    evilnessStringReturn = storedEvilnessStringReturn === 'true';
+  if (progress.evilCases !== undefined) {
+    evilnessMap = evilMapFromCases(progress.evilCases);
   }
-
-  const storedEvilnessMap = localStorage.getItem('evilnessMap');
-  if (storedEvilnessMap !== null) {
-    try {
-      evilnessMap = normalizeCaseRecord(
-        JSON.parse(storedEvilnessMap) as Record<string, boolean>,
-      );
-    } catch {
-      // ignore malformed stored map
-    }
-  }
+  if (preferences.currentPreset) currentPreset = String(preferences.currentPreset);
 }
 
 function loadSavedState(): void {
   try {
-    const saved = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    const saved = localStorage.getItem(CSP_PROGRESS_KEY);
     if (saved) {
       applyStoredState(JSON.parse(saved) as StoredProgressState);
     }
@@ -794,7 +837,7 @@ function loadSavedState(): void {
 
 function loadBootSavedState(): boolean {
   try {
-    const saved = localStorage.getItem(BOOT_PROGRESS_STORAGE_KEY);
+    const saved = localStorage.getItem(CSP_BOOT_KEY);
     if (!saved) return false;
     applyStoredState(JSON.parse(saved) as StoredProgressState);
     loadStoredEvilnessOverrides();
@@ -808,8 +851,6 @@ function loadBootSavedState(): boolean {
 }
 
 if (isFirstLoad) {
-  showPaths = true;
-  enablePriorityLearning = true;
   displayNames = { ...defaultDisplayNames };
   saveState();
 }
@@ -849,12 +890,12 @@ async function loadPresetAsDefaults(presetName: string): Promise<boolean> {
   if (!preset) return false;
   currentPreset = presetName;
   presetData = preset;
-  localStorage.setItem('currentPreset', currentPreset);
+  updateCspObject(CSP_PREFERENCES_KEY, { currentPreset });
   return true;
 }
 
 export async function initializePreset(): Promise<void> {
-  const savedPreset = localStorage.getItem('currentPreset') || "Matt's_Preset";
+  const savedPreset = String(readCspObject(CSP_PREFERENCES_KEY).currentPreset || "Matt's_Preset");
   if (PRESET_CONFIG[savedPreset]) {
     await loadPresetAsDefaults(savedPreset);
   }
@@ -882,15 +923,21 @@ export async function applyPreset(
   colorScheme = { ...DEFAULT_COLOR_SCHEME, ...((preset.colorScheme as Partial<ColorScheme>) || {}) };
 
   const patternsBefore = JSON.stringify(getShapePatterns());
-  if (preset.customShapesForParityTracerLibrary) {
-    localStorage.setItem(
-      'customShapesForParityTracerLibrary',
-      String(preset.customShapesForParityTracerLibrary),
-    );
+  if (preset.tracingPositions || preset.customShapesForParityTracerLibrary) {
+    const tracingPositions = preset.tracingPositions || preset.customShapesForParityTracerLibrary;
+    updateCspObject(CSP_PROGRESS_KEY, {
+      tracingPositions:
+        typeof tracingPositions === 'string'
+          ? JSON.parse(tracingPositions)
+          : tracingPositions,
+    });
   }
   const patternsChanged = JSON.stringify(getShapePatterns()) !== patternsBefore;
 
   if (preset.homepageShapeSVGCache) {
+    if (boot) {
+      Object.keys(svgData).forEach((key) => delete svgData[key]);
+    }
     seedHomepageShapeSVGs(
       homepageImageSettings,
       svgData,
@@ -898,7 +945,7 @@ export async function applyPreset(
     );
   }
   // SVGs generated before the patterns loaded carry stale marks.
-  if (patternsChanged) regenerateHomepageSVGs();
+  if (patternsChanged) refreshHomepageSVGs();
 
   perCaseSubtitles.clear();
   Object.entries(
@@ -914,19 +961,16 @@ export async function applyPreset(
     ),
   ).forEach(([k, v]) => customAlgorithms.set(Number(k), v));
 
-  if (preset.evilnessMap !== undefined) {
-    evilnessMap = normalizeCaseRecord(preset.evilnessMap as Record<string, boolean>);
+  if (preset.evilCases !== undefined || preset.evilnessMap !== undefined) {
+    evilnessMap = evilMapFromCases(preset.evilCases ?? preset.evilnessMap);
   }
-  if (preset.evilnessFactor !== undefined) evilnessFactor = Boolean(preset.evilnessFactor);
-  if (preset.evilnessStringReturn !== undefined)
+  if (preset.evilnessEnabled !== undefined) evilnessFactor = Boolean(preset.evilnessEnabled);
+  else if (preset.evilnessFactor !== undefined) evilnessFactor = Boolean(preset.evilnessFactor);
+  if (preset.evilnessAffectsHomescreen !== undefined)
+    evilnessStringReturn = Boolean(preset.evilnessAffectsHomescreen);
+  else if (preset.evilnessStringReturn !== undefined)
     evilnessStringReturn = Boolean(preset.evilnessStringReturn);
 
-  parityOrientations.clear();
-  Object.entries(
-    normalizeCaseRecord(preset.parityOrientations as Record<string, number> | undefined),
-  ).forEach(([k, v]) =>
-    parityOrientations.set(Number(k), Number(v)),
-  );
   generalNotes = (preset.generalNotes as string) || '';
 
   const presetParityCache = preset.cachedParityAlgorithms as
@@ -942,29 +986,38 @@ export async function applyPreset(
   if (applyFull) {
     if (preset.scrambleImageSize != null) scrambleImageSize = Number(preset.scrambleImageSize);
     if (preset.hideInstructions !== undefined) hideInstructions = Boolean(preset.hideInstructions);
-    if (preset.profileName) {
+    const preferences = (preset.preferences || {}) as Record<string, unknown>;
+    const training = (preset.training || {}) as Record<string, unknown>;
+    if (preferences.profileName) {
+      profileName = String(preferences.profileName);
+    } else if (preset.profileName) {
       profileName = String(preset.profileName);
-      localStorage.setItem('profileName', profileName);
     }
-    if (preset.profileAvatar) {
+    if (preferences.profileAvatar) {
+      profileAvatar = String(preferences.profileAvatar);
+    } else if (preset.profileAvatar) {
       profileAvatar = String(preset.profileAvatar);
-      localStorage.setItem('profileAvatar', profileAvatar);
     }
-    const personalLsKeys = [
-      'parityTracerImageSize',
-      'parityTracerShowArrow',
-      'parityTracerArrowSettings',
-      'trainingScrambleImageSize',
-      'trainingScrambleTextSize',
-      'trainingHoldToStart',
-      'trainingTimerSize',
-      'trainingShowPrevScramble',
-    ];
-    for (const k of personalLsKeys) {
-      if ((preset as Record<string, unknown>)[k] != null) {
-        localStorage.setItem(k, String((preset as Record<string, unknown>)[k]));
-      }
+    if (preset.parityTracerImageSize != null && preferences.ptImageSize == null)
+      preferences.ptImageSize = Number(preset.parityTracerImageSize);
+    if (preset.parityTracerShowArrow != null || preset.parityTracerArrowSettings != null) {
+      preferences.ptArrow = {
+        ...(preset.parityTracerArrowSettings
+          ? JSON.parse(String(preset.parityTracerArrowSettings))
+          : {}),
+        enabled: preset.parityTracerShowArrow !== false,
+      };
     }
+    if (preset.profileName != null) preferences.profileName = profileName;
+    if (preset.profileAvatar != null) preferences.profileAvatar = profileAvatar;
+    if (
+      typeof document !== 'undefined' &&
+      (preferences.theme === 'dark' || preferences.theme === 'light')
+    ) {
+      document.documentElement.setAttribute('data-theme', preferences.theme);
+    }
+    updateCspObject(CSP_PREFERENCES_KEY, preferences);
+    updateCspObject('cspTraining', training);
   }
 
   currentPreset = presetName;
@@ -1026,36 +1079,33 @@ export function exportData(): void {
     comments: Object.fromEntries(comments),
     plannedLevels: Object.fromEntries(plannedLevels),
     learningOrder: learningOrder ? getLearningOrder() : undefined,
-    parityOrientations: Object.fromEntries(parityOrientations),
-    showPaths: true,
     displayNames,
-    hideInstructions,
-    hideParenthesis,
     colorScheme,
-    scrambleImageSize,
-    customShapesForParityTracerLibrary: localStorage.getItem(
-      'customShapesForParityTracerLibrary',
-    ),
+    tracingPositions: getShapePatterns(),
     perCaseSubtitles: Object.fromEntries(perCaseSubtitles),
-    cachedParityAlgorithms: Object.fromEntries(cachedParityAlgorithms),
-    lastParityCalculationSettings,
     cornerStickerMode,
     customAlgorithms: Object.fromEntries(customAlgorithms),
     generalNotes,
     algVariables: Object.fromEntries(algVariables),
-    evilnessFactor,
-    evilnessStringReturn,
-    evilnessMap,
-    parityTracerImageSize: localStorage.getItem('parityTracerImageSize'),
-    parityTracerShowArrow: localStorage.getItem('parityTracerShowArrow'),
-    parityTracerArrowSettings: localStorage.getItem('parityTracerArrowSettings'),
-    trainingScrambleImageSize: localStorage.getItem('trainingScrambleImageSize'),
-    trainingScrambleTextSize: localStorage.getItem('trainingScrambleTextSize'),
-    trainingHoldToStart: localStorage.getItem('trainingHoldToStart'),
-    trainingTimerSize: localStorage.getItem('trainingTimerSize'),
-    trainingShowPrevScramble: localStorage.getItem('trainingShowPrevScramble'),
-    profileName,
-    profileAvatar,
+    evilnessEnabled: evilnessFactor,
+    evilnessAffectsHomescreen: evilnessStringReturn,
+    evilCases: evilCasesFromMap(evilnessMap),
+    sortMode: currentSortMode,
+    preferences: {
+      ...readCspObject(CSP_PREFERENCES_KEY),
+      hideInstructions,
+      hideParentheses: hideParenthesis,
+      profileName,
+      profileAvatar,
+      theme:
+        typeof document !== 'undefined'
+          ? document.documentElement.getAttribute('data-theme') || undefined
+          : undefined,
+    },
+    training: {
+      ...readCspObject('cspTraining'),
+      scramImageSize: readCspObject('cspTraining').scramImageSize ?? scrambleImageSize,
+    },
   };
   if (typeof (window as unknown as { selectorExportHook?: (s: Record<string, unknown>) => void })
     .selectorExportHook === 'function') {
@@ -1077,11 +1127,14 @@ export function importData(jsonStr: string): void {
     const state = JSON.parse(jsonStr);
     const normalized = normalizeCaseState(state);
 
-    if (state.customShapesForParityTracerLibrary) {
-      localStorage.setItem(
-        'customShapesForParityTracerLibrary',
-        state.customShapesForParityTracerLibrary,
-      );
+    if (state.tracingPositions || state.customShapesForParityTracerLibrary) {
+      const tracingPositions = state.tracingPositions || state.customShapesForParityTracerLibrary;
+      updateCspObject(CSP_PROGRESS_KEY, {
+        tracingPositions:
+          typeof tracingPositions === 'string'
+            ? JSON.parse(tracingPositions)
+            : tracingPositions,
+      });
     }
 
     learnedCases.clear();
@@ -1090,7 +1143,6 @@ export function importData(jsonStr: string): void {
     comments.clear();
     plannedLevels.clear();
     learningOrder = normalizeLearningOrder(normalized.learningOrder);
-    parityOrientations.clear();
     perCaseSubtitles.clear();
     customAlgorithms.clear();
     cachedParityAlgorithms.clear();
@@ -1105,25 +1157,13 @@ export function importData(jsonStr: string): void {
     Object.entries((normalized.plannedLevels as Record<string, unknown>) || {}).forEach(([k, v]) =>
       plannedLevels.set(Number(k), Number(v)),
     );
-    Object.entries((normalized.parityOrientations as Record<string, unknown>) || {}).forEach(([k, v]) =>
-      parityOrientations.set(Number(k), Number(v)),
-    );
-    showPaths = true;
 
     if (state.displayNames) {
       mergeDisplayNames(normalized.displayNames as Record<string, string>);
     } else {
       displayNames = { ...defaultDisplayNames };
     }
-    hideInstructions = !!state.hideInstructions;
-    hideParenthesis = !!state.hideParenthesis;
     colorScheme = { ...DEFAULT_COLOR_SCHEME, ...(state.colorScheme || {}) };
-    if (state.customShapesForParityTracerLibrary) {
-      localStorage.setItem(
-        'customShapesForParityTracerLibrary',
-        state.customShapesForParityTracerLibrary,
-      );
-    }
     Object.entries((normalized.perCaseSubtitles as Record<string, unknown>) || {}).forEach(([k, v]) =>
       perCaseSubtitles.set(Number(k), String(v)),
     );
@@ -1136,35 +1176,24 @@ export function importData(jsonStr: string): void {
       algVariables.set(k, String(v)),
     );
 
-    if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
-    if (state.evilnessStringReturn !== undefined)
-      evilnessStringReturn = Boolean(state.evilnessStringReturn);
-    if (state.evilnessMap !== undefined) {
-      evilnessMap = normalized.evilnessMap as Record<string, boolean>;
-    }
-
-    if (state.cachedParityAlgorithms) {
-      cachedParityAlgorithms.clear();
-      Object.entries(normalized.cachedParityAlgorithms as Record<string, unknown>).forEach(([k, v]) =>
-        cachedParityAlgorithms.set(Number(k), v as { odd: string[]; even: string[] }),
-      );
-    }
-    if (state.lastParityCalculationSettings) {
-      lastParityCalculationSettings = state.lastParityCalculationSettings as Record<
-        string,
-        unknown
-      >;
+    if (normalized.evilnessEnabled !== undefined)
+      evilnessFactor = Boolean(normalized.evilnessEnabled);
+    if (normalized.evilnessAffectsHomescreen !== undefined)
+      evilnessStringReturn = Boolean(normalized.evilnessAffectsHomescreen);
+    if (state.evilCases !== undefined || state.evilnessMap !== undefined) {
+      evilnessMap = evilMapFromCases(state.evilCases ?? normalized.evilnessMap);
     }
 
     generalNotes = state.generalNotes || '';
     algVariables.clear();
     Object.entries(state.algVariables || {}).forEach(([k, v]) => algVariables.set(k, String(v)));
 
-    if (state.evilnessFactor !== undefined) evilnessFactor = Boolean(state.evilnessFactor);
-    if (state.evilnessStringReturn !== undefined)
-      evilnessStringReturn = Boolean(state.evilnessStringReturn);
-    if (state.evilnessMap !== undefined) {
-      evilnessMap = normalized.evilnessMap as Record<string, boolean>;
+    if (normalized.evilnessEnabled !== undefined)
+      evilnessFactor = Boolean(normalized.evilnessEnabled);
+    if (normalized.evilnessAffectsHomescreen !== undefined)
+      evilnessStringReturn = Boolean(normalized.evilnessAffectsHomescreen);
+    if (state.evilCases !== undefined || state.evilnessMap !== undefined) {
+      evilnessMap = evilMapFromCases(state.evilCases ?? normalized.evilnessMap);
     }
 
     if (typeof (window as unknown as { selectorImportHook?: (s: Record<string, unknown>) => void })
@@ -1175,34 +1204,69 @@ export function importData(jsonStr: string): void {
 
     lastParityCalculationSettings = null;
 
-    if (state.customShapesForParityTracerLibrary) {
-      localStorage.setItem(
-        'customShapesForParityTracerLibrary',
-        state.customShapesForParityTracerLibrary,
-      );
+    const importedPreferences = { ...(state.preferences || {}) } as Record<string, unknown>;
+    const importedTraining = (state.training || {}) as Record<string, unknown>;
+    if (importedPreferences.hideInstructions !== undefined) {
+      hideInstructions = Boolean(importedPreferences.hideInstructions);
+    } else if (state.hideInstructions !== undefined) {
+      hideInstructions = Boolean(state.hideInstructions);
+      importedPreferences.hideInstructions = hideInstructions;
     }
-    if (state.parityTracerImageSize) localStorage.setItem('parityTracerImageSize', state.parityTracerImageSize);
-    if (state.parityTracerShowArrow !== undefined)
-      localStorage.setItem('parityTracerShowArrow', String(state.parityTracerShowArrow));
-    if (state.parityTracerArrowSettings)
-      localStorage.setItem('parityTracerArrowSettings', state.parityTracerArrowSettings);
-    if (state.trainingScrambleImageSize)
-      localStorage.setItem('trainingScrambleImageSize', state.trainingScrambleImageSize);
-    if (state.trainingScrambleTextSize)
-      localStorage.setItem('trainingScrambleTextSize', state.trainingScrambleTextSize);
-    if (state.trainingHoldToStart)
-      localStorage.setItem('trainingHoldToStart', state.trainingHoldToStart);
-    if (state.profileName) {
+    if (importedPreferences.hideParentheses !== undefined) {
+      hideParenthesis = Boolean(importedPreferences.hideParentheses);
+    } else if (state.hideParenthesis !== undefined) {
+      hideParenthesis = Boolean(state.hideParenthesis);
+      importedPreferences.hideParentheses = hideParenthesis;
+    }
+    if (importedTraining.scramImageSize === undefined && state.scrambleImageSize !== undefined) {
+      importedTraining.scramImageSize = Number(state.scrambleImageSize);
+    }
+    if (state.sortMode === 'priority' || state.sortMode === 'probability' || state.sortMode === 'antiProbability') {
+      currentSortMode = state.sortMode;
+    }
+    const importedTheme = importedPreferences.theme;
+    if (
+      typeof document !== 'undefined' &&
+      (importedTheme === 'dark' || importedTheme === 'light')
+    ) {
+      document.documentElement.setAttribute('data-theme', importedTheme);
+    }
+    if (state.parityTracerImageSize != null && importedPreferences.ptImageSize == null)
+      importedPreferences.ptImageSize = Number(state.parityTracerImageSize);
+    if (state.parityTracerShowArrow !== undefined || state.parityTracerArrowSettings) {
+      importedPreferences.ptArrow = {
+        ...(state.parityTracerArrowSettings
+          ? JSON.parse(String(state.parityTracerArrowSettings))
+          : {}),
+        enabled: state.parityTracerShowArrow !== false,
+      };
+    }
+    if (state.trainingScrambleImageSize != null)
+      importedTraining.scramImageSize = Number(state.trainingScrambleImageSize);
+    if (state.trainingScrambleTextSize != null)
+      importedTraining.scramTextSize = Number(state.trainingScrambleTextSize);
+    if (state.trainingHoldToStart != null)
+      importedTraining.holdToStart = Number(state.trainingHoldToStart);
+    if (importedPreferences.profileName) {
+      profileName = String(importedPreferences.profileName);
+    } else if (state.profileName) {
       profileName = String(state.profileName);
-      localStorage.setItem('profileName', profileName);
+      importedPreferences.profileName = profileName;
     }
-    if (state.profileAvatar) {
+    if (importedPreferences.profileAvatar) {
+      profileAvatar = String(importedPreferences.profileAvatar);
+    } else if (state.profileAvatar) {
       profileAvatar = String(state.profileAvatar);
-      localStorage.setItem('profileAvatar', profileAvatar);
+      importedPreferences.profileAvatar = profileAvatar;
     }
-    if (state.trainingTimerSize) localStorage.setItem('trainingTimerSize', state.trainingTimerSize);
+    if (typeof importedPreferences.currentPreset === 'string' && importedPreferences.currentPreset) {
+      currentPreset = importedPreferences.currentPreset;
+    }
+    if (state.trainingTimerSize != null) importedTraining.timerSize = Number(state.trainingTimerSize);
     if (state.trainingShowPrevScramble !== undefined)
-      localStorage.setItem('trainingShowPrevScramble', String(state.trainingShowPrevScramble));
+      importedTraining.showPrevScram = Boolean(state.trainingShowPrevScramble);
+    updateCspObject(CSP_PREFERENCES_KEY, importedPreferences);
+    updateCspObject('cspTraining', importedTraining);
 
     saveState();
     notify();
@@ -1410,7 +1474,7 @@ export function getColorName(hexColor: string): string {
 // ── Setters (persist + notify) ──────────────────────────────────────────────
 export function setSortMode(mode: SortMode): void {
   currentSortMode = mode;
-  localStorage.setItem('sortMode', mode);
+  updateCspObject(CSP_PROGRESS_KEY, { sortMode: mode });
 }
 
 export function setCornerStickerMode(mode: CornerMode): void {
@@ -1463,13 +1527,13 @@ export function setHideParenthesis(value: boolean): void {
 
 export function setEnhancedAccess(value: boolean): void {
   enhancedAccess = value;
-  localStorage.setItem('enhancedAccess', value.toString());
+  updateCspObject(CSP_PREFERENCES_KEY, { enhancedAccess: value });
   notify();
 }
 
 export function setAlgorithmFontSize(value: number): void {
   algorithmFontSize = value;
-  localStorage.setItem('algorithmFontSize', value.toString());
+  updateCspObject(CSP_PREFERENCES_KEY, { algorithmFontSize: value });
   notify();
 }
 
@@ -1488,8 +1552,7 @@ export function setGeneralNotes(value: string): void {
 export function setProfile(name: string, avatar: string): void {
   profileName = name;
   profileAvatar = avatar;
-  localStorage.setItem('profileName', name);
-  localStorage.setItem('profileAvatar', avatar);
+  updateCspObject(CSP_PREFERENCES_KEY, { profileName: name, profileAvatar: avatar });
   notify();
 }
 
@@ -1526,8 +1589,8 @@ export function setAlgVariable(key: string, value: string): void {
 export function toggleTheme(isDark: boolean): void {
   const next = isDark ? 'dark' : 'light';
   document.documentElement.setAttribute('data-theme', next);
-  localStorage.setItem('sqg-csp-theme', next);
-  regenerateHomepageSVGs();
+  updateCspObject(CSP_PREFERENCES_KEY, { theme: next });
+  refreshHomepageSVGs();
   notify();
 }
 
@@ -1537,7 +1600,7 @@ export function getHomepageImageSettings(): HomepageImageSettings {
 
 let homepageRegenTimer: ReturnType<typeof setTimeout> | null = null;
 
-function regenerateHomepageSVGs(): void {
+export function refreshHomepageSVGs(): void {
   if (homepageRegenTimer) clearTimeout(homepageRegenTimer);
   homepageRegenTimer = setTimeout(() => {
     homepageRegenTimer = null;
@@ -1551,13 +1614,13 @@ function regenerateHomepageSVGs(): void {
 export function updateHomepageImageSettings(patch: Partial<HomepageImageSettings>): void {
   homepageImageSettings = { ...homepageImageSettings, ...patch };
   saveHomepageImageSettings(homepageImageSettings);
-  regenerateHomepageSVGs();
+  refreshHomepageSVGs();
   notify();
 }
 
 export function resetHomepageImageSettingsState(): HomepageImageSettings {
   homepageImageSettings = resetHomepageImageSettingsDefaults();
-  regenerateHomepageSVGs();
+  refreshHomepageSVGs();
   notify();
   return homepageImageSettings;
 }

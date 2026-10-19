@@ -16,6 +16,7 @@ import { LAYER_SHAPE_BITS } from '../data/layerShapes';
 import { SHAPE_DISPLAY_ROTATIONS } from '../data/shapeDisplay';
 import { CASES } from '../data/cases';
 import type { AlgCase } from '../data/types';
+import { CSP_CACHE_KEY, CSP_PREFERENCES_KEY, readCspObject, updateCspObject } from './storage';
 
 export interface HomepageImageSettings {
   /** Light-theme tracing-start piece color (the '2'/'3' marked slots). */
@@ -53,12 +54,10 @@ export const DEFAULT_HOMEPAGE_IMAGE_SETTINGS: HomepageImageSettings = {
   leftColor: 'transparent',
 };
 
-const SETTINGS_STORAGE_KEY = 'sq1-homepage-image-settings';
-const SVG_CACHE_HASH_KEY = 'sq1-homepage-svg-cache-settings';
-const SVG_CACHE_ITEM_PREFIX = 'sq1-homepage-svg-cache-item';
 const SVG_CACHE_VERSION = 11;
 const HOMEPAGE_SLICE_STROKE_SCALE = 0.22;
 const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
+const svgDataHashes = new WeakMap<object, string>();
 
 export function isDarkTheme(): boolean {
   return (
@@ -70,8 +69,10 @@ export function isDarkTheme(): boolean {
 export function loadHomepageImageSettings(): HomepageImageSettings {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_HOMEPAGE_IMAGE_SETTINGS };
   try {
-    const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (stored) return { ...DEFAULT_HOMEPAGE_IMAGE_SETTINGS, ...JSON.parse(stored) };
+    const stored = readCspObject(CSP_PREFERENCES_KEY).homepageImage;
+    if (stored && typeof stored === 'object') {
+      return { ...DEFAULT_HOMEPAGE_IMAGE_SETTINGS, ...stored as Partial<HomepageImageSettings> };
+    }
   } catch {
     // ignore malformed stored settings
   }
@@ -80,7 +81,7 @@ export function loadHomepageImageSettings(): HomepageImageSettings {
 
 export function saveHomepageImageSettings(settings: HomepageImageSettings): void {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  updateCspObject(CSP_PREFERENCES_KEY, { homepageImage: settings });
 }
 
 export function resetHomepageImageSettings(): HomepageImageSettings {
@@ -237,7 +238,7 @@ function renderHomepageShapeSVGWithCore(
 }
 
 function cacheItemStorageKey(hash: string, key: string): string {
-  return `${SVG_CACHE_ITEM_PREFIX}:${hash}:${key}`;
+  return `${hash}:${key}`;
 }
 
 function yieldToBrowser(timeout = 500): Promise<void> {
@@ -255,16 +256,21 @@ function yieldToBrowser(timeout = 500): Promise<void> {
 function scheduleCompressedCacheWrite(settings: HomepageImageSettings, shapes: Record<string, string>): void {
   if (typeof localStorage === 'undefined' || typeof window === 'undefined' || Object.keys(shapes).length === 0) return;
   const hash = settingsHash(settings);
-  window.setTimeout(() => {
+  setTimeout(() => {
     void (async () => {
       try {
         await yieldToBrowser(1500);
         const compressed = await compressShapeSVGs(shapes);
         for (const [key, svg] of Object.entries(compressed)) {
           await yieldToBrowser();
-          localStorage.setItem(cacheItemStorageKey(hash, key), svg);
+          const cache = readCspObject(CSP_CACHE_KEY);
+          const homepageSVG = cache.homepageSVG && typeof cache.homepageSVG === 'object'
+            ? cache.homepageSVG as Record<string, unknown>
+            : {};
+          homepageSVG[cacheItemStorageKey(hash, key)] = svg;
+          updateCspObject(CSP_CACHE_KEY, { homepageSVG });
         }
-        localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
+        updateCspObject(CSP_CACHE_KEY, { homepageSvgSettings: hash });
       } catch {
         // Cache storage/import failures should never affect visible cards.
       }
@@ -279,15 +285,30 @@ function ensureHomepageShapeSVGKeys(
 ): void {
   const uniqueKeys = Array.from(new Set(keys));
   const hash = settingsHash(settings);
+  if (svgDataHashes.get(svgData) !== hash) {
+    Object.keys(svgData).forEach((key) => delete svgData[key]);
+    svgDataHashes.set(svgData, hash);
+  }
   const missing: string[] = [];
 
   for (const key of uniqueKeys) {
     if (svgData[key]) continue;
     if (typeof localStorage !== 'undefined') {
       try {
-        const cached = localStorage.getItem(cacheItemStorageKey(hash, key));
+        const cache = readCspObject(CSP_CACHE_KEY);
+        const homepageSVG = cache.homepageSVG && typeof cache.homepageSVG === 'object'
+          ? cache.homepageSVG as Record<string, unknown>
+          : {};
+        const legacyHash =
+          typeof cache.homepageSvgSettings === 'string' &&
+          cache.homepageSvgSettings.trim().startsWith('{')
+            ? cache.homepageSvgSettings
+            : null;
+        const cached =
+          homepageSVG[cacheItemStorageKey(hash, key)] ??
+          (legacyHash ? homepageSVG[cacheItemStorageKey(legacyHash, key)] : undefined);
         if (cached) {
-          svgData[key] = cached;
+          svgData[key] = String(cached);
           continue;
         }
       } catch {
@@ -383,7 +404,7 @@ function digest(s: string): string {
 }
 
 function settingsHash(settings: HomepageImageSettings): string {
-  return JSON.stringify({
+  const canonical = JSON.stringify({
     ...settings,
     __dark: isDarkTheme(),
     __svgCacheVersion: SVG_CACHE_VERSION,
@@ -394,6 +415,12 @@ function settingsHash(settings: HomepageImageSettings): string {
         BOTTOM_ANCHOR_SLOT,
     ),
   });
+  let hash = 0x811c9dc5;
+  for (let index = 0; index < canonical.length; index++) {
+    hash ^= canonical.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(36);
 }
 
 export function getHomepageShapeSVGCacheHash(settings: HomepageImageSettings): string {
@@ -406,20 +433,35 @@ export function seedHomepageShapeSVGs(
   payload: HomepageShapeSVGCachePayload,
 ): boolean {
   const hash = settingsHash(settings);
-  if (payload.hash !== hash) return false;
+  const legacyPresetCache = payload.hash.trim().startsWith('{');
+  if (payload.hash !== hash) {
+    if (!legacyPresetCache) return false;
+    try {
+      const legacySettings = JSON.parse(payload.hash) as { __dark?: boolean };
+      if (legacySettings.__dark !== isDarkTheme()) return false;
+    } catch {
+      return false;
+    }
+  }
   for (const [key, svg] of Object.entries(payload.shapes)) {
     svgData[key] = svg;
     if (typeof localStorage !== 'undefined') {
       try {
-        localStorage.setItem(cacheItemStorageKey(hash, key), svg);
+        const cache = readCspObject(CSP_CACHE_KEY);
+        const homepageSVG = cache.homepageSVG && typeof cache.homepageSVG === 'object'
+          ? cache.homepageSVG as Record<string, unknown>
+          : {};
+        homepageSVG[cacheItemStorageKey(hash, key)] = svg;
+        updateCspObject(CSP_CACHE_KEY, { homepageSVG });
       } catch {
         // Seeding is an optimization only.
       }
+      svgDataHashes.set(svgData, hash);
     }
   }
   if (typeof localStorage !== 'undefined') {
     try {
-      localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
+      updateCspObject(CSP_CACHE_KEY, { homepageSvgSettings: hash });
     } catch {
       // Seeding is an optimization only.
     }
@@ -494,7 +536,12 @@ export async function prepareHomepageShapeSVGCache(settings: HomepageImageSettin
   const compressed = await compressShapeSVGs(raw);
   if (settingsHash(settings) !== hash) throw new Error('Theme or tracing settings changed. Please save again.');
   for (const [key, svg] of Object.entries(compressed)) {
-    localStorage.setItem(cacheItemStorageKey(hash, key), svg);
+    const cache = readCspObject(CSP_CACHE_KEY);
+    const homepageSVG = cache.homepageSVG && typeof cache.homepageSVG === 'object'
+      ? cache.homepageSVG as Record<string, unknown>
+      : {};
+    homepageSVG[cacheItemStorageKey(hash, key)] = svg;
+    updateCspObject(CSP_CACHE_KEY, { homepageSVG });
   }
-  localStorage.setItem(SVG_CACHE_HASH_KEY, hash);
+  updateCspObject(CSP_CACHE_KEY, { homepageSvgSettings: hash });
 }

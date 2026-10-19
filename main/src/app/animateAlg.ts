@@ -11,6 +11,7 @@ import { getParityText } from '../lib/parityAnalyzer';
 import { resolveThemeAwareWhite } from '../lib/drawScramble';
 import { closeModalWithHistory, pushModalState } from './modal';
 import { colorScheme, cornerStickerMode } from './state';
+import { CSP_PREFERENCES_KEY, readCspObject, updateCspObject } from '../lib/storage';
 
 type ViewerToken =
   | { type: 'turn'; top: number; bottom: number; text: string }
@@ -167,7 +168,7 @@ class Square1ThreeViewer {
   private playing = false;
   private runningToken: ViewerToken | null = null;
   private frame = 0;
-  private speed = Number(localStorage.getItem('sq1ThreeAnimSpeed') || '1') || 1;
+  private speed = Number(readCspObject(CSP_PREFERENCES_KEY).animSpeed) || 1;
   private readonly im = new ImmediateRenderer();
   private readonly scene = new THREE.Scene();
   private readonly camera = new THREE.PerspectiveCamera(45, 1, 1, 5000);
@@ -295,7 +296,7 @@ class Square1ThreeViewer {
 
   setSpeed(value: number): void {
     this.speed = value;
-    localStorage.setItem('sq1ThreeAnimSpeed', String(value));
+    updateCspObject(CSP_PREFERENCES_KEY, { animSpeed: value });
   }
 
   private bindControls(): void {
@@ -922,7 +923,7 @@ export function openAnimateAlgModal(
 
   ensureStyles();
   const modalId = `sq1-three-modal-${Date.now()}`;
-  const speed = Number(localStorage.getItem('sq1ThreeAnimSpeed') || '1') || 1;
+  const speed = Number(readCspObject(CSP_PREFERENCES_KEY).animSpeed) || 1;
   document.body.insertAdjacentHTML('beforeend', createModalHTML(modalId, alg, caseName, parity, speed));
   document.body.classList.add('modal-open');
 

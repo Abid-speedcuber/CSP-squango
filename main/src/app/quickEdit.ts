@@ -323,6 +323,7 @@ function stripBeforeFirstSlash(alg: string): string {
 
 function updateAlgorithmCellParity(cell: HTMLElement): void {
   const alg = (cell.textContent || '').trim();
+  delete cell.dataset.parity;
   if (!alg || alg === 'Done!') {
     cell.style.color = '';
     cell.style.fontWeight = '';
@@ -357,6 +358,7 @@ function updateAlgorithmCellParity(cell: HTMLElement): void {
       );
 
       if (isDirectMatch) {
+        cell.dataset.parity = parityText === 'Odd' ? 'odd' : 'even';
         cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
       } else {
         if (canonicalIdx !== null) {
@@ -366,6 +368,7 @@ function updateAlgorithmCellParity(cell: HTMLElement): void {
             cell.textContent = normalizeScramble(fixed);
           }
         }
+        cell.dataset.parity = parityText === 'Odd' ? 'odd' : 'even';
         cell.style.color = parityText === 'Odd' ? 'var(--parity-odd)' : 'var(--parity-even)';
       }
       cell.style.fontWeight = '600';
@@ -391,6 +394,7 @@ function updateAlgorithmCellParity(cell: HTMLElement): void {
           cell.textContent = normalizeScramble(fixed);
         }
       }
+      cell.dataset.parity = parityText === 'Odd' ? 'odd' : 'even';
       cell.style.color = parityText === 'Odd' ? 'var(--parity-odd-mirror)' : 'var(--parity-even-mirror)';
       cell.style.fontWeight = '600';
     } else {
@@ -1034,14 +1038,23 @@ function saveQuickEditChanges(): void {
     const caseId = Number(caseName);
     const algCells = row.querySelectorAll('.alg-cell');
 
+    algCells.forEach((cell) => updateAlgorithmCellParity(cell as HTMLElement));
     const algs = Array.from(algCells)
       .map((cell) => ((cell as HTMLElement).textContent || '').trim())
       .filter((alg) => alg);
 
     if (algs.length > 0) {
+      const odd: string[] = [];
+      const even: string[] = [];
+      algCells.forEach((cell) => {
+        const alg = ((cell as HTMLElement).textContent || '').trim();
+        if (!alg) return;
+        if ((cell as HTMLElement).dataset.parity === 'odd') odd.push(alg);
+        else if ((cell as HTMLElement).dataset.parity === 'even') even.push(alg);
+      });
       customAlgorithms.set(caseId, {
-        odd: [],
-        even: algs,
+        odd,
+        even,
       });
     } else {
       customAlgorithms.delete(caseId);

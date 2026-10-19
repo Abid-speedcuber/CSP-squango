@@ -40,6 +40,7 @@ import {
   setZ2TracingMode,
   TOP_HEX,
 } from '../lib/parityAnalyzer';
+import { CSP_PREFERENCES_KEY, readCspObject } from '../lib/storage';
 import { resolveThemeAwareWhite, visualizeFromHex } from '../lib/drawScramble';
 import { decorateLearningOrderGrid } from './learningOrder';
 import {
@@ -59,6 +60,7 @@ import {
   hideInstructions,
   presetData,
   recalculateAllParity,
+  refreshHomepageSVGs,
   saveState,
   setEvilnessMap,
 } from './state';
@@ -126,20 +128,12 @@ function isDarkTracerSurface(backgroundColor: string): boolean {
 // there directly) and push them into the parityAnalyzer engine so arrow
 // generation and z2 swap use the current values.
 function refreshTracerSettings(): void {
-  const storedZ2 = localStorage.getItem('z2TracingModeForParityTracerLibrary');
-  setZ2TracingMode(storedZ2 === null ? true : storedZ2 === 'true');
-  const storedImgSize = localStorage.getItem('parityTracerImageSize');
-  setParityTracerImageSize(storedImgSize === null ? 280 : parseInt(storedImgSize, 10));
-  const storedArrow = localStorage.getItem('parityTracerShowArrow');
-  setShowCircularArrow(storedArrow === null ? true : storedArrow === 'true');
-  const storedArrowSettings = localStorage.getItem('parityTracerArrowSettings');
-  if (storedArrowSettings) {
-    try {
-      setArrowSettings(JSON.parse(storedArrowSettings) as Partial<ArrowSettings>);
-    } catch {
-      // keep current settings
-    }
-  }
+  const preferences = readCspObject(CSP_PREFERENCES_KEY);
+  setZ2TracingMode(preferences.z2Tracing !== false);
+  setParityTracerImageSize(Number(preferences.ptImageSize) || 280);
+  const arrow = preferences.ptArrow;
+  setShowCircularArrow(!arrow || typeof arrow !== 'object' || (arrow as { enabled?: boolean }).enabled !== false);
+  if (arrow && typeof arrow === 'object') setArrowSettings(arrow as Partial<ArrowSettings>);
   shapePatterns = { ...getShapePatterns() };
   syncEvilnessConfig();
 }
@@ -937,6 +931,7 @@ function showTracingPositionSettingsModal(
 
   const performSave = (): void => {
     setShapePatterns(shapePatterns);
+    refreshHomepageSVGs();
     saveState();
     recalculateAllParity();
 
@@ -1943,7 +1938,7 @@ function openNewParityAnalysis(setup: string | null, fromTrainingCaseInfo = fals
     leftColor: colorScheme.leftColor,
     scrambleText: setup || '',
     generateImage: true,
-    imageSize: parseInt(localStorage.getItem('parityTracerImageSize') || '280', 10) || 280,
+    imageSize: Number(readCspObject(CSP_PREFERENCES_KEY).ptImageSize) || 280,
   });
   if (fromTrainingCaseInfo && modal instanceof HTMLElement) {
     modal.classList.add('training-followup-modal');
@@ -1969,7 +1964,7 @@ function buildConfigFromColorScheme(): TracerConfig {
     leftFaceColorForVisualization: colorScheme.leftColor,
     scrambleTextInput: '',
     shouldGenerateImage: true,
-    imageSizeInPixels: parseInt(localStorage.getItem('parityTracerImageSize') || '280', 10) || 280,
+    imageSizeInPixels: Number(readCspObject(CSP_PREFERENCES_KEY).ptImageSize) || 280,
     returnOnlyParityValue: false,
   };
 }

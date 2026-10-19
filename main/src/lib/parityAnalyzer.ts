@@ -7,6 +7,7 @@
 
 import { normalizeScramble } from './normalizer';
 import { chooseBottomStart } from './tracingStart';
+import { CSP_PREFERENCES_KEY, CSP_PROGRESS_KEY, readCspObject, updateCspObject } from './storage';
 import {
   CORNER_IDENTIFIER,
   CORNER_PARTNER,
@@ -120,8 +121,6 @@ export const DEFAULT_SHAPE_PATTERNS: Record<string, string> = {
   '111111': 'Star',
 };
 
-const SHAPES_STORAGE_KEY = 'customShapesForParityTracerLibrary';
-
 function toBinaryPattern(pat: string): string {
   if (/[EC]/.test(pat)) return pat.replace(/E/g, '0').replace(/C/g, '1');
   return pat;
@@ -137,31 +136,29 @@ function migratePatterns(patterns: Record<string, string>): Record<string, strin
 
 export function loadShapes(): Record<string, string> {
   if (typeof localStorage === 'undefined') return { ...DEFAULT_SHAPE_PATTERNS };
-  const stored = localStorage.getItem(SHAPES_STORAGE_KEY);
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored) as Record<string, string>;
-      const migrated = migratePatterns(parsed);
-      if (JSON.stringify(migrated) !== JSON.stringify(parsed)) {
-        localStorage.setItem(SHAPES_STORAGE_KEY, JSON.stringify(migrated));
-      }
-      return migrated;
-    } catch {
-      return { ...DEFAULT_SHAPE_PATTERNS };
+  const stored = readCspObject(CSP_PROGRESS_KEY).tracingPositions;
+  if (stored && typeof stored === 'object' && !Array.isArray(stored)) {
+    const migrated = migratePatterns(stored as Record<string, string>);
+    if (JSON.stringify(migrated) !== JSON.stringify(stored)) {
+      updateCspObject(CSP_PROGRESS_KEY, { tracingPositions: migrated });
     }
+    return migrated;
   }
   return { ...DEFAULT_SHAPE_PATTERNS };
 }
 
 export function saveShapes(shapes: Record<string, string>): void {
-  localStorage.setItem(SHAPES_STORAGE_KEY, JSON.stringify(shapes));
+  updateCspObject(CSP_PROGRESS_KEY, { tracingPositions: shapes });
 }
 
 let shapePatterns = loadShapes();
 let shapePatternsSource = readShapesSource();
 
 function readShapesSource(): string | null {
-  return typeof localStorage === 'undefined' ? null : localStorage.getItem(SHAPES_STORAGE_KEY);
+  const tracingPositions = readCspObject(CSP_PROGRESS_KEY).tracingPositions;
+  return tracingPositions && typeof tracingPositions === 'object'
+    ? JSON.stringify(tracingPositions)
+    : null;
 }
 
 /** Live patterns; reloads when storage was changed externally (preset/state restore). */
@@ -196,15 +193,8 @@ export interface ArrowSettings {
   radius: number;
 }
 
-const Z2_MODE_STORAGE_KEY = 'z2TracingModeForParityTracerLibrary';
-const IMAGE_SIZE_STORAGE_KEY = 'parityTracerImageSize';
-const SHOW_ARROW_STORAGE_KEY = 'parityTracerShowArrow';
-const ARROW_SETTINGS_STORAGE_KEY = 'parityTracerArrowSettings';
-
 let z2TracingModeEnabled = (() => {
-  if (typeof localStorage === 'undefined') return true;
-  const stored = localStorage.getItem(Z2_MODE_STORAGE_KEY);
-  return stored === null ? true : stored === 'true';
+  return readCspObject(CSP_PREFERENCES_KEY).z2Tracing !== false;
 })();
 
 export function getZ2TracingMode(): boolean {
@@ -213,13 +203,11 @@ export function getZ2TracingMode(): boolean {
 
 export function setZ2TracingMode(enabled: boolean): void {
   z2TracingModeEnabled = enabled;
-  localStorage.setItem(Z2_MODE_STORAGE_KEY, enabled.toString());
+  updateCspObject(CSP_PREFERENCES_KEY, { z2Tracing: enabled });
 }
 
 let parityTracerImageSize = (() => {
-  if (typeof localStorage === 'undefined') return 280;
-  const stored = localStorage.getItem(IMAGE_SIZE_STORAGE_KEY);
-  return stored === null ? 280 : parseInt(stored, 10);
+  return Number(readCspObject(CSP_PREFERENCES_KEY).ptImageSize) || 280;
 })();
 
 export function getParityTracerImageSize(): number {
@@ -228,13 +216,12 @@ export function getParityTracerImageSize(): number {
 
 export function setParityTracerImageSize(size: number): void {
   parityTracerImageSize = size;
-  localStorage.setItem(IMAGE_SIZE_STORAGE_KEY, size.toString());
+  updateCspObject(CSP_PREFERENCES_KEY, { ptImageSize: size });
 }
 
 let showCircularArrow = (() => {
-  if (typeof localStorage === 'undefined') return true;
-  const stored = localStorage.getItem(SHOW_ARROW_STORAGE_KEY);
-  return stored === null ? true : stored === 'true';
+  const arrow = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+  return !arrow || typeof arrow !== 'object' || (arrow as { enabled?: boolean }).enabled !== false;
 })();
 
 export const DEFAULT_ARROW_SETTINGS: ArrowSettings = {
@@ -245,14 +232,10 @@ export const DEFAULT_ARROW_SETTINGS: ArrowSettings = {
 };
 
 let arrowSettings: ArrowSettings = (() => {
-  if (typeof localStorage === 'undefined') return DEFAULT_ARROW_SETTINGS;
-  const stored = localStorage.getItem(ARROW_SETTINGS_STORAGE_KEY);
-  if (stored === null) return DEFAULT_ARROW_SETTINGS;
-  try {
-    return { ...DEFAULT_ARROW_SETTINGS, ...JSON.parse(stored) };
-  } catch {
-    return DEFAULT_ARROW_SETTINGS;
-  }
+  const arrow = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+  return arrow && typeof arrow === 'object'
+    ? { ...DEFAULT_ARROW_SETTINGS, ...arrow as Partial<ArrowSettings> }
+    : DEFAULT_ARROW_SETTINGS;
 })();
 
 export function getShowCircularArrow(): boolean {
@@ -261,7 +244,10 @@ export function getShowCircularArrow(): boolean {
 
 export function setShowCircularArrow(enabled: boolean): void {
   showCircularArrow = enabled;
-  localStorage.setItem(SHOW_ARROW_STORAGE_KEY, enabled.toString());
+  const current = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+  updateCspObject(CSP_PREFERENCES_KEY, {
+    ptArrow: { ...(current && typeof current === 'object' ? current : {}), enabled },
+  });
 }
 
 export function getArrowSettings(): ArrowSettings {
@@ -270,7 +256,10 @@ export function getArrowSettings(): ArrowSettings {
 
 export function setArrowSettings(settings: Partial<ArrowSettings>): void {
   arrowSettings = { ...arrowSettings, ...settings };
-  localStorage.setItem(ARROW_SETTINGS_STORAGE_KEY, JSON.stringify(arrowSettings));
+  const current = readCspObject(CSP_PREFERENCES_KEY).ptArrow;
+  updateCspObject(CSP_PREFERENCES_KEY, {
+    ptArrow: { ...(current && typeof current === 'object' ? current : {}), ...arrowSettings },
+  });
 }
 
 export interface EvilnessConfig {

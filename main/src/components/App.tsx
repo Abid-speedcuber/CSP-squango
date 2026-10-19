@@ -31,8 +31,8 @@ import SettingsModal from './SettingsModal';
 import HomepageImagesModal from './HomepageImagesModal';
 import Dropdown from './Dropdown';
 import { decorateLearningOrderGrid } from '../app/learningOrder';
+import { CSP_CACHE_KEY, readCspObject, updateCspObject } from '../lib/storage';
 
-const CARD_HEIGHT_CACHE_KEY = 'sqg-card-height-estimates-v1';
 const DEFAULT_SKELETON_CARD_HEIGHT = 360;
 const MATT_SKELETON_CARD_HEIGHT = 430;
 const MIN_INITIAL_CARD_COUNT = 3;
@@ -41,7 +41,8 @@ type ScheduledHandle = { cancel: () => void };
 
 function readCardHeightCache(): Record<string, number> {
   try {
-    return JSON.parse(localStorage.getItem(CARD_HEIGHT_CACHE_KEY) || '{}') as Record<string, number>;
+    const cache = readCspObject(CSP_CACHE_KEY);
+    return (cache.cardHeightEstimates as Record<string, number> | undefined) || {};
   } catch {
     return {};
   }
@@ -71,7 +72,7 @@ function saveCardHeightEstimate(preset: string, columns: number, height: number)
   // Ease downward so a temporarily short filtered view does not make the next
   // Matt/default skeleton too small again.
   cache[key] = previous ? Math.round(previous * 0.35 + height * 0.65) : Math.round(height);
-  localStorage.setItem(CARD_HEIGHT_CACHE_KEY, JSON.stringify(cache));
+  updateCspObject(CSP_CACHE_KEY, { cardHeightEstimates: cache });
 }
 
 function getInitialCardCount(columns: number, estimatedCardHeight: number): number {

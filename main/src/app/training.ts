@@ -38,6 +38,7 @@ import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
 import { renderCard } from './cardHTML';
 import { openNotesModal } from './notes';
+import { CSP_TRAINING_KEY, readCspObject, updateCspObject } from '../lib/storage';
 
 // ── Training modal state (mirrors legacy) ───────────────────────────────────
 let currentTrainingCase: number | null = null;
@@ -51,9 +52,10 @@ let preGeneratedScrambles: ScrambleData[] = [];
 let currentScrambleText = '';
 let scrambleHistory: ScrambleData[] = [];
 let currentHistoryIndex = -1;
-let trainingScrambleImageSize = 280;
-let trainingScrambleTextSize = 16;
-let trainingHoldToStart = 0.22;
+const trainingStorage = readCspObject(CSP_TRAINING_KEY);
+let trainingScrambleImageSize = Number(trainingStorage.scramImageSize) || 280;
+let trainingScrambleTextSize = Number(trainingStorage.scramTextSize) || 16;
+let trainingHoldToStart = Number(trainingStorage.holdToStart) || 0.22;
 let holdStartTime = 0;
 let isHoldReady = false;
 let inspectionStartTime = 0;
@@ -86,9 +88,9 @@ interface ShapeIndexRenderEntry {
 const SHAPE_INDEX_WRAPPER_PADDING = 16;
 
 // Live-setting mirrors (bridged to window so React settings can mutate them).
-let trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
-let trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
-let trainingHideScrambleImage = localStorage.getItem('trainingHideScrambleImage') === 'true';
+let trainingEnableInspection = trainingStorage.inspection === true;
+let trainingEnableParityQuiz = trainingStorage.parityQuiz === true;
+let trainingHideScrambleImage = trainingStorage.hideScramImage === true;
 
 // Inspection beeps (Web Audio).
 let _trainingAudioCtx: AudioContext | null = null;
@@ -534,16 +536,13 @@ function closeTrainingModal(): void {
 }
 
 function loadTrainingSettings(): void {
-  const savedImageSize = localStorage.getItem('trainingScrambleImageSize');
-  const savedTextSize = localStorage.getItem('trainingScrambleTextSize');
-  const savedHoldToStart = localStorage.getItem('trainingHoldToStart');
-
-  trainingScrambleImageSize = savedImageSize ? parseInt(savedImageSize) : 280;
-  trainingScrambleTextSize = savedTextSize ? parseInt(savedTextSize) : 16;
-  trainingHoldToStart = savedHoldToStart ? parseFloat(savedHoldToStart) : 0.22;
-  trainingEnableInspection = localStorage.getItem('trainingEnableInspection') === 'true';
-  trainingEnableParityQuiz = localStorage.getItem('trainingEnableParityQuiz') === 'true';
-  trainingHideScrambleImage = localStorage.getItem('trainingHideScrambleImage') === 'true';
+  const settings = readCspObject(CSP_TRAINING_KEY);
+  trainingScrambleImageSize = Number(settings.scramImageSize) || 280;
+  trainingScrambleTextSize = Number(settings.scramTextSize) || 16;
+  trainingHoldToStart = Number(settings.holdToStart) || 0.22;
+  trainingEnableInspection = settings.inspection === true;
+  trainingEnableParityQuiz = settings.parityQuiz === true;
+  trainingHideScrambleImage = settings.hideScramImage === true;
 }
 
 // ── Scramble display ─────────────────────────────────────────────────────────
@@ -624,7 +623,7 @@ function nextScrambleManual(): void {
 }
 
 function applyTimerSize(): void {
-  const size = parseInt(localStorage.getItem('trainingTimerSize') || '80');
+  const size = Number(readCspObject(CSP_TRAINING_KEY).timerSize) || 80;
   const el = document.getElementById('trainingTimer');
   if (el) el.style.fontSize = size + 'px';
 }
@@ -638,7 +637,7 @@ function applyPrevScrambleBar(): void {
   const bar = document.getElementById('prevScrambleBar');
   if (!bar) return;
   const trainingActive = document.getElementById('trainingModal')?.classList.contains('active');
-  const enabled = localStorage.getItem('trainingShowPrevScramble') === 'true';
+  const enabled = readCspObject(CSP_TRAINING_KEY).showPrevScram === true;
   bar.style.fontSize = Math.max(10, trainingScrambleTextSize - 2) + 'px';
   if (!enabled || !trainingActive) {
     bar.style.display = 'none';
@@ -858,7 +857,7 @@ function playInspectionBeep(freq = 800, count = 1, vol = 0.15, gap = 0.13): void
 }
 
 function checkInspectionBeeps(): void {
-  if (localStorage.getItem('trainingInspectionBeep') !== 'true') return;
+  if (readCspObject(CSP_TRAINING_KEY).inspectionBeep !== true) return;
   if (!_inspBeep8Fired && inspectionElapsed >= 8000) {
     _inspBeep8Fired = true;
     playInspectionBeep(660, 1, 0.1, 0.13);
@@ -1880,13 +1879,15 @@ function quizGetParityFromHex(hexCode: string): 'Odd' | 'Even' | 'Error' | null 
 
 function readSelectedCaseIds(key: string): number[] | null {
   try {
-    const raw = localStorage.getItem(key);
-    const value: unknown = JSON.parse(raw || 'null');
+    const field = key === 'sq1-selector-evilness'
+      ? 'selectedEvilness'
+      : key === 'sq1-selector-parity'
+        ? 'selectedParityQuiz'
+        : 'selectedMulti';
+    const value: unknown = readCspObject(CSP_TRAINING_KEY)[field];
     if (!Array.isArray(value)) return null;
     const caseIds = value.map(getCaseId).filter((id): id is number => id !== undefined);
-    if (raw !== JSON.stringify(caseIds)) {
-      localStorage.setItem(key, JSON.stringify(caseIds));
-    }
+    updateCspObject(CSP_TRAINING_KEY, { [field]: caseIds });
     return caseIds;
   } catch {
     return null;
@@ -3072,12 +3073,15 @@ function closeTrainerPickerModal(): void {
 function trainerPickerLaunch(type: 'timer' | 'evilness' | 'parity' | 'color'): void {
   const picker = document.getElementById('trainerPickerModal');
   if (picker) picker.remove();
+  if (type === 'color') {
+    startColorRecognitionPractice();
+    return;
+  }
 
   const KEYS: Record<string, string> = {
     timer: 'sq1-selector-cases',
     evilness: 'sq1-selector-evilness',
     parity: 'sq1-selector-parity',
-    color: 'sq1-selector-color',
   };
   const key = KEYS[type];
   selectorStorageKey = key;
@@ -3092,8 +3096,6 @@ function trainerPickerLaunch(type: 'timer' | 'evilness' | 'parity' | 'color'): v
     startEvilnessQuiz(chosen);
   } else if (type === 'parity') {
     startParityQuiz(chosen);
-  } else if (type === 'color') {
-    startColorRecognitionPractice();
   }
 }
 
@@ -3101,7 +3103,12 @@ function trainerPickerLaunch(type: 'timer' | 'evilness' | 'parity' | 'color'): v
 function saveSelectorSelection(key?: string): void {
   try {
     const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
-    localStorage.setItem(storageKey, JSON.stringify([...selectorSelectedCases]));
+    const field = storageKey === 'sq1-selector-evilness'
+      ? 'selectedEvilness'
+      : storageKey === 'sq1-selector-parity'
+        ? 'selectedParityQuiz'
+        : 'selectedMulti';
+    updateCspObject(CSP_TRAINING_KEY, { [field]: [...selectorSelectedCases] });
   } catch {
     // ignore
   }
@@ -3110,14 +3117,16 @@ function saveSelectorSelection(key?: string): void {
 function loadSelectorSelection(key?: string): void {
   try {
     const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
-    const raw = localStorage.getItem(storageKey);
-    if (raw) {
-      const arr: unknown = JSON.parse(raw);
-      if (Array.isArray(arr)) {
-        selectorSelectedCases = new Set(
-          arr.map(getCaseId).filter((id): id is number => id !== undefined),
-        );
-      }
+    const field = storageKey === 'sq1-selector-evilness'
+      ? 'selectedEvilness'
+      : storageKey === 'sq1-selector-parity'
+        ? 'selectedParityQuiz'
+        : 'selectedMulti';
+    const arr = readCspObject(CSP_TRAINING_KEY)[field];
+    if (Array.isArray(arr)) {
+      selectorSelectedCases = new Set(
+        arr.map(getCaseId).filter((id): id is number => id !== undefined),
+      );
     }
   } catch {
     // ignore
@@ -3128,14 +3137,14 @@ function loadSelectorSelection(key?: string): void {
   }
 }
 
-function goThroughKey(selectorKey?: string): string {
-  return 'goThroughEachCase:' + (selectorKey || selectorStorageKey || TIMER_SELECTOR_KEY);
-}
-
 function isGoThroughEnabled(selectorKey?: string): boolean {
-  const v = localStorage.getItem(goThroughKey(selectorKey));
-  if (v !== null) return v === 'true';
-  return localStorage.getItem('trainingGoThroughEachCase') === 'true';
+  const key = selectorKey || selectorStorageKey || TIMER_SELECTOR_KEY;
+  const field = key === 'sq1-selector-evilness'
+    ? 'eachCaseEvilness'
+    : key === 'sq1-selector-parity'
+      ? 'eachCaseParityQuiz'
+      : 'eachCaseMulti';
+  return readCspObject(CSP_TRAINING_KEY)[field] === true;
 }
 
 function openTrainingSelector(): void {
@@ -3280,7 +3289,13 @@ function onSelectorSearch(val: string): void {
 }
 
 function toggleGoThroughFromSelector(checked: boolean): void {
-  localStorage.setItem(goThroughKey(selectorStorageKey), checked.toString());
+  const key = selectorStorageKey || TIMER_SELECTOR_KEY;
+  const field = key === 'sq1-selector-evilness'
+    ? 'eachCaseEvilness'
+    : key === 'sq1-selector-parity'
+      ? 'eachCaseParityQuiz'
+      : 'eachCaseMulti';
+  updateCspObject(CSP_TRAINING_KEY, { [field]: checked });
   resetGoThroughPool();
   if (multiCaseMode) regenerateMultiScrambleLookahead();
   if (evilQuizOnSelectionChange) evilQuizOnSelectionChange([...selectorSelectedCases]);
@@ -3579,14 +3594,22 @@ function goThroughConsume(): void {
 
 // ── Export / import hooks (called from state.ts exportData/importData) ───────
 function selectorExportHook(stateObj: Record<string, unknown>): Record<string, unknown> {
-  stateObj.selectorSelectedCases = [...selectorSelectedCases];
+  const training = stateObj.training && typeof stateObj.training === 'object'
+    ? stateObj.training as Record<string, unknown>
+    : {};
+  training.selectedMulti = [...selectorSelectedCases];
+  stateObj.training = training;
   return stateObj;
 }
 
 function selectorImportHook(stateObj: Record<string, unknown>): void {
-  if (stateObj.selectorSelectedCases && Array.isArray(stateObj.selectorSelectedCases)) {
+  const training = stateObj.training && typeof stateObj.training === 'object'
+    ? stateObj.training as Record<string, unknown>
+    : stateObj;
+  const selected = training.selectedMulti ?? training.selectorSelectedCases;
+  if (Array.isArray(selected)) {
     selectorSelectedCases = new Set(
-      (stateObj.selectorSelectedCases as unknown[])
+      (selected as unknown[])
         .map(getCaseId)
         .filter((id): id is number => id !== undefined),
     );
