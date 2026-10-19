@@ -145,6 +145,10 @@ export default function App(): React.ReactNode {
     setLearnFilterState(filter);
   }, []);
 
+  useEffect(() => {
+    setSortTypeState(currentSortMode);
+  }, [storeVersion]);
+
   const filtered = useMemo(
     () => (bootReady ? computeFilteredData(searchTerm, sortType, learnFilter) : []),
     [searchTerm, sortType, learnFilter, bootReady, storeVersion],

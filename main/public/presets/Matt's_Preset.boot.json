@@ -1361,6 +1361,7 @@
       44
     ]
   ],
+  "sortMode": "priority",
   "colorScheme": {
     "topColor": "#000000",
     "bottomColor": "#FFFFFF",

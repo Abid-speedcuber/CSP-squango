@@ -913,6 +913,13 @@ export async function applyPreset(
   if (!preset) return;
 
   learningOrder = normalizeLearningOrder(preset.learningOrder);
+  if (
+    preset.sortMode === 'priority' ||
+    preset.sortMode === 'probability' ||
+    preset.sortMode === 'antiProbability'
+  ) {
+    currentSortMode = preset.sortMode;
+  }
   if (preset.displayNames) {
     displayNames = normalizeCaseRecord(preset.displayNames as Record<string, string>);
   }

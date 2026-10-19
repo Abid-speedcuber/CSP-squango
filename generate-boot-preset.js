@@ -57,6 +57,7 @@ function generateBootPreset(preset) {
     'generalNotes',
     'customAlgorithms',
     'learningOrder',
+    'sortMode',
     'colorScheme',
     'cornerStickerMode',
     'evilCases',
