@@ -3186,7 +3186,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
     --lg-3: #8a96ab;
 }
 .learning-group-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
-.learning-group-box { --lg: var(--lg-0); position: absolute; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--lg) 50%, transparent); border-radius: 12px; }
+.learning-group-box { --lg: var(--lg-0); position: absolute; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--lg) 50%, transparent); border-radius: var(--lg-radius, 12px); }
 .learning-group-box[data-tone="1"] { --lg: var(--lg-1); }
 .learning-group-box[data-tone="2"] { --lg: var(--lg-2); }
 .learning-group-box[data-tone="3"] { --lg: var(--lg-3); }

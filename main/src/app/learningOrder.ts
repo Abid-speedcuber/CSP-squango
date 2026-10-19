@@ -601,6 +601,8 @@ export function decorateLearningOrderGrid(
   const gap = parseFloat(style.columnGap) || 0;
   // Keep outlines of neighboring groups from touching inside the gap.
   const pad = Math.max(2, Math.min(6, gap / 2 - 1.5));
+  // Outline corners stay concentric with the cards they wrap.
+  const cardRadius = cards[0] ? parseFloat(getComputedStyle(cards[0]).borderTopLeftRadius) || 0 : 12;
 
   // Runs of adjacent same-group cards within one row (first/last = card indices).
   type Run = { cards: HTMLElement[]; groupId: number; first: number; last: number };
@@ -639,6 +641,7 @@ export function decorateLearningOrderGrid(
     const box = document.createElement('div');
     box.className = 'learning-group-box';
     box.dataset.tone = String(run.groupId % 4);
+    box.style.setProperty('--lg-radius', `${cardRadius + pad}px`);
     const prev = runs[i - 1];
     const next = runs[i + 1];
     if (prev && prev.groupId === run.groupId && prev.last + 1 === run.first) box.classList.add('cont-start');

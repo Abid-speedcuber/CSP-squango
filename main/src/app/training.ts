@@ -38,6 +38,7 @@ import { showToast } from './toast';
 import { mountInfoTip } from '../components/mountInfoTip';
 import { renderCard } from './cardHTML';
 import { openNotesModal } from './notes';
+import { decorateLearningOrderGrid } from './learningOrder';
 import { CSP_TRAINING_KEY, readCspObject, updateCspObject } from '../lib/storage';
 
 // ── Training modal state (mirrors legacy) ───────────────────────────────────
@@ -3386,7 +3387,7 @@ function renderSelectorCases(): void {
       const displayName = getDisplayName(item.id);
 
       return `
-            <div onclick="toggleSelectorCase('${item.id}')"
+            <div data-case="${item.id}" onclick="toggleSelectorCase('${item.id}')"
                 style="
                     padding: 7px 8px;
                     background: ${bgColor};
@@ -3413,6 +3414,7 @@ function renderSelectorCases(): void {
         `;
     })
     .join('');
+  decorateLearningOrderGrid(grid, '[data-case]', 'data-case');
 
   const countBar = document.getElementById('selectorCountBar');
   if (countBar) {

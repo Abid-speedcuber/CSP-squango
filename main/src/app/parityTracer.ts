@@ -43,7 +43,6 @@ import {
 import { CSP_PREFERENCES_KEY, readCspObject } from '../lib/storage';
 import { resolveThemeAwareWhite, visualizeFromHex } from '../lib/drawScramble';
 import { getHomepageShapeStyle } from '../lib/homepageShapes';
-import { decorateLearningOrderGrid } from './learningOrder';
 import {
   closeModalWithHistory,
   pushModalState,
@@ -592,7 +591,6 @@ function showEvilnessCasesModal(
         </div>`;
       })
       .join('');
-    decorateLearningOrderGrid(grid, '[data-case]', 'data-case');
 
     const countBar = evilInner.querySelector('#evilCountBar');
     if (countBar) {
