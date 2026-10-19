@@ -32,6 +32,7 @@ import HomepageImagesModal from './HomepageImagesModal';
 import Dropdown from './Dropdown';
 import { decorateLearningOrderGrid } from '../app/learningOrder';
 import { CSP_CACHE_KEY, readCspObject, updateCspObject } from '../lib/storage';
+import { temporarilyDisablePointerEvents } from '../app/interactionLock';
 
 const DEFAULT_SKELETON_CARD_HEIGHT = 360;
 const MATT_SKELETON_CARD_HEIGHT = 430;
@@ -165,6 +166,7 @@ export default function App(): React.ReactNode {
 
   // Boot: paint the responsive shell first, then run preset/SVG/parity work.
   useEffect(() => {
+    if (isFirstLoad) temporarilyDisablePointerEvents();
     let cancelled = false;
     let hydrationHandle: ScheduledHandle | null = null;
     const afterFirstPaint = () => {
@@ -190,7 +192,7 @@ export default function App(): React.ReactNode {
           if (isFirstLoad) {
             hydrationHandle = scheduleBackgroundTask(() => {
               void hydratePresetDetails("Matt's_Preset").then(() => {
-                if (!cancelled) window.setTimeout(() => openGeneralNotesModal(), 100);
+                if (!cancelled) openGeneralNotesModal();
               });
             }, 1000);
           } else {

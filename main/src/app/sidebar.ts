@@ -27,6 +27,7 @@ import { closeModalWithHistory, pushModalState } from './modal';
 import { openGeneralNotesModal } from './notes';
 import { applyInstructionVisibility } from './visibility';
 import { showToast } from './toast';
+import { temporarilyDisablePointerEvents } from './interactionLock';
 
 const AVATARS = [
   'res/avatar.svg',
@@ -786,6 +787,7 @@ export function handlePresetChange(presetName: string): void {
       closeModalWithHistory(close);
       document.documentElement.classList.remove('scroll-locked');
       closeSidebar();
+      temporarilyDisablePointerEvents();
       void applyPreset(presetName, false, false).then(() => {
         initializePresetSelector();
       });
@@ -850,6 +852,7 @@ export function handlePresetChange(presetName: string): void {
     closeModalWithHistory(close);
     document.documentElement.classList.remove('scroll-locked');
     closeSidebar();
+    temporarilyDisablePointerEvents();
     void applyPreset(presetName, false, false).then(() => {
       initializePresetSelector();
       setTimeout(() => openGeneralNotesModal(), 800);
