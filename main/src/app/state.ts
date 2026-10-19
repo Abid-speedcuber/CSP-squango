@@ -916,6 +916,14 @@ export async function applyPreset(
   if (preset.displayNames) {
     displayNames = normalizeCaseRecord(preset.displayNames as Record<string, string>);
   }
+  const preferences = (preset.preferences || {}) as Record<string, unknown>;
+  if (
+    applyFull &&
+    typeof document !== 'undefined' &&
+    (preferences.theme === 'dark' || preferences.theme === 'light')
+  ) {
+    document.documentElement.setAttribute('data-theme', preferences.theme);
+  }
   comments.clear();
   Object.entries(normalizeCaseRecord(preset.comments as Record<string, string> | undefined)).forEach(
     ([k, v]) => comments.set(Number(k), String(v)),
@@ -986,7 +994,6 @@ export async function applyPreset(
   if (applyFull) {
     if (preset.scrambleImageSize != null) scrambleImageSize = Number(preset.scrambleImageSize);
     if (preset.hideInstructions !== undefined) hideInstructions = Boolean(preset.hideInstructions);
-    const preferences = (preset.preferences || {}) as Record<string, unknown>;
     const training = (preset.training || {}) as Record<string, unknown>;
     if (preferences.profileName) {
       profileName = String(preferences.profileName);
@@ -1010,12 +1017,6 @@ export async function applyPreset(
     }
     if (preset.profileName != null) preferences.profileName = profileName;
     if (preset.profileAvatar != null) preferences.profileAvatar = profileAvatar;
-    if (
-      typeof document !== 'undefined' &&
-      (preferences.theme === 'dark' || preferences.theme === 'light')
-    ) {
-      document.documentElement.setAttribute('data-theme', preferences.theme);
-    }
     updateCspObject(CSP_PREFERENCES_KEY, preferences);
     updateCspObject('cspTraining', training);
   }

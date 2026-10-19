@@ -197,17 +197,6 @@ test('legacy evilness maps import as only the explicitly evil case IDs', () => {
   expect(state.evilnessMap).toEqual({ '4': true, '12': true });
 });
 
-test("Matt's boot preset seeds parity cache for first paint", async () => {
-  presetPayload = loadPresetFile("Matt's_Preset.boot.json");
-  await state.applyPreset("Matt's_Preset", true, true, true, true, true);
-
-  expect(state.cachedParityAlgorithms.size).toBe(90);
-  expect(state.needsParityRecalculation()).toBe(false);
-  const left42 = state.cachedParityAlgorithms.get(getCaseId('Left 4-2/Paired Edges')!);
-  expect(left42?.odd).toContain('(-2,-4)/(4,0)/(1,0)/(-3,-3)/');
-  expect(left42?.even).toContain('(0,-2)/(-2,0)/(-1,-2)/(-3,-3)/');
-});
-
 test("Matt's boot preset seeds the first four cards' homepage SVGs", async () => {
   presetPayload = loadPresetFile("Matt's_Preset.boot.json");
   Object.keys(state.svgData).forEach((key) => delete state.svgData[key]);

@@ -60,10 +60,8 @@ const HOMEPAGE_SLICE_RADIUS_SCALE = 0.9;
 const svgDataHashes = new WeakMap<object, string>();
 
 export function isDarkTheme(): boolean {
-  return (
-    typeof document !== 'undefined' &&
-    document.documentElement.getAttribute('data-theme') === 'dark'
-  );
+  if (typeof document === 'undefined') return true;
+  return document.documentElement.getAttribute('data-theme') !== 'light';
 }
 
 export function loadHomepageImageSettings(): HomepageImageSettings {
@@ -425,6 +423,23 @@ function settingsHash(settings: HomepageImageSettings): string {
 
 export function getHomepageShapeSVGCacheHash(settings: HomepageImageSettings): string {
   return settingsHash(settings);
+}
+
+export async function generateHomepageShapeSVGCache(
+  settings: HomepageImageSettings,
+  keys: string[],
+): Promise<HomepageShapeSVGCachePayload> {
+  const options = createHomepageCoreOptions(settings);
+  const core = createConfiguredCore(options);
+  const raw: Record<string, string> = {};
+  for (const key of [...new Set(keys)]) {
+    const svg = renderHomepageShapeSVGWithCore(core, options, key);
+    if (svg) raw[key] = svg;
+  }
+  return {
+    hash: settingsHash(settings),
+    shapes: await compressShapeSVGs(raw),
+  };
 }
 
 export function seedHomepageShapeSVGs(
