@@ -42,6 +42,7 @@ import {
 } from '../lib/parityAnalyzer';
 import { CSP_PREFERENCES_KEY, readCspObject } from '../lib/storage';
 import { resolveThemeAwareWhite, visualizeFromHex } from '../lib/drawScramble';
+import { getHomepageShapeStyle } from '../lib/homepageShapes';
 import { decorateLearningOrderGrid } from './learningOrder';
 import {
   closeModalWithHistory,
@@ -57,6 +58,7 @@ import {
   evilnessStringReturn,
   getCaseNameFromScramble,
   getDisplayName,
+  getProbabilityTieRanks,
   hideInstructions,
   presetData,
   recalculateAllParity,
@@ -473,7 +475,10 @@ function showEvilnessCasesModal(
   mainCloseBtn: HTMLElement | null,
   mainSettingsBtn: HTMLElement | null,
 ): void {
-  const allCases: number[] = data.map((d) => d.id);
+  const learningRanks = getProbabilityTieRanks();
+  const allCases: number[] = data
+    .map((d) => d.id)
+    .sort((a, b) => (learningRanks.get(a) ?? 0) - (learningRanks.get(b) ?? 0));
   const getDispName = (cn: number): string => getDisplayName(cn);
 
   const localEvilMap: Record<string, boolean> = { ...evilnessMap };
@@ -485,7 +490,7 @@ function showEvilnessCasesModal(
   evilModalDiv.id = 'evilModal';
   evilModalDiv.style.cssText = `
     display:flex; position:fixed; top:0; left:0; width:100%; height:100%;
-    background:rgba(0,0,0,0.55); z-index:10008;
+    background:var(--modal-overlay); z-index:10008;
     align-items:center; justify-content:center; padding:20px; box-sizing:border-box;
   `;
 
@@ -821,6 +826,7 @@ function showTracingPositionSettingsModal(
   shapePatterns = { ...getShapePatterns() };
   const sortedEntries = Object.entries(shapePatterns).sort((a, b) => a[1].localeCompare(b[1]));
 
+  const shapeStyle = getHomepageShapeStyle();
   sortedEntries.forEach(([pattern, name], idx) => {
     const caseDiv = document.createElement('div');
     caseDiv.className = 'shape-config-item';
@@ -865,8 +871,8 @@ function showTracingPositionSettingsModal(
     nameSpan.textContent = name;
 
     const vizDiv = document.createElement('div');
-    vizDiv.innerHTML = generateShapeSVG(pattern, 112, 'config-' + pattern);
-    vizDiv.style.cssText = 'margin-bottom: 0.5rem;';
+    vizDiv.innerHTML = generateShapeSVG(pattern, 112, 'config-' + pattern, shapeStyle);
+    vizDiv.style.cssText = 'width: 100%; margin-bottom: 0.5rem;';
 
     caseDiv.appendChild(nameSpan);
     caseDiv.appendChild(vizDiv);
@@ -1322,7 +1328,7 @@ function showTracingPositionSettingsModal(
                 }
 
                 if (newPattern) {
-                  vizDiv.innerHTML = generateShapeSVG(newPattern, 112, 'config-' + newPattern);
+                  vizDiv.innerHTML = generateShapeSVG(newPattern, 112, 'config-' + newPattern, getHomepageShapeStyle());
 
                   vizDiv.querySelectorAll<HTMLElement>('[class*="shape-piece-config-"]').forEach((newPiece) => {
                     newPiece.style.cursor = 'pointer';

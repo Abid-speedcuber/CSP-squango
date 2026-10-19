@@ -16,6 +16,7 @@ import {
   stateToHex,
   type CubeState,
 } from './cube';
+import { renderExpandedLayerSVG } from './drawScrambleCore';
 
 export interface ColorConfig {
   topLayerMainColor: string;
@@ -786,105 +787,83 @@ export function encodeState(state: CubeState): string {
   return stateToHex(state);
 }
 
-export function generateShapeSVG(pattern: string, size: number, idPrefix: string): string {
-  const cx = size / 2;
-  const cy = size / 2;
+export interface ShapeSVGStyle {
+  border: string;
+  fill: string;
+  startColor: string;
+  strokeWidthOuter: number;
+  strokeWidthInner: number;
+}
 
-  const vh =
-    typeof window !== 'undefined'
-      ? Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0)
-      : 800;
-  const unit10vh = vh * 0.1;
-  const r_inner = 0;
-  const r_outer = Math.round(unit10vh * 0.7);
-  const r_outer_apex = Math.round(r_outer * (Math.cos(Math.PI / 6) + Math.sin(Math.PI / 6)));
+/** Theme-variable fallback; callers normally pass the homepage image style. */
+const DEFAULT_SHAPE_SVG_STYLE: ShapeSVGStyle = {
+  border: 'var(--svg-stroke)',
+  fill: 'transparent',
+  startColor: 'var(--shape-start, #0fc9cd)',
+  strokeWidthOuter: 0.012,
+  strokeWidthInner: 0.01,
+};
 
-  const maxRadius = Math.max(r_outer, r_outer_apex);
-  const scale = size * 0.4 / maxRadius;
-  const scaled_r_outer = r_outer * scale;
-  const scaled_r_outer_apex = r_outer_apex * scale;
-
-  const p2c = (cx: number, cy: number, radius: number, angleDeg: number): { x: number; y: number } => {
-    const a = (angleDeg * Math.PI) / 180;
-    return { x: cx + radius * Math.cos(a), y: cy - radius * Math.sin(a) };
-  };
-
-  const ptsToStr = (pts: { x: number; y: number }[]): string =>
-    pts.map((p) => `${p.x.toFixed(2)},${p.y.toFixed(2)}`).join(' ');
-
-  let svgContent = `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="display: inline-block;">
-    <style>
-      .shape-piece { cursor: pointer; transition: all 0.15s ease; }
-      .shape-piece:hover { fill: #ffd700 !important; stroke-width: 3; }
-    </style>`;
-
-  const pieces = pattern.split('');
-  const letterAngles: number[] = [];
-  let currentAngle = 90;
-
-  pieces.forEach((piece) => {
+export function generateShapeSVG(
+  pattern: string,
+  size: number,
+  idPrefix: string,
+  style: ShapeSVGStyle = DEFAULT_SHAPE_SVG_STYLE,
+): string {
+  let expanded = '';
+  for (const [index, piece] of [...pattern].entries()) {
     if (piece === '0') {
-      letterAngles.push(currentAngle);
-      currentAngle -= 30;
+      expanded += index === 0 ? '2' : '0';
     } else {
-      letterAngles.push(currentAngle);
-      letterAngles.push(currentAngle - 30);
-      currentAngle -= 60;
+      expanded += index === 0 ? '31' : '11';
     }
+  }
+
+  const svg = renderExpandedLayerSVG(expanded, {
+    size,
+    showSlice: false,
+    showSideColors: false,
+    colorScheme: {
+      top: style.fill,
+      bottom: style.fill,
+      front: 'transparent',
+      right: 'transparent',
+      back: 'transparent',
+      left: 'transparent',
+      border: style.border,
+    },
+    piecesColors: {
+      edgeColors: {
+        '0': { inner: 'top', outer: 'top' },
+        '2': { inner: style.startColor, outer: style.startColor },
+      },
+      cornerColors: {
+        '1': { top: 'top', left: 'top', right: 'top' },
+        '3': { top: style.startColor, left: style.startColor, right: style.startColor },
+      },
+    },
+    styleSettings: {
+      layerRatio: 1,
+      strokeWidthOuter: style.strokeWidthOuter,
+      strokeWidthInner: style.strokeWidthInner,
+    },
   });
 
-  let angleIndex = 0;
-  pieces.forEach((piece, index) => {
-    const isEdge = piece === '0';
-    const isFirst = index === 0;
-    const fillColor = isFirst ? '#add8e6' : '#ffffff';
-
-    if (isEdge) {
-      const centerAngle = letterAngles[angleIndex];
-      const half = 15;
-
-      const pInner = p2c(cx, cy, r_inner, centerAngle);
-      const pA = p2c(cx, cy, scaled_r_outer, centerAngle - half);
-      const pB = p2c(cx, cy, scaled_r_outer, centerAngle + half);
-
-      svgContent += `<polygon
-            class="shape-piece shape-piece-${idPrefix}"
-            data-piece-index="${index}"
-            points="${ptsToStr([pInner, pA, pB])}"
-            fill="${fillColor}"
-            stroke="#000"
-            stroke-width="2"
-          />`;
-
-      angleIndex += 1;
-    } else {
-      const angle1 = letterAngles[angleIndex];
-      const angle2 = letterAngles[angleIndex + 1];
-      const centerAngle = (angle1 + angle2) / 2;
-      const half = 30;
-
-      const pInner = p2c(cx, cy, r_inner, centerAngle);
-      const pOuterR = p2c(cx, cy, scaled_r_outer, centerAngle - half);
-      const pApex = p2c(cx, cy, scaled_r_outer_apex, centerAngle);
-      const pOuterL = p2c(cx, cy, scaled_r_outer, centerAngle + half);
-
-      svgContent += `<polygon
-            class="shape-piece shape-piece-${idPrefix}"
-            data-piece-index="${index}"
-            points="${ptsToStr([pInner, pOuterR, pApex, pOuterL])}"
-            fill="${fillColor}"
-            stroke="#000"
-            stroke-width="2"
-          />`;
-
-      angleIndex += 2;
-    }
-  });
-
-  svgContent += `<circle cx="${cx}" cy="${cy}" r="2" fill="#666"/>`;
-  svgContent += `</svg>`;
-
-  return svgContent;
+  let pieceIndex = 0;
+  return svg
+    .replace(/<polygon class="sticker"/g, () => {
+      const replacement = `<polygon class="shape-piece shape-piece-${idPrefix}" data-piece-index="${pieceIndex}"`;
+      pieceIndex += 1;
+      return replacement;
+    })
+    .replace(
+      '</svg>',
+      `<style>
+        .shape-piece { cursor: pointer; transition: all 0.15s ease; }
+        .shape-piece:hover { fill: var(--accent-hover) !important; }
+        .shape-config-item svg.squan { display: block; margin: 0 auto; width: 100% !important; height: auto !important; max-width: 500px; }
+      </style></svg>`,
+    );
 }
 
 export interface ArrowAngle {

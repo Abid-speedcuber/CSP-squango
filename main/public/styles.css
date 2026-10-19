@@ -254,8 +254,8 @@
     --bar-coverage:  linear-gradient(90deg, #2558a0, #3a6ec0);
     --bar-safety:    linear-gradient(90deg, #9c7010, #df853c);
 
-    /* ── Always-dark header chrome — same in both themes ── */
-    --header-dark-bg:   #2d3748;
+    /* ── Always-dark header chrome ── */
+    --header-dark-bg:   #16181f;
 
     --toast-success-bg: #1e5234;
     --toast-error-bg:   #921023;

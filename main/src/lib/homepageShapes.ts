@@ -10,7 +10,7 @@
 
 import { createConfiguredCore, renderExpandedLayerSVG, type Square1RenderOptions } from './drawScrambleCore';
 import { getMarkedLayerExpanded } from './expandedShape';
-import { getShapePatterns } from './parityAnalyzer';
+import { getShapePatterns, type ShapeSVGStyle } from './parityAnalyzer';
 import { BOTTOM_ANCHOR_SLOT } from './tracingStart';
 import { LAYER_SHAPE_BITS } from '../data/layerShapes';
 import { SHAPE_DISPLAY_ROTATIONS } from '../data/shapeDisplay';
@@ -95,6 +95,19 @@ function resolveStrokeColor(color: string): string {
 
 function resolveSpecialPieceColor(settings: HomepageImageSettings): string {
   return isDarkTheme() ? settings.specialPieceColorDark : settings.specialPieceColor;
+}
+
+/** Homepage-matching style for the tracing-position shape editor. */
+export function getHomepageShapeStyle(
+  settings: HomepageImageSettings = loadHomepageImageSettings(),
+): ShapeSVGStyle {
+  return {
+    border: resolveStrokeColor(settings.borderColor),
+    fill: settings.topColor,
+    startColor: resolveSpecialPieceColor(settings),
+    strokeWidthOuter: settings.strokeWidthOuter,
+    strokeWidthInner: settings.strokeWidthInner,
+  };
 }
 
 /** Marked, display-rotated expanded layer for a homepage image (see expandedShape.ts). */

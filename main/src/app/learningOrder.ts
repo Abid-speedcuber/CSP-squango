@@ -573,8 +573,11 @@ export function decorateLearningOrderGrid(
     groupObservers.set(grid, observer);
   }
 
-  const parent = grid.parentElement;
-  if (!parent) return;
+  // A scrolling grid hosts the layer itself so outlines scroll with the content.
+  const overflowY = getComputedStyle(grid).overflowY;
+  const scrolls = overflowY === 'auto' || overflowY === 'scroll';
+  const host = scrolls ? grid : grid.parentElement;
+  if (!host) return;
 
   const groups = new Map<number, number>();
   getLearningOrder()?.forEach((entry, groupId) => {
@@ -619,10 +622,10 @@ export function decorateLearningOrderGrid(
   if (current) runs.push(current);
   if (runs.length === 0) return;
 
-  if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative';
-  const origin = parent.getBoundingClientRect();
-  const offsetX = parent.scrollLeft - parent.clientLeft - origin.left;
-  const offsetY = parent.scrollTop - parent.clientTop - origin.top;
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  const origin = host.getBoundingClientRect();
+  const offsetX = host.scrollLeft - host.clientLeft - origin.left;
+  const offsetY = host.scrollTop - host.clientTop - origin.top;
 
   const layer = document.createElement('div');
   layer.className = 'learning-group-layer';
@@ -646,6 +649,7 @@ export function decorateLearningOrderGrid(
     box.style.height = `${bottom - top + pad * 2}px`;
     layer.appendChild(box);
   });
-  grid.insertAdjacentElement('afterend', layer);
+  if (scrolls) grid.appendChild(layer);
+  else grid.insertAdjacentElement('afterend', layer);
   groupLayers.set(grid, layer);
 }

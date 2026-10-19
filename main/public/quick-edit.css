@@ -19,7 +19,7 @@
 
 .quick-edit-header {
     padding: 8px 12px;
-    background: #2d3748;
+    background: var(--header-dark-bg, #2d3748);
     color: var(--text-on-color);
     display: flex;
     justify-content: space-between;
