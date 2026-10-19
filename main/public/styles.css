@@ -2994,7 +2994,7 @@ mark.search-hl { background-color: var(--search-highlight-bg); color: var(--sear
 
 /* ================================================================
    CUBESHAPE SVG THEMING
-   The .cubeshape-svg elements are injected inline (from svg.js),
+   The .cubeshape-svg elements are injected inline,
    so CSS properties DO cross into the SVG — unlike <img>-loaded SVGs.
 
    Structure of each cubeshape SVG:

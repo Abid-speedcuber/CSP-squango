@@ -21,8 +21,6 @@ const PRECACHE = [
     "./training-modal.css",
     "./quick-edit.css",
     "./svg-editor.css",
-    "./res/shapeImages/svg.js",
-    "./res/shapeImages/svgs.js",
     "./res/icons/icon-32.png",
     "./res/icons/icon-16.png",
     "./favicon.ico"
