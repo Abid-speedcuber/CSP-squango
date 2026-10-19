@@ -52,14 +52,15 @@ function generateBootPreset(preset) {
     'displayNames',
     'perCaseSubtitles',
     'comments',
+    'generalNotes',
     'customAlgorithms',
+    'learningOrder',
     'colorScheme',
     'cornerStickerMode',
-    'evilnessMap',
+    'evilCases',
     'evilnessEnabled',
     'evilnessAffectsHomescreen',
     'hideInstructions',
-    'parityOrientations',
     'tracingPositions',
   ]) {
     copyIfPresent(preset, boot, key);
