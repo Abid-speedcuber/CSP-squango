@@ -73,11 +73,14 @@ let shiftShortcutTriggered = false;
 let resetDismissedTooltipOnPointerMove: ((event: PointerEvent) => void) | null = null;
 let shapeIndexRenderVersion = 0;
 let shapeIndexRenderFrame: number | null = null;
+let trainerEmpty = false;
 
 interface ScrambleData {
   text: string;
   image: string;
   caseName?: number;
+  passEnd?: boolean;
+  passAnnounced?: boolean;
 }
 
 interface ShapeIndexRenderEntry {
@@ -106,6 +109,7 @@ let selectorSearchTerm = '';
 let selectorFilteredData: AlgCase[] = [];
 let multiTrainingCases: number[] = [];
 let _goThroughRemaining: number[] = [];
+let _lastGoThroughCase: number | null = null;
 let selectorStorageKey = 'sq1-selector-cases';
 let multiCaseMode = false;
 let evilQuizOnSelectionChange: ((ids: number[]) => void) | null = null;
@@ -116,6 +120,21 @@ const TIMER_SELECTOR_KEY = 'sq1-selector-cases';
 // ── Scramble text/image helpers ──────────────────────────────────────────────
 // Draw-scramble ring distance, matching the parity tracer's visualization.
 const TRAINING_SCRAMBLE_RING_DISTANCE = 120;
+
+// Paired scramble SVG geometry relative to `size` (same math as getShapeIndexSvgSize).
+const SCRAMBLE_CORE_RATIO = 220 / 400;
+const SCRAMBLE_WIDTH_RATIO =
+  SCRAMBLE_CORE_RATIO * 2 +
+  SCRAMBLE_CORE_RATIO * (0.44 * (2 + TRAINING_SCRAMBLE_RING_DISTANCE / 100) - 1);
+const SCRAMBLE_HEIGHT_RATIO = SCRAMBLE_CORE_RATIO * (1 + 0.0891);
+
+// Largest image size that fits the viewport. Temporary cap: never written to settings.
+function getEffectiveImageSize(requested: number = trainingScrambleImageSize || 280): number {
+  const sidePad = window.innerWidth <= 768 ? 36 : 20; // matches container + zone padding in CSS
+  const maxByWidth = (document.documentElement.clientWidth - sidePad * 2) / SCRAMBLE_WIDTH_RATIO;
+  const maxByHeight = (window.innerHeight * 0.45) / SCRAMBLE_HEIGHT_RATIO;
+  return Math.max(60, Math.floor(Math.min(requested, maxByWidth, maxByHeight)));
+}
 
 function formatMedianTime(timesMs: number[]): string {
   if (timesMs.length === 0) return 'Median: —';
@@ -139,7 +158,7 @@ function hexToScrambleText(hexCode: string): string {
   return text;
 }
 
-function hexToScrambleImage(hexCode: string, size = trainingScrambleImageSize): string {
+function hexToScrambleImage(hexCode: string, size = getEffectiveImageSize()): string {
   let image = '<div style="color: var(--text-muted)">Image unavailable</div>';
   try {
     const state = parseHexFormat(hexCode);
@@ -171,9 +190,13 @@ function generateMultiCaseScrambleData(): ScrambleData | null {
   if (!multiTrainingCases || multiTrainingCases.length === 0) return null;
 
   let caseName: number | undefined;
+  let passEnd = false;
   if (isGoThroughEnabled(TIMER_SELECTOR_KEY)) {
-    if (_goThroughRemaining.length === 0) resetGoThroughPool();
-    caseName = _goThroughRemaining[0];
+    // Draw from the pool at generation time so lookahead scrambles cover distinct cases.
+    if (_goThroughRemaining.length === 0) resetGoThroughPool(_lastGoThroughCase);
+    caseName = _goThroughRemaining.shift();
+    _lastGoThroughCase = caseName ?? null;
+    passEnd = _goThroughRemaining.length === 0 && multiTrainingCases.length > 1;
   } else {
     caseName = multiTrainingCases[Math.floor(Math.random() * multiTrainingCases.length)];
   }
@@ -182,17 +205,68 @@ function generateMultiCaseScrambleData(): ScrambleData | null {
   const shapeIndexItem = CSPData.getShapeEntry(caseName);
   if (!shapeIndexItem) return null;
 
-  const selectedKey = `training_selected_${caseName}`;
-  const indices = trainingSelections[selectedKey] || [
-    ...(shapeIndexItem.org || []),
-    ...(shapeIndexItem.mir || []),
-  ];
-  if (!indices || indices.length === 0) return null;
+  // Multi-case training always uses every angle of each case.
+  const indices = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
+  if (indices.length === 0) return null;
 
   const scramble = indices[Math.floor(Math.random() * indices.length)];
   const hexCode = shapeIndexToHex(scramble);
 
-  return { text: hexToScrambleText(hexCode), image: hexToScrambleImage(hexCode), caseName };
+  return {
+    text: hexToScrambleText(hexCode),
+    image: hexToScrambleImage(hexCode),
+    caseName,
+    passEnd,
+  };
+}
+
+function hasTrainerScrambles(): boolean {
+  return multiCaseMode ? multiTrainingCases.length > 0 : trainingScrambles.length > 0;
+}
+
+// Nothing selected: hide the scramble and show "--:--". Returns true when empty.
+function syncEmptyState(): boolean {
+  const empty = !hasTrainerScrambles();
+  const wasEmpty = trainerEmpty;
+  trainerEmpty = empty;
+  document.getElementById('trainingModal')?.classList.toggle('training-empty', empty);
+  const timerEl = document.getElementById('trainingTimer');
+  if (empty) {
+    resetTimerStateOnEscape(true);
+    preGeneratedScrambles = [];
+    scrambleHistory = [];
+    currentHistoryIndex = -1;
+    currentScrambleText = '';
+    const scrambleEl = document.getElementById('trainingScramble');
+    if (scrambleEl) {
+      scrambleEl.style.fontSize = trainingScrambleTextSize + 'px';
+      const prompt = multiCaseMode ? 'Select a case to start training' : 'Select an angle to start training';
+      scrambleEl.innerHTML = `<span style="color:var(--text-muted);font-style:italic;font-family:inherit;">${prompt}</span>`;
+    }
+    // Solved cube keeps the layout (and timer position) identical to the populated state.
+    const imgEl = document.getElementById('trainingScrambleImage');
+    if (imgEl) {
+      let solved = '';
+      if (!trainingHideScrambleImage) {
+        try {
+          solved = visualizeFromScramble(
+            '(0,0)',
+            getEffectiveImageSize(),
+            colorScheme,
+            TRAINING_SCRAMBLE_RING_DISTANCE,
+          );
+        } catch {
+          // leave blank on failure
+        }
+      }
+      imgEl.innerHTML = solved;
+    }
+    if (timerEl) timerEl.textContent = '--:--';
+    applyPrevScrambleBar();
+  } else if (wasEmpty && timerEl) {
+    timerEl.textContent = '0.000';
+  }
+  return empty;
 }
 
 // ── Modal creation ───────────────────────────────────────────────────────────
@@ -461,13 +535,10 @@ export function openTrainingModal(caseName: string): void {
 
   const allScrambles = [...(shapeIndexItem.org || []), ...(shapeIndexItem.mir || [])];
 
+  // Always start with every angle selected; selection is not kept between sessions.
   const selectedKey = `training_selected_${caseId}`;
-  if (trainingSelections[selectedKey]) {
-    trainingScrambles = trainingSelections[selectedKey];
-  } else {
-    trainingScrambles = allScrambles;
-    trainingSelections[selectedKey] = allScrambles;
-  }
+  trainingScrambles = [...allScrambles];
+  trainingSelections[selectedKey] = trainingScrambles;
 
   if (trainingScrambles.length === 0) {
     showToast('No training scrambles available for this case.', 2500, 'error');
@@ -532,6 +603,12 @@ function closeTrainingModal(): void {
     isInspectionPhase = false;
     parityQuizPhase = false;
     if (inspectionInterval) clearInterval(inspectionInterval);
+    if (trainerEmpty) {
+      const timerEl = document.getElementById('trainingTimer');
+      if (timerEl) timerEl.textContent = '0.000';
+    }
+    trainerEmpty = false;
+    modal.classList.remove('training-empty');
     multiCaseMode = false;
   });
 }
@@ -548,6 +625,15 @@ function loadTrainingSettings(): void {
 
 // ── Scramble display ─────────────────────────────────────────────────────────
 function displayNextScramble(): void {
+  if (syncEmptyState()) return;
+
+  // Announce once the last case of a pass has been left.
+  const leaving = scrambleHistory[currentHistoryIndex];
+  if (multiCaseMode && leaving?.passEnd && !leaving.passAnnounced) {
+    leaving.passAnnounced = true;
+    showToast('Gone through each case!', 3000, 'success');
+  }
+
   clearInterval(inspectionInterval as ReturnType<typeof setInterval>);
   isInspectionPhase = false;
   parityQuizPhase = false;
@@ -655,6 +741,7 @@ function applyPrevScrambleBar(): void {
 }
 
 function regenerateScrambleLookaheadLegacy(): void {
+  if (syncEmptyState()) return;
   preGeneratedScrambles = [];
   for (let i = 0; i < 3; i++) {
     preGeneratedScrambles.push(generateNextScrambleData()!);
@@ -667,12 +754,16 @@ function regenerateScrambleLookaheadLegacy(): void {
 // Resize the currently-displayed scramble image in place WITHOUT advancing to a
 // new scramble (used when the user changes the training image-size setting).
 function resizeCurrentTrainingScramble(): void {
+  if (trainerEmpty) {
+    syncEmptyState();
+    return;
+  }
   const imgEl = document.getElementById('trainingScrambleImage');
   if (imgEl && !trainingHideScrambleImage && currentScrambleText) {
     try {
       const img = visualizeFromScramble(
         currentScrambleText,
-        trainingScrambleImageSize,
+        getEffectiveImageSize(),
         colorScheme,
         TRAINING_SCRAMBLE_RING_DISTANCE,
       );
@@ -724,7 +815,7 @@ function openParityAnalysisFromTraining(): void {
 
 // ── Timer handlers ───────────────────────────────────────────────────────────
 function handleTimerMouseDown(): void {
-  if (timerRunning) return;
+  if (trainerEmpty || timerRunning) return;
   if (trainingEnableInspection && !isInspectionPhase && !parityQuizPhase) {
     if (trainingEnableParityQuiz) startParityQuizInspection();
     else startInspection();
@@ -757,7 +848,7 @@ function handleTimerMouseLeave(): void {
 
 function handleTimerTouchStart(e: Event): void {
   e.preventDefault();
-  if (timerRunning) return;
+  if (trainerEmpty || timerRunning) return;
   if (trainingEnableInspection && !isInspectionPhase && !parityQuizPhase) {
     if (trainingEnableParityQuiz) startParityQuizInspection();
     else startInspection();
@@ -1614,6 +1705,7 @@ function handleTrainingKeyDown(e: KeyboardEvent): void {
 
   if (e.code === 'Space' && !e.repeat) {
     e.preventDefault();
+    if (trainerEmpty) return;
     if (!spacePressed) {
       spacePressed = true;
       if (trainingEnableInspection && !isInspectionPhase && !parityQuizPhase) {
@@ -1897,11 +1989,7 @@ function readSelectedCaseIds(key: string): number[] | null {
 
 // ── 1. EVILNESS QUIZ ─────────────────────────────────────────────────────────
 function openEvilnessQuiz(): void {
-  const key = 'sq1-selector-evilness';
-  selectorStorageKey = key;
-  const saved = readSelectedCaseIds(key);
-  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
-  startEvilnessQuiz(chosen);
+  startEvilnessQuiz(resolveInitialSelection('sq1-selector-evilness'));
 }
 
 function startEvilnessQuiz(chosenCaseNames: number[]): void {
@@ -1909,14 +1997,12 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
   if (evilCaseNames.length === 0) return;
 
   let evilRemaining: number[] = [];
-  let evilSawFirstPass = false;
   function resetEvilRemaining(): void {
     evilRemaining = [...evilCaseNames];
     for (let i = evilRemaining.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [evilRemaining[i], evilRemaining[j]] = [evilRemaining[j], evilRemaining[i]];
     }
-    evilSawFirstPass = false;
   }
   resetEvilRemaining();
 
@@ -1925,9 +2011,8 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
     let caseName: number | undefined;
     if (isGoThroughEnabled('sq1-selector-evilness')) {
       if (evilRemaining.length === 0) {
-        if (evilSawFirstPass) showToast('Gone through each case!', 3000, 'success');
+        if (evilCaseNames.length > 1) showToast('Gone through each case!', 3000, 'success');
         resetEvilRemaining();
-        evilSawFirstPass = true;
       }
       caseName = evilRemaining.shift();
     } else {
@@ -2023,6 +2108,8 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
     resetEvilRemaining();
     const countEl = document.getElementById('evilQuizCaseCount');
     if (countEl) countEl.textContent = `${evilCaseNames.length} cases selected`;
+    updateEvilStartState();
+    if (evilCaseNames.length === 0 && quizRunning) stopEvilQuiz();
   };
 
   function openEvilQuizSettings(): void {
@@ -2040,7 +2127,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
         if (imgEl && notation)
           imgEl.innerHTML = visualizeFromScramble(
             notation,
-            size,
+            getEffectiveImageSize(size),
             colorScheme,
             TRAINING_SCRAMBLE_RING_DISTANCE,
           );
@@ -2087,6 +2174,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
   }
 
   function nextQuestion(): void {
+    if (!quizRunning) return;
     if (timerInt) clearInterval(timerInt);
     const picked = pickEvilItem();
     if (!picked) return;
@@ -2098,7 +2186,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
       const state = parseHexFormat(currentHexCode);
       const notation = scrambleFromState(state);
       imgHTML = notation
-        ? visualizeFromScramble(notation, trainingScrambleImageSize || 280, colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
+        ? visualizeFromScramble(notation, getEffectiveImageSize(), colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
         : '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
     } catch {
       imgHTML = '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
@@ -2278,27 +2366,7 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
         resetEvilRemaining();
         const existing = document.getElementById('evilQuizAnswerOverlay');
         if (existing) existing.remove();
-        const timerZone = document.getElementById('evilQuizTimerZone')!;
-        const startOverlay = document.createElement('div');
-        startOverlay.id = 'evilQuizStartOverlay';
-        startOverlay.style.cssText =
-          'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
-        startOverlay.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
-        <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
-        <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
-            You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
-            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
-        </div>
-        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
-    </div>`;
-        timerZone.appendChild(startOverlay);
-        document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
-          startOverlay.remove();
-          quizRunning = true;
-          (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = false;
-          nextQuestion();
-        });
+        showEvilStartOverlay();
         return;
       }
       closeQuiz();
@@ -2321,20 +2389,66 @@ function startEvilnessQuiz(chosenCaseNames: number[]): void {
   document.addEventListener('keydown', handleEvilKeyDown);
 
   document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
-    document.getElementById('evilQuizStartOverlay')!.remove();
+    tryStartEvilQuiz(document.getElementById('evilQuizStartOverlay')!);
+  });
+  updateEvilStartState();
+
+  function tryStartEvilQuiz(overlay: HTMLElement): void {
+    if (evilCaseNames.length === 0) {
+      showToast('Select a case to start training.', 2500, 'error');
+      return;
+    }
+    overlay.remove();
     quizRunning = true;
     (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = false;
     nextQuestion();
-  });
+  }
+
+  // Dimmed (not `disabled`) so clicking still shows the message.
+  function updateEvilStartState(): void {
+    const btn = document.getElementById('evilQuizStartBtn');
+    if (!btn) return;
+    const none = evilCaseNames.length === 0;
+    btn.setAttribute('aria-disabled', String(none));
+    btn.style.opacity = none ? '0.5' : '';
+    btn.style.cursor = none ? 'not-allowed' : 'pointer';
+  }
+
+  function showEvilStartOverlay(): void {
+    document.getElementById('evilQuizStartOverlay')?.remove();
+    const startOverlay = document.createElement('div');
+    startOverlay.id = 'evilQuizStartOverlay';
+    startOverlay.style.cssText =
+      'position:absolute;top:0;left:0;width:100%;height:100%;background:var(--surface);display:flex;align-items:flex-start;justify-content:center;z-index:50;border-radius:inherit;padding-top:2rem;box-sizing:border-box;';
+    startOverlay.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;gap:1.2rem;max-width:320px;text-align:center;padding:1.5rem;">
+        <div style="font-size:1.1rem;font-weight:700;color:var(--text-ui);">Evilness Quiz</div>
+        <div style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">
+            You'll be shown a scrambled cube image. Decide if the case requires a <span style="color:#2d6a2d;font-weight:700;">Good</span> alg or a <span style="color:#8b0000;font-weight:700;">Bad</span> alg.<br><br>
+            Use the <strong>left half</strong> of the screen (or left-side keys) for Good, and the <strong>right half</strong> (or right-side keys) for Evil.
+        </div>
+        <button id="evilQuizStartBtn" style="padding:0.9rem 2.2rem;background:var(--accent);color:var(--text-on-color);border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;">Start</button>
+    </div>`;
+    document.getElementById('evilQuizTimerZone')!.appendChild(startOverlay);
+    document.getElementById('evilQuizStartBtn')!.addEventListener('click', () => {
+      tryStartEvilQuiz(startOverlay);
+    });
+    updateEvilStartState();
+  }
+
+  // Return to the start screen (e.g. every case was deselected mid-quiz).
+  function stopEvilQuiz(): void {
+    quizRunning = false;
+    if (timerInt) clearInterval(timerInt);
+    (document.getElementById('evilQuizNextBtn') as HTMLButtonElement).disabled = true;
+    document.getElementById('evilQuizAnswerOverlay')?.remove();
+    showEvilStartOverlay();
+  }
 }
 
 // ── 2. PARITY QUIZ ───────────────────────────────────────────────────────────
 function openParityQuiz(): void {
-  const key = 'sq1-selector-parity';
-  selectorStorageKey = key;
-  const saved = readSelectedCaseIds(key);
-  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
-  startParityQuiz(chosen);
+  startParityQuiz(resolveInitialSelection('sq1-selector-parity'));
 }
 
 function startParityQuiz(chosenCaseNames: number[]): void {
@@ -2479,7 +2593,7 @@ function startParityQuiz(chosenCaseNames: number[]): void {
       const notation = scrambleFromState(state);
       scrambleText = notation || hexCode;
       imgHTML = notation
-        ? visualizeFromScramble(notation, trainingScrambleImageSize || 280, colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
+        ? visualizeFromScramble(notation, getEffectiveImageSize(), colorScheme, TRAINING_SCRAMBLE_RING_DISTANCE)
         : '<div style="color:var(--text-muted);padding:1rem;">Image unavailable</div>';
       currentParity = quizGetParityFromHex(hexCode);
     } catch {
@@ -3084,14 +3198,9 @@ function trainerPickerLaunch(type: 'timer' | 'evilness' | 'parity' | 'color'): v
     evilness: 'sq1-selector-evilness',
     parity: 'sq1-selector-parity',
   };
-  const key = KEYS[type];
-  selectorStorageKey = key;
-
-  const saved = readSelectedCaseIds(key);
-  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
+  const chosen = resolveInitialSelection(KEYS[type]);
 
   if (type === 'timer') {
-    selectorSelectedCases = new Set(chosen);
     openMultiCaseTrainingModal(chosen);
   } else if (type === 'evilness') {
     startEvilnessQuiz(chosen);
@@ -3116,6 +3225,7 @@ function saveSelectorSelection(key?: string): void {
 }
 
 function loadSelectorSelection(key?: string): void {
+  let stored = false;
   try {
     const storageKey = key || selectorStorageKey || 'sq1-selector-cases';
     const field = storageKey === 'sq1-selector-evilness'
@@ -3128,12 +3238,14 @@ function loadSelectorSelection(key?: string): void {
       selectorSelectedCases = new Set(
         arr.map(getCaseId).filter((id): id is number => id !== undefined),
       );
+      stored = true;
     }
   } catch {
     // ignore
   }
-  if (selectorSelectedCases.size === 0) {
-    data.forEach((item) => selectorSelectedCases.add(item.id));
+  // Default to all cases only when nothing has ever been saved (an empty saved list is valid).
+  if (!stored) {
+    selectorSelectedCases = new Set(data.map((item) => item.id));
     saveSelectorSelection(key);
   }
 }
@@ -3148,10 +3260,18 @@ function isGoThroughEnabled(selectorKey?: string): boolean {
   return readCspObject(CSP_TRAINING_KEY)[field] === true;
 }
 
+// Resolve the starting selection for a trainer. An empty saved list falls back to all cases.
+function resolveInitialSelection(key: string): number[] {
+  selectorStorageKey = key;
+  const saved = readSelectedCaseIds(key);
+  const chosen = saved && saved.length > 0 ? saved : data.map((item) => item.id);
+  selectorSelectedCases = new Set(chosen);
+  if (!saved || saved.length === 0) saveSelectorSelection(key);
+  return chosen;
+}
+
 function openTrainingSelector(): void {
-  selectorStorageKey = 'sq1-selector-cases';
-  if (selectorSelectedCases.size === 0) loadSelectorSelection('sq1-selector-cases');
-  openMultiCaseTrainingModal([...selectorSelectedCases]);
+  openMultiCaseTrainingModal(resolveInitialSelection('sq1-selector-cases'));
 }
 
 function openSelectorModal(storageKey?: string): void {
@@ -3435,18 +3555,7 @@ function toggleSelectorCase(caseName: string): void {
   }
   saveSelectorSelection(selectorStorageKey);
   renderSelectorCases();
-  if (multiCaseMode) {
-    multiTrainingCases = [...selectorSelectedCases];
-    resetGoThroughPool();
-    updateMultiTrainingTitle();
-    const current = scrambleHistory[currentHistoryIndex];
-    if (
-      current?.caseName !== undefined &&
-      !selectorSelectedCases.has(current.caseName)
-    ) {
-      regenerateMultiScrambleLookahead();
-    }
-  }
+  syncMultiTrainerSelection();
   if (evilQuizOnSelectionChange) evilQuizOnSelectionChange([...selectorSelectedCases]);
   if (parityQuizOnSelectionChange) parityQuizOnSelectionChange([...selectorSelectedCases]);
 }
@@ -3492,15 +3601,7 @@ function applySelectorBulkAction(action: string): void {
   }
   saveSelectorSelection(selectorStorageKey);
   renderSelectorCases();
-  if (multiCaseMode) {
-    multiTrainingCases = [...selectorSelectedCases];
-    resetGoThroughPool();
-    updateMultiTrainingTitle();
-    const current = scrambleHistory[currentHistoryIndex];
-    if (current && current.caseName && !selectorSelectedCases.has(current.caseName)) {
-      regenerateMultiScrambleLookahead();
-    }
-  }
+  syncMultiTrainerSelection();
   if (evilQuizOnSelectionChange) evilQuizOnSelectionChange([...selectorSelectedCases]);
   if (parityQuizOnSelectionChange) parityQuizOnSelectionChange([...selectorSelectedCases]);
 }
@@ -3550,7 +3651,28 @@ function updateMultiTrainingTitle(): void {
   titleEl.textContent = `${n} case${n !== 1 ? 's' : ''} selected`;
 }
 
+// Apply selector changes to the running multi-case trainer.
+function syncMultiTrainerSelection(): void {
+  if (!multiCaseMode) return;
+  multiTrainingCases = [...selectorSelectedCases];
+  const current = scrambleHistory[currentHistoryIndex];
+  resetGoThroughPool(current?.caseName);
+  const currentValid =
+    current?.caseName !== undefined && selectorSelectedCases.has(current.caseName);
+  if (currentValid) {
+    preGeneratedScrambles = [];
+    for (let i = 0; i < 3; i++) preGeneratedScrambles.push(generateNextScrambleData()!);
+    updateMultiTrainingTitle();
+  } else {
+    regenerateMultiScrambleLookahead();
+  }
+}
+
 function regenerateMultiScrambleLookahead(): void {
+  if (syncEmptyState()) {
+    updateMultiTrainingTitle();
+    return;
+  }
   preGeneratedScrambles = [];
   for (let i = 0; i < 3; i++) {
     preGeneratedScrambles.push(generateNextScrambleData()!);
@@ -3581,17 +3703,7 @@ function resetGoThroughPool(avoidFirst?: number | null): void {
 }
 
 function goThroughConsume(): void {
-  if (!multiCaseMode || !isGoThroughEnabled(TIMER_SELECTOR_KEY)) return;
-  const done = scrambleHistory[currentHistoryIndex]?.caseName || null;
-  if (!done) return;
-  const idx = _goThroughRemaining.indexOf(done);
-  if (idx !== -1) _goThroughRemaining.splice(idx, 1);
-  if (_goThroughRemaining.length === 0) {
-    showToast('Gone through each case!', 3000, 'success');
-    resetGoThroughPool(done);
-  }
-  preGeneratedScrambles = [];
-  for (let i = 0; i < 3; i++) preGeneratedScrambles.push(generateNextScrambleData()!);
+  // No-op: the pool is consumed at generation time and passes are announced in displayNextScramble.
 }
 
 // ── Export / import hooks (called from state.ts exportData/importData) ───────
@@ -3664,6 +3776,21 @@ export function setEnableParityQuizLive(val: boolean): void {
 
 // ── Installation ──────────────────────────────────────────────────────────────
 let installed = false;
+let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
+
+// Re-render open scramble images when the viewport changes (rotation, window resize).
+function handleViewportResize(): void {
+  if (viewportResizeTimer) clearTimeout(viewportResizeTimer);
+  viewportResizeTimer = setTimeout(() => {
+    if (document.getElementById('trainingModal')?.classList.contains('active')) {
+      resizeCurrentTrainingScramble();
+    }
+    if (document.getElementById('evilnessQuizModal')) {
+      (window as unknown as { _evilQuizUpdateImageSize?: (size: number) => void })
+        ._evilQuizUpdateImageSize?.(trainingScrambleImageSize || 280);
+    }
+  }, 120);
+}
 
 export function installTrainingShims(): void {
   if (installed) return;
@@ -3678,6 +3805,7 @@ export function installTrainingShims(): void {
   document.addEventListener('keydown', handleTrainingKeyDown, true);
   document.addEventListener('keydown', handleQuizKeyDown);
   document.addEventListener('keyup', handleTrainingKeyUp);
+  window.addEventListener('resize', handleViewportResize);
 
   // Training modal bridges.
   w.openTrainingModal = openTrainingModal;

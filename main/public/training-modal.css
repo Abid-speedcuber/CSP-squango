@@ -5,7 +5,8 @@
     top: 0;
     left: 0;
     width: 100vw;
-    height: 120vh;
+    height: 100vh;
+    height: 100dvh;
     background: var(--surface);
     z-index: 10000;
     overflow: hidden;
@@ -110,12 +111,14 @@ body.modal-open .training-modal {
     border-bottom: 1px solid var(--surface-border);
     font-family: Consolas, Monaco, 'Courier New', monospace;
     font-size: 1rem;
+    line-height: 1.7;
     color: var(--text-ui);
     text-align: center;
     cursor: pointer;
     user-select: none;
     overflow-wrap: break-word;
-    word-break: break-all;
+    word-break: normal;
+    text-wrap: balance;
     transition: background 0.2s ease;
 }
 
@@ -803,5 +806,207 @@ body.modal-open .training-modal {
 @media (hover: hover) {
     #selectorStartBtn:hover {
         background: var(--accent-hover) !important;
+    }
+}
+
+/* ── Empty state (no case/angle selected) ── */
+/* Keep layout identical to the populated state; only disable interaction. */
+.training-modal.training-empty .training-case-actions {
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.training-modal.training-empty #trainingTimerSubInfo {
+    display: none !important;
+}
+
+.training-modal.training-empty .training-modal-scramble {
+    pointer-events: none;
+    cursor: default;
+}
+
+.training-modal.training-empty .training-modal-timer-zone {
+    cursor: default;
+}
+
+/* Scale scramble images to fit narrow screens */
+.training-modal-image {
+    max-width: 100%;
+}
+
+/* Drop the generated wrapper's built-in 2rem padding; the fit calculation assumes none. */
+.training-modal-image > div {
+    padding: 0 !important;
+}
+
+/* ── Quizzes: timer centered on the screen, image above it ── */
+#evilQuizTimerZone,
+#colorRecogTimerZone {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto minmax(0, 1fr);
+    justify-items: center;
+    gap: 0 !important;
+    padding-top: 0;
+}
+
+#evilQuizTimerZone .training-modal-image-container {
+    grid-row: 1;
+    align-self: end;
+    min-height: 0;
+    padding: 8px 12px 12px;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#colorRecogTrio {
+    grid-row: 1;
+    align-self: end;
+    padding-bottom: 12px;
+    max-width: 100%;
+}
+
+#colorRecogTrio > div {
+    width: min(90px, 24vw) !important;
+    height: min(90px, 24vw) !important;
+}
+
+#evilQuizTimer,
+#colorRecogTimer {
+    grid-row: 2;
+    margin-top: 0;
+    text-align: center;
+}
+
+/* Stacked answer halves: labels at the outer edges, keeping the middle clear */
+@media (max-width: 500px) {
+    #evilQuizGood,
+    #colorRecogEven {
+        align-items: flex-start !important;
+        padding-top: 1.25rem !important;
+    }
+
+    #evilQuizEvil,
+    #colorRecogOdd {
+        align-items: flex-end !important;
+        padding-bottom: 1.25rem !important;
+    }
+}
+
+/* ── Mobile spacing: timer trainer + parity quiz ── */
+@media (max-width: 768px) {
+    #trainingTimerZone {
+        justify-content: center;
+        gap: 14px;
+        padding: 0 12px 24px;
+        box-sizing: border-box;
+    }
+
+    #trainingTimerZone .training-modal-image-container {
+        width: 100%;
+        min-height: 0;
+        padding: 0;
+    }
+
+    #trainingTimerZone .training-modal-timer,
+    #trainingTimerZone .training-case-actions {
+        margin-top: 0;
+    }
+
+    #parityQuizModal .training-modal-timer-zone {
+        gap: 0.75rem !important;
+        padding: 0 12px;
+        box-sizing: border-box;
+    }
+
+    #parityQuizModal .training-modal-image-container {
+        min-height: 0;
+        padding: 8px 0;
+    }
+}
+
+/* ── Mobile: selector modals ── */
+@media (max-width: 480px) {
+    .shape-index-selector-header {
+        padding: 14px 16px;
+    }
+
+    .shape-index-selector-body {
+        padding: 14px;
+    }
+
+    #selectorCaseGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+/* ── Case selector: bulk-action dropdown (menu scales with its trigger) ── */
+#trainingSelectorModal > div {
+    overflow: visible !important; /* let the menu extend past the panel */
+}
+
+#trainingSelectorModal > div > div:first-child {
+    border-radius: 14px 14px 0 0;
+}
+
+#trainingSelectorModal > div > div:last-child {
+    border-radius: 0 0 14px 14px;
+}
+
+#trainingSelectorModal #selectorSearchInput {
+    min-width: 0;
+}
+
+#trainingSelectorModal .custom-dropdown {
+    flex: 0 0 auto;
+    width: 9.5rem;
+    min-width: 0;
+    font-size: 0.85rem;
+}
+
+#trainingSelectorModal .custom-dropdown-trigger {
+    padding: 0.5em 0.7em;
+    gap: 0.5em;
+    font-size: inherit;
+}
+
+#trainingSelectorModal .custom-dropdown-menu {
+    left: auto;
+    right: 0;
+    width: max-content;
+    min-width: 100%;
+    max-width: min(18rem, calc(100vw - 48px));
+    max-height: min(24rem, 55vh);
+    padding: 0.3em;
+    font-size: inherit;
+}
+
+#trainingSelectorModal .custom-dropdown-option {
+    padding: 0.5em 0.7em;
+    gap: 1em;
+    font-size: inherit;
+}
+
+/* ── Mobile: extra side padding so scramble SVGs aren't clipped ── */
+@media (max-width: 768px) {
+    #trainingTimerZone .training-modal-image-container,
+    #evilQuizTimerZone .training-modal-image-container,
+    #parityQuizModal .training-modal-image-container {
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 100%;
+        padding: 12px 24px;
+    }
+
+    #colorRecogTrio {
+        padding-left: 24px;
+        padding-right: 24px;
+        box-sizing: border-box;
+    }
+
+    /* Don't let the SVG's own viewport crop shapes that sit near its edge */
+    .training-modal-image,
+    .training-modal-image svg {
+        overflow: visible;
     }
 }
