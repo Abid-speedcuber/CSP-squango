@@ -359,6 +359,12 @@ function createTrainingModal(): HTMLElement {
     openParityAnalysisFromTraining();
   });
 
+  document.getElementById('prevScrambleBar')!.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const prev = scrambleHistory[currentHistoryIndex - 1];
+    if (prev) openParityAnalysisFromTraining(prev.text);
+  });
+
   document.getElementById('trainingCaseName')!.addEventListener('click', (e) => {
     e.stopPropagation();
     openShapeIndexSelector();
@@ -732,6 +738,9 @@ function applyPrevScrambleBar(): void {
   }
   bar.style.display = 'block';
   const prevIdx = currentHistoryIndex - 1;
+  const hasPrev = prevIdx >= 0 && !!scrambleHistory[prevIdx];
+  bar.style.cursor = hasPrev ? 'pointer' : 'default';
+  bar.title = hasPrev ? 'Click to analyze parity' : '';
   if (prevIdx < 0 || !scrambleHistory[prevIdx]) {
     bar.innerHTML =
       '<span style="color:var(--text-muted); font-style:italic; font-family:inherit;">No previous scramble to show</span>';
@@ -778,8 +787,8 @@ function resizeCurrentTrainingScramble(): void {
 }
 
 // ── Parity tracer hook (tracer itself is ported separately) ──────────────────
-function openParityAnalysisFromTraining(): void {
-  const cleanScramble = currentScrambleText.replace(/<[^>]*>/g, '').trim();
+function openParityAnalysisFromTraining(scrambleText: string = currentScrambleText): void {
+  const cleanScramble = scrambleText.replace(/<[^>]*>/g, '').trim();
 
   const tracerLib = (window as unknown as { ParityTracerLibrary?: unknown }).ParityTracerLibrary;
   if (!tracerLib) {
