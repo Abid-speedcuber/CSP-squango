@@ -287,10 +287,9 @@ function ensureStaticModals(): void {
             ">
                 <section style="margin-bottom: 26px;">
                     <p style="margin: 0; font-size: 1rem; color: var(--text-secondary);">
-                    SquanGo CSP is a focused Square-1 CSP training tool built for speedcubers
-                    who want structure, repetition, and zero fluff.
-                    It started as a personal motivation tool and slowly turned into something
-                    worth sharing.
+                    With SquanGo CSP, we had one mission: to create one place that has
+                    <span style="font-weight: bold; color: var(--text-ui);">everything you need</span> for CSP,
+                    whether it's learning or training.
                     </p>
                 </section>
                 <section style="
@@ -300,13 +299,21 @@ function ensureStaticModals(): void {
                     padding: 20px;
                     margin-bottom: 22px;
                 ">
-                    <p style="font-weight: 600; margin-bottom: 6px;">Developer</p>
+                    <p style="font-weight: 600; margin-bottom: 6px;">Developers</p>
                     <p style="margin: 0 0 10px 0; color: var(--text-secondary);">
-                    Created by <strong>Abid Ibn Ashraf</strong>
+                    Created by <strong>Abid Ibn Ashraf</strong> and <strong>Matt Mao</strong>.
+                    </p>
+                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
+                    Contact & feedback:
+                    <strong>Email us</strong> at <span style="font-weight: bold; color: var(--text-ui);">squango.support@gmail.com</span>
                     </p>
                     <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
-                    Contact & feedback:
-                    <strong>Discord — <span style="color: var(--text-ui);">abid_ibn_ashraf</span></strong>
+                    <a href=".."
+                        target="_blank"
+                        style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;"
+                    >
+                        Discover more SquanGo websites →
+                    </a>
                     </p>
                 </section>
                 <section style="
@@ -318,32 +325,10 @@ function ensureStaticModals(): void {
                 ">
                     <p style="font-weight: 600; margin-bottom: 10px;">Credits & Inspiration</p>
                     <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-                    Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong>.
-                    The overall Homepage layout, case images and most of the alg data are based on her work.
+                    Major credit goes to <strong>Eva Kato (Hashtag Cuber)</strong> for initial
+                    design inspirations.
                     </p>
-                    <p style="margin: 0; font-size: 0.95rem; color: var(--text-secondary);">
-                    Additional credit to my frind<strong>Matt</strong> — the Chinese NR holder for sq1 —
-                    for helping me out in this project. Matt's preset is built solemnly by him, the dark mode is also his contribution alone, and he helped me refine the site further.
                     </p>
-                </section>
-                <section style="
-                    background: var(--surface);
-                    border: 1px solid var(--border-color);
-                    border-radius: 10px;
-                    padding: 20px;
-                    margin-bottom: 22px;
-                ">
-                    <p style="font-weight: 600; margin-bottom: 8px;">Scramble Generator</p>
-                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-                    Square-1 scrambles are generated using code from
-                    <strong>csTimer</strong>, written by Shuang Chen (cs0x7f),
-                    licensed under GPL-3.0.
-                    </p>
-                    <a href="https://github.com/cs0x7f/cstimer/blob/master/src/js/scramble/scramble_sq1_new.js"
-                    target="_blank"
-                    style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;">
-                    View source on GitHub →
-                    </a>
                 </section>
                 <section style="
                     background: var(--surface);
@@ -352,10 +337,6 @@ function ensureStaticModals(): void {
                     padding: 20px;
                 ">
                     <p style="font-weight: 600; margin-bottom: 8px;">Open Source</p>
-                    <p style="margin: 0 0 10px 0; font-size: 0.95rem; color: var(--text-secondary);">
-                    SquanGo CSP is open source. You’re free to explore the code,
-                    suggest improvements, or fork it for your own use.
-                    </p>
                     <a href="https://github.com/Abid-speedcuber/CSP-squango"
                         target="_blank"
                         style="font-size: 0.95rem; font-weight: 500; color: var(--about-link-color); text-decoration: none;"
