@@ -1010,3 +1010,17 @@ body.modal-open .training-modal {
         overflow: visible;
     }
 }
+
+/* Bulk-action menu is a list of actions, not a value picker */
+#trainingSelectorModal .custom-dropdown-option:disabled {
+    display: none; /* placeholder entry */
+}
+
+#trainingSelectorModal .custom-dropdown-option[aria-selected="true"] {
+    background: transparent;
+    color: var(--text-ui);
+}
+
+#trainingSelectorModal .custom-dropdown-check {
+    display: none;
+}
