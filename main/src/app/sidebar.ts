@@ -26,6 +26,8 @@ import {
 import { closeModalWithHistory, pushModalState } from './modal';
 import { openGeneralNotesModal } from './notes';
 import { applyInstructionVisibility } from './visibility';
+
+let sidebarToggleListenerInstalled = false;
 import { showToast } from './toast';
 import { temporarilyDisablePointerEvents } from './interactionLock';
 
@@ -1037,9 +1039,10 @@ export function toggleSidebar(): void {
 
     if (isOpening) {
       document.documentElement.classList.add('scroll-locked');
+      sidebar.classList.add('active');
+    } else {
+      sidebar.classList.remove('active');
     }
-
-    sidebar.classList.toggle('active');
   }
 }
 
@@ -1120,7 +1123,10 @@ export function installSidebarShims(): void {
   w.openGeneralNotesModal = openGeneralNotesModal;
 
   // The header menu button dispatches this custom event.
-  window.addEventListener('sqg:toggle-sidebar', () => toggleSidebar());
+  if (!sidebarToggleListenerInstalled) {
+    window.addEventListener('sqg:toggle-sidebar', () => toggleSidebar());
+    sidebarToggleListenerInstalled = true;
+  }
 
   // Apply the saved profile to the header button on boot.
   applyProfileUI();
