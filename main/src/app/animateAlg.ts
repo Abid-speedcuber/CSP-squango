@@ -20,14 +20,29 @@ type ViewerToken =
 
 const LEN = 150;
 const INTERNAL_COL = 0x0f0f0f;
-const BLUE = 0x0433ff;
-const RED = 0xff2600;
-const GREEN = 0x60d937;
-const ORANGE = 0xff9300;
-const EDGE_RIGHT_COLORS = [ORANGE, BLUE, RED, GREEN, RED, BLUE, ORANGE, GREEN];
-const LEFT_COLORS = [BLUE, RED, GREEN, ORANGE, BLUE, ORANGE, GREEN, RED];
+type Face = 'front' | 'right' | 'back' | 'left';
+// Solved-state face of each side sticker, indexed by piece number - 1.
+const EDGE_FACES: Face[] = ['back', 'right', 'front', 'left', 'front', 'right', 'back', 'left'];
+const CORNER_LEFT_FACES: Face[] = ['right', 'front', 'left', 'back', 'right', 'back', 'left', 'front'];
+// Equator [bar, end, adjacent] faces per half.
+const SLICE_FACES_RIGHT: Face[] = ['right', 'front', 'back'];
+const SLICE_FACES_LEFT: Face[] = ['left', 'back', 'front'];
+
+function toHex(css: string): number {
+  return new THREE.Color(resolveThemeAwareWhite(css)).getHex();
+}
 const INITIAL_UP = [1, -1, 0.02, 2, -2, 0.03, 3, -3, 0.04, 4, -4, 0.01];
 const INITIAL_DOWN = [0.05, 5, -5, 0.06, 6, -6, 0.07, 7, -7, 0.08, 8, -8];
+
+const DEFAULT_ANIM_DELAY_MS = 300;
+
+function readAnimDelay(): number {
+  const raw = readCspObject(CSP_PREFERENCES_KEY).animDelay;
+  const n = Number(raw);
+  return raw === undefined || raw === null || raw === '' || !Number.isFinite(n)
+    ? DEFAULT_ANIM_DELAY_MS
+    : Math.max(0, n);
+}
 
 function escapeHTML(s: string): string {
   return s.replace(/[&<>"']/g, (ch) => ({
@@ -50,10 +65,7 @@ function parseAlgorithm(algorithm: string): ViewerToken[] {
     } else if (raw.toLowerCase() === 'y2' || raw.toLowerCase() === 'z2') {
       tokens.push({ type: 'rotation', axis: raw.toLowerCase() as 'y2' | 'z2', text: raw });
     } else {
-      // The viewer's layer axes map (top, bottom) turns to (bottom, -top).
-      // Convert notation into the viewer's local axes so the visible move
-      // matches the requested top and bottom turns.
-      tokens.push({ type: 'turn', top: -Number(match[2]), bottom: Number(match[1]), text: raw });
+      tokens.push({ type: 'turn', top: Number(match[1]), bottom: Number(match[2]), text: raw });
     }
   }
   return tokens;
@@ -155,10 +167,13 @@ class ImmediateRenderer {
 }
 
 class Square1ThreeViewer {
-  private readonly poles = [
-    new THREE.Color(resolveThemeAwareWhite('#ffffff')).getHex(),
-    0x1e1e1e,
-  ];
+  private readonly poles = [toHex(colorScheme.topColor), toHex(colorScheme.bottomColor)];
+  private readonly faces: Record<Face, number> = {
+    front: toHex(colorScheme.frontColor),
+    right: toHex(colorScheme.rightColor),
+    back: toHex(colorScheme.backColor),
+    left: toHex(colorScheme.leftColor),
+  };
   private up = INITIAL_UP.slice();
   private down = INITIAL_DOWN.slice();
   private bar = false;
@@ -166,6 +181,11 @@ class Square1ThreeViewer {
   private step = 0;
   private progress = 0;
   private playing = false;
+  private stepping = false;
+  private delay = readAnimDelay();
+  private pauseUntil = 0;
+  private reversing = false;
+  onPlayingChange: ((playing: boolean) => void) | null = null;
   private runningToken: ViewerToken | null = null;
   private frame = 0;
   private speed = Number(readCspObject(CSP_PREFERENCES_KEY).animSpeed) || 1;
@@ -246,25 +266,70 @@ class Square1ThreeViewer {
     this.renderer.domElement.remove();
   }
 
+  private setPlaying(value: boolean): void {
+    if (this.playing === value) return;
+    this.playing = value;
+    this.onPlayingChange?.(value);
+  }
+
+  // Instantly completes any in-flight move so the next action starts clean.
+  private settle(): void {
+    this.pauseUntil = 0;
+    if (this.runningToken && !this.reversing) {
+      this.commit(this.runningToken);
+      this.step++;
+    }
+    this.runningToken = null;
+    this.reversing = false;
+    this.stepping = false;
+    this.progress = 0;
+  }
+
   play(): void {
     if (this.playing || this.step >= this.tokens.length) return;
-    this.playing = true;
+    this.pauseUntil = 0;
+    this.setPlaying(true);
     this.status.textContent = 'playing';
   }
 
   pause(): void {
-    this.playing = false;
+    this.setPlaying(false);
+    this.stepping = false;
     this.status.textContent = 'paused';
   }
 
+  // Play/pause; restarts from the beginning when the algorithm has finished.
+  toggle(): void {
+    if (this.playing) {
+      this.pause();
+      return;
+    }
+    if (this.step >= this.tokens.length && !this.runningToken) this.reset();
+    this.play();
+  }
+
   reset(): void {
+    this.runningToken = null;
+    this.reversing = false;
+    this.stepping = false;
+    this.progress = 0;
     this.setToStartState();
     this.step = 0;
-    this.progress = 0;
-    this.playing = false;
-    this.runningToken = null;
+    this.setPlaying(false);
     this.updateAlgorithm();
     this.status.textContent = 'case ready';
+  }
+
+  // Jumps to the state right before move `index`, paused.
+  jumpTo(index: number): void {
+    this.settle();
+    const target = Math.max(0, Math.min(index, this.tokens.length));
+    this.setToStartState();
+    for (let i = 0; i < target; i++) this.commit(this.tokens[i]);
+    this.step = target;
+    this.setPlaying(false);
+    this.updateAlgorithm();
+    this.status.textContent = target === 0 ? 'case ready' : `move ${target} / ${this.tokens.length}`;
   }
 
   private setToStartState(): void {
@@ -275,28 +340,43 @@ class Square1ThreeViewer {
     for (const token of this.presetTokens) this.commit(token);
   }
 
+  // Animates one move forward, then pauses.
   next(): void {
-    if (this.runningToken || this.step >= this.tokens.length) return;
+    this.settle();
+    if (this.step >= this.tokens.length) return;
     this.runningToken = this.tokens[this.step];
     this.progress = 0;
-    this.playing = true;
+    this.stepping = true;
+    this.setPlaying(true);
   }
 
+  // Animates one move backward, then pauses.
   previous(): void {
-    if (this.runningToken || this.step <= 0) return;
-    const targetStep = Math.max(0, this.step - 1);
+    this.settle();
+    if (this.step <= 0) return;
+    const target = this.step - 1;
     this.setToStartState();
-    for (let i = 0; i < targetStep; i++) this.commit(this.tokens[i]);
-    this.step = targetStep;
-    this.playing = false;
-    this.progress = 0;
+    for (let i = 0; i < target; i++) this.commit(this.tokens[i]);
+    this.step = target;
+    this.runningToken = this.tokens[target];
+    this.reversing = true;
+    this.progress = 1;
     this.updateAlgorithm();
-    this.status.textContent = targetStep === 0 ? 'case ready' : `move ${targetStep} / ${this.tokens.length}`;
+    this.setPlaying(true);
   }
 
   setSpeed(value: number): void {
     this.speed = value;
     updateCspObject(CSP_PREFERENCES_KEY, { animSpeed: value });
+  }
+
+  setDelay(value: number): void {
+    this.delay = value;
+    updateCspObject(CSP_PREFERENCES_KEY, { animDelay: value });
+  }
+
+  get isPlaying(): boolean {
+    return this.playing;
   }
 
   private bindControls(): void {
@@ -387,6 +467,7 @@ class Square1ThreeViewer {
 
   private tick(): void {
     if (!this.playing) return;
+    if (!this.runningToken && performance.now() < this.pauseUntil) return;
     if (!this.runningToken) {
       if (this.step >= this.tokens.length) {
         this.playing = false;
@@ -396,26 +477,35 @@ class Square1ThreeViewer {
       this.runningToken = this.tokens[this.step];
       this.progress = 0;
     }
-    this.progress += 0.035 * this.speed;
-    if (this.progress >= 1) {
-      this.commit(this.runningToken);
-      this.runningToken = null;
-      this.progress = 0;
-      this.step++;
-      this.updateAlgorithm();
-      if (this.step >= this.tokens.length) {
-        this.playing = false;
-        this.status.textContent = 'done';
-      }
-    } else {
+    this.progress += (this.reversing ? -1 : 1) * 0.035 * this.speed;
+    const finished = this.reversing ? this.progress <= 0 : this.progress >= 1;
+    if (!finished) {
       this.status.textContent = `move ${Math.min(this.step + 1, this.tokens.length)} / ${this.tokens.length}`;
+      return;
+    }
+    if (!this.reversing) {
+      this.commit(this.runningToken);
+      this.step++;
+    }
+    const single = this.reversing || this.stepping;
+    this.runningToken = null;
+    this.progress = 0;
+    this.reversing = false;
+    this.stepping = false;
+    this.updateAlgorithm();
+    if (!single) this.pauseUntil = performance.now() + this.delay;
+    if (single || this.step >= this.tokens.length) {
+      this.setPlaying(false);
+      this.status.textContent = this.step >= this.tokens.length
+        ? 'done'
+        : this.step === 0 ? 'case ready' : `move ${this.step} / ${this.tokens.length}`;
     }
   }
 
   private commit(token: ViewerToken): void {
     if (token.type === 'turn') {
       this.up = turnLayer(this.up, token.top);
-      this.down = turnLayer(this.down, -token.bottom);
+      this.down = turnLayer(this.down, token.bottom);
     } else if (token.type === 'slash') {
       const upSection = this.up.slice(0, 6);
       const downSection = this.down.slice(0, 6);
@@ -442,7 +532,7 @@ class Square1ThreeViewer {
   private updateAlgorithm(): void {
     this.algEl.innerHTML = this.tokens.map((token, idx) => {
       const cls = idx === this.step ? 'sq1-token current' : idx < this.step ? 'sq1-token done' : 'sq1-token';
-      return `<span class="${cls}">${escapeHTML(token.text)}</span>`;
+      return `<span class="${cls}" data-idx="${idx}">${escapeHTML(token.text)}</span>`;
     }).join('');
   }
 
@@ -457,7 +547,7 @@ class Square1ThreeViewer {
       this.drawUpLayer();
       this.im.pop();
       this.im.push();
-      this.im.rotateZ(ease(0, token.bottom * Math.PI / 6, this.progress));
+      this.im.rotateZ(ease(0, -token.bottom * Math.PI / 6, this.progress));
       this.drawDownLayer();
       this.im.pop();
     } else if (token?.type === 'slash') {
@@ -517,7 +607,7 @@ class Square1ThreeViewer {
     this.im.push();
     const layer = isTop ? this.up : this.down;
     const start = isRight ? 0 : 6;
-    this.im.translate(0, 0, isTop ? (internal ? LEN / 6 : LEN / 2) : (internal ? -LEN / 6 : -LEN / 2));
+    this.im.translate(0, 0, isTop ? (internal ? -LEN / 6 : -LEN / 2) : (internal ? LEN / 6 : LEN / 2));
     if (!isTop) this.im.rotateZ(Math.PI);
     for (let i = start; i < start + 6; i++) {
       const value = layer[i];
@@ -560,41 +650,43 @@ class Square1ThreeViewer {
     this.im.pop();
   }
 
+  private edgeSide(value: number): number {
+    return this.faces[EDGE_FACES[Math.round(Math.abs(value) * 100) - 1]];
+  }
+
+  private cornerSide(value: number, side: 'right' | 'left'): number {
+    const n = Math.round(Math.abs(value)) - 1;
+    return this.faces[(side === 'right' ? EDGE_FACES : CORNER_LEFT_FACES)[n]];
+  }
+
   private layerSides(isTop: boolean, isRight: boolean): void {
     const layer = isTop ? this.up : this.down;
     const start = isRight ? 0 : 6;
+    const z = isTop ? -LEN / 3 : LEN / 3;
+    const cx = -LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6);
+    const cy = LEN / (2 * Math.cos(Math.PI / 12)) - LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6);
     for (let i = start; i < start + 6; i++) {
       const value = layer[i];
       this.im.push();
       if (isTop) {
         this.im.rotateZ(i * Math.PI / 6);
-        if (Math.abs(value) < 1) this.eadj(0, 0, LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value * 100) - 1]);
-        else if (value >= 1) this.cadj(0, 0, LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value) - 1]);
+        if (Math.abs(value) < 1) this.eadj(0, 0, z, this.edgeSide(value));
+        else if (value >= 1) this.cadj(0, 0, z, this.cornerSide(value, 'right'));
         else {
           this.im.rotateZ(Math.PI / 3);
-          this.cadj(
-            -LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6),
-            LEN / (2 * Math.cos(Math.PI / 12)) - LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6),
-            LEN / 3,
-            LEFT_COLORS[Math.trunc(-value - 1)],
-          );
+          this.cadj(cx, cy, z, this.cornerSide(value, 'left'));
         }
       } else {
         this.im.rotateZ(Math.PI);
         if (Math.abs(value) < 1) {
           this.im.rotateZ(-(i + 1) * Math.PI / 6);
-          this.eadj(0, 0, -LEN / 3, EDGE_RIGHT_COLORS[Math.trunc(value * 100) - 1]);
+          this.eadj(0, 0, z, this.edgeSide(value));
         } else if (value >= 1) {
           this.im.rotateZ(-(i - 1) * Math.PI / 6);
-          this.cadj(
-            -LEN / 2 * Math.sqrt(2) * Math.cos(Math.PI / 6),
-            LEN / (2 * Math.cos(Math.PI / 12)) - LEN / 2 * Math.sqrt(2) * Math.sin(Math.PI / 6),
-            -LEN / 3,
-            EDGE_RIGHT_COLORS[Math.trunc(value) - 1],
-          );
+          this.cadj(cx, cy, z, this.cornerSide(value, 'right'));
         } else {
           this.im.rotateZ(-(i + 1) * Math.PI / 6);
-          this.cadj(0, 0, -LEN / 3, LEFT_COLORS[Math.trunc(-value) - 1]);
+          this.cadj(0, 0, z, this.cornerSide(value, 'left'));
         }
       }
       this.im.pop();
@@ -642,30 +734,16 @@ class Square1ThreeViewer {
     this.im.push();
     if (flip) this.im.rotateX(Math.PI);
     this.coreTops(isRight);
-    if (isRight) {
-      if (!rotated) {
-        this.equatorBar(BLUE);
-        this.equatorEndLong(RED);
-        this.cadj(0, 0, 0, ORANGE);
-      } else {
-        this.equatorBar(GREEN);
-        this.equatorEndLong(ORANGE);
-        this.cadj(0, 0, 0, RED);
-      }
-    } else {
+    // After y2/z2 the halves trade face colors.
+    const [bar, end, adj] = isRight !== rotated ? SLICE_FACES_RIGHT : SLICE_FACES_LEFT;
+    if (!isRight) {
       this.im.push();
       this.im.rotateZ(Math.PI);
-      if (!rotated) {
-        this.equatorBar(GREEN);
-        this.equatorEndLong(ORANGE);
-        this.cadj(0, 0, 0, RED);
-      } else {
-        this.equatorBar(BLUE);
-        this.equatorEndLong(RED);
-        this.cadj(0, 0, 0, ORANGE);
-      }
-      this.im.pop();
     }
+    this.equatorBar(this.faces[bar]);
+    this.equatorEndLong(this.faces[end]);
+    this.cadj(0, 0, 0, this.faces[adj]);
+    if (!isRight) this.im.pop();
     this.im.pop();
   }
 
@@ -725,7 +803,7 @@ class Square1ThreeViewer {
   }
 }
 
-function createModalHTML(modalId: string, algorithm: string, caseName: string, parity: string, speed: number): string {
+function createModalHTML(modalId: string, algorithm: string, caseName: string, parity: string, speed: number, delay: number): string {
   const title = caseName && parity ? `${caseName} (${parity})` : 'Algorithm Viewer';
   return `
     <div id="${modalId}" class="modal active sq1-three-modal">
@@ -742,10 +820,12 @@ function createModalHTML(modalId: string, algorithm: string, caseName: string, p
         <div class="sq1-three-controls">
           <button class="control-btn" id="${modalId}-reset" title="Reset"><img src="res/anim/first.svg" alt="Reset"></button>
           <button class="control-btn" id="${modalId}-prev" title="Previous"><img src="res/anim/prev.svg" alt="Previous"></button>
-          <button class="control-btn" id="${modalId}-play" title="Play"><img src="res/anim/play.svg" alt="Play"></button>
-          <button class="control-btn" id="${modalId}-pause" title="Pause"><img src="res/anim/pause.svg" alt="Pause"></button>
+          <button class="control-btn" id="${modalId}-toggle" title="Play"><img src="res/anim/play.svg" alt="Play"></button>
           <button class="control-btn" id="${modalId}-next" title="Next"><img src="res/anim/next.svg" alt="Next"></button>
-          <label class="sq1-speed">Speed <input id="${modalId}-speed" type="range" min="0.4" max="3" step="0.1" value="${speed}"></label>
+          <div class="sq1-sliders">
+            <label class="sq1-speed" title="How fast each move turns">Speed <input id="${modalId}-speed" type="range" min="0.4" max="3" step="0.1" value="${speed}"></label>
+            <label class="sq1-speed" title="Pause between moves">Delay <input id="${modalId}-delay" type="range" min="0" max="1500" step="50" value="${delay}"></label>
+          </div>
           <span class="sq1-status" id="${modalId}-status">idle</span>
         </div>
       </div>
@@ -802,7 +882,10 @@ function ensureStyles(): void {
       padding: 0 4px;
       border-radius: 4px;
       color: var(--text-secondary);
+      cursor: pointer;
     }
+    .sq1-token:hover { background: var(--surface2); }
+    .sq1-three-controls .control-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .sq1-token.done { color: var(--text-muted); opacity: 0.7; }
     .sq1-token.current { background: var(--step-highlight-bg); color: var(--accent); }
     .sq1-three-controls {
@@ -816,8 +899,14 @@ function ensureStyles(): void {
       width: 16px;
       height: 16px;
     }
-    .sq1-speed {
+    .sq1-sliders {
       margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .sq1-speed {
       display: flex;
       align-items: center;
       gap: 8px;
@@ -885,7 +974,7 @@ function ensureStyles(): void {
     }
     @media (max-width: 570px) {
       .sq1-three-stage { height: 360px; }
-      .sq1-speed { width: 100%; margin-left: 0; }
+      .sq1-sliders { width: 100%; margin-left: 0; }
       .sq1-status { margin-left: auto; }
     }
   `;
@@ -924,7 +1013,8 @@ export function openAnimateAlgModal(
   ensureStyles();
   const modalId = `sq1-three-modal-${Date.now()}`;
   const speed = Number(readCspObject(CSP_PREFERENCES_KEY).animSpeed) || 1;
-  document.body.insertAdjacentHTML('beforeend', createModalHTML(modalId, alg, caseName, parity, speed));
+  const delay = readAnimDelay();
+  document.body.insertAdjacentHTML('beforeend', createModalHTML(modalId, alg, caseName, parity, speed, delay));
   document.body.classList.add('modal-open');
 
   const modal = document.getElementById(modalId)!;
@@ -935,16 +1025,53 @@ export function openAnimateAlgModal(
   const viewer = new Square1ThreeViewer(host, tokens, presetTokens, status, algEl);
   viewer.setSpeed(speed);
 
+  let removeKeyListeners = () => {};
   const close = () => {
     closeModalWithHistory(() => {
+      removeKeyListeners();
       viewer.dispose();
       modal.remove();
       document.body.classList.remove('modal-open');
     });
   };
   document.getElementById(`${modalId}-close`)!.onclick = close;
-  document.getElementById(`${modalId}-play`)!.onclick = () => viewer.play();
-  document.getElementById(`${modalId}-pause`)!.onclick = () => viewer.pause();
+  const toggleBtn = document.getElementById(`${modalId}-toggle`)!;
+  const toggleImg = toggleBtn.querySelector('img')!;
+  viewer.onPlayingChange = (playing) => {
+    toggleImg.src = playing ? 'res/anim/pause.svg' : 'res/anim/play.svg';
+    toggleImg.alt = toggleBtn.title = playing ? 'Pause' : 'Play';
+    for (const id of ['prev', 'next']) {
+      (document.getElementById(`${modalId}-${id}`) as HTMLButtonElement).disabled = playing;
+    }
+  };
+  toggleBtn.onclick = () => viewer.toggle();
+
+  algEl.addEventListener('click', (e) => {
+    const tokenEl = (e.target as HTMLElement).closest<HTMLElement>('.sq1-token');
+    if (tokenEl) viewer.jumpTo(Number(tokenEl.dataset.idx));
+  });
+
+  const isTyping = (e: KeyboardEvent) => e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+  const onKeyDown = (e: KeyboardEvent): void => {
+    if (e.ctrlKey || e.metaKey || e.altKey || isTyping(e)) return;
+    if (e.code === 'Space') {
+      if (!e.repeat) viewer.toggle();
+    } else if (e.key === 'ArrowRight') { if (!viewer.isPlaying) viewer.next(); }
+    else if (e.key === 'ArrowLeft') { if (!viewer.isPlaying) viewer.previous(); }
+    else return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  };
+  // Prevents a focused button from also firing a click on Space release.
+  const onKeyUp = (e: KeyboardEvent): void => {
+    if (e.code === 'Space' && !isTyping(e)) e.preventDefault();
+  };
+  document.addEventListener('keydown', onKeyDown, true);
+  document.addEventListener('keyup', onKeyUp, true);
+  removeKeyListeners = () => {
+    document.removeEventListener('keydown', onKeyDown, true);
+    document.removeEventListener('keyup', onKeyUp, true);
+  };
   document.getElementById(`${modalId}-reset`)!.onclick = () => viewer.reset();
   document.getElementById(`${modalId}-prev`)!.onclick = () => viewer.previous();
   document.getElementById(`${modalId}-next`)!.onclick = () => viewer.next();
@@ -958,7 +1085,22 @@ export function openAnimateAlgModal(
     viewer.setSpeed(value);
   };
   speedInput.oninput = updateSpeed;
+  speedInput.onchange = () => speedInput.blur();
   updateSpeed();
+
+  const delayInput = document.getElementById(`${modalId}-delay`) as HTMLInputElement;
+  const paintDelay = () => {
+    const min = Number(delayInput.min);
+    const max = Number(delayInput.max);
+    const progress = ((Number(delayInput.value) - min) / (max - min)) * 100;
+    delayInput.style.setProperty('--range-progress', `${progress}%`);
+  };
+  delayInput.oninput = () => {
+    paintDelay();
+    viewer.setDelay(Number(delayInput.value));
+  };
+  delayInput.onchange = () => delayInput.blur();
+  paintDelay();
   pushModalState(modalId, close);
 }
 
